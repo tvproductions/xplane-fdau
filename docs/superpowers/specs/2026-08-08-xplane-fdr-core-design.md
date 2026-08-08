@@ -55,6 +55,8 @@ XPLM callbacks, plugin lifecycles, and consumer-specific business rules do not.
 - Preserve each optional DataRef's conversion factor and comment.
 - Provide reusable stock-X-Plane recording profiles and strict JSON
   configuration.
+- Provide configurable artifact storage with an X-Plane 12-oriented default
+  directory and deterministic filename fallback.
 - Export standards-conforming GeoJSON.
 - Make every core behavior testable without X-Plane, XPPython3, a network,
   sleeping, or third-party packages.
@@ -197,6 +199,25 @@ successful recordings.
 Existing destinations will be rejected unless overwrite is explicitly enabled.
 Caller-supplied streams remain under caller ownership and durability control.
 
+Callers may supply a complete destination path, or they may resolve one from
+the recording configuration. A complete caller-supplied path has highest
+precedence. A caller-supplied filename uses the configured directory and
+overrides a configured filename. When neither is supplied, the library uses
+the configured filename or generates
+`xplane-fdr-YYYYMMDDTHHMMSSffffffZ.fdr` from the recording's UTC start instant.
+The start instant may be supplied directly, and the clock used when it is
+omitted will be replaceable so filename behavior remains deterministic in
+tests.
+
+The configured storage directory defaults to `Output/FDR files`, interpreted
+relative to an X-Plane installation root supplied by the adapter. This is the
+library's X-Plane 12 storage convention; the core will not search for an
+installation or import simulator APIs to discover it. Explicit absolute
+directories are also valid. A configured filename is a literal basename
+ending in `.fdr`, not a template, and may not contain a directory separator.
+Overwrite permission is never read from reusable configuration and must remain
+an explicit API or command-line decision.
+
 ## Reader and Writer Behavior
 
 The reader will parse incrementally and report structural failures with source
@@ -230,10 +251,25 @@ paths are supplied through project-owned JSON rather than built into the
 package.
 
 The reusable JSON contract is adapter-neutral. It may describe profiles,
-sampling policy, FDR metadata, and custom DataRefs. It will not contain host,
-port, WebSocket path, XPLM callback, output path, or overwrite policy.
-Adapter projects may compose it into an outer configuration that adds their own
-connection or lifecycle settings.
+sampling policy, FDR metadata, custom DataRefs, and artifact storage. Storage
+has a `directory` and an optional literal `filename`:
+
+```json
+{
+  "storage": {
+    "directory": "Output/FDR files",
+    "filename": "training-flight.fdr"
+  }
+}
+```
+
+The directory defaults to `Output/FDR files`. Relative directories are
+resolved against an X-Plane installation root supplied by the adapter;
+absolute directories require no simulator root. The filename is optional and
+follows the precedence and generated-name rules in the recording boundary.
+The configuration will not contain host, port, WebSocket path, XPLM callback,
+or overwrite policy. Adapter projects may compose it into an outer
+configuration that adds their own connection or lifecycle settings.
 
 Configuration loading will use `json` plus explicit standard-library semantic
 validation. The packaged JSON Schema supports editors and external validators
@@ -322,6 +358,9 @@ Automated tests will use `unittest`. Verification will include:
 - atomic output, overwrite protection, partial recovery, and failure ordering;
 - immutable profile definitions and deterministic composition;
 - strict configuration parsing and packaged schema availability;
+- storage-directory resolution, configured and caller-supplied filename
+  precedence, deterministic default naming, and configured-basename
+  validation;
 - valid GeoJSON, coordinate order, MSL properties, UTC-date resolution, and
   antimeridian splitting;
 - CLI output, exit status, stream separation, and overwrite behavior;

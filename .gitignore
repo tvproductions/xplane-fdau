@@ -203,6 +203,10 @@ cython_debug/
 # Temporary file for partial code execution
 tempCodeRunnerFile.py
 
+# Local agent workflow scratch and isolated worktrees
+.superpowers/
+.worktrees/
+
 # Ruff stuff:
 .ruff_cache/
 

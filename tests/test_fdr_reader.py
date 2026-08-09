@@ -99,6 +99,11 @@ class FDRReaderValidV4Tests(unittest.TestCase):
                 self.assertEqual(origin, recording.header.source_origin)
                 self.assertEqual(4, recording.header.source_version)
 
+    def test_one_digit_utc_hour_is_preserved_as_an_unzoned_time(self) -> None:
+        recording = FDRReader().read(NamedStringIO(fdr_text("1:02:03.5, 1, 2, 3, 4, 5, 6")))
+
+        self.assertEqual(time(1, 2, 3, 500000), recording.samples[0].time_utc)
+
     def test_cr_lf_and_crlf_are_normalized_from_short_chunks(self) -> None:
         records = (
             "COMM, split boundaries",

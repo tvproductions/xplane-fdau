@@ -239,8 +239,9 @@ class FDRSampleStream(Iterator[FDRSample]):
         timestamp = fields[0]
         if _TIMESTAMP_PATTERN.fullmatch(timestamp) is None:
             self._parse_error(line, "invalid UTC time")
+        hour, remainder = timestamp.split(":", 1)
         try:
-            time_utc = time.fromisoformat(timestamp)
+            time_utc = time.fromisoformat(f"{hour.zfill(2)}:{remainder}")
         except ValueError:
             self._parse_error(line, "invalid UTC time")
         numbers = tuple(self._parse_number(value, line, "sample number") for value in fields[1:])

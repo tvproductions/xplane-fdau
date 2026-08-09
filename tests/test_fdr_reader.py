@@ -603,6 +603,16 @@ class FDRReaderMalformedV4Tests(unittest.TestCase):
             with self.subTest(text=repr(text)):
                 self.assert_parse_error(text, line=line, message_part=message)
 
+    def test_unbounded_numeric_version_preserves_raw_integer_conversion_failure(self) -> None:
+        source = NamedStringIO(f"A\n{'9' * 5000}\n")
+
+        with self.assertRaises(ValueError) as caught:
+            FDRReader().open(source)
+
+        self.assertIs(type(caught.exception), ValueError)
+        self.assertFalse(hasattr(caught.exception, "source"))
+        self.assertFalse(hasattr(caught.exception, "line"))
+
     def test_malformed_header_records_and_declarations_are_rejected(self) -> None:
         cases = (
             (fdr_text("BAD, value"), 3, "metadata"),

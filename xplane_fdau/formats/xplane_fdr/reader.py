@@ -213,10 +213,7 @@ class FDRSampleStream(Iterator[FDRSample]):
         match = _VERSION_PATTERN.fullmatch(text.strip())
         if match is None:
             self._parse_error(line, "version line must begin with an integer and optional suffix text")
-        try:
-            version = int(match.group(1))
-        except ValueError as error:
-            self._parse_error(line, f"invalid version integer: {error}")
+        version = int(match.group(1))
         if version not in {3, 4}:
             self._parse_error(line, "reader supports versions 3 and 4 only")
         return line, version

@@ -50,3 +50,26 @@ detect-secrets baseline step.  It flags two SHA-256 provenance literals in the
 migration plan and their two matching literals in `tests/test_documentation.py`.
 All four are present at the declared Task 6 base commit; Task 6 does not modify them.
 No unrelated documentation or security-baseline change was made.
+
+## Fix Round 1
+
+Review found one semantic regression in the initial decomposition.  BASE used
+direct `int()` conversion for a lexically numeric version, so Python's integer
+digit limit caused a 5,000-digit version to raise raw `ValueError` without FDR
+source or line context.  The initial Task 6 change translated that failure to
+`FDRParseError` with an `invalid version integer` diagnostic.
+
+Added
+`test_unbounded_numeric_version_preserves_raw_integer_conversion_failure`
+before changing production code.  Its RED run failed because the observed
+exception type was `FDRParseError`, not exact `ValueError`.  Restoring direct
+conversion made the focused regression test and all 29 reader tests pass while
+retaining the helper decomposition.
+
+Fix-round verification:
+
+- focused reader/model/CLI suites: 85 tests passed;
+- full `unittest discover -v`: 194 tests passed;
+- Ruff check and format check passed;
+- `ty check` passed; and
+- exact Xenon max-C target passed.

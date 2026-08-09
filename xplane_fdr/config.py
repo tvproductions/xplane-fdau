@@ -168,7 +168,7 @@ def _require_number(
     if type(value) not in (int, float):
         _config_error("must be a finite number", source=source, property_path=path)
     number = cast(int | float, value)
-    if not math.isfinite(number):
+    if type(number) is float and not math.isfinite(number):
         _config_error("must be a finite number", source=source, property_path=path)
     if minimum is not None and (number < minimum or (exclusive_minimum and number == minimum)):
         comparison = "greater than" if exclusive_minimum else "at least"
@@ -176,6 +176,17 @@ def _require_number(
     if maximum is not None and number > maximum:
         _config_error(f"must be at most {maximum}", source=source, property_path=path)
     return number
+
+
+def _require_sampling_float(value: object, path: str, source: str) -> float:
+    number = _require_number(value, path, source, minimum=0, exclusive_minimum=True)
+    try:
+        result = float(number)
+    except OverflowError:
+        _config_error("must be representable as a finite float", source=source, property_path=path)
+    if not math.isfinite(result):
+        _config_error("must be representable as a finite float", source=source, property_path=path)
+    return result
 
 
 def _optional_string(
@@ -237,7 +248,7 @@ def _validate_programmatic_number(
     if type(value) not in (int, float):
         _programmatic_error("must be a finite number", property_path)
     number = cast(int | float, value)
-    if not math.isfinite(number):
+    if type(number) is float and not math.isfinite(number):
         _programmatic_error("must be a finite number", property_path)
     if minimum is not None and number < minimum:
         _programmatic_error(f"must be at least {minimum}", property_path)
@@ -329,6 +340,11 @@ class FDRRecordConfig:
             seen.add(dataref.path)
         if not isinstance(self.storage, FDRStoragePolicy):
             _programmatic_error("must be an FDRStoragePolicy", "$.storage")
+        directory = os.fspath(self.storage.directory)
+        if not directory or "\x00" in directory:
+            _programmatic_error("must be a non-empty path without NUL", "$.storage.directory")
+        if self.storage.filename is not None:
+            _validate_programmatic_text(self.storage.filename, "$.storage.filename")
 
 
 def _parse_profiles(root: dict[str, object], source: str) -> tuple[str, ...]:
@@ -348,11 +364,11 @@ def _parse_profiles(root: dict[str, object], source: str) -> tuple[str, ...]:
 def _parse_sampling(root: dict[str, object], source: str) -> FDRSamplingPolicy:
     value = _require_object(root.get("sampling", {}), "$.sampling", source)
     _reject_unknown(value, _SAMPLING_PROPERTIES, "$.sampling", source)
-    interval = _require_number(value.get("interval_seconds", 0.1), "$.sampling.interval_seconds", source, minimum=0, exclusive_minimum=True)
+    interval = _require_sampling_float(value.get("interval_seconds", 0.1), "$.sampling.interval_seconds", source)
     duration = None
     if "duration_seconds" in value:
-        duration = _require_number(value["duration_seconds"], "$.sampling.duration_seconds", source, minimum=0, exclusive_minimum=True)
-    return FDRSamplingPolicy(float(interval), None if duration is None else float(duration))
+        duration = _require_sampling_float(value["duration_seconds"], "$.sampling.duration_seconds", source)
+    return FDRSamplingPolicy(interval, duration)
 
 
 def _parse_metadata(root: dict[str, object], source: str) -> FDRMetadataConfig:

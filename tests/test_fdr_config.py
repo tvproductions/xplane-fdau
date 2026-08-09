@@ -9,6 +9,7 @@ from importlib.resources import files
 import json
 import math
 from pathlib import Path
+import re
 import tempfile
 from typing import Literal, cast
 import unittest
@@ -285,6 +286,56 @@ class FDRConfigValidationTests(unittest.TestCase):
             with self.subTest(constructor=constructor), self.assertRaises(FDRConfigError):
                 constructor()
 
+    def test_programmatic_config_revalidates_storage_text_with_config_context(self) -> None:
+        invalid = (
+            (FDRStoragePolicy(Path("bad\x00directory")), "$.storage.directory"),
+            (FDRStoragePolicy(filename="bad\x00.fdr"), "$.storage.filename"),
+            (FDRStoragePolicy(filename="bad\n.fdr"), "$.storage.filename"),
+        )
+
+        for storage, property_path in invalid:
+            with self.subTest(storage=storage):
+                with self.assertRaises(FDRConfigError) as caught:
+                    FDRRecordConfig(schema_version=1, storage=storage)
+                self.assertEqual(property_path, caught.exception.property_path)
+
+    def test_huge_integer_metadata_and_scale_remain_exact_but_sampling_is_contextual(self) -> None:
+        huge = 10**400
+        document = json.dumps(
+            {
+                "schema_version": 1,
+                "profiles": ["minimal"],
+                "metadata": {"pressure_in_hg": huge},
+                "datarefs": [{"path": "sim/test/huge", "scale": huge}],
+            }
+        )
+
+        try:
+            loaded = load_text(document)
+            programmatic_metadata = FDRMetadataConfig(pressure_in_hg=huge)
+            programmatic_dataref = FDRDatarefConfig("sim/test/huge", huge)
+        except OverflowError as error:
+            self.fail(f"exact integers must not reach float finiteness checks: {error}")
+        definition = resolve_recording_definition(loaded)
+
+        self.assertEqual(huge, loaded.metadata.pressure_in_hg)
+        self.assertEqual(huge, loaded.datarefs[0].scale)
+        self.assertEqual(huge, programmatic_metadata.pressure_in_hg)
+        self.assertEqual(huge, programmatic_dataref.scale)
+        self.assertEqual(huge, definition.header.datarefs[0].scale)
+
+        for name in ("interval_seconds", "duration_seconds"):
+            stream = io.StringIO(json.dumps({"schema_version": 1, "sampling": {name: huge}}))
+            stream.name = "huge.json"
+            with self.subTest(name=name):
+                try:
+                    with self.assertRaises(FDRConfigError) as caught:
+                        load_record_config(stream)
+                except OverflowError as error:
+                    self.fail(f"sampling overflow must be contextual: {error}")
+                self.assertEqual("huge.json", getattr(caught.exception, "source"))
+                self.assertEqual(f"$.sampling.{name}", caught.exception.property_path)
+
 
 class FDRConfigSchemaTests(unittest.TestCase):
     """The packaged editor contract mirrors runtime structure without adding dependencies."""
@@ -306,6 +357,28 @@ class FDRConfigSchemaTests(unittest.TestCase):
         serialized = json.dumps(schema)
         for forbidden in ("connection", "xplm", "overwrite", "output_path"):
             self.assertNotIn(forbidden, serialized.lower())
+
+    def test_schema_patterns_match_runtime_basename_and_single_line_rules(self) -> None:
+        schema = json.loads(files("xplane_fdr.schemas").joinpath("fdr-record-config-v1.schema.json").read_text(encoding="utf-8"))
+        properties = schema["properties"]
+        single_line_patterns = (
+            (properties["metadata"]["properties"]["aircraft_path"]["pattern"], "Aircraft/Test.acf"),
+            (properties["metadata"]["properties"]["tail_number"]["pattern"], "N172SP"),
+            (properties["metadata"]["properties"]["local_date"]["pattern"], "2026-08-08"),
+            (properties["metadata"]["properties"]["comments"]["items"]["pattern"], "comment"),
+            (properties["datarefs"]["items"]["properties"]["path"]["pattern"], "sim/test/value"),
+            (properties["datarefs"]["items"]["properties"]["comment"]["pattern"], "comment"),
+            (properties["storage"]["properties"]["filename"]["pattern"], "valid.fdr"),
+        )
+        filename_pattern = re.compile(properties["storage"]["properties"]["filename"]["pattern"])
+
+        self.assertIsNotNone(filename_pattern.match(".fdr"))
+        for pattern, valid in single_line_patterns:
+            compiled = re.compile(pattern)
+            with self.subTest(pattern=pattern):
+                self.assertIsNotNone(compiled.match(valid))
+                self.assertIsNone(compiled.match(f"{valid}\n"))
+                self.assertIsNone(compiled.match(f"{valid}\r"))
 
 
 if __name__ == "__main__":

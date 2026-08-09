@@ -18,8 +18,10 @@ _DATE_FORMATS = (
 )
 
 
-def _tuple[T](values: tuple[T, ...] | list[T]) -> tuple[T, ...]:
+def _tuple[T](values: tuple[T, ...] | list[T], name: str) -> tuple[T, ...]:
     """Freeze a caller-provided sequence without changing its order."""
+    if type(values) not in (tuple, list):
+        raise FDRValidationError(f"{name} must be a tuple or list")
     return tuple(values)
 
 
@@ -136,14 +138,14 @@ class FDRHeader:
     local_date: date | None
 
     def __post_init__(self) -> None:
-        if self.source_version not in {3, 4} or type(self.source_version) is not int:
+        if type(self.source_version) is not int or self.source_version not in {3, 4}:
             raise FDRValidationError("source version must be 3 or 4")
-        if self.source_origin not in {"A", "I"}:
+        if type(self.source_origin) is not str or self.source_origin not in {"A", "I"}:
             raise FDRValidationError("source origin must be 'A' or 'I'")
-        comments = _tuple(self.comments)
-        metadata = _tuple(self.metadata)
-        datarefs = _tuple(self.datarefs)
-        legacy_columns = _tuple(self.legacy_columns)
+        comments = _tuple(self.comments, "comments")
+        metadata = _tuple(self.metadata, "metadata")
+        datarefs = _tuple(self.datarefs, "datarefs")
+        legacy_columns = _tuple(self.legacy_columns, "legacy columns")
         if any(not isinstance(comment, str) for comment in comments):
             raise FDRValidationError("comments must contain only strings")
         if any(not isinstance(item, FDRMetadata) for item in metadata):
@@ -203,8 +205,16 @@ class FDRSample:
         object.__setattr__(self, "latitude", latitude)
         for name in ("altitude_msl_ft", "heading_magnetic_deg", "pitch_deg", "roll_deg"):
             object.__setattr__(self, name, _require_finite_number(getattr(self, name), name))
-        object.__setattr__(self, "additional_values", _validate_values(_tuple(self.additional_values), "additional values"))
-        object.__setattr__(self, "legacy_values", _validate_values(_tuple(self.legacy_values), "legacy values"))
+        object.__setattr__(
+            self,
+            "additional_values",
+            _validate_values(_tuple(self.additional_values, "additional values"), "additional values"),
+        )
+        object.__setattr__(
+            self,
+            "legacy_values",
+            _validate_values(_tuple(self.legacy_values, "legacy values"), "legacy values"),
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -217,7 +227,7 @@ class FDRRecording:
     def __post_init__(self) -> None:
         if not isinstance(self.header, FDRHeader):
             raise FDRValidationError("header must be an FDRHeader")
-        samples = _tuple(self.samples)
+        samples = _tuple(self.samples, "samples")
         if any(not isinstance(sample, FDRSample) for sample in samples):
             raise FDRValidationError("samples must contain FDRSample entries")
         for index, sample in enumerate(samples):
@@ -274,7 +284,7 @@ class FDRNormalizationResult:
             raise FDRValidationError("recording must be an FDRRecording")
         if self.recording.header.source_version != 4:
             raise FDRValidationError("normalization results must contain a version 4 recording")
-        omitted = _tuple(self.omitted_legacy_field_ids)
+        omitted = _tuple(self.omitted_legacy_field_ids, "omitted legacy field ids")
         if any(not isinstance(identifier, str) for identifier in omitted):
             raise FDRValidationError("omitted legacy field ids must contain only strings")
         object.__setattr__(self, "omitted_legacy_field_ids", omitted)

@@ -186,6 +186,54 @@ class FDRLeafModelTests(unittest.TestCase):
         self.assertEqual((3.5,), recording.samples[0].additional_values)
         self.assertEqual(1, len(recording.samples))
 
+    def test_ordered_fields_reject_none_and_unordered_containers(self) -> None:
+        sample = make_sample()
+        recording = FDRRecording(make_v4_header(), (sample,))
+        invalid_constructors = (
+            ("comments None", lambda: make_v4_header(comments=cast(tuple[str, ...], None))),
+            ("comments set", lambda: make_v4_header(comments=cast(tuple[str, ...], {"first", "second"}))),
+            (
+                "metadata set",
+                lambda: make_v4_header(metadata=cast(tuple[FDRMetadata, ...], {FDRMetadata("TAIL", "N1")})),
+            ),
+            (
+                "datarefs set",
+                lambda: make_v4_header(datarefs=cast(tuple[FDRDataref, ...], {FDRDataref("sim/test/value", 1)})),
+            ),
+            (
+                "legacy columns set",
+                lambda: FDRHeader(
+                    3,
+                    "A",
+                    (),
+                    (),
+                    (),
+                    cast(tuple[FDRLegacyColumn, ...], {FDRLegacyColumn("longitude")}),
+                    None,
+                ),
+            ),
+            (
+                "additional values set",
+                lambda: dataclasses.replace(sample, additional_values=cast(tuple[int | float, ...], {1, 2})),
+            ),
+            (
+                "legacy values set",
+                lambda: dataclasses.replace(sample, legacy_values=cast(tuple[int | float, ...], {1, 2})),
+            ),
+            (
+                "samples set",
+                lambda: FDRRecording(make_v4_header(), cast(tuple[FDRSample, ...], {sample})),
+            ),
+            (
+                "omissions set",
+                lambda: FDRNormalizationResult(recording, cast(tuple[str, ...], {"legacy_one", "legacy_two"})),
+            ),
+        )
+
+        for label, constructor in invalid_constructors:
+            with self.subTest(field=label), self.assertRaises(FDRValidationError):
+                constructor()
+
     def test_text_fields_reject_wrong_or_empty_values(self) -> None:
         invalid_constructors = (
             lambda: FDRMetadata("", "value"),
@@ -288,6 +336,16 @@ class FDRHeaderTests(unittest.TestCase):
             lambda: FDRHeader(4, "A", (), cast(tuple[FDRMetadata, ...], ("TAIL N1",)), (), (), None),
             lambda: FDRHeader(4, "A", (), (), cast(tuple[FDRDataref, ...], ("sim/test",)), (), None),
         )
+        for constructor in invalid_headers:
+            with self.subTest(constructor=constructor), self.assertRaises(FDRValidationError):
+                constructor()
+
+    def test_header_rejects_unhashable_version_and_origin_with_validation_error(self) -> None:
+        invalid_headers = (
+            lambda: FDRHeader(cast(Literal[3, 4], []), "A", (), (), (), (), None),
+            lambda: FDRHeader(4, cast(Literal["A", "I"], []), (), (), (), (), None),
+        )
+
         for constructor in invalid_headers:
             with self.subTest(constructor=constructor), self.assertRaises(FDRValidationError):
                 constructor()

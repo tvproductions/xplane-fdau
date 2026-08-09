@@ -19,12 +19,11 @@ from xplane_fdau.formats.xplane_fdr import (
     FDRDatarefConfig,
     FDRMetadataConfig,
     FDRRecordConfig,
-    FDRSamplingPolicy,
-    FDRStoragePolicy,
     get_profile,
     load_record_config,
     resolve_recording_definition,
 )
+from xplane_fdau.sinks.xplane_fdr import FDRSamplingPolicy, FDRStoragePolicy
 
 
 def load_text(text: str) -> FDRRecordConfig:

@@ -26,14 +26,6 @@ from .models import (
     FDRSample,
 )
 from .reader import FDRReader, FDRSampleStream
-from .recording import (
-    FDRRecordingDefinition,
-    FDRRecordingSession,
-    FDRSampleSink,
-    FDRSampleSource,
-    FDRSamplingPolicy,
-    FDRStoragePolicy,
-)
 from .profiles import (
     FDRRecordingProfile,
     FDRTrajectorySource,
@@ -57,18 +49,12 @@ __all__ = [
     "FDROutputError",
     "FDRParseError",
     "FDRRecording",
-    "FDRRecordingDefinition",
     "FDRRecordingProfile",
-    "FDRRecordingSession",
     "FDRRecordingStateError",
     "FDRRecordConfig",
     "FDRReader",
     "FDRSample",
-    "FDRSampleSink",
-    "FDRSampleSource",
     "FDRSampleStream",
-    "FDRSamplingPolicy",
-    "FDRStoragePolicy",
     "FDRStreamWriter",
     "FDRTrajectorySource",
     "FDRValidationError",

@@ -16,14 +16,16 @@ from xplane_fdau.formats.xplane_fdr import (
     FDRDataref,
     FDRHeader,
     FDRReader,
-    FDRRecordingDefinition,
-    FDRRecordingSession,
     FDRRecordingStateError,
     FDRSample,
+    FDRValidationError,
+)
+from xplane_fdau.sinks.xplane_fdr import (
+    FDRRecordingDefinition,
+    FDRRecordingSession,
     FDRSampleSource,
     FDRSamplingPolicy,
     FDRStoragePolicy,
-    FDRValidationError,
 )
 
 

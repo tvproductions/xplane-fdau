@@ -13,7 +13,7 @@ from typing import Literal, NoReturn, Protocol, cast
 from .errors import FDRConfigError
 from .models import FDRDataref, FDRHeader, FDRMetadata
 from .profiles import compose_profiles, list_profiles
-from .recording import FDRRecordingDefinition, FDRSamplingPolicy, FDRStoragePolicy
+from .definition import FDRRecordingDefinition, FDRSamplingPolicy, FDRStoragePolicy
 
 
 _DEFAULT_STORAGE_DIRECTORY = Path("Output/FDR files")

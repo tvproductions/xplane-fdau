@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta
 import math
 import os
@@ -75,6 +76,17 @@ _VERSION_3_DUPLICATE_FIELD_IDS = {14: "flap[0]", 15: "flap[1]"}
 _VERSION_3_LEGACY_COLUMNS = tuple(
     FDRLegacyColumn(_VERSION_3_DUPLICATE_FIELD_IDS.get(index, label), comment=label) for index, label in enumerate(_VERSION_3_SOURCE_LABELS)
 )
+
+
+@dataclass(slots=True)
+class _HeaderState:
+    """Mutable accumulator used while parsing a native FDR header."""
+
+    comments: list[str] = field(default_factory=list)
+    metadata: list[FDRMetadata] = field(default_factory=list)
+    datarefs: list[FDRDataref] = field(default_factory=list)
+    local_date: date | None = None
+    last_line: int = 0
 
 
 class _ReadableText(Protocol):
@@ -183,24 +195,33 @@ class FDRSampleStream(Iterator[FDRSample]):
         self._closed = True
 
     def _parse_header(self) -> FDRHeader:
-        origin_line, origin_text = self._next_nonblank("missing origin marker")
-        origin = origin_text.strip()
+        origin = self._parse_origin()
+        version_line, version = self._parse_version()
+        state = _HeaderState(last_line=version_line)
+        self._collect_header(version, origin, state)
+        return self._build_header(version, origin, state)
+
+    def _parse_origin(self) -> str:
+        line, text = self._next_nonblank("missing origin marker")
+        origin = text.strip()
         if origin not in {"A", "I"}:
-            self._parse_error(origin_line, "origin marker must be 'A' or 'I'")
+            self._parse_error(line, "origin marker must be 'A' or 'I'")
+        return origin
 
-        version_line, version_text = self._next_nonblank("missing version line")
-        version_match = _VERSION_PATTERN.fullmatch(version_text.strip())
-        if version_match is None:
-            self._parse_error(version_line, "version line must begin with an integer and optional suffix text")
-        version = int(version_match.group(1))
+    def _parse_version(self) -> tuple[int, int]:
+        line, text = self._next_nonblank("missing version line")
+        match = _VERSION_PATTERN.fullmatch(text.strip())
+        if match is None:
+            self._parse_error(line, "version line must begin with an integer and optional suffix text")
+        try:
+            version = int(match.group(1))
+        except ValueError as error:
+            self._parse_error(line, f"invalid version integer: {error}")
         if version not in {3, 4}:
-            self._parse_error(version_line, "reader supports versions 3 and 4 only")
+            self._parse_error(line, "reader supports versions 3 and 4 only")
+        return line, version
 
-        comments: list[str] = []
-        metadata: list[FDRMetadata] = []
-        datarefs: list[FDRDataref] = []
-        local_date: date | None = None
-        last_header_line = version_line
+    def _collect_header(self, version: int, origin: str, state: _HeaderState) -> None:
         for line, text in self._lines:
             stripped = text.strip()
             if not stripped:
@@ -209,38 +230,44 @@ class FDRSampleStream(Iterator[FDRSample]):
             kind = kind.strip()
             if (version == 3 and kind == "DATA") or (version == 4 and ":" in kind):
                 self._first_sample = (line, stripped)
-                break
+                return
             if not separator:
                 self._parse_error(line, "header record requires a comma")
-            payload = payload.strip()
-            last_header_line = line
-            if kind == "COMM":
-                comments.append(payload)
-            elif kind == "DREF" and version == 4:
-                dataref = self._parse_dataref(payload, line)
-                self._validate_dataref_append(origin, comments, metadata, datarefs, dataref, local_date, line)
-                datarefs.append(dataref)
-            elif _METADATA_PATTERN.fullmatch(kind):
-                metadata.append(self._validated(FDRMetadata, line, kind, payload))
-                if kind == "DATE":
-                    local_date = self._parse_date(payload, line)
-                elif kind == "TIME" and version == 3:
-                    self._v3_start_time = self._parse_time(payload, line, name="TIME")
-            else:
-                self._parse_error(line, "metadata key must be four-character uppercase text")
+            state.last_line = line
+            self._append_header_record(version, origin, state, line, kind, payload.strip())
+
+    def _append_header_record(self, version: int, origin: str, state: _HeaderState, line: int, kind: str, payload: str) -> None:
+        if kind == "COMM":
+            state.comments.append(payload)
+            return
+        if kind == "DREF" and version == 4:
+            dataref = self._parse_dataref(payload, line)
+            self._validate_dataref_append(origin, state.comments, state.metadata, state.datarefs, dataref, state.local_date, line)
+            state.datarefs.append(dataref)
+            return
+        if _METADATA_PATTERN.fullmatch(kind):
+            state.metadata.append(self._validated(FDRMetadata, line, kind, payload))
+            if kind == "DATE":
+                state.local_date = self._parse_date(payload, line)
+            elif kind == "TIME" and version == 3:
+                self._v3_start_time = self._parse_time(payload, line, name="TIME")
+            return
+        self._parse_error(line, "metadata key must be four-character uppercase text")
+
+    def _build_header(self, version: int, origin: str, state: _HeaderState) -> FDRHeader:
         if version == 3 and self._v3_start_time is None:
-            required_line = self._first_sample[0] if self._first_sample is not None else last_header_line
+            required_line = self._first_sample[0] if self._first_sample is not None else state.last_line
             self._parse_error(required_line, "version 3 requires a valid TIME header")
         return self._validated(
             FDRHeader,
-            last_header_line,
+            state.last_line,
             source_version=version,
             source_origin=origin,
-            comments=tuple(comments),
-            metadata=tuple(metadata),
-            datarefs=tuple(datarefs) if version == 4 else (),
+            comments=tuple(state.comments),
+            metadata=tuple(state.metadata),
+            datarefs=tuple(state.datarefs) if version == 4 else (),
             legacy_columns=_VERSION_3_LEGACY_COLUMNS if version == 3 else (),
-            local_date=local_date,
+            local_date=state.local_date,
         )
 
     def _next_nonblank(self, missing_message: str) -> tuple[int, str]:

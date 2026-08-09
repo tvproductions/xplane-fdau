@@ -6,7 +6,7 @@ from datetime import date, time
 import io
 from pathlib import Path
 import tempfile
-from typing import override
+from typing import Any, override
 from unittest import mock
 import unittest
 
@@ -397,6 +397,90 @@ class FDRReaderValidV3Tests(unittest.TestCase):
                 result.recording.samples[0].roll_deg,
             ),
         )
+
+
+class FDRReaderHeaderCharacterizationTests(unittest.TestCase):
+    """Characterize header branches before their complexity-only decomposition."""
+
+    def test_headers_preserve_records_samples_and_failure_lines(self) -> None:
+        cases: tuple[dict[str, Any], ...] = (
+            {
+                "name": "version 4 records and first sample",
+                "text": fdr_text(
+                    "",
+                    "COMM, first comment",
+                    "ZZZZ, opaque value",
+                    "DATE, 2026-08-09",
+                    "DREF, sim/test/value 2 // scale comment",
+                    "COMM, second comment",
+                    "",
+                    "12:00:00, 1, 2, 3, 4, 5, 6, 7",
+                ),
+                "header": {
+                    "version": 4,
+                    "origin": "A",
+                    "comments": ("first comment", "second comment"),
+                    "metadata": (("ZZZZ", "opaque value"), ("DATE", "2026-08-09")),
+                    "datarefs": (("sim/test/value", 2, "scale comment"),),
+                    "local_date": date(2026, 8, 9),
+                },
+                "sample": (time(12), 1, (7,)),
+            },
+            {
+                "name": "version 3 metadata and first sample",
+                "text": fdr_text(
+                    "",
+                    "COMM, legacy comment",
+                    "TIME, 23:59:59",
+                    "DREF, sim/test/legacy 1",
+                    "DATE, 08/09/26",
+                    "",
+                    v3_data(),
+                    origin="I",
+                    version="3 X-Plane 12",
+                ),
+                "header": {
+                    "version": 3,
+                    "origin": "I",
+                    "comments": ("legacy comment",),
+                    "metadata": (("TIME", "23:59:59"), ("DREF", "sim/test/legacy 1"), ("DATE", "08/09/26")),
+                    "datarefs": (),
+                    "local_date": date(2026, 8, 9),
+                },
+                "sample": (time(23, 59, 59), -87.9048, ()),
+            },
+            {
+                "name": "missing header record separator",
+                "text": fdr_text("ABCD value"),
+                "error": (3, "header record requires a comma"),
+            },
+            {
+                "name": "malformed header key",
+                "text": fdr_text("TOOLONG, value"),
+                "error": (3, "metadata key must be four-character uppercase text"),
+            },
+        )
+        for case in cases:
+            with self.subTest(case=case["name"]):
+                if "error" in case:
+                    line, message = case["error"]
+                    with self.assertRaises(FDRParseError) as caught:
+                        FDRReader().open(NamedStringIO(case["text"]))
+                    self.assertEqual(("memory.fdr", line), (caught.exception.source, caught.exception.line))
+                    self.assertEqual(message, caught.exception.message)
+                    continue
+
+                with FDRReader().open(NamedStringIO(case["text"])) as stream:
+                    header = stream.header
+                    expected = case["header"]
+                    self.assertEqual(expected["version"], header.source_version)
+                    self.assertEqual(expected["origin"], header.source_origin)
+                    self.assertEqual(expected["comments"], header.comments)
+                    self.assertEqual(expected["metadata"], tuple((item.key, item.value) for item in header.metadata))
+                    self.assertEqual(expected["datarefs"], tuple((item.path, item.scale, item.comment) for item in header.datarefs))
+                    self.assertEqual(expected["local_date"], header.local_date)
+                    sample = next(stream)
+                self.assertEqual(case["sample"], (sample.time_utc, sample.longitude, sample.additional_values))
 
 
 class FDRReaderMalformedV3Tests(unittest.TestCase):

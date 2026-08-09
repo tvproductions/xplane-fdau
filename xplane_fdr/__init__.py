@@ -17,6 +17,7 @@ from .models import (
     FDRRecording,
     FDRSample,
 )
+from .reader import FDRReader, FDRSampleStream
 
 __all__ = [
     "FDRConfigError",
@@ -30,7 +31,9 @@ __all__ = [
     "FDRParseError",
     "FDRRecording",
     "FDRRecordingStateError",
+    "FDRReader",
     "FDRSample",
+    "FDRSampleStream",
     "FDRValidationError",
     "__version__",
 ]

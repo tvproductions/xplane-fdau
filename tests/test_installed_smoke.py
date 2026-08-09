@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
+from unittest import mock
 
 from tools import installed_smoke
 from xplane_fdau.formats.xplane_fdr import FDRReader
@@ -47,6 +48,21 @@ class InstalledSmokeTests(unittest.TestCase):
         self.assertEqual("0.1.0", installed_smoke.parse_version(["0.1.0"]))
         with self.assertRaisesRegex(installed_smoke.SmokeError, "usage"):
             installed_smoke.parse_version([])
+
+    def test_smoke_uses_the_nested_native_fdr_cli(self) -> None:
+        commands: list[list[str]] = []
+
+        with (
+            mock.patch.object(installed_smoke, "ensure_outside_checkout"),
+            mock.patch.object(installed_smoke, "_command_path", return_value=Path("xplane-fdau")),
+            mock.patch.object(installed_smoke, "_run", side_effect=commands.append),
+        ):
+            installed_smoke.smoke("0.1.0", checkout=Path("checkout"))
+
+        self.assertEqual("fdr", commands[0][1])
+        self.assertEqual("validate", commands[0][2])
+        self.assertEqual("fdr", commands[-1][1])
+        self.assertEqual("to-geojson", commands[-1][2])
 
 
 if __name__ == "__main__":

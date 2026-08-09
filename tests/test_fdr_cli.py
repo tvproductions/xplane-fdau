@@ -86,9 +86,10 @@ class FDRCliTests(unittest.TestCase):
     def test_parser_accepts_only_the_documented_offline_command_shapes(self) -> None:
         parser = build_parser()
         commands = (
-            ["validate", str(self.input)],
-            ["inspect", str(self.input), "--json", "--first-utc-date", "2026-08-07"],
+            ["fdr", "validate", str(self.input)],
+            ["fdr", "inspect", str(self.input), "--json", "--first-utc-date", "2026-08-07"],
             [
+                "fdr",
                 "to-geojson",
                 str(self.input),
                 str(self.root / "flight.geojson"),
@@ -99,15 +100,26 @@ class FDRCliTests(unittest.TestCase):
         )
 
         for arguments in commands:
-            with self.subTest(command=arguments[0]):
+            with self.subTest(command=arguments[1]):
                 parsed = parser.parse_args(arguments)
-                self.assertEqual(arguments[0], parsed.command)
+                self.assertEqual("fdr", parsed.domain)
+                self.assertEqual(arguments[1], parsed.command)
         status, stdout, stderr = self.capture_main(["live-record"])
         self.assertEqual((2, ""), (status, stdout))
         self.assertIn("invalid choice", stderr)
 
-    def test_help_lists_the_three_offline_commands_on_stdout(self) -> None:
+    def test_help_lists_the_fdr_domain_on_stdout(self) -> None:
         status, stdout, stderr = self.capture_main(["--help"])
+
+        self.assertEqual(0, status)
+        self.assertEqual("", stderr)
+        self.assertIn("fdr", stdout)
+        for command in ("inspect", "validate", "to-geojson"):
+            self.assertNotIn(command, stdout)
+        self.assertNotIn("live-record", stdout)
+
+    def test_fdr_help_lists_exactly_the_three_offline_native_commands(self) -> None:
+        status, stdout, stderr = self.capture_main(["fdr", "--help"])
 
         self.assertEqual(0, status)
         self.assertEqual("", stderr)
@@ -115,15 +127,27 @@ class FDRCliTests(unittest.TestCase):
             self.assertIn(command, stdout)
         self.assertNotIn("live-record", stdout)
 
+    def test_flat_native_commands_are_rejected(self) -> None:
+        for arguments in (
+            ["validate", str(self.input)],
+            ["inspect", str(self.input)],
+            ["to-geojson", str(self.input), str(self.root / "flight.geojson")],
+        ):
+            with self.subTest(arguments=arguments):
+                status, stdout, stderr = self.capture_main(arguments)
+                self.assertEqual((2, ""), (status, stdout))
+                self.assertIn("invalid choice", stderr)
+                self.assertNotIn("Traceback", stderr)
+
     def test_validate_is_silent_on_success(self) -> None:
-        status, stdout, stderr = self.capture_main(["validate", str(self.input)])
+        status, stdout, stderr = self.capture_main(["fdr", "validate", str(self.input)])
 
         self.assertEqual((0, "", ""), (status, stdout, stderr))
 
     def test_library_failures_are_concise_stderr_only_with_line_context(self) -> None:
         self.input.write_text("A\n4\n12:00:00, invalid, 2, 3, 4, 5, 6\n", encoding="utf-8")
 
-        status, stdout, stderr = self.capture_main(["validate", str(self.input)])
+        status, stdout, stderr = self.capture_main(["fdr", "validate", str(self.input)])
 
         self.assertEqual(1, status)
         self.assertEqual("", stdout)
@@ -135,7 +159,7 @@ class FDRCliTests(unittest.TestCase):
     def test_missing_input_is_a_concise_stderr_only_failure(self) -> None:
         missing = self.root / "missing.fdr"
 
-        status, stdout, stderr = self.capture_main(["inspect", str(missing)])
+        status, stdout, stderr = self.capture_main(["fdr", "inspect", str(missing)])
 
         self.assertEqual(1, status)
         self.assertEqual("", stdout)
@@ -145,7 +169,7 @@ class FDRCliTests(unittest.TestCase):
         self.assertNotIn("Traceback", stderr)
 
     def test_inspect_json_is_compact_sorted_strict_and_exactly_lf_terminated(self) -> None:
-        status, stdout, stderr = self.capture_main(["inspect", str(self.input), "--json"])
+        status, stdout, stderr = self.capture_main(["fdr", "inspect", str(self.input), "--json"])
 
         document = json.loads(stdout)
         self.assertEqual(0, status)
@@ -170,7 +194,7 @@ class FDRCliTests(unittest.TestCase):
         translated_stdout = io.TextIOWrapper(raw_stdout, encoding="utf-8", newline="\r\n")
         stderr = io.StringIO()
         with redirect_stdout(translated_stdout), redirect_stderr(stderr):
-            status = main(["inspect", str(self.input), "--json"])
+            status = main(["fdr", "inspect", str(self.input), "--json"])
             translated_stdout.flush()
 
         self.assertEqual(0, status)
@@ -179,7 +203,7 @@ class FDRCliTests(unittest.TestCase):
         self.assertEqual("", stderr.getvalue())
 
     def test_inspect_resolves_the_explicit_first_utc_date_across_midnight(self) -> None:
-        status, stdout, stderr = self.capture_main(["inspect", str(self.input), "--json", "--first-utc-date", "2026-08-07"])
+        status, stdout, stderr = self.capture_main(["fdr", "inspect", str(self.input), "--json", "--first-utc-date", "2026-08-07"])
 
         document = json.loads(stdout)
         self.assertEqual(0, status)
@@ -188,7 +212,7 @@ class FDRCliTests(unittest.TestCase):
         self.assertEqual("", stderr)
 
     def test_inspect_human_output_contains_the_normalized_summary(self) -> None:
-        status, stdout, stderr = self.capture_main(["inspect", str(self.input)])
+        status, stdout, stderr = self.capture_main(["fdr", "inspect", str(self.input)])
 
         self.assertEqual(0, status)
         for text in (
@@ -205,11 +229,11 @@ class FDRCliTests(unittest.TestCase):
 
     def test_invalid_arguments_return_status_two_without_a_traceback(self) -> None:
         cases = (
-            ["inspect", str(self.input), "--first-utc-date", "2026-02-30"],
-            ["inspect", str(self.input), "--first-utc-date", "20260807"],
-            ["inspect", str(self.input), "--first-utc-date", "2026-W32-5"],
-            ["validate"],
-            ["to-geojson", str(self.input)],
+            ["fdr", "inspect", str(self.input), "--first-utc-date", "2026-02-30"],
+            ["fdr", "inspect", str(self.input), "--first-utc-date", "20260807"],
+            ["fdr", "inspect", str(self.input), "--first-utc-date", "2026-W32-5"],
+            ["fdr", "validate"],
+            ["fdr", "to-geojson", str(self.input)],
         )
 
         for arguments in cases:
@@ -223,7 +247,7 @@ class FDRCliTests(unittest.TestCase):
     def test_to_geojson_writes_strict_canonical_atomic_output_with_timestamps(self) -> None:
         output = self.root / "flight.geojson"
 
-        status, stdout, stderr = self.capture_main(["to-geojson", str(self.input), str(output), "--first-utc-date", "2026-08-07"])
+        status, stdout, stderr = self.capture_main(["fdr", "to-geojson", str(self.input), str(output), "--first-utc-date", "2026-08-07"])
 
         payload = output.read_bytes()
         document = json.loads(payload)
@@ -242,14 +266,14 @@ class FDRCliTests(unittest.TestCase):
         output = self.root / "flight.geojson"
         output.write_text("existing\n", encoding="utf-8")
 
-        status, stdout, stderr = self.capture_main(["to-geojson", str(self.input), str(output)])
+        status, stdout, stderr = self.capture_main(["fdr", "to-geojson", str(self.input), str(output)])
 
         self.assertEqual((1, ""), (status, stdout))
         self.assertIn("already exists", stderr)
         self.assertEqual("existing\n", output.read_text(encoding="utf-8"))
         self.assertEqual([], list(self.root.glob(f".{output.name}.*.partial")))
 
-        status, stdout, stderr = self.capture_main(["to-geojson", str(self.input), str(output), "--overwrite"])
+        status, stdout, stderr = self.capture_main(["fdr", "to-geojson", str(self.input), str(output), "--overwrite"])
         self.assertEqual((0, "", ""), (status, stdout, stderr))
         self.assertEqual("FeatureCollection", json.loads(output.read_text(encoding="utf-8"))["type"])
 
@@ -260,7 +284,7 @@ class FDRCliTests(unittest.TestCase):
             mock.patch("xplane_fdau.cli.json.dumps", side_effect=ValueError("strict JSON failure")),
             mock.patch("xplane_fdau.cli._create_partial") as create_partial,
         ):
-            status, stdout, stderr = self.capture_main(["to-geojson", str(self.input), str(output)])
+            status, stdout, stderr = self.capture_main(["fdr", "to-geojson", str(self.input), str(output)])
 
         self.assertEqual((1, ""), (status, stdout))
         self.assertIn("strict JSON failure", stderr)
@@ -277,7 +301,8 @@ class FDRCliTests(unittest.TestCase):
         )
 
         self.assertEqual(0, completed.returncode, completed.stderr)
-        self.assertIn("to-geojson", completed.stdout)
+        self.assertIn("fdr", completed.stdout)
+        self.assertNotIn("to-geojson", completed.stdout)
         self.assertEqual("", completed.stderr)
 
 
@@ -455,7 +480,7 @@ class FDRCliAtomicOutputTests(unittest.TestCase):
             stdout = io.StringIO()
             stderr = io.StringIO()
             with redirect_stdout(stdout), redirect_stderr(stderr):
-                status = main(["to-geojson", str(input_path), str(output)])
+                status = main(["fdr", "to-geojson", str(input_path), str(output)])
 
         partials = list(self.root.glob(f".{output.name}.*.partial"))
         self.assertEqual(1, status)

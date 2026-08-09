@@ -57,8 +57,10 @@ def _first_utc_date(value: str) -> date:
 
 def build_parser() -> argparse.ArgumentParser:
     """Build the documented offline command parser."""
-    parser = _ArgumentParser(prog="xplane-fdau", description="Offline X-Plane FDR tools")
-    commands = parser.add_subparsers(dest="command", required=True)
+    parser = _ArgumentParser(prog="xplane-fdau", description="Virtual FDAU/FDIU tools for X-Plane")
+    domains = parser.add_subparsers(dest="domain", required=True)
+    fdr = domains.add_parser("fdr", help="native X-Plane FDR tools")
+    commands = fdr.add_subparsers(dest="command", required=True)
 
     validate = commands.add_parser("validate", help="strictly validate an FDR file")
     validate.add_argument("input", type=Path, metavar="INPUT")

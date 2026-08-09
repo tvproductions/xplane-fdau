@@ -83,13 +83,13 @@ def smoke(version: str, *, checkout: Path) -> None:
         v4.write_bytes(MINIMAL_V4)
         for fixture in (v3, v4):
             native_fdr.FDRReader().read(fixture)
-            _run([str(command), "validate", str(fixture)])
+            _run([str(command), "fdr", "validate", str(fixture)])
         round_trip = work / "round-trip.fdr"
         native_fdr.FDRWriter().write(native_fdr.FDRReader().read(v4), round_trip)
         if not round_trip.read_bytes().startswith(b"A\n4\n"):
             raise SmokeError("canonical v4 output does not begin with A\\n4\\n")
         native_fdr.FDRReader().read(round_trip)
-        _run([str(command), "to-geojson", str(v4), str(work / "recording.geojson")])
+        _run([str(command), "fdr", "to-geojson", str(v4), str(work / "recording.geojson")])
 
 
 def main(argv: list[str] | None = None) -> int:

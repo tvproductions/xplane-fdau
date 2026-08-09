@@ -23,7 +23,8 @@ _NETWORK_ROOTS = frozenset(
     }
 )
 _ALLOWED_ROOTS = frozenset(sys.stdlib_module_names) | {"__future__", "xplane_fdau"}
-_DYNAMIC_IMPORT_CALLS = frozenset(
+_IMPORT_LOADER_NAMES = frozenset({"__import__", "import_module"})
+_DYNAMIC_EXECUTION_CALLS = frozenset(
     {
         "__import__",
         "builtins.__import__",
@@ -31,6 +32,7 @@ _DYNAMIC_IMPORT_CALLS = frozenset(
         "builtins.eval",
         "exec",
         "builtins.exec",
+        "importlib.__import__",
         "importlib.import_module",
         "importlib.reload",
         "importlib.machinery.ExtensionFileLoader",
@@ -50,23 +52,41 @@ _DYNAMIC_IMPORT_CALLS = frozenset(
 )
 
 
+def _literal_string(node: ast.AST) -> str | None:
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    return None
+
+
 def _qualified_name(node: ast.AST, bindings: Mapping[str, str]) -> str | None:
     if isinstance(node, ast.Name):
         return bindings.get(node.id, node.id)
     if isinstance(node, ast.Attribute):
         parent = _qualified_name(node.value, bindings)
         return f"{parent}.{node.attr}" if parent is not None else None
+    if isinstance(node, ast.Call):
+        called = _qualified_name(node.func, bindings)
+        if called in {"getattr", "builtins.getattr"} and len(node.args) >= 2:
+            parent = _qualified_name(node.args[0], bindings)
+            attribute = _literal_string(node.args[1])
+            if parent is not None and attribute is not None:
+                return f"{parent}.{attribute}"
+        if called in {"vars", "builtins.vars"} and len(node.args) == 1:
+            parent = _qualified_name(node.args[0], bindings)
+            if parent is not None:
+                return f"{parent}.__dict__"
+    if isinstance(node, ast.Subscript):
+        attribute = _literal_string(node.slice)
+        if attribute not in _IMPORT_LOADER_NAMES:
+            return None
+        parent = _qualified_name(node.value, bindings)
+        if parent is not None and parent.endswith(".__dict__"):
+            return f"{parent.removesuffix('.__dict__')}.{attribute}"
     return None
 
 
-def _getattr_target(node: ast.AST, bindings: Mapping[str, str]) -> str | None:
-    if not isinstance(node, ast.Call) or _qualified_name(node.func, bindings) != "getattr" or len(node.args) < 2:
-        return None
-    parent = _qualified_name(node.args[0], bindings)
-    attribute = node.args[1]
-    if parent is None or not isinstance(attribute, ast.Constant) or not isinstance(attribute.value, str):
-        return None
-    return f"{parent}.{attribute.value}"
+def _is_dynamic_execution(called: str) -> bool:
+    return called in _DYNAMIC_EXECUTION_CALLS or called.rsplit(".", 1)[-1] in _IMPORT_LOADER_NAMES
 
 
 def _bindings(tree: ast.AST) -> dict[str, str]:
@@ -87,7 +107,7 @@ def _bindings(tree: ast.AST) -> dict[str, str]:
         value = node.value
         if value is None:
             continue
-        resolved = _qualified_name(value, bindings) or _getattr_target(value, bindings)
+        resolved = _qualified_name(value, bindings)
         if resolved is None:
             continue
         targets = node.targets if isinstance(node, ast.Assign) else [node.target]
@@ -121,8 +141,8 @@ def runtime_import_violations(source: str, *, filename: str = "<runtime>") -> tu
                 violations.append(f"{location}: forbidden third-party import '{module}'; only stdlib and xplane_fdau are allowed")
 
         if isinstance(node, ast.Call):
-            called = _qualified_name(node.func, bindings) or _getattr_target(node.func, bindings)
-            if called in _DYNAMIC_IMPORT_CALLS:
+            called = _qualified_name(node.func, bindings)
+            if called is not None and _is_dynamic_execution(called):
                 violations.append(f"{filename}:{node.lineno}: dynamic import mechanism '{called}' is forbidden")
 
     return tuple(violations)

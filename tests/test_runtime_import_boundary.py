@@ -31,11 +31,15 @@ class RuntimeImportBoundaryTests(unittest.TestCase):
         """The guard must not reject the supported runtime dependency directions."""
         source = """
 from __future__ import annotations
+import importlib.resources
 from importlib import resources
 from pathlib import Path
 import xplane_fdau.formats.xplane_fdr
 from . import models
 from ..formats import xplane_fdr
+
+resources.files("xplane_fdau")
+importlib.resources.files("xplane_fdau")
 """
 
         self.assertEqual((), runtime_import_violations(source))
@@ -64,10 +68,27 @@ from ..formats import xplane_fdr
         cases = {
             "builtin": '__import__("requests")',
             "builtins attribute": 'import builtins\nbuiltins.__import__("requests")',
+            "importlib builtin alias": 'from importlib import __import__ as load\nload("requests")',
+            "importlib builtin attribute": 'import importlib\nimportlib.__import__("requests")',
             "module alias": 'import importlib as loader\nloader.import_module("requests")',
             "symbol alias": 'from importlib import import_module as load\nload("requests")',
             "assigned alias": 'import importlib\nload = importlib.import_module\nload("requests")',
-            "getattr alias": 'import importlib as loader\ngetattr(loader, "import_module")("requests")',
+            "importlib dict direct": 'import importlib\nimportlib.__dict__["import_module"]("requests")',
+            "importlib dict assigned": ('import importlib\nload = importlib.__dict__["import_module"]\nload("requests")'),
+            "importlib dict module alias": ('import importlib as loader\nload = loader.__dict__["import_module"]\nload("requests")'),
+            "builtins vars direct": 'import builtins\nvars(builtins)["__import__"]("requests")',
+            "builtins vars assigned": ('import builtins\nload = vars(builtins)["__import__"]\nload("requests")'),
+            "builtins vars module alias": ('import builtins as core\nload = vars(core)["__import__"]\nload("requests")'),
+            "builtins vars symbol alias": (
+                'from builtins import vars as namespace\nimport builtins\nload = namespace(builtins)["__import__"]\nload("requests")'
+            ),
+            "importlib getattr direct": 'import importlib\ngetattr(importlib, "import_module")("requests")',
+            "importlib getattr assigned": ('import importlib\nload = getattr(importlib, "import_module")\nload("requests")'),
+            "builtins getattr direct": 'import builtins\ngetattr(builtins, "__import__")("requests")',
+            "builtins getattr assigned": ('import builtins\nload = getattr(builtins, "__import__")\nload("requests")'),
+            "builtins getattr symbol alias": (
+                'from builtins import getattr as lookup\nimport importlib\nload = lookup(importlib, "import_module")\nload("requests")'
+            ),
             "module spec": "from importlib.util import module_from_spec as build\nbuild(spec)",
             "run module": 'import runpy\nrunpy.run_module("payload")',
             "resolve name": 'import pkgutil\npkgutil.resolve_name("payload:entry")',

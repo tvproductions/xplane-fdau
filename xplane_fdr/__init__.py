@@ -15,6 +15,7 @@ from .errors import (
     FDRRecordingStateError,
     FDRValidationError,
 )
+from .geojson import recording_to_geojson
 from .models import (
     FDRDataref,
     FDRHeader,
@@ -79,6 +80,7 @@ __all__ = [
     "load_record_config",
     "mandatory_trajectory_sources",
     "resolve_recording_definition",
+    "recording_to_geojson",
 ]
 
 __version__ = "0.1.0"

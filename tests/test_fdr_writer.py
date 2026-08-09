@@ -103,7 +103,7 @@ class BodyAndCleanupFailureStream(OwnershipStream):
 class FDRWriterCanonicalTests(unittest.TestCase):
     """Verify one deterministic serializer serves complete and streamed writes."""
 
-    def test_write_emits_exact_utf8_lf_v4_bytes_in_model_order(self) -> None:
+    def test_origin_i_result_artifact_and_readback_are_canonical_without_source_mutation(self) -> None:
         expected = (
             b"A\n"
             b"4\n"
@@ -124,7 +124,8 @@ class FDRWriterCanonicalTests(unittest.TestCase):
             self.assertEqual(expected, destination.read_bytes())
             canonical = replace(recording, header=replace(recording.header, source_origin="A"))
             self.assertEqual(canonical, FDRReader().read(destination))
-        self.assertEqual(FDRNormalizationResult(recording, ()), result)
+        self.assertEqual(FDRNormalizationResult(canonical, ()), result)
+        self.assertEqual("I", recording.header.source_origin)
 
     def test_complete_and_streamed_writes_produce_identical_text(self) -> None:
         recording = make_recording()
@@ -200,6 +201,35 @@ class FDRWriterNormalizationTests(unittest.TestCase):
             (recording.samples[0].longitude, recording.samples[0].latitude),
             (reread.samples[0].longitude, reread.samples[0].latitude),
         )
+
+    def test_v3_legacy_dref_is_reported_and_omitted_before_canonical_write(self) -> None:
+        fixture_text = (FIXTURE_ROOT / "version3-minimal.fdr").read_text(encoding="utf-8")
+        source_text = fixture_text.replace(
+            "DATE, 08/09/2026\n",
+            "DATE, 08/09/2026\nDREF, sim/legacy/ignored 1 // legacy declaration\nZZZZ, preserved value\n",
+        )
+        recording = FDRReader().read(io.StringIO(source_text))
+        source_header = recording.header
+
+        result = recording.normalized_v4(allow_lossy_legacy=True)
+
+        self.assertIn("DREF", result.omitted_legacy_field_ids)
+        self.assertEqual(
+            (
+                FDRMetadata("TIME", "18:30:00"),
+                FDRMetadata("DATE", "08/09/2026"),
+                FDRMetadata("ZZZZ", "preserved value"),
+            ),
+            result.recording.header.metadata,
+        )
+        self.assertEqual(source_header, recording.header)
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "normalized.fdr"
+            write_result = FDRWriter().write(result.recording, destination)
+            reread = FDRReader().read(destination)
+
+        self.assertEqual(result.recording, write_result.recording)
+        self.assertEqual(result.recording, reread)
 
 
 class FDRStreamWriterOwnershipTests(unittest.TestCase):

@@ -262,13 +262,21 @@ class FDRRecording:
 
     def normalized_v4(self, *, allow_lossy_legacy: bool = False) -> FDRNormalizationResult:
         """Return v4 data, requiring an explicit opt-in to omit legacy columns."""
-        omitted = tuple(column.identifier for column in self.header.legacy_columns)
+        legacy_dref_omissions = tuple(item.key for item in self.header.metadata if self.header.source_version == 3 and item.key == "DREF")
+        omitted = (*tuple(column.identifier for column in self.header.legacy_columns), *legacy_dref_omissions)
         if self.header.source_version == 3 and not allow_lossy_legacy:
             raise FDRValidationError("version 3 normalization requires allow_lossy_legacy=True")
-        if not omitted and self.header.source_version == 4:
+        if not omitted and self.header.source_version == 4 and self.header.source_origin == "A":
             return FDRNormalizationResult(self, ())
-        normalized_header = replace(self.header, source_version=4, legacy_columns=())
-        normalized_samples = tuple(replace(sample, legacy_values=()) for sample in self.samples)
+        normalized_metadata = tuple(item for item in self.header.metadata if item.key != "DREF") if self.header.source_version == 3 else self.header.metadata
+        normalized_header = replace(
+            self.header,
+            source_version=4,
+            source_origin="A",
+            metadata=normalized_metadata,
+            legacy_columns=(),
+        )
+        normalized_samples = tuple(replace(sample, legacy_values=()) for sample in self.samples) if self.header.source_version == 3 else self.samples
         return FDRNormalizationResult(FDRRecording(normalized_header, normalized_samples), omitted)
 
 

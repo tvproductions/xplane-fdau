@@ -12,9 +12,10 @@ Its approved implementation plan is:
 - `docs/superpowers/plans/2026-08-08-xplane-fdr-core.md`
 
 Execution uses the repository's subagent-driven development workflow with
-review checkpoints. The remaining v3 prerequisite is a vetted X-Plane v3
-reference file; do not broaden the parser's supported semantics from invented
-or reverse-engineered data.
+review checkpoints. The X-Plane v3 reference prerequisite is complete; vetted
+provenance and the independently minimized fixture evidence are recorded in
+`tests/fixtures/fdr/README.md`. Do not broaden the parser's supported semantics
+from invented or reverse-engineered data.
 
 The project keeps its capture-neutral, Python 3.12+, standard-library-only
 runtime contract. Read the approved design and applicable task brief before

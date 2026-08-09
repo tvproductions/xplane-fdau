@@ -76,10 +76,14 @@ with FDRRecordingSession.open("flight.fdr", definition) as session:
     sample_count = session.record_from((sample,))
 ```
 
-Path-based recording writes a uniquely named sibling partial first. A successful
-commit flushes and publishes atomically; failure leaves the partial for
-diagnosis and never presents it as the requested final artifact. Existing
-destinations are protected unless `overwrite=True` is supplied explicitly.
+Path-based recording writes a uniquely named sibling partial first. Before
+publication, a failure retains the partial for diagnosis and never creates the
+requested final artifact. After publication, the final path is already linked
+and committed. If removing the partial then fails, the library raises a
+cleanup-specific `FDROutputError` and retains both the final artifact and the
+partial artifact. Callers must not blindly retry publication after that error;
+they should inspect the final and partial paths first. Existing destinations
+are protected unless `overwrite=True` is supplied explicitly.
 
 ## Configure profiles, custom DataRefs, and storage
 

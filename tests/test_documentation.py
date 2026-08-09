@@ -76,6 +76,21 @@ class DocumentationTests(unittest.TestCase):
         ):
             self.assertIn(required, guide)
 
+    def test_partial_recovery_distinguishes_publication_from_cleanup_failure(self) -> None:
+        """Callers must not retry publication after the final artifact was linked."""
+        guide = (ROOT / "docs/usage/fdr-toolkit.md").read_text(encoding="utf-8")
+        prose = " ".join(guide.split())
+
+        for required in (
+            "Before publication",
+            "never creates the requested final artifact",
+            "After publication",
+            "cleanup-specific `FDROutputError`",
+            "retains both the final artifact and the partial artifact",
+            "must not blindly retry publication",
+        ):
+            self.assertIn(required, prose)
+
     def test_documented_schema_url_has_a_published_schema_artifact(self) -> None:
         """The schema URL in a user configuration must not lead to a Pages 404."""
         published = ROOT / "docs/schemas/fdr-record-config-v1.schema.json"

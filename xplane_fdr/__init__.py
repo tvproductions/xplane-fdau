@@ -1,5 +1,12 @@
 """X-Plane Flight Data Recorder toolkit."""
 
+from .config import (
+    FDRDatarefConfig,
+    FDRMetadataConfig,
+    FDRRecordConfig,
+    load_record_config,
+    resolve_recording_definition,
+)
 from .errors import (
     FDRConfigError,
     FDRError,
@@ -39,10 +46,12 @@ from .writer import FDRStreamWriter, FDRWriter
 __all__ = [
     "FDRConfigError",
     "FDRDataref",
+    "FDRDatarefConfig",
     "FDRError",
     "FDRHeader",
     "FDRLegacyColumn",
     "FDRMetadata",
+    "FDRMetadataConfig",
     "FDRNormalizationResult",
     "FDROutputError",
     "FDRParseError",
@@ -51,6 +60,7 @@ __all__ = [
     "FDRRecordingProfile",
     "FDRRecordingSession",
     "FDRRecordingStateError",
+    "FDRRecordConfig",
     "FDRReader",
     "FDRSample",
     "FDRSampleSink",
@@ -66,7 +76,9 @@ __all__ = [
     "compose_profiles",
     "get_profile",
     "list_profiles",
+    "load_record_config",
     "mandatory_trajectory_sources",
+    "resolve_recording_definition",
 ]
 
 __version__ = "0.1.0"

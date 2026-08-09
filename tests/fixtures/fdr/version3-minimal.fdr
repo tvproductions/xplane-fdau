@@ -1,0 +1,8 @@
+A
+3 independently minimized from Laminar Research's documented version 3 layout
+COMM, independently minimized synthetic version 3 fixture
+TIME, 18:30:00
+DATE, 08/09/2026
+COMM,time,Longitude,Latitude,Altitude,HDG,Pitch,Roll,BaroA,AltMSL,VSpd,TAS,IAS,GndSpd,Stall Warning,flap,flap,OAT,wind,wind speed,FQtyL,FQtyR,volt1,amp1,OilP,OilT,Eng1 Percent Power,RPM,MAP,FFlow,CHT-1,CHT-2,CHT-3,CHT-4,CHT-5,CHT-6,EGT-1,EGT-2,EGT-3,EGT-4,EGT-5,EGT-6
+DATA,0,-87.9048,41.9742,640,270,2,-1,29.92,640,0,100,95,98,0,0,0,20,180,10,20,20,28,0,45,180,75,2500,24,10,350,351,352,353,354,355,1300,1301,1302,1303,1304,1305
+DATA,1,-87.9047,41.9743,641,271,3,-2,29.92,641,60,101,96,99,0,0,0,20,181,11,19,19,28,1,46,181,76,2501,25,11,356,357,358,359,360,361,1306,1307,1308,1309,1310,1311

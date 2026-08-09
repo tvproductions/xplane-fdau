@@ -1,0 +1,10 @@
+A
+4
+COMM, independently minimized synthetic version 4 fixture
+ACFT, Aircraft/Synthetic/Test.acf
+TAIL, N123XF
+DATE, 08/09/2026
+DREF, sim/test/ratio 2.0 // synthetic conversion value
+COMM, UTC time, longitude, latitude, altmsl(ft), heading, pitch, roll, sim/test/ratio
+18:30:00, -87.9048, 41.9742, 640, 270, 2, -1, 0.25
+18:30:01.5, -87.9047, 41.9743, 641, 271, 3, -2, 0.5

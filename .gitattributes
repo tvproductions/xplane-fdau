@@ -1,5 +1,8 @@
 # Auto detect text files and perform LF normalization
 * text=auto
 
+# Preserve fixture line separators as part of their format contracts.
+tests/fixtures/fdr/*.fdr -text whitespace=cr-at-eol
+
 # Preserve tagged upstream vendored documentation byte-for-byte.
 .codex/plugins/superpowers/README.md whitespace=-trailing-space

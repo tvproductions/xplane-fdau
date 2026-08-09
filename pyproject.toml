@@ -53,6 +53,14 @@ build-backend = "uv_build"
 
 [tool.uv.build-backend]
 module-root = ""
+source-exclude = [
+    ".codex/**",
+    ".git/**",
+    ".superpowers/**",
+    ".ruff_cache/**",
+    "docs/superpowers/**",
+    "tests/fixtures/fdr/*official*",
+]
 
 [tool.coverage.run]
 source = ["xplane_fdr"]
@@ -67,6 +75,7 @@ exclude_lines = [
 
 [tool.ruff]
 line-length = 160
+exclude = [".codex", "docs/superpowers"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W"]

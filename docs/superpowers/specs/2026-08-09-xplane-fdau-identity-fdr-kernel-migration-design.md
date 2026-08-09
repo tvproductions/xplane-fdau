@@ -96,6 +96,7 @@ xplane_fdau/
 |       |-- reader.py
 |       |-- writer.py
 |       |-- profiles.py
+|       |-- definition.py
 |       |-- config.py
 |       |-- geojson.py
 |       `-- schemas/
@@ -113,6 +114,12 @@ configuration, validation errors, and GeoJSON conversion from
 `xplane_fdau.formats.xplane_fdr`. Recording callers import
 `FDRRecordingSession` and its native recording-definition and destination
 helpers from `xplane_fdau.sinks.xplane_fdr`.
+
+`formats.xplane_fdr.definition` owns the immutable native recording,
+sampling, and storage definitions consumed by both configuration parsing and
+the sink. The sink imports and re-exports those public definition types. This
+keeps dependency direction one-way—sink to format—without making callers know
+the internal definition module or creating a format-to-sink import cycle.
 
 The split is semantic rather than cosmetic:
 

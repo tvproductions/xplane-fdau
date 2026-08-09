@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import io
+import os
 from pathlib import Path
+import tempfile
 import unittest
 
 from tools import installed_smoke
@@ -16,12 +18,24 @@ class InstalledSmokeTests(unittest.TestCase):
         with self.assertRaisesRegex(installed_smoke.SmokeError, "checkout"):
             installed_smoke.ensure_outside_checkout(checkout / "xplane_fdr/__init__.py", checkout)
 
-    def test_unix_venv_command_location_keeps_venv_path_without_resolving_symlinks(self) -> None:
-        command = Path("/tmp/venv/bin/xplane-fdr")
-        interpreter = Path("/tmp/venv/bin/python")
-        self.assertEqual(command.absolute(), installed_smoke.validate_command_path(command, interpreter))
-        with self.assertRaisesRegex(installed_smoke.SmokeError, "scripts directory"):
-            installed_smoke.validate_command_path(Path("/usr/local/bin/xplane-fdr"), interpreter)
+    def test_symlinked_venv_interpreter_keeps_scripts_directory_identity(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            scripts = root / "venv" / "bin"
+            target = root / "base" / "python"
+            scripts.mkdir(parents=True)
+            target.parent.mkdir()
+            target.write_text("target", encoding="utf-8")
+            interpreter = scripts / "python"
+            command = scripts / "xplane-fdr"
+            command.write_text("command", encoding="utf-8")
+            try:
+                os.symlink(target, interpreter)
+            except (NotImplementedError, OSError) as error:
+                self.skipTest(f"symlink creation unavailable: {error}")
+            self.assertEqual(command.absolute(), installed_smoke.validate_command_path(command, interpreter))
+            with self.assertRaisesRegex(installed_smoke.SmokeError, "scripts directory"):
+                installed_smoke.validate_command_path(root / "outside" / "xplane-fdr", interpreter)
 
     def test_minimal_fixtures_are_self_contained_and_parseable(self) -> None:
         self.assertTrue(installed_smoke.MINIMAL_V3.startswith(b"A\n3\n"))

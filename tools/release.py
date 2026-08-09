@@ -19,6 +19,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = "xplane_fdr"
 PROJECT = "xplane-fdr"
+RELEASE_VERSION = "0.1.0"
 
 
 class ReleaseError(ValueError):
@@ -41,7 +42,7 @@ def _project_version() -> str:
     dependencies = project["dependencies"]
     if not isinstance(version, str) or not isinstance(dependencies, list):
         raise ReleaseError("pyproject project version and dependencies must be declared")
-    if dependencies or project.get("requires-python") != ">=3.12":
+    if version != RELEASE_VERSION or dependencies or project.get("requires-python") != ">=3.12":
         raise ReleaseError("project runtime dependencies and Requires-Python do not match the release contract")
     return version
 
@@ -59,15 +60,15 @@ def _version_from_source(source: bytes, *, label: str) -> str:
 def _version() -> str:
     project_version = _project_version()
     runtime_version = _version_from_source((ROOT / PACKAGE / "__init__.py").read_bytes(), label="source __init__.py")
-    if project_version != runtime_version:
-        raise ReleaseError(f"project version {project_version!r} differs from runtime version {runtime_version!r}")
-    return project_version
+    if project_version != RELEASE_VERSION or runtime_version != RELEASE_VERSION:
+        raise ReleaseError(f"project and runtime versions must both be {RELEASE_VERSION}")
+    return RELEASE_VERSION
 
 
 def validate_tag(tag: str) -> str:
     """Return the release version when *tag* exactly matches its v-prefixed form."""
     version = _version()
-    expected = f"v{version}"
+    expected = f"v{RELEASE_VERSION}"
     if tag != expected:
         raise ReleaseError(f"release tag must be {expected!r}, got {tag!r}")
     return version
@@ -152,11 +153,23 @@ def _expected_package_files() -> dict[str, bytes]:
 
 def _check_metadata(payload: bytes, version: str, *, label: str) -> None:
     message = BytesParser().parsebytes(payload)
+    if message.defects:
+        raise ReleaseError(f"{label} metadata is malformed: {message.defects[0]}")
     for field, expected in (("Name", PROJECT), ("Version", version), ("Requires-Python", ">=3.12")):
         if message.get_all(field, []) != [expected]:
             raise ReleaseError(f"{label} metadata must contain exactly {field}: {expected}")
     if message.get_all("Requires-Dist", []):
         raise ReleaseError(f"{label} metadata declares a Requires-Dist runtime dependency")
+
+
+def _check_sdist_pyproject(payload: bytes) -> None:
+    try:
+        archived = tomllib.loads(payload.decode("utf-8"))
+    except (UnicodeDecodeError, tomllib.TOMLDecodeError) as error:
+        raise ReleaseError(f"sdist pyproject.toml is malformed: {error}") from error
+    tracked = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    if archived != tracked:
+        raise ReleaseError("sdist pyproject.toml must match the tracked project configuration")
 
 
 def _check_package_payloads(read: Callable[[str], bytes], names: set[str], version: str, *, label: str) -> None:
@@ -189,6 +202,9 @@ def _check_wheel(wheel: Path, version: str) -> None:
             raise ReleaseError("wheel WHEEL metadata must contain exactly Tag: py3-none-any")
         if archive.read(f"{dist_info}/licenses/LICENSE") != (ROOT / "LICENSE").read_bytes():
             raise ReleaseError("wheel LICENSE must match the tracked license at its expected location")
+        licenses = [name for name in names if PurePosixPath(name).name == "LICENSE"]
+        if licenses != [f"{dist_info}/licenses/LICENSE"]:
+            raise ReleaseError("wheel must contain exactly one LICENSE at its expected location")
         _check_package_payloads(archive.read, set(names), version, label="wheel")
 
 
@@ -212,6 +228,7 @@ def _check_sdist(sdist: Path, version: str) -> None:
             return stream.read()
 
         _check_metadata(read("PKG-INFO"), version, label="sdist")
+        _check_sdist_pyproject(read("pyproject.toml"))
         if read("LICENSE") != (ROOT / "LICENSE").read_bytes() or [name for name in relative if PurePosixPath(name).name == "LICENSE"] != ["LICENSE"]:
             raise ReleaseError("sdist must contain one tracked LICENSE at its expected location")
         _check_package_payloads(read, relative, version, label="sdist")

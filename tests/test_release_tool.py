@@ -10,6 +10,7 @@ import tempfile
 import unittest
 import warnings
 import zipfile
+from unittest.mock import patch
 
 from tools import release
 
@@ -118,6 +119,38 @@ class ReleaseToolTests(unittest.TestCase):
             self._make_dist(Path(raw), wheel_tag=b"Wheel-Version: 1.0\nTag: cp312-cp312-win_amd64\n")
             with self.assertRaisesRegex(release.ReleaseError, "WHEEL"):
                 release.check_dist(Path(raw))
+
+    def test_release_version_is_pinned_and_metadata_defects_are_rejected(self) -> None:
+        with patch.object(release, "_project_version", return_value="0.1.0.dev1"), patch.object(release, "_version_from_source", return_value="0.1.0.dev1"):
+            with self.assertRaisesRegex(release.ReleaseError, "0.1.0"):
+                release.validate_tag("v0.1.0.dev1")
+        malformed = {
+            "space-before-colon": b"Metadata-Version: 2.4\nName: xplane-fdr\nVersion: 0.1.0\nRequires-Python: >=3.12\nRequires-Dist : hostile\n",
+            "non-header": b"Metadata-Version: 2.4\nName: xplane-fdr\nVersion: 0.1.0\nRequires-Python: >=3.12\nthis is not a header\n",
+        }
+        for name, metadata in malformed.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as raw:
+                self._make_dist(Path(raw), wheel_metadata=metadata)
+                with self.assertRaisesRegex(release.ReleaseError, "metadata"):
+                    release.check_dist(Path(raw))
+
+    def test_check_dist_requires_canonical_sdist_pyproject_and_exactly_one_wheel_license(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            self._make_dist(
+                Path(raw),
+                tar_updates={"xplane_fdr-0.1.0/pyproject.toml": b"[project]\nname = 'xplane-fdr'\nversion = '9.9.9'\ndependencies = ['hostile']\n"},
+            )
+            with self.assertRaisesRegex(release.ReleaseError, "pyproject"):
+                release.check_dist(Path(raw))
+        with tempfile.TemporaryDirectory() as raw:
+            self._make_dist(Path(raw), wheel_updates={"xplane_fdr-0.1.0.dist-info/licenses/third/LICENSE": b"duplicate"})
+            with self.assertRaisesRegex(release.ReleaseError, "exactly one LICENSE"):
+                release.check_dist(Path(raw))
+
+    def test_check_dist_accepts_semantically_identical_sdist_pyproject(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            self._make_dist(Path(raw), tar_updates={"xplane_fdr-0.1.0/pyproject.toml": Path("pyproject.toml").read_bytes() + b"\n"})
+            release.check_dist(Path(raw))
 
     def test_check_dist_requires_exact_package_contents_schema_and_license_locations(self) -> None:
         expected_schema = "xplane_fdr/schemas/fdr-record-config-v1.schema.json"

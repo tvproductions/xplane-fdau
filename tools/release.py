@@ -5,11 +5,14 @@ from __future__ import annotations
 import argparse
 import ast
 from dataclasses import dataclass
+from email.parser import BytesParser
 import hashlib
 import json
 from pathlib import Path, PurePosixPath
+import stat
 import tarfile
 import tomllib
+from typing import Callable
 import zipfile
 
 
@@ -38,29 +41,24 @@ def _project_version() -> str:
     dependencies = project["dependencies"]
     if not isinstance(version, str) or not isinstance(dependencies, list):
         raise ReleaseError("pyproject project version and dependencies must be declared")
-    if dependencies:
-        raise ReleaseError("runtime dependencies must be empty")
-    if project.get("requires-python") != ">=3.12":
-        raise ReleaseError("Requires-Python must be >=3.12")
+    if dependencies or project.get("requires-python") != ">=3.12":
+        raise ReleaseError("project runtime dependencies and Requires-Python do not match the release contract")
     return version
 
 
-def _runtime_version() -> str:
-    source = ROOT / PACKAGE / "__init__.py"
-    tree = ast.parse(source.read_text(encoding="utf-8"), filename=str(source))
-    version: object | None = None
+def _version_from_source(source: bytes, *, label: str) -> str:
+    tree = ast.parse(source.decode("utf-8"), filename=label)
     for statement in tree.body:
         if isinstance(statement, ast.Assign) and any(isinstance(target, ast.Name) and target.id == "__version__" for target in statement.targets):
-            version = ast.literal_eval(statement.value)
-            break
-    if not isinstance(version, str):
-        raise ReleaseError("xplane_fdr.__version__ must be a string")
-    return version
+            value = ast.literal_eval(statement.value)
+            if isinstance(value, str):
+                return value
+    raise ReleaseError(f"{label} does not define a string __version__")
 
 
 def _version() -> str:
     project_version = _project_version()
-    runtime_version = _runtime_version()
+    runtime_version = _version_from_source((ROOT / PACKAGE / "__init__.py").read_bytes(), label="source __init__.py")
     if project_version != runtime_version:
         raise ReleaseError(f"project version {project_version!r} differs from runtime version {runtime_version!r}")
     return project_version
@@ -83,33 +81,94 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _forbidden(name: str) -> bool:
-    parts = PurePosixPath(name).parts
-    forbidden_parts = {".codex", ".git", ".superpowers", "__pycache__", ".ruff_cache", ".pytest_cache"}
-    return bool(forbidden_parts.intersection(parts)) or ("docs" in parts and "superpowers" in parts) or "official" in name.lower()
+def _forbidden(parts: tuple[str, ...]) -> bool:
+    forbidden = {".codex", ".git", ".superpowers", "__pycache__", ".ruff_cache", ".pytest_cache"}
+    return bool(forbidden.intersection(parts)) or ("docs" in parts and "superpowers" in parts) or "official" in "/".join(parts).lower()
 
 
-def _require_archive_names(names: list[str], *, prefix: str, label: str) -> None:
-    for name in names:
-        path = PurePosixPath(name)
-        if path.is_absolute() or ".." in path.parts or not name.startswith(prefix):
-            raise ReleaseError(f"{label} member escapes the source root: {name}")
-        if _forbidden(name):
-            raise ReleaseError(f"{label} contains forbidden member: {name}")
+def _safe_member_path(name: str, *, label: str) -> PurePosixPath:
+    if not name or "\\" in name or name.startswith("/"):
+        raise ReleaseError(f"{label} has an unsafe archive path: {name!r}")
+    path = PurePosixPath(name)
+    if path.is_absolute() or any(part in {"", ".", ".."} for part in path.parts) or path.as_posix() != name:
+        raise ReleaseError(f"{label} has an unsafe archive path: {name!r}")
+    if _forbidden(path.parts):
+        raise ReleaseError(f"{label} contains forbidden member: {name}")
+    return path
 
 
-def _required_package_members(version: str) -> set[str]:
-    members = {path.relative_to(ROOT).as_posix() for path in (ROOT / PACKAGE).rglob("*.py")}
-    members.add(f"{PACKAGE}/schemas/fdr-record-config-v1.schema.json")
-    return members
+def _validated_zip_names(archive: zipfile.ZipFile) -> tuple[str, ...]:
+    names: list[str] = []
+    seen: set[str] = set()
+    for info in archive.infolist():
+        if stat.S_ISLNK(info.external_attr >> 16):
+            raise ReleaseError(f"wheel contains an unsafe link member: {info.filename}")
+        if info.is_dir() and (not info.filename.endswith("/") or info.filename.endswith("//")):
+            raise ReleaseError(f"wheel has an unsafe archive path: {info.filename!r}")
+        name = _safe_member_path(info.filename[:-1] if info.is_dir() else info.filename, label="wheel")
+        canonical = name.as_posix()
+        if canonical in seen:
+            raise ReleaseError(f"wheel contains duplicate member: {canonical}")
+        seen.add(canonical)
+        if not info.is_dir():
+            names.append(canonical)
+    return tuple(names)
 
 
-def _check_metadata(metadata: str, version: str, *, label: str) -> None:
-    for field in (f"Name: {PROJECT}", f"Version: {version}", "Requires-Python: >=3.12"):
-        if field not in metadata:
-            raise ReleaseError(f"{label} metadata is missing {field}")
-    if "Requires-Dist:" in metadata:
+def _validated_tar_members(archive: tarfile.TarFile, root: str) -> tuple[tarfile.TarInfo, ...]:
+    members: list[tarfile.TarInfo] = []
+    seen: set[str] = set()
+    root_count = 0
+    for member in archive.getmembers():
+        if member.name == root:
+            if not member.isdir():
+                raise ReleaseError("sdist root member must be a directory")
+            root_count += 1
+            continue
+        path = _safe_member_path(member.name, label="sdist")
+        if not (member.isfile() or member.isdir()):
+            raise ReleaseError(f"sdist contains an unsafe link or member type: {member.name}")
+        parts = path.parts
+        if not parts or parts[0] != root:
+            raise ReleaseError(f"sdist member escapes the source root: {member.name}")
+        canonical = path.as_posix()
+        if canonical in seen:
+            raise ReleaseError(f"sdist contains duplicate member: {canonical}")
+        seen.add(canonical)
+        if member.isfile():
+            members.append(member)
+    if root_count != 1:
+        raise ReleaseError(f"sdist must contain exactly one root directory, found {root_count}")
+    return tuple(members)
+
+
+def _expected_package_files() -> dict[str, bytes]:
+    expected: dict[str, bytes] = {}
+    for source in (ROOT / PACKAGE).rglob("*"):
+        if source.is_file() and (source.suffix == ".py" or source.suffix == ".json" or source.name == "py.typed"):
+            expected[source.relative_to(ROOT).as_posix()] = source.read_bytes()
+    return expected
+
+
+def _check_metadata(payload: bytes, version: str, *, label: str) -> None:
+    message = BytesParser().parsebytes(payload)
+    for field, expected in (("Name", PROJECT), ("Version", version), ("Requires-Python", ">=3.12")):
+        if message.get_all(field, []) != [expected]:
+            raise ReleaseError(f"{label} metadata must contain exactly {field}: {expected}")
+    if message.get_all("Requires-Dist", []):
         raise ReleaseError(f"{label} metadata declares a Requires-Dist runtime dependency")
+
+
+def _check_package_payloads(read: Callable[[str], bytes], names: set[str], version: str, *, label: str) -> None:
+    expected = _expected_package_files()
+    package_names = {name for name in names if name.startswith(f"{PACKAGE}/")}
+    if package_names != set(expected):
+        raise ReleaseError(f"{label} package members differ from the expected runtime module/resource set")
+    for name, payload in expected.items():
+        if read(name) != payload:
+            raise ReleaseError(f"{label} member bytes differ from tracked source: {name}")
+    if _version_from_source(read(f"{PACKAGE}/__init__.py"), label=f"{label} __init__.py") != version:
+        raise ReleaseError(f"{label} runtime __version__ differs from the release version")
 
 
 def _check_wheel(wheel: Path, version: str) -> None:
@@ -118,40 +177,44 @@ def _check_wheel(wheel: Path, version: str) -> None:
         raise ReleaseError(f"wheel must be named {expected_name}")
     dist_info = f"{PACKAGE}-{version}.dist-info"
     with zipfile.ZipFile(wheel) as archive:
-        names = archive.namelist()
-        _require_archive_names(names, prefix="", label="wheel")
-        for name in names:
-            if not (name.startswith(f"{PACKAGE}/") or name.startswith(f"{dist_info}/")):
-                raise ReleaseError(f"wheel member is outside the package or dist-info roots: {name}")
-        metadata = archive.read(f"{dist_info}/METADATA").decode("utf-8")
-        _check_metadata(metadata, version, label="wheel")
-        missing = _required_package_members(version).difference(names)
-        if missing:
-            raise ReleaseError(f"wheel is missing required members: {', '.join(sorted(missing))}")
-        licenses = [name for name in names if name.endswith("/LICENSE")]
-        if len(licenses) != 1:
-            raise ReleaseError(f"wheel must contain exactly one LICENSE, found {len(licenses)}")
+        names = _validated_zip_names(archive)
+        if any(not (name.startswith(f"{PACKAGE}/") or name.startswith(f"{dist_info}/")) for name in names):
+            raise ReleaseError("wheel member is outside the package or dist-info roots")
+        required = {f"{dist_info}/METADATA", f"{dist_info}/WHEEL", f"{dist_info}/RECORD", f"{dist_info}/licenses/LICENSE"}
+        if not required.issubset(names):
+            raise ReleaseError("wheel is missing required dist-info members")
+        _check_metadata(archive.read(f"{dist_info}/METADATA"), version, label="wheel")
+        wheel_metadata = BytesParser().parsebytes(archive.read(f"{dist_info}/WHEEL"))
+        if wheel_metadata.get_all("Tag", []) != ["py3-none-any"]:
+            raise ReleaseError("wheel WHEEL metadata must contain exactly Tag: py3-none-any")
+        if archive.read(f"{dist_info}/licenses/LICENSE") != (ROOT / "LICENSE").read_bytes():
+            raise ReleaseError("wheel LICENSE must match the tracked license at its expected location")
+        _check_package_payloads(archive.read, set(names), version, label="wheel")
 
 
 def _check_sdist(sdist: Path, version: str) -> None:
     expected_name = f"{PACKAGE}-{version}.tar.gz"
     if sdist.name != expected_name:
         raise ReleaseError(f"sdist must be named {expected_name}")
-    root = f"{PACKAGE}-{version}/"
+    root = f"{PACKAGE}-{version}"
     with tarfile.open(sdist, "r:gz") as archive:
-        names = archive.getnames()
-        _require_archive_names([name for name in names if name != root.rstrip("/")], prefix=root, label="sdist")
-        relative = {name.removeprefix(root) for name in names}
-        metadata_stream = archive.extractfile(f"{root}PKG-INFO")
-        if metadata_stream is None:
-            raise ReleaseError("sdist is missing PKG-INFO")
-        _check_metadata(metadata_stream.read().decode("utf-8"), version, label="sdist")
-        missing = _required_package_members(version).difference(relative)
-        if missing:
-            raise ReleaseError(f"sdist is missing required members: {', '.join(sorted(missing))}")
-        licenses = [name for name in relative if PurePosixPath(name).name == "LICENSE"]
-        if len(licenses) != 1:
-            raise ReleaseError(f"sdist must contain exactly one LICENSE, found {len(licenses)}")
+        members = _validated_tar_members(archive, root)
+        names = {member.name for member in members}
+        relative = {name.removeprefix(f"{root}/") for name in names}
+        required = {"PKG-INFO", "pyproject.toml", "LICENSE"}
+        if not required.issubset(relative):
+            raise ReleaseError("sdist is missing required root members")
+
+        def read(relative_name: str) -> bytes:
+            stream = archive.extractfile(f"{root}/{relative_name}")
+            if stream is None:
+                raise ReleaseError(f"sdist cannot read required member: {relative_name}")
+            return stream.read()
+
+        _check_metadata(read("PKG-INFO"), version, label="sdist")
+        if read("LICENSE") != (ROOT / "LICENSE").read_bytes() or [name for name in relative if PurePosixPath(name).name == "LICENSE"] != ["LICENSE"]:
+            raise ReleaseError("sdist must contain one tracked LICENSE at its expected location")
+        _check_package_payloads(read, relative, version, label="sdist")
 
 
 def check_dist(directory: Path) -> ReleaseArtifacts:
@@ -187,17 +250,7 @@ def main(argv: list[str] | None = None) -> int:
             print(validate_tag(args.tag))
         else:
             artifacts = check_dist(args.directory)
-            print(
-                json.dumps(
-                    {
-                        "sdist": artifacts.sdist.name,
-                        "sdist_sha256": artifacts.sdist_sha256,
-                        "wheel": artifacts.wheel.name,
-                        "wheel_sha256": artifacts.wheel_sha256,
-                    },
-                    sort_keys=True,
-                )
-            )
+            print(json.dumps(artifacts.__dict__, default=str, sort_keys=True))
     except ReleaseError as error:
         parser.error(str(error))
     return 0

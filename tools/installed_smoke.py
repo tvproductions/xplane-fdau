@@ -10,6 +10,13 @@ import sys
 import tempfile
 
 
+MINIMAL_V3 = (
+    b"A\n3\nTIME, 18:30:00\nDATE, 08/09/2026\n"
+    b"DATA,0,-87.9048,41.9742,640,270,2,-1,29.92,640,0,100,95,98,0,0,0,20,180,10,20,20,28,0,45,180,75,2500,24,10,350,351,352,353,354,355,1300,1301,1302,1303,1304,1305\n"
+)
+MINIMAL_V4 = b"A\n4\nDATE, 08/09/2026\n18:30:00, -87.9048, 41.9742, 640, 270, 2, -1\n"
+
+
 class SmokeError(RuntimeError):
     """Report a failure in the installed-wheel contract."""
 
@@ -30,14 +37,19 @@ def ensure_outside_checkout(imported: Path, checkout: Path) -> None:
     raise SmokeError(f"xplane_fdr imported from checkout: {imported}")
 
 
+def validate_command_path(command: Path, interpreter: Path) -> Path:
+    """Require a console script beside the interpreter without resolving venv symlinks."""
+    command_path = command.absolute()
+    if command_path.parent != interpreter.absolute().parent:
+        raise SmokeError(f"xplane-fdr command is not in this interpreter's scripts directory: {command_path}")
+    return command_path
+
+
 def _command_path() -> Path:
     command = shutil.which("xplane-fdr")
     if command is None:
         raise SmokeError("interpreter-local xplane-fdr command was not found on PATH")
-    resolved = Path(command).resolve()
-    if resolved.parent != Path(sys.executable).resolve().parent:
-        raise SmokeError(f"xplane-fdr command is not in this interpreter's scripts directory: {resolved}")
-    return resolved
+    return validate_command_path(Path(command), Path(sys.executable))
 
 
 def _run(command: list[str]) -> None:
@@ -62,13 +74,12 @@ def smoke(version: str, *, checkout: Path) -> None:
     if not schema.is_file() or '"$schema"' not in schema.read_text(encoding="utf-8"):
         raise SmokeError("installed schema resource is unavailable or invalid")
     command = _command_path()
-    fixture_root = checkout / "tests" / "fixtures" / "fdr"
     with tempfile.TemporaryDirectory() as raw:
         work = Path(raw)
         v3 = work / "version3-minimal.fdr"
         v4 = work / "version4-minimal.fdr"
-        shutil.copy2(fixture_root / v3.name, v3)
-        shutil.copy2(fixture_root / v4.name, v4)
+        v3.write_bytes(MINIMAL_V3)
+        v4.write_bytes(MINIMAL_V4)
         for fixture in (v3, v4):
             xplane_fdr.FDRReader().read(fixture)
             _run([str(command), "validate", str(fixture)])

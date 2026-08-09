@@ -2,25 +2,32 @@
 
 from __future__ import annotations
 
+import io
 from pathlib import Path
 import unittest
 
 from tools import installed_smoke
+from xplane_fdr import FDRReader
 
 
 class InstalledSmokeTests(unittest.TestCase):
     def test_checkout_path_detection_rejects_checkout_import(self) -> None:
         checkout = Path("C:/work/xplane-fdr").resolve()
-        imported = checkout / "xplane_fdr" / "__init__.py"
-
         with self.assertRaisesRegex(installed_smoke.SmokeError, "checkout"):
-            installed_smoke.ensure_outside_checkout(imported, checkout)
+            installed_smoke.ensure_outside_checkout(checkout / "xplane_fdr/__init__.py", checkout)
 
-    def test_checkout_path_detection_accepts_site_packages_import(self) -> None:
-        checkout = Path("C:/work/xplane-fdr").resolve()
-        imported = Path("C:/venv/Lib/site-packages/xplane_fdr/__init__.py").resolve()
+    def test_unix_venv_command_location_keeps_venv_path_without_resolving_symlinks(self) -> None:
+        command = Path("/tmp/venv/bin/xplane-fdr")
+        interpreter = Path("/tmp/venv/bin/python")
+        self.assertEqual(command.absolute(), installed_smoke.validate_command_path(command, interpreter))
+        with self.assertRaisesRegex(installed_smoke.SmokeError, "scripts directory"):
+            installed_smoke.validate_command_path(Path("/usr/local/bin/xplane-fdr"), interpreter)
 
-        installed_smoke.ensure_outside_checkout(imported, checkout)
+    def test_minimal_fixtures_are_self_contained_and_parseable(self) -> None:
+        self.assertTrue(installed_smoke.MINIMAL_V3.startswith(b"A\n3\n"))
+        self.assertTrue(installed_smoke.MINIMAL_V4.startswith(b"A\n4\n"))
+        self.assertEqual(1, len(FDRReader().read(io.StringIO(installed_smoke.MINIMAL_V3.decode("utf-8"))).samples))
+        self.assertEqual(1, len(FDRReader().read(io.StringIO(installed_smoke.MINIMAL_V4.decode("utf-8"))).samples))
 
     def test_version_parser_requires_release_version(self) -> None:
         self.assertEqual("0.1.0", installed_smoke.parse_version(["0.1.0"]))

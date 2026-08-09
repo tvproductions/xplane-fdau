@@ -205,6 +205,8 @@ class FDRCliTests(unittest.TestCase):
     def test_invalid_arguments_return_status_two_without_a_traceback(self) -> None:
         cases = (
             ["inspect", str(self.input), "--first-utc-date", "2026-02-30"],
+            ["inspect", str(self.input), "--first-utc-date", "20260807"],
+            ["inspect", str(self.input), "--first-utc-date", "2026-W32-5"],
             ["validate"],
             ["to-geojson", str(self.input)],
         )
@@ -381,6 +383,59 @@ class FDRCliAtomicOutputTests(unittest.TestCase):
             _write_atomic_json({"type": "FeatureCollection"}, output, overwrite=False)
 
         self.assertFalse(output.exists())
+        self.assertTrue(partial.exists())
+        partial.unlink()
+
+    def test_partial_already_absent_after_link_is_a_successful_publication(self) -> None:
+        output = self.root / "flight.geojson"
+        partial = self.root / ".flight.geojson.injected.partial"
+        real_unlink = os.unlink
+
+        def create_partial(_destination: Path) -> tuple[Path, FailingAtomicStream]:
+            return partial, FailingAtomicStream(partial)
+
+        def remove_partial_then_report_missing(path: str | os.PathLike[str]) -> None:
+            real_unlink(path)
+            if Path(path) == partial:
+                raise FileNotFoundError("partial was already removed")
+
+        with (
+            mock.patch("xplane_fdr.cli._create_partial", side_effect=create_partial),
+            mock.patch("xplane_fdr.cli.os.unlink", side_effect=remove_partial_then_report_missing),
+        ):
+            try:
+                _write_atomic_json({"type": "FeatureCollection"}, output, overwrite=False)
+            except Exception as error:
+                self.fail(f"already-absent partial must be successful: {error!r}")
+
+        self.assertFalse(partial.exists())
+        self.assertEqual("FeatureCollection", json.loads(output.read_text(encoding="utf-8"))["type"])
+
+    def test_partial_unlink_failure_never_removes_a_replaced_destination(self) -> None:
+        output = self.root / "flight.geojson"
+        partial = self.root / ".flight.geojson.injected.partial"
+        replacement = self.root / "replacement.tmp"
+        replacement.write_text("replacement\n", encoding="utf-8")
+        real_unlink = os.unlink
+
+        def create_partial(_destination: Path) -> tuple[Path, FailingAtomicStream]:
+            return partial, FailingAtomicStream(partial)
+
+        def replace_destination_then_fail(path: str | os.PathLike[str]) -> None:
+            if Path(path) == partial:
+                os.replace(replacement, output)
+                raise OSError("injected partial unlink failure after replacement")
+            real_unlink(path)
+
+        with (
+            mock.patch("xplane_fdr.cli._create_partial", side_effect=create_partial),
+            mock.patch("xplane_fdr.cli.os.unlink", side_effect=replace_destination_then_fail),
+            self.assertRaisesRegex(ValueError, "injected partial unlink failure after replacement"),
+        ):
+            _write_atomic_json({"type": "FeatureCollection"}, output, overwrite=False)
+
+        self.assertTrue(output.exists())
+        self.assertEqual("replacement\n", output.read_text(encoding="utf-8"))
         self.assertTrue(partial.exists())
         partial.unlink()
 

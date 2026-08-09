@@ -47,7 +47,10 @@ class _ArgumentParser(argparse.ArgumentParser):
 
 def _first_utc_date(value: str) -> date:
     try:
-        return date.fromisoformat(value)
+        parsed = date.fromisoformat(value)
+        if parsed.isoformat() != value:
+            raise ValueError
+        return parsed
     except ValueError as error:
         raise argparse.ArgumentTypeError(f"invalid date: {value!r}; expected YYYY-MM-DD") from error
 
@@ -232,8 +235,19 @@ def _write_atomic_json(document: object, destination: Path, *, overwrite: bool) 
         _raise_after_unpublished_cleanup(primary, partial=partial, stream=stream)
     try:
         os.unlink(partial)
+    except FileNotFoundError:
+        return
     except BaseException as primary:
         wrapped_primary = _wrapped(primary, partial)
+        try:
+            owns_destination = os.path.samefile(partial, destination)
+        except BaseException as ownership_check:
+            raise BaseExceptionGroup(
+                "GeoJSON partial cleanup and destination ownership check failed",
+                [wrapped_primary, _wrapped(ownership_check, destination)],
+            ) from None
+        if not owns_destination:
+            raise wrapped_primary.with_traceback(wrapped_primary.__traceback__)
         try:
             os.unlink(destination)
         except BaseException as rollback:

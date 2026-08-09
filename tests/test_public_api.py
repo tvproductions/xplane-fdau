@@ -90,7 +90,8 @@ class PublicAPITests(unittest.TestCase):
                 self.assertEqual(0, node.level)
                 module = node.module or ""
                 if module.startswith("xplane_fdau"):
-                    self.assertTrue(module.startswith("xplane_fdau.formats.xplane_fdr"))
+                    native_format = "xplane_fdau.formats.xplane_fdr"
+                    self.assertTrue(module == native_format or module.startswith(f"{native_format}."))
                 else:
                     self.assertIn(module.split(".", 1)[0], allowed_stdlib)
 

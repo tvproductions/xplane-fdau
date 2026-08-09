@@ -7,6 +7,7 @@ import io
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import tempfile
 from typing import override
@@ -123,9 +124,12 @@ class FDRCliTests(unittest.TestCase):
 
         self.assertEqual(0, status)
         self.assertEqual("", stderr)
-        for command in ("inspect", "validate", "to-geojson"):
-            self.assertIn(command, stdout)
-        self.assertNotIn("live-record", stdout)
+        command_sets = re.findall(r"\{([^{}]+)\}", stdout)
+        self.assertTrue(command_sets)
+        self.assertEqual(
+            {frozenset({"inspect", "validate", "to-geojson"})},
+            {frozenset(command_set.split(",")) for command_set in command_sets},
+        )
 
     def test_flat_native_commands_are_rejected(self) -> None:
         for arguments in (

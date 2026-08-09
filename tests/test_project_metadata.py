@@ -20,4 +20,5 @@ class ProjectMetadataTests(unittest.TestCase):
         self.assertEqual(["__version__"], xplane_fdau.__all__)
 
     def test_unreleased_legacy_namespace_is_absent(self) -> None:
+        self.assertFalse(Path("xplane_fdr").exists())
         self.assertIsNone(importlib.util.find_spec("xplane_fdr"))

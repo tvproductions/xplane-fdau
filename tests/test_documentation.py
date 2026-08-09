@@ -131,10 +131,11 @@ class DocumentationTests(unittest.TestCase):
 
     def test_active_surfaces_do_not_promise_the_unreleased_fdr_identity(self) -> None:
         """The former identity remains historical material, not an active contract."""
-        active_paths = (
+        active_paths = [
             ROOT / "README.md",
             ROOT / "mkdocs.yml",
             ROOT / "pyproject.toml",
+            ROOT / ".pre-commit-config.yaml",
             ROOT / "AGENTS.md",
             ROOT / "BACKLOG.md",
             ROOT / "CHANGELOG.md",
@@ -142,11 +143,54 @@ class DocumentationTests(unittest.TestCase):
             ROOT / "docs/index.md",
             ROOT / "docs/usage/native-fdr.md",
             ROOT / "docs/reference/native-fdr.md",
-        )
-        active_paths += tuple((ROOT / ".codex/skills").glob("*/SKILL.md"))
+            ROOT / "docs/schemas/fdr-record-config-v1.schema.json",
+        ]
+        active_paths.extend((ROOT / ".codex/skills").glob("*/SKILL.md"))
+        active_paths.extend((ROOT / ".github/workflows").glob("*.yml"))
+        active_paths.extend((ROOT / "tools").glob("*.py"))
+
+        active_text = "\n".join(self._read_required_text(path) for path in active_paths)
+        for required in (
+            "https://github.com/tvproductions/xplane-fdau",
+            "xplane-fdau",
+            "xplane_fdau",
+        ):
+            self.assertIn(required, active_text)
 
         for path in active_paths:
-            self.assertNotIn("xplane-fdr", self._read_required_text(path), path)
+            text = self._read_required_text(path)
+            self.assertNotIn("https://github.com/tvproductions/xplane-fdr", text, path)
+            self.assertNotIn("xplane-fdr =", text, path)
+            self.assertNotIn("xplane-fdr inspect", text, path)
+            self.assertNotIn("xplane-fdr validate", text, path)
+            self.assertNotIn("xplane-fdr to-geojson", text, path)
+
+    def test_migration_closeout_preserves_the_unreleased_next_contract_boundary(self) -> None:
+        """The next agent must not release or skip the canonical contract sequence."""
+        handoff = self._read_required_text(ROOT / "HANDOFF.md")
+        changelog = self._read_required_text(ROOT / "CHANGELOG.md")
+        backlog = self._read_required_text(ROOT / "BACKLOG.md")
+        backlog_prose = " ".join(backlog.split())
+
+        for required in (
+            "Identity and native-FDR-kernel migration: implemented and verified, but unreleased.",
+            "Completed implementation plan",
+            "measurement, binding, observation, sample, frame, timing, and quality contracts",
+            "ARINC",
+            "FDM/FOQA",
+        ):
+            self.assertIn(required, handoff)
+        self.assertIn("## 0.1.0 (Unreleased)", changelog)
+        self.assertNotIn("## 0.1.0 (Released)", changelog)
+        for required in (
+            "measurement, binding, observation, sample, frame, timing, and quality contracts",
+            "acquisition profiles, demand resolution, continuity, and generic fan-out",
+            "canonical archive, manifest, recovery, and deterministic replay",
+            "canonical samples to the native FDR sink with explicit loss reporting",
+            "ARINC",
+            "FDM/FOQA",
+        ):
+            self.assertIn(required, backlog_prose)
 
     def _published_text(self) -> str:
         paths = (

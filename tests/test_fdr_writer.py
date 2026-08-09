@@ -299,7 +299,37 @@ class FDRWriterPathPublicationTests(unittest.TestCase):
             self.assertIsInstance(caught.exception.__cause__, FileExistsError)
             self.assertTrue(cast(Path, sink.partial_path).exists())
 
-    def test_partial_unlink_failure_rolls_back_newly_published_destination(self) -> None:
+    def test_post_link_partial_cleanup_failure_keeps_publication_and_committed_state(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "flight.fdr"
+            real_unlink = os.unlink
+            unlink_calls: list[Path] = []
+
+            def fail_partial_unlink(path: str | os.PathLike[str]) -> None:
+                unlink_calls.append(Path(path))
+                if Path(path) == partial:
+                    raise OSError("partial unlink failed")
+                real_unlink(path)
+
+            with mock.patch("xplane_fdr.writer.os.unlink", side_effect=fail_partial_unlink):
+                with FDRWriter().open(make_header(), destination) as sink:
+                    sink.write_sample(make_sample())
+                    partial = cast(Path, sink.partial_path)
+                    with self.assertRaises(FDROutputError) as caught:
+                        sink.commit()
+
+            self.assertIn("publication succeeded but partial cleanup failed", caught.exception.message)
+            self.assertEqual(partial, caught.exception.artifact_path)
+            self.assertEqual("partial unlink failed", str(caught.exception.__cause__))
+            self.assertEqual([partial], unlink_calls)
+            self.assertTrue(partial.exists())
+            self.assertTrue(destination.exists())
+            sink.abort()
+            with self.assertRaisesRegex(FDRRecordingStateError, "committed"):
+                sink.commit()
+            self.assertTrue(destination.exists())
+
+    def test_post_link_missing_partial_is_successful_publication(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             destination = Path(directory) / "flight.fdr"
             sink = FDRWriter().open(make_header(), destination)
@@ -307,44 +337,18 @@ class FDRWriterPathPublicationTests(unittest.TestCase):
             partial = cast(Path, sink.partial_path)
             real_unlink = os.unlink
 
-            def fail_partial_unlink(path: str | os.PathLike[str]) -> None:
-                if Path(path) == partial:
-                    raise OSError("partial unlink failed")
+            def remove_partial_then_report_missing(path: str | os.PathLike[str]) -> None:
                 real_unlink(path)
+                if Path(path) == partial:
+                    raise FileNotFoundError("partial already absent")
 
-            with mock.patch("xplane_fdr.writer.os.unlink", side_effect=fail_partial_unlink) as unlink:
-                with self.assertRaises(FDROutputError) as caught:
+            with mock.patch("xplane_fdr.writer.os.unlink", side_effect=remove_partial_then_report_missing):
+                try:
                     sink.commit()
+                except Exception as error:
+                    self.fail(f"already-absent partial must be successful: {error!r}")
 
-            self.assertEqual("partial unlink failed", str(caught.exception.__cause__))
-            self.assertEqual([mock.call(partial), mock.call(destination)], unlink.call_args_list)
-            self.assertTrue(partial.exists())
-            self.assertFalse(destination.exists())
-
-    def test_partial_unlink_and_destination_rollback_failures_are_grouped_primary_first(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            destination = Path(directory) / "flight.fdr"
-            sink = FDRWriter().open(make_header(), destination)
-            sink.write_sample(make_sample())
-            partial = cast(Path, sink.partial_path)
-
-            with mock.patch(
-                "xplane_fdr.writer.os.unlink",
-                side_effect=(OSError("partial unlink failed"), OSError("destination rollback failed")),
-            ):
-                with self.assertRaises(BaseExceptionGroup) as caught:
-                    sink.commit()
-
-            primary, rollback = caught.exception.exceptions
-            self.assertIsInstance(primary, FDROutputError)
-            primary_output = cast(FDROutputError, primary)
-            self.assertEqual(partial, primary_output.artifact_path)
-            self.assertEqual("partial unlink failed", str(primary_output.__cause__))
-            self.assertIsInstance(rollback, FDROutputError)
-            rollback_output = cast(FDROutputError, rollback)
-            self.assertEqual(destination, rollback_output.artifact_path)
-            self.assertEqual("destination rollback failed", str(rollback_output.__cause__))
-            self.assertTrue(partial.exists())
+            self.assertFalse(partial.exists())
             self.assertTrue(destination.exists())
 
     def test_overwrite_replaces_only_during_commit(self) -> None:

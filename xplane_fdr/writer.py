@@ -112,21 +112,14 @@ def _wrapped_output_error(error: OSError, artifact_path: Path | None) -> FDROutp
         return wrapped
 
 
-def _publish_without_replacement(partial_path: Path, destination: Path) -> None:
-    os.link(partial_path, destination)
+def _published_cleanup_error(error: OSError, partial_path: Path) -> FDROutputError:
     try:
-        os.unlink(partial_path)
-    except BaseException as primary:
-        wrapped_primary = _wrapped_output_error(primary, partial_path) if isinstance(primary, OSError) else primary
-        try:
-            os.unlink(destination)
-        except BaseException as rollback:
-            wrapped_rollback = _wrapped_output_error(rollback, destination) if isinstance(rollback, OSError) else rollback
-            raise BaseExceptionGroup(
-                "FDR partial cleanup and destination rollback failed",
-                [wrapped_primary, wrapped_rollback],
-            ) from None
-        raise wrapped_primary.with_traceback(wrapped_primary.__traceback__)
+        raise FDROutputError(
+            f"FDR publication succeeded but partial cleanup failed: {error}",
+            artifact_path=partial_path,
+        ) from error
+    except FDROutputError as wrapped:
+        return wrapped
 
 
 class FDRStreamWriter:
@@ -198,13 +191,26 @@ class FDRStreamWriter:
             self._stream.flush()
             os.fsync(self._stream.fileno())
             self._stream.close()
-            if self._overwrite:
+        except BaseException as primary:
+            self._abort_after(primary)
+        if self._overwrite:
+            try:
                 os.replace(partial_path, self._destination)
-            else:
-                _publish_without_replacement(partial_path, self._destination)
+            except BaseException as primary:
+                self._abort_after(primary)
+            self._state = "committed"
+            return
+        try:
+            os.link(partial_path, self._destination)
         except BaseException as primary:
             self._abort_after(primary)
         self._state = "committed"
+        try:
+            os.unlink(partial_path)
+        except FileNotFoundError:
+            return
+        except OSError as cleanup:
+            raise _published_cleanup_error(cleanup, partial_path)
 
     def abort(self) -> None:
         """Stop writing while preserving any path partial for diagnosis."""

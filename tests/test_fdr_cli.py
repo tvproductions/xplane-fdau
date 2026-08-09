@@ -13,6 +13,7 @@ from typing import override
 from unittest import mock
 import unittest
 
+from xplane_fdr import FDROutputError
 from xplane_fdr.cli import _write_atomic_json, build_parser, main
 
 
@@ -362,15 +363,17 @@ class FDRCliAtomicOutputTests(unittest.TestCase):
         self.assertEqual("raced\n", output.read_text(encoding="utf-8"))
         self.assertFalse(partial.exists())
 
-    def test_partial_unlink_failure_rolls_back_the_new_destination(self) -> None:
+    def test_post_link_partial_cleanup_failure_keeps_published_output_and_partial(self) -> None:
         output = self.root / "flight.geojson"
         partial = self.root / ".flight.geojson.injected.partial"
         real_unlink = os.unlink
+        unlink_calls: list[Path] = []
 
         def create_partial(_destination: Path) -> tuple[Path, FailingAtomicStream]:
             return partial, FailingAtomicStream(partial)
 
         def fail_partial_unlink(path: str | os.PathLike[str]) -> None:
+            unlink_calls.append(Path(path))
             if Path(path) == partial:
                 raise OSError("injected partial unlink failure")
             real_unlink(path)
@@ -378,11 +381,15 @@ class FDRCliAtomicOutputTests(unittest.TestCase):
         with (
             mock.patch("xplane_fdr.cli._create_partial", side_effect=create_partial),
             mock.patch("xplane_fdr.cli.os.unlink", side_effect=fail_partial_unlink),
-            self.assertRaisesRegex(ValueError, "injected partial unlink failure"),
+            self.assertRaises(FDROutputError) as caught,
         ):
             _write_atomic_json({"type": "FeatureCollection"}, output, overwrite=False)
 
-        self.assertFalse(output.exists())
+        self.assertIn("publication succeeded but partial cleanup failed", str(caught.exception))
+        self.assertEqual(partial, caught.exception.artifact_path)
+        self.assertEqual("injected partial unlink failure", str(caught.exception.__cause__))
+        self.assertEqual([partial], unlink_calls)
+        self.assertTrue(output.exists())
         self.assertTrue(partial.exists())
         partial.unlink()
 
@@ -439,32 +446,25 @@ class FDRCliAtomicOutputTests(unittest.TestCase):
         self.assertTrue(partial.exists())
         partial.unlink()
 
-    def test_partial_unlink_and_rollback_failures_keep_primary_first(self) -> None:
+    def test_to_geojson_reports_published_output_with_partial_cleanup_failure(self) -> None:
+        input_path = self.root / "flight.fdr"
+        input_path.write_text(VALID_FDR, encoding="utf-8")
         output = self.root / "flight.geojson"
-        partial = self.root / ".flight.geojson.injected.partial"
 
-        def create_partial(_destination: Path) -> tuple[Path, FailingAtomicStream]:
-            return partial, FailingAtomicStream(partial)
+        with mock.patch("xplane_fdr.cli.os.unlink", side_effect=OSError("injected partial cleanup failure")):
+            stdout = io.StringIO()
+            stderr = io.StringIO()
+            with redirect_stdout(stdout), redirect_stderr(stderr):
+                status = main(["to-geojson", str(input_path), str(output)])
 
-        def fail_unlink(path: str | os.PathLike[str]) -> None:
-            if Path(path) == partial:
-                raise OSError("primary partial unlink failure")
-            raise OSError("rollback destination unlink failure")
-
-        with (
-            mock.patch("xplane_fdr.cli._create_partial", side_effect=create_partial),
-            mock.patch("xplane_fdr.cli.os.unlink", side_effect=fail_unlink),
-            self.assertRaises(BaseExceptionGroup) as caught,
-        ):
-            _write_atomic_json({"type": "FeatureCollection"}, output, overwrite=False)
-
-        messages = [str(error) for error in caught.exception.exceptions]
-        self.assertIn("primary partial unlink failure", messages[0])
-        self.assertIn("rollback destination unlink failure", messages[1])
+        partials = list(self.root.glob(f".{output.name}.*.partial"))
+        self.assertEqual(1, status)
+        self.assertEqual("", stdout.getvalue())
+        self.assertEqual(1, len(partials))
+        self.assertIn("publication succeeded but partial cleanup failed", stderr.getvalue())
+        self.assertIn(str(partials[0]), stderr.getvalue())
+        self.assertNotIn("Traceback", stderr.getvalue())
         self.assertTrue(output.exists())
-        self.assertTrue(partial.exists())
-        os.unlink(output)
-        os.unlink(partial)
 
     def test_primary_and_close_cleanup_failures_keep_primary_first_and_unlink_partial(self) -> None:
         output = self.root / "flight.geojson"

@@ -179,6 +179,16 @@ def _output_error(error: OSError, artifact_path: Path) -> FDROutputError:
         return wrapped
 
 
+def _published_cleanup_error(error: OSError, partial: Path) -> FDROutputError:
+    try:
+        raise FDROutputError(
+            f"GeoJSON publication succeeded but partial cleanup failed: {error}",
+            artifact_path=partial,
+        ) from error
+    except FDROutputError as wrapped:
+        return wrapped
+
+
 def _wrapped(error: BaseException, artifact_path: Path) -> BaseException:
     return _output_error(error, artifact_path) if isinstance(error, OSError) else error
 
@@ -237,25 +247,8 @@ def _write_atomic_json(document: object, destination: Path, *, overwrite: bool) 
         os.unlink(partial)
     except FileNotFoundError:
         return
-    except BaseException as primary:
-        wrapped_primary = _wrapped(primary, partial)
-        try:
-            owns_destination = os.path.samefile(partial, destination)
-        except BaseException as ownership_check:
-            raise BaseExceptionGroup(
-                "GeoJSON partial cleanup and destination ownership check failed",
-                [wrapped_primary, _wrapped(ownership_check, destination)],
-            ) from None
-        if not owns_destination:
-            raise wrapped_primary.with_traceback(wrapped_primary.__traceback__)
-        try:
-            os.unlink(destination)
-        except BaseException as rollback:
-            raise BaseExceptionGroup(
-                "GeoJSON partial cleanup and destination rollback failed",
-                [wrapped_primary, _wrapped(rollback, destination)],
-            ) from None
-        raise wrapped_primary.with_traceback(wrapped_primary.__traceback__)
+    except OSError as cleanup:
+        raise _published_cleanup_error(cleanup, partial)
 
 
 def _format_error(error: BaseException) -> str:

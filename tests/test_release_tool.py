@@ -10,7 +10,7 @@ import tempfile
 import unittest
 import warnings
 import zipfile
-from unittest.mock import patch
+from contextlib import redirect_stderr
 
 from tools import release
 
@@ -133,9 +133,6 @@ class ReleaseToolTests(unittest.TestCase):
                 release.check_dist(Path(raw))
 
     def test_release_version_is_pinned_and_metadata_defects_are_rejected(self) -> None:
-        with patch.object(release, "_project_version", return_value="0.1.0.dev1"), patch.object(release, "_version_from_source", return_value="0.1.0.dev1"):
-            with self.assertRaisesRegex(release.ReleaseError, "0.1.0"):
-                release.validate_tag("v0.1.0.dev1")
         malformed = {
             "space-before-colon": b"Metadata-Version: 2.4\nName: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.12\nRequires-Dist : hostile\n",
             "non-header": b"Metadata-Version: 2.4\nName: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.12\nthis is not a header\n",
@@ -203,10 +200,26 @@ class ReleaseToolTests(unittest.TestCase):
             with self.assertRaisesRegex(release.ReleaseError, "link"):
                 release.check_dist(Path(raw))
 
-    def test_validate_tag_requires_exact_project_version(self) -> None:
-        self.assertEqual("0.1.0", release.validate_tag("v0.1.0"))
-        with self.assertRaisesRegex(release.ReleaseError, "v0.1.0"):
-            release.validate_tag("v0.1.1")
+    def test_check_dist_rejects_metadata_duplicates_with_mixed_case(self) -> None:
+        metadata = b"Metadata-Version: 2.4\nName: xplane-fdau\nname: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.12\n"
+        with tempfile.TemporaryDirectory() as raw:
+            self._make_dist(Path(raw), wheel_metadata=metadata)
+            with self.assertRaisesRegex(release.ReleaseError, "Name"):
+                release.check_dist(Path(raw))
+
+    def test_check_dist_rejects_near_match_dist_info_root(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            self._make_dist(Path(raw), wheel_updates={"xplane_fdau-0.1.0.dist-info-evil/METADATA": b"hostile"})
+            with self.assertRaisesRegex(release.ReleaseError, "outside"):
+                release.check_dist(Path(raw))
+
+    def test_command_offers_only_distribution_validation(self) -> None:
+        errors = io.StringIO()
+        with redirect_stderr(errors), self.assertRaises(SystemExit) as raised:
+            release.main(["check-tag", "v0.1.0"])
+
+        self.assertEqual(2, raised.exception.code)
+        self.assertIn("invalid choice", errors.getvalue())
 
 
 if __name__ == "__main__":

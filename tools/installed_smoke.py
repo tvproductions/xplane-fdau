@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import importlib.resources
+import importlib.util
 from pathlib import Path
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -37,6 +37,12 @@ def ensure_outside_checkout(imported: Path, checkout: Path) -> None:
     raise SmokeError(f"xplane_fdau imported from checkout: {imported}")
 
 
+def ensure_legacy_package_absent() -> None:
+    """Reject an environment that still exposes the unreleased legacy package."""
+    if importlib.util.find_spec("xplane_fdr") is not None:
+        raise SmokeError("legacy xplane_fdr package is installed")
+
+
 def validate_command_path(command: Path, interpreter: Path) -> Path:
     """Require a console script beside the interpreter without resolving venv symlinks."""
     command_path = command.absolute()
@@ -46,10 +52,13 @@ def validate_command_path(command: Path, interpreter: Path) -> Path:
 
 
 def _command_path() -> Path:
-    command = shutil.which("xplane-fdau")
-    if command is None:
-        raise SmokeError("interpreter-local xplane-fdau command was not found on PATH")
-    return validate_command_path(Path(command), Path(sys.executable))
+    interpreter = Path(sys.executable)
+    scripts = interpreter.absolute().parent
+    for name in ("xplane-fdau", "xplane-fdau.exe", "xplane-fdau.cmd"):
+        command = scripts / name
+        if command.is_file():
+            return validate_command_path(command, interpreter)
+    raise SmokeError("interpreter-local xplane-fdau command was not found beside the interpreter")
 
 
 def _run(command: list[str]) -> None:
@@ -69,6 +78,7 @@ def smoke(version: str, *, checkout: Path) -> None:
     ensure_outside_checkout(location, checkout)
     if xplane_fdau.__version__ != version:
         raise SmokeError(f"installed version is {xplane_fdau.__version__}, expected {version}")
+    ensure_legacy_package_absent()
     for name in xplane_fdau.__all__:
         getattr(xplane_fdau, name)
     schema = importlib.resources.files("xplane_fdau.formats.xplane_fdr").joinpath("schemas/fdr-record-config-v1.schema.json")

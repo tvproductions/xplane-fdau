@@ -16,16 +16,18 @@ class ReleaseWorkflowTests(unittest.TestCase):
         self.assertNotIn("uv build", installed)
         self.assertIn('cd "$RUNNER_TEMP"', installed)
 
-    def test_release_validates_then_uses_protected_trusted_publish_job(self) -> None:
-        workflow = Path(".github/workflows/release.yml").read_text(encoding="utf-8")
+    def test_release_readiness_is_manual_and_non_publishing(self) -> None:
+        self.assertFalse(Path(".github/workflows/release.yml").exists())
+        workflow = Path(".github/workflows/release-readiness.yml").read_text(encoding="utf-8")
+        self.assertIn("workflow_dispatch:", workflow)
         self.assertIn("actions/upload-artifact@v4", workflow)
         self.assertIn("actions/download-artifact@v4", workflow)
-        self.assertIn("publish-pypi:", workflow)
-        self.assertIn("needs: [validate-release, installed-wheel]", workflow)
-        self.assertIn("environment: pypi", workflow)
-        self.assertIn("id-token: write", workflow)
-        self.assertIn("github.ref_type == 'tag'", workflow)
-        self.assertIn("uv publish dist/*", workflow)
+        self.assertIn("needs: validate-release", workflow)
+        self.assertNotIn("uv publish", workflow)
+        self.assertNotIn("id-token: write", workflow)
+        self.assertNotIn("tags:", workflow)
+        self.assertNotIn("publish-pypi:", workflow)
+        self.assertNotIn("check-tag", workflow)
 
 
 if __name__ == "__main__":

@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import io
+import importlib.util
 import os
 from pathlib import Path
+import sys
 import tempfile
 import unittest
 from unittest import mock
@@ -48,6 +50,20 @@ class InstalledSmokeTests(unittest.TestCase):
         self.assertEqual("0.1.0", installed_smoke.parse_version(["0.1.0"]))
         with self.assertRaisesRegex(installed_smoke.SmokeError, "usage"):
             installed_smoke.parse_version([])
+
+    def test_legacy_package_presence_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            legacy = Path(raw) / "xplane_fdr"
+            legacy.mkdir()
+            (legacy / "__init__.py").write_text("", encoding="utf-8")
+            sys.path.insert(0, raw)
+            importlib.invalidate_caches()
+            try:
+                with self.assertRaisesRegex(installed_smoke.SmokeError, "xplane_fdr"):
+                    installed_smoke.ensure_legacy_package_absent()
+            finally:
+                sys.path.remove(raw)
+                importlib.invalidate_caches()
 
     def test_smoke_uses_the_nested_native_fdr_cli(self) -> None:
         commands: list[list[str]] = []

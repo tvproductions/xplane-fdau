@@ -65,15 +65,6 @@ def _version() -> str:
     return RELEASE_VERSION
 
 
-def validate_tag(tag: str) -> str:
-    """Return the release version when *tag* exactly matches its v-prefixed form."""
-    version = _version()
-    expected = f"v{RELEASE_VERSION}"
-    if tag != expected:
-        raise ReleaseError(f"release tag must be {expected!r}, got {tag!r}")
-    return version
-
-
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
@@ -191,7 +182,7 @@ def _check_wheel(wheel: Path, version: str) -> None:
     dist_info = f"{PACKAGE}-{version}.dist-info"
     with zipfile.ZipFile(wheel) as archive:
         names = _validated_zip_names(archive)
-        if any(not (name.startswith(f"{PACKAGE}/") or name.startswith(f"{dist_info}/")) for name in names):
+        if any(PurePosixPath(name).parts[0] not in {PACKAGE, dist_info} for name in names):
             raise ReleaseError("wheel member is outside the package or dist-info roots")
         required = {f"{dist_info}/METADATA", f"{dist_info}/WHEEL", f"{dist_info}/RECORD", f"{dist_info}/licenses/LICENSE"}
         if not required.issubset(names):
@@ -257,17 +248,12 @@ def main(argv: list[str] | None = None) -> int:
     """Run a non-publishing release validation command."""
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
-    tag = commands.add_parser("check-tag", help="validate a v-prefixed release tag")
-    tag.add_argument("tag")
     dist = commands.add_parser("check-dist", help="validate the local wheel and sdist")
     dist.add_argument("directory", type=Path)
     args = parser.parse_args(argv)
     try:
-        if args.command == "check-tag":
-            print(validate_tag(args.tag))
-        else:
-            artifacts = check_dist(args.directory)
-            print(json.dumps(artifacts.__dict__, default=str, sort_keys=True))
+        artifacts = check_dist(args.directory)
+        print(json.dumps(artifacts.__dict__, default=str, sort_keys=True))
     except ReleaseError as error:
         parser.error(str(error))
     return 0

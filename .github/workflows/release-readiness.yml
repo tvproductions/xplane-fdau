@@ -1,8 +1,7 @@
 name: release-readiness
 
 on:
-  push:
-    tags: ["v*"]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -20,14 +19,13 @@ jobs:
       - run: uv run --python 3.14 mkdocs build --strict
       - run: uv build --no-sources
       - run: uv tool run twine check --strict dist/*
-      - run: uv run --python 3.14 python tools/release.py check-tag "${GITHUB_REF_NAME}"
       - run: uv run --python 3.14 python tools/release.py check-dist dist
       - uses: actions/upload-artifact@v4
         with:
           name: distribution
           path: |
-            dist/xplane_fdr-0.1.0-py3-none-any.whl
-            dist/xplane_fdr-0.1.0.tar.gz
+            dist/xplane_fdau-0.1.0-py3-none-any.whl
+            dist/xplane_fdau-0.1.0.tar.gz
           if-no-files-found: error
 
   installed-wheel:
@@ -45,25 +43,8 @@ jobs:
         with:
           name: distribution
           path: dist
-      - run: uv venv "$RUNNER_TEMP/xplane-fdr-smoke" --python ${{ matrix.python-version }}
-      - run: uv pip install --python "$RUNNER_TEMP/xplane-fdr-smoke/bin/python" dist/xplane_fdr-0.1.0-py3-none-any.whl
+      - run: uv venv "$RUNNER_TEMP/xplane-fdau-smoke" --python ${{ matrix.python-version }}
+      - run: uv pip install --python "$RUNNER_TEMP/xplane-fdau-smoke/bin/python" dist/xplane_fdau-0.1.0-py3-none-any.whl
       - run: |
           cd "$RUNNER_TEMP"
-          source "$RUNNER_TEMP/xplane-fdr-smoke/bin/activate"
-          python "$GITHUB_WORKSPACE/tools/installed_smoke.py" 0.1.0
-
-  publish-pypi:
-    needs: [validate-release, installed-wheel]
-    if: github.ref_type == 'tag' && github.ref_name == 'v0.1.0'
-    runs-on: ubuntu-latest
-    environment: pypi
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - uses: astral-sh/setup-uv@v9.0.0
-      - uses: actions/download-artifact@v4
-        with:
-          name: distribution
-          path: dist
-      - run: uv publish dist/*
+          "$RUNNER_TEMP/xplane-fdau-smoke/bin/python" "$GITHUB_WORKSPACE/tools/installed_smoke.py" 0.1.0

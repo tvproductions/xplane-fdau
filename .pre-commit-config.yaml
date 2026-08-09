@@ -17,14 +17,14 @@ repos:
 
       - id: lizard-report
         name: lizard report
-        entry: uv run lizard xplane_fdr -i -1
+        entry: uv run lizard xplane_fdau -i -1
         language: system
         pass_filenames: false
         types: [python]
 
       - id: cohesion-report
         name: cohesion report
-        entry: uv run cohesion -d xplane_fdr
+        entry: uv run cohesion -d xplane_fdau
         language: system
         pass_filenames: false
         types: [python]

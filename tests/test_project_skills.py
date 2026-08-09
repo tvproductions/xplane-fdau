@@ -9,12 +9,20 @@ import unittest
 
 
 class ProjectSkillTests(unittest.TestCase):
-    def test_project_skills_are_scoped_to_xplane_fdr(self) -> None:
+    def test_project_skills_are_scoped_to_unreleased_xplane_fdau(self) -> None:
         for name in ("code-quality", "documentation", "hygiene", "git-sync", "release"):
             path = Path(".codex/skills") / name / "SKILL.md"
             text = path.read_text(encoding="utf-8")
             self.assertIn("name:", text)
+            self.assertIn("xplane-fdau", text)
             self.assertNotIn("xpwebapi", text.lower())
+
+    def test_release_skill_stops_after_local_readiness(self) -> None:
+        text = Path(".codex/skills/release/SKILL.md").read_text(encoding="utf-8")
+
+        self.assertIn("publication is not authorized", text)
+        self.assertIn("xplane_fdau-0.1.0-py3-none-any.whl", text)
+        self.assertNotIn("check-tag", text)
 
     def test_hygiene_script_runs_the_local_quality_gate(self) -> None:
         path = Path(".codex/skills/hygiene/scripts/hygiene.py")

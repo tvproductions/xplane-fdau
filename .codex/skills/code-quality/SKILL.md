@@ -1,6 +1,6 @@
 ---
 name: code-quality
-description: Use when changing xplane-fdr code or tooling, checking lint, formatting, types, tests, coverage, security, complexity, pre-commit, or CI-equivalent quality gates.
+description: Use when changing xplane-fdau code or tooling, checking lint, formatting, types, tests, coverage, security, complexity, pre-commit, or CI-equivalent quality gates.
 ---
 
 # Code Quality

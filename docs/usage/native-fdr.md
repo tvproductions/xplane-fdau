@@ -1,4 +1,9 @@
-# FDR toolkit guide
+# Native X-Plane FDR guide
+
+Native X-Plane FDR v3/v4 is a deliberately lossy projection and recording sink
+within `xplane-fdau`; it is not the canonical FDAU archive. Native-format
+parsing and projection APIs are in `xplane_fdau.formats.xplane_fdr`, while the
+publication lifecycle is in `xplane_fdau.sinks.xplane_fdr`.
 
 ## Read native FDR files
 
@@ -7,7 +12,7 @@ source version and exposes a common navigation view; a v3 file is never
 silently rewritten.
 
 ```python
-from xplane_fdr import FDRReader
+from xplane_fdau.formats.xplane_fdr import FDRReader
 
 recording = FDRReader().read("Input/FDR files/flight.fdr")
 print(recording.header.source_version)  # 3 or 4
@@ -20,7 +25,7 @@ normalized only through an explicit opt-in because its legacy fields may be
 omitted. Treat this conversion as lossy and examine the reported omissions.
 
 ```python
-from xplane_fdr import FDRReader, FDRWriter
+from xplane_fdau.formats.xplane_fdr import FDRReader, FDRWriter
 
 legacy = FDRReader().read("legacy-v3.fdr")
 result = FDRWriter().write(
@@ -48,11 +53,10 @@ bundled, and the library never starts a background thread or connection.
 ```python
 from datetime import time
 from pathlib import Path
-from xplane_fdr import (
-    FDRHeader,
+from xplane_fdau.formats.xplane_fdr import FDRHeader, FDRSample
+from xplane_fdau.sinks.xplane_fdr import (
     FDRRecordingDefinition,
     FDRRecordingSession,
-    FDRSample,
     FDRSamplingPolicy,
     FDRStoragePolicy,
 )
@@ -93,7 +97,7 @@ connection settings, callback settings, or overwrite permission.
 
 ```json
 {
-  "$schema": "https://tvproductions.github.io/xplane-fdr/schemas/fdr-record-config-v1.schema.json",
+  "$schema": "https://tvproductions.github.io/xplane-fdau/schemas/fdr-record-config-v1.schema.json",
   "schema_version": 1,
   "profiles": ["standard"],
   "datarefs": [
@@ -111,10 +115,11 @@ connection settings, callback settings, or overwrite permission.
 
 Custom DataRefs extend or override profile declarations in order. The complete
 contract is the packaged
-[fdr-record-config-v1.schema.json](https://github.com/tvproductions/xplane-fdr/blob/main/xplane_fdr/schemas/fdr-record-config-v1.schema.json).
+[fdr-record-config-v1.schema.json](https://github.com/tvproductions/xplane-fdau/blob/main/xplane_fdau/formats/xplane_fdr/schemas/fdr-record-config-v1.schema.json).
 
 ```python
-from xplane_fdr import FDRRecordingSession, load_record_config, resolve_recording_definition
+from xplane_fdau.formats.xplane_fdr import load_record_config, resolve_recording_definition
+from xplane_fdau.sinks.xplane_fdr import FDRRecordingSession
 
 config = load_record_config("recording.json")
 definition = resolve_recording_definition(config)
@@ -136,7 +141,7 @@ name such as `xplane-fdr-YYYYMMDDTHHMMSSffffffZ.fdr`.
 
 ```python
 from datetime import date
-from xplane_fdr import FDRReader, recording_to_geojson
+from xplane_fdau.formats.xplane_fdr import FDRReader, recording_to_geojson
 
 recording = FDRReader().read("flight.fdr")
 feature_collection = recording_to_geojson(recording, first_utc_date=date(2026, 8, 8))
@@ -151,9 +156,9 @@ properties as `altitude_msl_ft` and an explicit metre conversion instead.
 The standalone CLI provides only offline file operations:
 
 ```powershell
-xplane-fdr inspect flight.fdr
-xplane-fdr validate flight.fdr
-xplane-fdr to-geojson flight.fdr flight.geojson --first-utc-date 2026-08-08
+xplane-fdau fdr inspect flight.fdr
+xplane-fdau fdr validate flight.fdr
+xplane-fdau fdr to-geojson flight.fdr flight.geojson --first-utc-date 2026-08-08
 ```
 
 It does not include a live-record command. A capture adapter may offer its own
@@ -161,8 +166,9 @@ user interface or command while using this library's session API.
 
 ## XPPython3 installation
 
-Install the released wheel into XPPython3's supported Python environment using
-its supported pip facilities, and pin or bound the compatible package version
-in the consuming project. A consumer plugin constructs samples and submits them
-from its chosen flight-loop callback; this library does not bundle simulator
-integration or invoke an installer itself.
+When a release is authorized, install its wheel into XPPython3's supported
+Python environment using its supported pip facilities, and pin or bound the
+compatible package version in the consuming project. Version `0.1.0` is
+unreleased. A consumer plugin constructs samples and submits them from its
+chosen flight-loop callback; this library does not bundle simulator integration
+or invoke an installer itself.

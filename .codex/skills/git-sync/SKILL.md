@@ -1,6 +1,6 @@
 ---
 name: git-sync
-description: Use when staging, committing, pushing, publishing, or synchronizing xplane-fdr changes with Git, including scope review and pre-push validation.
+description: Use when staging, committing, pushing, publishing, or synchronizing xplane-fdau changes with Git, including scope review and pre-push validation.
 ---
 
 # Git Sync
@@ -12,8 +12,8 @@ git status -sb
 git diff --stat
 git diff --cached --stat
 uv run python -m unittest discover -v
-uv run ruff check xplane_fdr tests tools
-uv run ruff format --check xplane_fdr tests tools
+uv run ruff check xplane_fdau tests tools
+uv run ruff format --check xplane_fdau tests tools
 ```
 
 If unrelated changes are mixed in, ask which paths belong to the requested publish. Otherwise stage the scoped paths, inspect the staged diff, and use a concise imperative commit subject.

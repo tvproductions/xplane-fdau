@@ -1,18 +1,19 @@
-# xplane-fdr
+# xplane-fdau
 
-A standard-library-only Python toolkit for reading, writing, recording,
-validating, and converting native X-Plane Flight Data Recorder (`.fdr`) files,
-independent of how flight data is captured.
+`xplane-fdau` is a standard library-only virtual Flight Data Acquisition Unit /
+Flight Data Interface Unit toolkit for X-Plane. Native X-Plane FDR v3/v4 is
+retained as one deliberately lossy replay format and recording sink; it is not
+the canonical FDAU archive.
 
-`xplane-fdr` supports Python 3.12+ and has no runtime dependencies. It reads
-X-Plane FDR v3 and v4 input, and writes deterministic canonical FDR v4 output.
-Capture remains adapter-owned: this package does not bundle Web API or XPLM
+Version `0.1.0` is unreleased. It supports Python 3.12+ with no runtime
+dependencies. Native FDR callers import parsing, models, writing, profiles,
+configuration, validation errors, and GeoJSON projection from
+`xplane_fdau.formats.xplane_fdr`. Recording callers import the native sink from
+`xplane_fdau.sinks.xplane_fdr`.
+
+Capture remains adapter-owned: this project does not bundle Web API or XPLM
 adapters, connections, cadence scheduling, or plugin lifecycle management.
 
-```powershell
-python -m pip install xplane-fdr
-```
-
-See the [documentation site](https://tvproductions.github.io/xplane-fdr/) for
-the [toolkit guide](docs/usage/fdr-toolkit.md) and
-[stable API reference](docs/reference/fdr.md).
+See the [documentation site](https://tvproductions.github.io/xplane-fdau/) for
+the [native FDR guide](docs/usage/native-fdr.md) and
+[native FDR API reference](docs/reference/native-fdr.md).

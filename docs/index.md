@@ -1,31 +1,36 @@
-# xplane-fdr
+# xplane-fdau
 
-`xplane-fdr` is a pure-Python toolkit using only the Python standard library for native
-X-Plane textual Flight Data Recorder files. It accepts FDR v3 and v4 input and
-always writes deterministic canonical v4 output. Python 3.12 or newer is
-required.
+`xplane-fdau` is a standard library-only virtual Flight Data Acquisition Unit /
+Flight Data Interface Unit toolkit for X-Plane. Native X-Plane FDR v3/v4 is
+retained as one deliberately lossy replay format and recording sink; it is not
+the canonical FDAU archive.
 
-The library is deliberately capture-neutral. An adapter reads simulator or
-external values, decides cadence scheduling, manages connections and plugin
-lifecycle, and submits semantic samples; capture adapters are not bundled.
-This package does not import a Web API client, XPPython3, `xp`, or XPLM.
+Version `0.1.0` is unreleased. Python 3.12 or newer is required. The project
+does not import a Web API client, XPPython3, `xp`, or XPLM.
 
-## What it includes
+## Native FDR boundary
 
-- Incremental v3/v4 reading and strict validation.
-- Deterministic v4 writing, including partial-artifact recovery.
-- Push-first recording sessions, stock profiles, and strict JSON configuration.
-- JSON-compatible GeoJSON conversion and offline commands.
+Native FDR parsing, models, deterministic canonical v4 writing, profiles,
+configuration, validation, and GeoJSON projection live in
+`xplane_fdau.formats.xplane_fdr`. Push-first publication lives in
+`xplane_fdau.sinks.xplane_fdr`. The native format is not a canonical FDAU
+recording model or archive.
 
-## What it does not include
+The adapter owns acquisition: it reads simulator or external values, chooses
+cadence scheduling, manages connections and plugin lifecycle, and submits
+native semantic samples. The capture adapters are not bundled.
 
-The command line does not include a live-record command. Capture sources,
-connections, scheduling, and simulator plugin lifecycle belong to the adapter
-that calls `session.record(sample)`.
+## Offline native FDR commands
 
-Native X-Plane textual `.fdr` v3/v4 files are not real-aircraft ARINC
-recorder/QAR formats. This project also does not provide FOQA/FDM analytics or
-program thresholds.
+```powershell
+xplane-fdau fdr inspect flight.fdr
+xplane-fdau fdr validate flight.fdr
+xplane-fdau fdr to-geojson flight.fdr flight.geojson
+```
 
-Continue with the [FDR toolkit guide](usage/fdr-toolkit.md) or the
-[stable API reference](reference/fdr.md).
+The command line does not include a live-record command. Native X-Plane
+textual `.fdr` v3/v4 files are not real-aircraft ARINC recorder/QAR formats,
+and this project does not provide FOQA/FDM analytics or program thresholds.
+
+Continue with the [native FDR guide](usage/native-fdr.md) or the
+[native FDR API reference](reference/native-fdr.md).

@@ -1,8 +1,8 @@
-site_name: xplane-fdr
-site_description: Capture-neutral tools for native X-Plane Flight Data Recorder files
-site_url: https://tvproductions.github.io/xplane-fdr/
-repo_url: https://github.com/tvproductions/xplane-fdr
-repo_name: tvproductions/xplane-fdr
+site_name: xplane-fdau
+site_description: Virtual FDAU/FDIU tools for X-Plane, including native FDR v3/v4
+site_url: https://tvproductions.github.io/xplane-fdau/
+repo_url: https://github.com/tvproductions/xplane-fdau
+repo_name: tvproductions/xplane-fdau
 
 theme:
   name: material
@@ -17,9 +17,9 @@ plugins:
 nav:
   - Overview: index.md
   - Usage:
-      - FDR toolkit: usage/fdr-toolkit.md
+      - Native FDR: usage/native-fdr.md
   - Reference:
-      - Stable API: reference/fdr.md
+      - Native FDR API: reference/native-fdr.md
 
 validation:
   omitted_files: ignore

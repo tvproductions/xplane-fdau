@@ -1,6 +1,6 @@
 ---
 name: hygiene
-description: Use when performing xplane-fdr cleanup, maintenance, lockfile checks, dependency chores, pre-handoff verification, or an offline repository hygiene pass.
+description: Use when performing xplane-fdau cleanup, maintenance, lockfile checks, dependency chores, pre-handoff verification, or an offline repository hygiene pass.
 ---
 
 # Hygiene

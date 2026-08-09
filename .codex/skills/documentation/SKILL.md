@@ -1,23 +1,26 @@
 ---
 name: documentation
-description: Use when creating or updating xplane-fdr user guidance, MkDocs pages, stable API reference, configuration examples, or documentation verification.
+description: Use when creating or updating xplane-fdau user guidance, MkDocs pages, native FDR API reference, configuration examples, or documentation verification.
 ---
 
 # Publishing documentation
 
 Document the behavior proved by this repository, not simulator behavior owned
-by an adapter. The public import contract is `xplane_fdr.__all__`; the rendered
-API reference is `docs/reference/fdr.md` through MkDocstrings.
+by an adapter. Native FDR format APIs live in
+`xplane_fdau.formats.xplane_fdr`; recording APIs live in
+`xplane_fdau.sinks.xplane_fdr`. The rendered API reference is
+`docs/reference/native-fdr.md` through MkDocstrings.
 
 ## Workflow
 
 1. Check the relevant public module, its `unittest` coverage, and the approved
    design before changing a claim or example.
 2. Keep user pages in `README.md`, `docs/index.md`, and
-   `docs/usage/fdr-toolkit.md`; update `docs/reference/fdr.md` when the stable
-   public surface changes.
-3. State the format boundary precisely: native X-Plane textual v3/v4 input,
-   canonical v4 output, and explicit lossy v3 normalization. Keep capture,
+   `docs/usage/native-fdr.md`; update `docs/reference/native-fdr.md` when the
+   native public surface changes.
+3. State the format boundary precisely: native X-Plane textual v3/v4 is a
+   lossy projection and sink, not the canonical FDAU archive; preserve
+   canonical v4 output and explicit lossy v3 normalization. Keep capture,
    scheduling, connections, and plugin lifecycle adapter-owned.
 4. For recording guidance, explain configured `Output/FDR files`, generated
    UTC filenames, explicit overwrite, and partial-artifact recovery. Link the

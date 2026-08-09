@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 import unittest
 
@@ -10,13 +11,13 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class DocumentationTests(unittest.TestCase):
-    """Protect the stable promises a user needs to choose and operate the library."""
+    """Protect the active FDAU and native-FDR documentation contract."""
 
     def test_mkdocs_navigation_names_every_published_page(self) -> None:
         """A missing navigation entry makes a complete page undiscoverable."""
         config = (ROOT / "mkdocs.yml").read_text(encoding="utf-8")
 
-        for page in ("index.md", "usage/fdr-toolkit.md", "reference/fdr.md"):
+        for page in ("index.md", "usage/native-fdr.md", "reference/native-fdr.md"):
             self.assertIn(page, config)
         self.assertIn("validation:", config)
         self.assertIn("links:", config)
@@ -28,7 +29,7 @@ class DocumentationTests(unittest.TestCase):
         for required in (
             "FDR v3 and v4",
             "canonical v4",
-            "lossy",
+            "lossy projection",
             "explicit opt-in",
             "standard library",
             "push-first",
@@ -58,7 +59,7 @@ class DocumentationTests(unittest.TestCase):
             "partial",
             "overwrite",
             "XPPython3",
-            "released wheel",
+            "unreleased",
             "inspect",
             "validate",
             "to-geojson",
@@ -67,7 +68,7 @@ class DocumentationTests(unittest.TestCase):
 
     def test_recording_examples_construct_semantic_inputs(self) -> None:
         """Callback examples need runnable models, not undefined placeholders."""
-        guide = (ROOT / "docs/usage/fdr-toolkit.md").read_text(encoding="utf-8")
+        guide = self._read_required_text(ROOT / "docs/usage/native-fdr.md")
 
         for required in (
             "FDRRecordingDefinition(",
@@ -78,7 +79,7 @@ class DocumentationTests(unittest.TestCase):
 
     def test_partial_recovery_distinguishes_publication_from_cleanup_failure(self) -> None:
         """Callers must not retry publication after the final artifact was linked."""
-        guide = (ROOT / "docs/usage/fdr-toolkit.md").read_text(encoding="utf-8")
+        guide = self._read_required_text(ROOT / "docs/usage/native-fdr.md")
         prose = " ".join(guide.split())
 
         for required in (
@@ -99,11 +100,64 @@ class DocumentationTests(unittest.TestCase):
         self.assertTrue(published.is_file())
         self.assertEqual(packaged.read_bytes(), published.read_bytes())
 
+    def test_active_documentation_uses_the_fdau_native_projection_boundary(self) -> None:
+        """Users need the nested native-format and sink entry points."""
+        text = self._published_text()
+
+        for required in (
+            "xplane-fdau",
+            "xplane_fdau.formats.xplane_fdr",
+            "xplane_fdau.sinks.xplane_fdr",
+            "xplane-fdau fdr inspect",
+            "xplane-fdau fdr validate",
+            "xplane-fdau fdr to-geojson",
+            "lossy projection",
+            "canonical FDAU archive",
+            "standard library",
+        ):
+            self.assertIn(required, text)
+
+    def test_imported_architecture_documents_retain_their_recorded_bytes(self) -> None:
+        """The copied q4xpcc architecture references are immutable provenance."""
+        expected_hashes = {
+            "xplane12_virtual_fdau_ecosystem_design.md": "fc0fe7c0c6c37e51f52dec2781ce840dec729365754f9afce3b308306ae54480",
+            "xplane12_foqa_fdr_addon_design_spec_v2.md": "9333d74bdb2ffeb9a8d21fdf508393289bf1e230f775f55cd36a5ae01dbd23ad",
+        }
+
+        for filename, expected_hash in expected_hashes.items():
+            document = ROOT / "docs/architecture" / filename
+            self.assertTrue(document.is_file())
+            self.assertEqual(expected_hash, hashlib.sha256(document.read_bytes()).hexdigest())
+
+    def test_active_surfaces_do_not_promise_the_unreleased_fdr_identity(self) -> None:
+        """The former identity remains historical material, not an active contract."""
+        active_paths = (
+            ROOT / "README.md",
+            ROOT / "mkdocs.yml",
+            ROOT / "pyproject.toml",
+            ROOT / "AGENTS.md",
+            ROOT / "BACKLOG.md",
+            ROOT / "CHANGELOG.md",
+            ROOT / "HANDOFF.md",
+            ROOT / "docs/index.md",
+            ROOT / "docs/usage/native-fdr.md",
+            ROOT / "docs/reference/native-fdr.md",
+        )
+        active_paths += tuple((ROOT / ".codex/skills").glob("*/SKILL.md"))
+
+        for path in active_paths:
+            text = self._read_required_text(path).replace("xplane-fdr-YYYYMMDDTHHMMSSffffffZ.fdr", "")
+            self.assertNotIn("xplane-fdr", text, path)
+
     def _published_text(self) -> str:
         paths = (
             ROOT / "README.md",
             ROOT / "docs/index.md",
-            ROOT / "docs/usage/fdr-toolkit.md",
-            ROOT / "docs/reference/fdr.md",
+            ROOT / "docs/usage/native-fdr.md",
+            ROOT / "docs/reference/native-fdr.md",
         )
-        return "\n".join(path.read_text(encoding="utf-8") for path in paths)
+        return "\n".join(self._read_required_text(path) for path in paths)
+
+    def _read_required_text(self, path: Path) -> str:
+        self.assertTrue(path.is_file(), path)
+        return path.read_text(encoding="utf-8")

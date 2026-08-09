@@ -1,11 +1,11 @@
 ---
 name: release
-description: Use when validating, preparing, or authorizing an xplane-fdr distribution release, including wheel artifacts, installed smoke tests, release CI, or publication decisions.
+description: Use when validating local readiness for the unreleased xplane-fdau distribution, including wheel artifacts, installed smoke tests, and release-readiness checks.
 ---
 
-# xplane-fdr Release
+# xplane-fdau Release Readiness
 
-Validate first; publish only after the user explicitly authorizes every external action.
+Validate local readiness only; publication is not authorized for this increment.
 
 ## Local Readiness
 
@@ -24,12 +24,12 @@ uv tool run twine check --strict dist/*
 uv run python tools/release.py check-dist dist
 ```
 
-The validator requires only `xplane_fdr-0.1.0-py3-none-any.whl` and `xplane_fdr-0.1.0.tar.gz`, no runtime requirements, package modules, schema, one license, and no repository/workflow/cache or official-fixture content. Release CI also checks `v0.1.0` with `tools/release.py check-tag`.
+The validator requires only `xplane_fdau-0.1.0-py3-none-any.whl` and `xplane_fdau-0.1.0.tar.gz`, no runtime requirements, package modules, schema, one license, and no repository/workflow/cache or official-fixture content.
 
 ## Installed Matrix
 
-For Python 3.12, 3.13, and 3.14, create an isolated environment outside the checkout, install the exact wheel, and run its interpreter on `tools/installed_smoke.py 0.1.0`. It must import outside the checkout, expose `__all__` and the schema, parse minimal v3/v4 fixtures, round-trip canonical v4, and resolve `xplane-fdr` from that environment's scripts directory.
+For Python 3.12, 3.13, and 3.14, create an isolated environment outside the checkout, install the exact wheel, and run its interpreter on `tools/installed_smoke.py 0.1.0`. It must import `xplane_fdau` outside the checkout, load the nested schema, parse minimal v3/v4 fixtures, round-trip canonical v4, and resolve `xplane-fdau` from that environment's scripts directory.
 
 ## Authorization Gate
 
-Local validation, hashes, CI success, urgency, and a release tag candidate do **not** authorize a push, tag, PyPI publication, or GitHub release. Stop after reporting immutable artifact names and SHA-256 hashes. Ask for explicit authorization that names each external action before doing any of them.
+Stop after reporting local readiness and immutable artifact names and SHA-256 hashes. Do not push, tag, publish to PyPI, or create a GitHub release; the canonical vertical slice must be complete and separately authorized first.

@@ -225,7 +225,7 @@ class FDRDestinationResolutionTests(unittest.TestCase):
             self.assertEqual(absolute / "flight.fdr", session.destination_path)
 
     def test_configured_and_caller_filenames_must_be_fdr_basenames(self) -> None:
-        invalid_names = ("", "flight.txt", "FLIGHT.FDR", "nested/flight.fdr", r"nested\flight.fdr")
+        invalid_names = ("", "flight.txt", "FLIGHT.FDR", "nested/flight.fdr", r"nested\flight.fdr", "D:flight.fdr")
 
         for filename in invalid_names:
             with self.subTest(configured=filename), self.assertRaises(FDRValidationError):

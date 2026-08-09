@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 import math
 import os
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import NoReturn, Protocol, TextIO, cast
 
 from .errors import FDRRecordingStateError, FDRValidationError
@@ -29,8 +29,8 @@ def _positive_finite_float(value: object, name: str) -> float:
 def _fdr_basename(value: object, name: str) -> str:
     if not isinstance(value, str) or not value or not value.endswith(".fdr"):
         raise FDRValidationError(f"{name} must be a basename ending in .fdr")
-    if "/" in value or "\\" in value:
-        raise FDRValidationError(f"{name} must not contain a directory separator")
+    if "/" in value or "\\" in value or PureWindowsPath(value).drive:
+        raise FDRValidationError(f"{name} must not contain a drive or directory separator")
     return value
 
 

@@ -89,8 +89,9 @@ def _safe_member_path(name: str, *, label: str) -> PurePosixPath:
     return path
 
 
-def _validated_zip_names(archive: zipfile.ZipFile) -> tuple[str, ...]:
-    names: list[str] = []
+def _validated_zip_names(archive: zipfile.ZipFile) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    files: list[str] = []
+    directories: list[str] = []
     seen: set[str] = set()
     for info in archive.infolist():
         if stat.S_ISLNK(info.external_attr >> 16):
@@ -102,13 +103,13 @@ def _validated_zip_names(archive: zipfile.ZipFile) -> tuple[str, ...]:
         if canonical in seen:
             raise ReleaseError(f"wheel contains duplicate member: {canonical}")
         seen.add(canonical)
-        if not info.is_dir():
-            names.append(canonical)
-    return tuple(names)
+        (directories if info.is_dir() else files).append(canonical)
+    return tuple(files), tuple(directories)
 
 
-def _validated_tar_members(archive: tarfile.TarFile, root: str) -> tuple[tarfile.TarInfo, ...]:
-    members: list[tarfile.TarInfo] = []
+def _validated_tar_members(archive: tarfile.TarFile, root: str) -> tuple[tuple[tarfile.TarInfo, ...], tuple[str, ...]]:
+    files: list[tarfile.TarInfo] = []
+    directories: list[str] = []
     seen: set[str] = set()
     root_count = 0
     for member in archive.getmembers():
@@ -128,10 +129,12 @@ def _validated_tar_members(archive: tarfile.TarFile, root: str) -> tuple[tarfile
             raise ReleaseError(f"sdist contains duplicate member: {canonical}")
         seen.add(canonical)
         if member.isfile():
-            members.append(member)
+            files.append(member)
+        else:
+            directories.append(canonical)
     if root_count != 1:
         raise ReleaseError(f"sdist must contain exactly one root directory, found {root_count}")
-    return tuple(members)
+    return tuple(files), tuple(directories)
 
 
 def _expected_package_files() -> dict[str, bytes]:
@@ -140,6 +143,15 @@ def _expected_package_files() -> dict[str, bytes]:
         if source.is_file() and (source.suffix == ".py" or source.suffix == ".json" or source.name == "py.typed"):
             expected[source.relative_to(ROOT).as_posix()] = source.read_bytes()
     return expected
+
+
+def _expected_directories(files: set[str]) -> set[str]:
+    directories: set[str] = set()
+    for name in files:
+        parts = PurePosixPath(name).parts[:-1]
+        for end in range(1, len(parts) + 1):
+            directories.add(PurePosixPath(*parts[:end]).as_posix())
+    return directories
 
 
 def _check_metadata(payload: bytes, version: str, *, label: str) -> None:
@@ -163,6 +175,20 @@ def _check_sdist_pyproject(payload: bytes) -> None:
         raise ReleaseError("sdist pyproject.toml must match the tracked project configuration")
 
 
+def _check_wheel_metadata(payload: bytes) -> None:
+    message = BytesParser().parsebytes(payload)
+    if message.defects:
+        raise ReleaseError(f"wheel WHEEL metadata is malformed: {message.defects[0]}")
+    expected = (
+        ("Wheel-Version", "1.0"),
+        ("Root-Is-Purelib", "true"),
+        ("Tag", "py3-none-any"),
+    )
+    for field, value in expected:
+        if message.get_all(field, []) != [value]:
+            raise ReleaseError(f"wheel WHEEL metadata must contain exactly {field}: {value}")
+
+
 def _check_package_payloads(read: Callable[[str], bytes], names: set[str], version: str, *, label: str) -> None:
     expected = _expected_package_files()
     package_names = {name for name in names if name.startswith(f"{PACKAGE}/")}
@@ -181,21 +207,28 @@ def _check_wheel(wheel: Path, version: str) -> None:
         raise ReleaseError(f"wheel must be named {expected_name}")
     dist_info = f"{PACKAGE}-{version}.dist-info"
     with zipfile.ZipFile(wheel) as archive:
-        names = _validated_zip_names(archive)
+        names, directories = _validated_zip_names(archive)
         if any(PurePosixPath(name).parts[0] not in {PACKAGE, dist_info} for name in names):
             raise ReleaseError("wheel member is outside the package or dist-info roots")
-        required = {f"{dist_info}/METADATA", f"{dist_info}/WHEEL", f"{dist_info}/RECORD", f"{dist_info}/licenses/LICENSE"}
-        if not required.issubset(names):
-            raise ReleaseError("wheel is missing required dist-info members")
-        _check_metadata(archive.read(f"{dist_info}/METADATA"), version, label="wheel")
-        wheel_metadata = BytesParser().parsebytes(archive.read(f"{dist_info}/WHEEL"))
-        if wheel_metadata.get_all("Tag", []) != ["py3-none-any"]:
-            raise ReleaseError("wheel WHEEL metadata must contain exactly Tag: py3-none-any")
-        if archive.read(f"{dist_info}/licenses/LICENSE") != (ROOT / "LICENSE").read_bytes():
-            raise ReleaseError("wheel LICENSE must match the tracked license at its expected location")
         licenses = [name for name in names if PurePosixPath(name).name == "LICENSE"]
         if licenses != [f"{dist_info}/licenses/LICENSE"]:
             raise ReleaseError("wheel must contain exactly one LICENSE at its expected location")
+        expected_names = set(_expected_package_files()) | {
+            f"{dist_info}/METADATA",
+            f"{dist_info}/WHEEL",
+            f"{dist_info}/entry_points.txt",
+            f"{dist_info}/RECORD",
+            f"{dist_info}/licenses/LICENSE",
+        }
+        if set(names) != expected_names or set(directories) != _expected_directories(expected_names):
+            raise ReleaseError("wheel members differ from the exact expected artifact set")
+        _check_metadata(archive.read(f"{dist_info}/METADATA"), version, label="wheel")
+        _check_wheel_metadata(archive.read(f"{dist_info}/WHEEL"))
+        expected_entry_points = b"[console_scripts]\nxplane-fdau = xplane_fdau.cli:main\n\n"
+        if archive.read(f"{dist_info}/entry_points.txt") != expected_entry_points:
+            raise ReleaseError("wheel entry_points.txt differs from the expected console script")
+        if archive.read(f"{dist_info}/licenses/LICENSE") != (ROOT / "LICENSE").read_bytes():
+            raise ReleaseError("wheel LICENSE must match the tracked license at its expected location")
         _check_package_payloads(archive.read, set(names), version, label="wheel")
 
 
@@ -205,12 +238,13 @@ def _check_sdist(sdist: Path, version: str) -> None:
         raise ReleaseError(f"sdist must be named {expected_name}")
     root = f"{PACKAGE}-{version}"
     with tarfile.open(sdist, "r:gz") as archive:
-        members = _validated_tar_members(archive, root)
+        members, directories = _validated_tar_members(archive, root)
         names = {member.name for member in members}
         relative = {name.removeprefix(f"{root}/") for name in names}
-        required = {"PKG-INFO", "pyproject.toml", "LICENSE"}
-        if not required.issubset(relative):
-            raise ReleaseError("sdist is missing required root members")
+        relative_directories = {name.removeprefix(f"{root}/") for name in directories}
+        expected_relative = set(_expected_package_files()) | {"PKG-INFO", "pyproject.toml", "pyproject.toml.orig", "LICENSE", "README.md"}
+        if relative != expected_relative or relative_directories != _expected_directories(expected_relative):
+            raise ReleaseError("sdist members differ from the exact expected artifact set")
 
         def read(relative_name: str) -> bytes:
             stream = archive.extractfile(f"{root}/{relative_name}")
@@ -220,6 +254,10 @@ def _check_sdist(sdist: Path, version: str) -> None:
 
         _check_metadata(read("PKG-INFO"), version, label="sdist")
         _check_sdist_pyproject(read("pyproject.toml"))
+        if read("pyproject.toml.orig") != (ROOT / "pyproject.toml").read_bytes():
+            raise ReleaseError("sdist pyproject.toml.orig must match the tracked project configuration bytes")
+        if read("README.md") != (ROOT / "README.md").read_bytes():
+            raise ReleaseError("sdist README.md must match the tracked project documentation bytes")
         if read("LICENSE") != (ROOT / "LICENSE").read_bytes() or [name for name in relative if PurePosixPath(name).name == "LICENSE"] != ["LICENSE"]:
             raise ReleaseError("sdist must contain one tracked LICENSE at its expected location")
         _check_package_payloads(read, relative, version, label="sdist")

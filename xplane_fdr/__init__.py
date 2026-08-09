@@ -26,6 +26,14 @@ from .recording import (
     FDRSamplingPolicy,
     FDRStoragePolicy,
 )
+from .profiles import (
+    FDRRecordingProfile,
+    FDRTrajectorySource,
+    compose_profiles,
+    get_profile,
+    list_profiles,
+    mandatory_trajectory_sources,
+)
 from .writer import FDRStreamWriter, FDRWriter
 
 __all__ = [
@@ -40,6 +48,7 @@ __all__ = [
     "FDRParseError",
     "FDRRecording",
     "FDRRecordingDefinition",
+    "FDRRecordingProfile",
     "FDRRecordingSession",
     "FDRRecordingStateError",
     "FDRReader",
@@ -50,9 +59,14 @@ __all__ = [
     "FDRSamplingPolicy",
     "FDRStoragePolicy",
     "FDRStreamWriter",
+    "FDRTrajectorySource",
     "FDRValidationError",
     "FDRWriter",
     "__version__",
+    "compose_profiles",
+    "get_profile",
+    "list_profiles",
+    "mandatory_trajectory_sources",
 ]
 
 __version__ = "0.1.0"

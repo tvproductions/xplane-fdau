@@ -1,0 +1,29 @@
+site_name: xplane-fdr
+site_description: Capture-neutral tools for native X-Plane Flight Data Recorder files
+site_url: https://tvproductions.github.io/xplane-fdr/
+repo_url: https://github.com/tvproductions/xplane-fdr
+repo_name: tvproductions/xplane-fdr
+
+theme:
+  name: material
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [.]
+
+nav:
+  - Overview: index.md
+  - Usage:
+      - FDR toolkit: usage/fdr-toolkit.md
+  - Reference:
+      - Stable API: reference/fdr.md
+
+validation:
+  omitted_files: ignore
+  links:
+    absolute_links: relative_to_docs
+    anchors: warn
+    unrecognized_links: warn

@@ -2,19 +2,23 @@
 
 ## Start Here
 
-This repository was created to extract the reusable X-Plane Flight Data
-Recorder domain from the unreleased `xpwebapi` FDR feature. The user approved
-the repository boundary, project identity, capture-neutral architecture,
-Python 3.12 floor, and standard-library-only runtime contract.
-
-The next action is **written-spec review**, not implementation. Read the full
-design:
+The core design is approved at commit
+`1358f0d9db3366dcb36ef2870396f9409eb89808`:
 
 - `docs/superpowers/specs/2026-08-08-xplane-fdr-core-design.md`
 
-Present it to the user for review and incorporate any requested changes. After
-explicit approval, invoke the Superpowers `writing-plans` workflow. Repository
-bootstrap and implementation belong in that plan.
+Its approved implementation plan is:
+
+- `docs/superpowers/plans/2026-08-08-xplane-fdr-core.md`
+
+Execution uses the repository's subagent-driven development workflow with
+review checkpoints. The remaining v3 prerequisite is a vetted X-Plane v3
+reference file; do not broaden the parser's supported semantics from invented
+or reverse-engineered data.
+
+The project keeps its capture-neutral, Python 3.12+, standard-library-only
+runtime contract. Read the approved design and applicable task brief before
+changing behavior or documentation.
 
 Superpowers v6.2.0 is freshly vendored under `.codex/` from upstream commit
 `3dcbd5c4b48e02263fbf4a3c01e3fe4f81d584d9`. Restart Codex in this repository

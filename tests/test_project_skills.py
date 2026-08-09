@@ -10,7 +10,7 @@ import unittest
 
 class ProjectSkillTests(unittest.TestCase):
     def test_project_skills_are_scoped_to_xplane_fdr(self) -> None:
-        for name in ("code-quality", "hygiene", "git-sync"):
+        for name in ("code-quality", "documentation", "hygiene", "git-sync"):
             path = Path(".codex/skills") / name / "SKILL.md"
             text = path.read_text(encoding="utf-8")
             self.assertIn("name:", text)

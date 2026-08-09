@@ -50,7 +50,7 @@ class DocumentationTests(unittest.TestCase):
 
         for required in (
             "Output/FDR files",
-            "xplane-fdr-YYYYMMDDTHHMMSSffffffZ.fdr",
+            "xplane-fdau-YYYYMMDDTHHMMSSffffffZ.fdr",
             "fdr-record-config-v1.schema.json",
             "custom DataRefs",
             "[longitude, latitude]",
@@ -146,8 +146,7 @@ class DocumentationTests(unittest.TestCase):
         active_paths += tuple((ROOT / ".codex/skills").glob("*/SKILL.md"))
 
         for path in active_paths:
-            text = self._read_required_text(path).replace("xplane-fdr-YYYYMMDDTHHMMSSffffffZ.fdr", "")
-            self.assertNotIn("xplane-fdr", text, path)
+            self.assertNotIn("xplane-fdr", self._read_required_text(path), path)
 
     def _published_text(self) -> str:
         paths = (

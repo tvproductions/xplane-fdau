@@ -24,6 +24,14 @@ class ProjectSkillTests(unittest.TestCase):
         self.assertIn("xplane_fdau-0.1.0-py3-none-any.whl", text)
         self.assertNotIn("check-tag", text)
 
+    def test_git_sync_skill_does_not_authorize_push_during_unreleased_increment(self) -> None:
+        text = Path(".codex/skills/git-sync/SKILL.md").read_text(encoding="utf-8")
+
+        self.assertNotIn("\ngit push ", text)
+        self.assertIn("Do not push", text)
+        self.assertIn("canonical vertical slice", text)
+        self.assertIn("separately authorizes", text)
+
     def test_hygiene_script_runs_the_local_quality_gate(self) -> None:
         path = Path(".codex/skills/hygiene/scripts/hygiene.py")
         spec = importlib.util.spec_from_file_location("hygiene", path)

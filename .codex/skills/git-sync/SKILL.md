@@ -1,11 +1,17 @@
 ---
 name: git-sync
-description: Use when staging, committing, pushing, publishing, or synchronizing xplane-fdau changes with Git, including scope review and pre-push validation.
+description: Use when staging, committing, or inspecting synchronization state for xplane-fdau changes, including scope review and local validation.
 ---
 
 # Git Sync
 
-Publish deliberately. Read `AGENTS.md`, inspect scope, validate, stage only intended files, commit, push, and confirm local and remote state.
+Prepare local changes deliberately. Read `AGENTS.md`, inspect scope, validate,
+stage only intended files, commit, and confirm local state.
+
+This project is unreleased and its canonical vertical slice is incomplete. Do not push.
+A future push requires both completion of that vertical slice and a
+separate request in which the user separately authorizes it; this skill grants
+neither condition.
 
 ```powershell
 git status -sb
@@ -23,10 +29,11 @@ git add -- <paths>
 git diff --cached --check
 git diff --cached
 git commit -m "<subject>"
-git push origin <branch>
-git fetch origin
 git status -sb
 git log --oneline -3
 ```
 
-Use `unittest` only. Do not stage unrelated changes, use force push, rebase, merge, or publish after a rejected push without user direction. If a write command needs sandbox approval, request it with the exact command and a concise reason. Report commit SHA, branch, validation, remote, and final synchronization state.
+Use `unittest` only. Do not stage unrelated changes, force push, rebase, merge,
+tag, publish, or create a release. If a write command needs sandbox approval,
+request it with the exact command and a concise reason. Report commit SHA,
+branch, validation, and final local state.

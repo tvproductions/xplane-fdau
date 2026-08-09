@@ -135,7 +135,7 @@ session = FDRRecordingSession.open(
 provided by the adapter. An absolute configured directory needs no root. A
 complete destination path wins; otherwise a caller filename wins over the
 configured filename. If neither supplies a name, the library generates a UTC
-name such as `xplane-fdr-YYYYMMDDTHHMMSSffffffZ.fdr`.
+name such as `xplane-fdau-YYYYMMDDTHHMMSSffffffZ.fdr`.
 
 ## Convert to GeoJSON
 

@@ -1,0 +1,31 @@
+version: 2
+updates:
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "America/Chicago"
+    open-pull-requests-limit: 4
+    groups:
+      development-dependencies:
+        patterns:
+          - "bandit"
+          - "cohesion"
+          - "coverage"
+          - "detect-secrets"
+          - "interrogate"
+          - "lizard"
+          - "mkdocs"
+          - "mkdocs-git-revision-date-localized-plugin"
+          - "mkdocs-material"
+          - "mkdocstrings"
+          - "mkdocstrings-python"
+          - "pre-commit"
+          - "pyyaml"
+          - "ruff"
+          - "ty"
+          - "vulture"
+          - "wily"
+          - "xenon"

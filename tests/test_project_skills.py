@@ -1,0 +1,32 @@
+"""Tests for the project's locally defined workflow skills."""
+
+from __future__ import annotations
+
+import importlib.util
+from pathlib import Path
+import sys
+import unittest
+
+
+class ProjectSkillTests(unittest.TestCase):
+    def test_project_skills_are_scoped_to_xplane_fdr(self) -> None:
+        for name in ("code-quality", "hygiene", "git-sync"):
+            path = Path(".codex/skills") / name / "SKILL.md"
+            text = path.read_text(encoding="utf-8")
+            self.assertIn("name:", text)
+            self.assertNotIn("xpwebapi", text.lower())
+
+    def test_hygiene_script_runs_the_local_quality_gate(self) -> None:
+        path = Path(".codex/skills/hygiene/scripts/hygiene.py")
+        spec = importlib.util.spec_from_file_location("hygiene", path)
+        if spec is None or spec.loader is None:
+            self.fail("hygiene script must be importable")
+        loader = spec.loader
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        try:
+            loader.exec_module(module)
+        finally:
+            sys.modules.pop(spec.name, None)
+
+        self.assertIn(("uv", "run", "python", "tools/quality.py", "check"), module.LOCAL_COMMANDS)

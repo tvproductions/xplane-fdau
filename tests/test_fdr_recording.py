@@ -12,7 +12,7 @@ import tempfile
 from typing import cast, override
 import unittest
 
-from xplane_fdr import (
+from xplane_fdau.formats.xplane_fdr import (
     FDRDataref,
     FDRHeader,
     FDRReader,
@@ -180,7 +180,7 @@ class FDRDestinationResolutionTests(unittest.TestCase):
             started = datetime(2026, 8, 8, 18, 30, 12, 123456, tzinfo=UTC)
             session = FDRRecordingSession.open(None, make_definition(), xplane_root=directory, started_at_utc=started)
 
-            self.assertEqual("xplane-fdr-20260808T183012123456Z.fdr", cast(Path, session.destination_path).name)
+            self.assertEqual("xplane-fdau-20260808T183012123456Z.fdr", cast(Path, session.destination_path).name)
 
     def test_generated_name_uses_injected_clock_once_and_normalizes_zero_offset_utc(self) -> None:
         calls = 0
@@ -194,7 +194,7 @@ class FDRDestinationResolutionTests(unittest.TestCase):
             session = FDRRecordingSession.open(None, make_definition(), xplane_root=directory, utc_clock=clock)
 
         self.assertEqual(1, calls)
-        self.assertEqual("xplane-fdr-20260102T030405000006Z.fdr", cast(Path, session.destination_path).name)
+        self.assertEqual("xplane-fdau-20260102T030405000006Z.fdr", cast(Path, session.destination_path).name)
 
     def test_generated_name_rejects_naive_and_non_utc_instants(self) -> None:
         invalid = (

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://tvproductions.github.io/xplane-fdr/schemas/fdr-record-config-v1.schema.json",
-  "title": "xplane-fdr recording configuration version 1",
+  "$id": "https://tvproductions.github.io/xplane-fdau/schemas/fdr-record-config-v1.schema.json",
+  "title": "xplane-fdau recording configuration version 1",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema_version"],

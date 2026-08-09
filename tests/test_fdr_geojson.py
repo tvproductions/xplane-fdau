@@ -7,7 +7,7 @@ import json
 from typing import cast
 import unittest
 
-from xplane_fdr import (
+from xplane_fdau.formats.xplane_fdr import (
     FDRDataref,
     FDRHeader,
     FDRMetadata,

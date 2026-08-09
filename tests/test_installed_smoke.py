@@ -9,14 +9,14 @@ import tempfile
 import unittest
 
 from tools import installed_smoke
-from xplane_fdr import FDRReader
+from xplane_fdau.formats.xplane_fdr import FDRReader
 
 
 class InstalledSmokeTests(unittest.TestCase):
     def test_checkout_path_detection_rejects_checkout_import(self) -> None:
         checkout = Path("C:/work/xplane-fdr").resolve()
         with self.assertRaisesRegex(installed_smoke.SmokeError, "checkout"):
-            installed_smoke.ensure_outside_checkout(checkout / "xplane_fdr/__init__.py", checkout)
+            installed_smoke.ensure_outside_checkout(checkout / "xplane_fdau/__init__.py", checkout)
 
     def test_symlinked_venv_interpreter_keeps_scripts_directory_identity(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
@@ -27,7 +27,7 @@ class InstalledSmokeTests(unittest.TestCase):
             target.parent.mkdir()
             target.write_text("target", encoding="utf-8")
             interpreter = scripts / "python"
-            command = scripts / "xplane-fdr"
+            command = scripts / "xplane-fdau"
             command.write_text("command", encoding="utf-8")
             try:
                 os.symlink(target, interpreter)
@@ -35,7 +35,7 @@ class InstalledSmokeTests(unittest.TestCase):
                 self.skipTest(f"symlink creation unavailable: {error}")
             self.assertEqual(command.absolute(), installed_smoke.validate_command_path(command, interpreter))
             with self.assertRaisesRegex(installed_smoke.SmokeError, "scripts directory"):
-                installed_smoke.validate_command_path(root / "outside" / "xplane-fdr", interpreter)
+                installed_smoke.validate_command_path(root / "outside" / "xplane-fdau", interpreter)
 
     def test_minimal_fixtures_are_self_contained_and_parseable(self) -> None:
         self.assertTrue(installed_smoke.MINIMAL_V3.startswith(b"A\n3\n"))

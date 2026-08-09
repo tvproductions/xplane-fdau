@@ -5,8 +5,8 @@ from __future__ import annotations
 from dataclasses import FrozenInstanceError
 import unittest
 
-import xplane_fdr.profiles as profile_module
-from xplane_fdr import (
+import xplane_fdau.formats.xplane_fdr.profiles as profile_module
+from xplane_fdau.formats.xplane_fdr import (
     compose_profiles,
     get_profile,
     list_profiles,

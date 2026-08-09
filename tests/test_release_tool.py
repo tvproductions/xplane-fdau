@@ -18,7 +18,7 @@ from tools import release
 class ReleaseToolTests(unittest.TestCase):
     def _package_files(self) -> dict[str, bytes]:
         files: dict[str, bytes] = {}
-        for source in Path("xplane_fdr").rglob("*"):
+        for source in Path("xplane_fdau").rglob("*"):
             if source.is_file() and (source.suffix == ".py" or source.name == "py.typed" or source.suffix == ".json"):
                 files[source.as_posix()] = source.read_bytes()
         return files
@@ -35,21 +35,28 @@ class ReleaseToolTests(unittest.TestCase):
         tar_updates: dict[str, bytes] | None = None,
         tar_link: tuple[str, str] | None = None,
     ) -> None:
-        metadata = wheel_metadata or b"Metadata-Version: 2.4\nName: xplane-fdr\nVersion: 0.1.0\nRequires-Python: >=3.12\n"
+        metadata = wheel_metadata or b"Metadata-Version: 2.4\nName: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.12\n"
         wheel_files = self._package_files()
         wheel_files.update(
             {
-                "xplane_fdr-0.1.0.dist-info/METADATA": metadata,
-                "xplane_fdr-0.1.0.dist-info/WHEEL": wheel_tag or b"Wheel-Version: 1.0\nGenerator: test\nRoot-Is-Purelib: true\nTag: py3-none-any\n",
-                "xplane_fdr-0.1.0.dist-info/RECORD": b"",
-                "xplane_fdr-0.1.0.dist-info/licenses/LICENSE": Path("LICENSE").read_bytes(),
+                "xplane_fdau-0.1.0.dist-info/METADATA": metadata,
+                "xplane_fdau-0.1.0.dist-info/WHEEL": wheel_tag or b"Wheel-Version: 1.0\nGenerator: test\nRoot-Is-Purelib: true\nTag: py3-none-any\n",
+                "xplane_fdau-0.1.0.dist-info/RECORD": b"",
+                "xplane_fdau-0.1.0.dist-info/licenses/LICENSE": Path("LICENSE").read_bytes(),
             }
         )
         if wheel_updates:
             wheel_files.update(wheel_updates)
-        wheel = directory / "xplane_fdr-0.1.0-py3-none-any.whl"
+        wheel = directory / "xplane_fdau-0.1.0-py3-none-any.whl"
         with zipfile.ZipFile(wheel, "w") as archive:
-            for name in ("xplane_fdr/", "xplane_fdr/schemas/", "xplane_fdr-0.1.0.dist-info/", "xplane_fdr-0.1.0.dist-info/licenses/"):
+            for name in (
+                "xplane_fdau/",
+                "xplane_fdau/formats/",
+                "xplane_fdau/formats/xplane_fdr/",
+                "xplane_fdau/formats/xplane_fdr/schemas/",
+                "xplane_fdau-0.1.0.dist-info/",
+                "xplane_fdau-0.1.0.dist-info/licenses/",
+            ):
                 archive.writestr(name, b"")
             for name, payload in wheel_files.items():
                 if name == wheel_link:
@@ -63,22 +70,27 @@ class ReleaseToolTests(unittest.TestCase):
                     warnings.simplefilter("ignore", UserWarning)
                     archive.writestr(*wheel_duplicates)
 
-        tar_files = {f"xplane_fdr-0.1.0/{name}": payload for name, payload in self._package_files().items()}
+        tar_files = {f"xplane_fdau-0.1.0/{name}": payload for name, payload in self._package_files().items()}
         tar_files.update(
             {
-                "xplane_fdr-0.1.0/LICENSE": Path("LICENSE").read_bytes(),
-                "xplane_fdr-0.1.0/PKG-INFO": metadata,
-                "xplane_fdr-0.1.0/pyproject.toml": Path("pyproject.toml").read_bytes(),
+                "xplane_fdau-0.1.0/LICENSE": Path("LICENSE").read_bytes(),
+                "xplane_fdau-0.1.0/PKG-INFO": metadata,
+                "xplane_fdau-0.1.0/pyproject.toml": Path("pyproject.toml").read_bytes(),
             }
         )
         if tar_updates:
             tar_files.update(tar_updates)
-        sdist = directory / "xplane_fdr-0.1.0.tar.gz"
+        sdist = directory / "xplane_fdau-0.1.0.tar.gz"
         with tarfile.open(sdist, "w:gz") as archive:
-            root = tarfile.TarInfo("xplane_fdr-0.1.0")
+            root = tarfile.TarInfo("xplane_fdau-0.1.0")
             root.type = tarfile.DIRTYPE
             archive.addfile(root)
-            for name in ("xplane_fdr-0.1.0/xplane_fdr", "xplane_fdr-0.1.0/xplane_fdr/schemas"):
+            for name in (
+                "xplane_fdau-0.1.0/xplane_fdau",
+                "xplane_fdau-0.1.0/xplane_fdau/formats",
+                "xplane_fdau-0.1.0/xplane_fdau/formats/xplane_fdr",
+                "xplane_fdau-0.1.0/xplane_fdau/formats/xplane_fdr/schemas",
+            ):
                 directory_member = tarfile.TarInfo(name)
                 directory_member.type = tarfile.DIRTYPE
                 archive.addfile(directory_member)
@@ -100,15 +112,15 @@ class ReleaseToolTests(unittest.TestCase):
 
             artifacts = release.check_dist(directory)
 
-        self.assertEqual("xplane_fdr-0.1.0-py3-none-any.whl", artifacts.wheel.name)
-        self.assertEqual("xplane_fdr-0.1.0.tar.gz", artifacts.sdist.name)
+        self.assertEqual("xplane_fdau-0.1.0-py3-none-any.whl", artifacts.wheel.name)
+        self.assertEqual("xplane_fdau-0.1.0.tar.gz", artifacts.sdist.name)
 
     def test_check_dist_rejects_hostile_metadata_and_internal_wheel_tag(self) -> None:
         cases = {
-            "x-name": b"Metadata-Version: 2.4\nX-Name: xplane-fdr\nVersion: 0.1.0\nRequires-Python: >=3.12\n",
-            "dev-version": b"Metadata-Version: 2.4\nName: xplane-fdr\nVersion: 0.1.0.dev1\nRequires-Python: >=3.12\n",
-            "broadened-python": b"Metadata-Version: 2.4\nName: xplane-fdr\nVersion: 0.1.0\nRequires-Python: >=3.11\n",
-            "lowercase-requires-dist": b"Metadata-Version: 2.4\nName: xplane-fdr\nVersion: 0.1.0\nRequires-Python: >=3.12\nrequires-dist: hostile\n",
+            "x-name": b"Metadata-Version: 2.4\nX-Name: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.12\n",
+            "dev-version": b"Metadata-Version: 2.4\nName: xplane-fdau\nVersion: 0.1.0.dev1\nRequires-Python: >=3.12\n",
+            "broadened-python": b"Metadata-Version: 2.4\nName: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.11\n",
+            "lowercase-requires-dist": b"Metadata-Version: 2.4\nName: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.12\nrequires-dist: hostile\n",
         }
         for name, metadata in cases.items():
             with self.subTest(name=name), tempfile.TemporaryDirectory() as raw:
@@ -125,8 +137,8 @@ class ReleaseToolTests(unittest.TestCase):
             with self.assertRaisesRegex(release.ReleaseError, "0.1.0"):
                 release.validate_tag("v0.1.0.dev1")
         malformed = {
-            "space-before-colon": b"Metadata-Version: 2.4\nName: xplane-fdr\nVersion: 0.1.0\nRequires-Python: >=3.12\nRequires-Dist : hostile\n",
-            "non-header": b"Metadata-Version: 2.4\nName: xplane-fdr\nVersion: 0.1.0\nRequires-Python: >=3.12\nthis is not a header\n",
+            "space-before-colon": b"Metadata-Version: 2.4\nName: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.12\nRequires-Dist : hostile\n",
+            "non-header": b"Metadata-Version: 2.4\nName: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.12\nthis is not a header\n",
         }
         for name, metadata in malformed.items():
             with self.subTest(name=name), tempfile.TemporaryDirectory() as raw:
@@ -138,29 +150,29 @@ class ReleaseToolTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw:
             self._make_dist(
                 Path(raw),
-                tar_updates={"xplane_fdr-0.1.0/pyproject.toml": b"[project]\nname = 'xplane-fdr'\nversion = '9.9.9'\ndependencies = ['hostile']\n"},
+                tar_updates={"xplane_fdau-0.1.0/pyproject.toml": b"[project]\nname = 'xplane-fdau'\nversion = '9.9.9'\ndependencies = ['hostile']\n"},
             )
             with self.assertRaisesRegex(release.ReleaseError, "pyproject"):
                 release.check_dist(Path(raw))
         with tempfile.TemporaryDirectory() as raw:
-            self._make_dist(Path(raw), wheel_updates={"xplane_fdr-0.1.0.dist-info/licenses/third/LICENSE": b"duplicate"})
+            self._make_dist(Path(raw), wheel_updates={"xplane_fdau-0.1.0.dist-info/licenses/third/LICENSE": b"duplicate"})
             with self.assertRaisesRegex(release.ReleaseError, "exactly one LICENSE"):
                 release.check_dist(Path(raw))
 
     def test_check_dist_accepts_semantically_identical_sdist_pyproject(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
-            self._make_dist(Path(raw), tar_updates={"xplane_fdr-0.1.0/pyproject.toml": Path("pyproject.toml").read_bytes() + b"\n"})
+            self._make_dist(Path(raw), tar_updates={"xplane_fdau-0.1.0/pyproject.toml": Path("pyproject.toml").read_bytes() + b"\n"})
             release.check_dist(Path(raw))
 
     def test_check_dist_requires_exact_package_contents_schema_and_license_locations(self) -> None:
-        expected_schema = "xplane_fdr/schemas/fdr-record-config-v1.schema.json"
+        expected_schema = "xplane_fdau/formats/xplane_fdr/schemas/fdr-record-config-v1.schema.json"
         cases = {
             "corrupt-wheel-schema": {expected_schema: b"{}\n"},
-            "unexpected-native": {"xplane_fdr/hostile.pyd": b"native"},
-            "unexpected-module": {"xplane_fdr/hostile.py": b""},
+            "unexpected-native": {"xplane_fdau/hostile.pyd": b"native"},
+            "unexpected-module": {"xplane_fdau/hostile.py": b""},
             "relocated-license": {
-                "xplane_fdr-0.1.0.dist-info/licenses/LICENSE": b"",
-                "xplane_fdr-0.1.0.dist-info/LICENSE": Path("LICENSE").read_bytes(),
+                "xplane_fdau-0.1.0.dist-info/licenses/LICENSE": b"",
+                "xplane_fdau-0.1.0.dist-info/LICENSE": Path("LICENSE").read_bytes(),
             },
         }
         for name, updates in cases.items():
@@ -169,25 +181,25 @@ class ReleaseToolTests(unittest.TestCase):
                 with self.assertRaises(release.ReleaseError):
                     release.check_dist(Path(raw))
         with tempfile.TemporaryDirectory() as raw:
-            self._make_dist(Path(raw), tar_updates={f"xplane_fdr-0.1.0/{expected_schema}": b"{}\n"})
+            self._make_dist(Path(raw), tar_updates={f"xplane_fdau-0.1.0/{expected_schema}": b"{}\n"})
             with self.assertRaises(release.ReleaseError):
                 release.check_dist(Path(raw))
 
     def test_check_dist_rejects_unsafe_archive_paths_duplicates_and_links(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
-            self._make_dist(Path(raw), wheel_updates={"xplane_fdr/..\\evil.py": b""})
+            self._make_dist(Path(raw), wheel_updates={"xplane_fdau/..\\evil.py": b""})
             with self.assertRaisesRegex(release.ReleaseError, "path"):
                 release.check_dist(Path(raw))
         with tempfile.TemporaryDirectory() as raw:
-            self._make_dist(Path(raw), wheel_duplicates=("xplane_fdr/__init__.py", b"duplicate"))
+            self._make_dist(Path(raw), wheel_duplicates=("xplane_fdau/__init__.py", b"duplicate"))
             with self.assertRaisesRegex(release.ReleaseError, "duplicate"):
                 release.check_dist(Path(raw))
         with tempfile.TemporaryDirectory() as raw:
-            self._make_dist(Path(raw), tar_link=("xplane_fdr-0.1.0/xplane_fdr/link.py", "../../evil.py"))
+            self._make_dist(Path(raw), tar_link=("xplane_fdau-0.1.0/xplane_fdau/link.py", "../../evil.py"))
             with self.assertRaisesRegex(release.ReleaseError, "link"):
                 release.check_dist(Path(raw))
         with tempfile.TemporaryDirectory() as raw:
-            self._make_dist(Path(raw), wheel_link="xplane_fdr-0.1.0.dist-info/RECORD")
+            self._make_dist(Path(raw), wheel_link="xplane_fdau-0.1.0.dist-info/RECORD")
             with self.assertRaisesRegex(release.ReleaseError, "link"):
                 release.check_dist(Path(raw))
 

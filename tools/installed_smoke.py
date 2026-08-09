@@ -1,4 +1,4 @@
-"""Smoke-test an installed xplane-fdr wheel without importing its checkout."""
+"""Smoke-test an installed xplane-fdau wheel without importing its checkout."""
 
 from __future__ import annotations
 
@@ -34,21 +34,21 @@ def ensure_outside_checkout(imported: Path, checkout: Path) -> None:
         imported.resolve().relative_to(checkout.resolve())
     except ValueError:
         return
-    raise SmokeError(f"xplane_fdr imported from checkout: {imported}")
+    raise SmokeError(f"xplane_fdau imported from checkout: {imported}")
 
 
 def validate_command_path(command: Path, interpreter: Path) -> Path:
     """Require a console script beside the interpreter without resolving venv symlinks."""
     command_path = command.absolute()
     if command_path.parent != interpreter.absolute().parent:
-        raise SmokeError(f"xplane-fdr command is not in this interpreter's scripts directory: {command_path}")
+        raise SmokeError(f"xplane-fdau command is not in this interpreter's scripts directory: {command_path}")
     return command_path
 
 
 def _command_path() -> Path:
-    command = shutil.which("xplane-fdr")
+    command = shutil.which("xplane-fdau")
     if command is None:
-        raise SmokeError("interpreter-local xplane-fdr command was not found on PATH")
+        raise SmokeError("interpreter-local xplane-fdau command was not found on PATH")
     return validate_command_path(Path(command), Path(sys.executable))
 
 
@@ -60,17 +60,18 @@ def _run(command: list[str]) -> None:
 
 def smoke(version: str, *, checkout: Path) -> None:
     """Exercise the installed public API, schema, FDR files, and CLI commands."""
-    import xplane_fdr
+    import xplane_fdau
+    import xplane_fdau.formats.xplane_fdr as native_fdr
 
-    location = Path(xplane_fdr.__file__ or "")
+    location = Path(xplane_fdau.__file__ or "")
     if not location:
-        raise SmokeError("xplane_fdr has no import location")
+        raise SmokeError("xplane_fdau has no import location")
     ensure_outside_checkout(location, checkout)
-    if xplane_fdr.__version__ != version:
-        raise SmokeError(f"installed version is {xplane_fdr.__version__}, expected {version}")
-    for name in xplane_fdr.__all__:
-        getattr(xplane_fdr, name)
-    schema = importlib.resources.files("xplane_fdr").joinpath("schemas/fdr-record-config-v1.schema.json")
+    if xplane_fdau.__version__ != version:
+        raise SmokeError(f"installed version is {xplane_fdau.__version__}, expected {version}")
+    for name in xplane_fdau.__all__:
+        getattr(xplane_fdau, name)
+    schema = importlib.resources.files("xplane_fdau.formats.xplane_fdr").joinpath("schemas/fdr-record-config-v1.schema.json")
     if not schema.is_file() or '"$schema"' not in schema.read_text(encoding="utf-8"):
         raise SmokeError("installed schema resource is unavailable or invalid")
     command = _command_path()
@@ -81,13 +82,13 @@ def smoke(version: str, *, checkout: Path) -> None:
         v3.write_bytes(MINIMAL_V3)
         v4.write_bytes(MINIMAL_V4)
         for fixture in (v3, v4):
-            xplane_fdr.FDRReader().read(fixture)
+            native_fdr.FDRReader().read(fixture)
             _run([str(command), "validate", str(fixture)])
         round_trip = work / "round-trip.fdr"
-        xplane_fdr.FDRWriter().write(xplane_fdr.FDRReader().read(v4), round_trip)
+        native_fdr.FDRWriter().write(native_fdr.FDRReader().read(v4), round_trip)
         if not round_trip.read_bytes().startswith(b"A\n4\n"):
             raise SmokeError("canonical v4 output does not begin with A\\n4\\n")
-        xplane_fdr.FDRReader().read(round_trip)
+        native_fdr.FDRReader().read(round_trip)
         _run([str(command), "to-geojson", str(v4), str(work / "recording.geojson")])
 
 

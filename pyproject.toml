@@ -1,7 +1,7 @@
 [project]
-name = "xplane-fdr"
+name = "xplane-fdau"
 version = "0.1.0"
-description = "A standard-library-only Python toolkit for reading, writing, recording, validating, and converting X-Plane Flight Data Recorder files, independent of how flight data is captured."
+description = "Standard-library-only Python toolkit for acquiring, normalizing, recording, replaying, and distributing X-Plane flight data, including native FDR v3/v4 support."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
@@ -17,13 +17,13 @@ requires-python = ">=3.12"
 dependencies = []
 
 [project.scripts]
-xplane-fdr = "xplane_fdr.cli:main"
+xplane-fdau = "xplane_fdau.cli:main"
 
 [project.urls]
-Homepage = "https://tvproductions.github.io/xplane-fdr/"
-Documentation = "https://tvproductions.github.io/xplane-fdr/"
-Issues = "https://github.com/tvproductions/xplane-fdr/issues"
-Repository = "https://github.com/tvproductions/xplane-fdr"
+Homepage = "https://tvproductions.github.io/xplane-fdau/"
+Documentation = "https://tvproductions.github.io/xplane-fdau/"
+Issues = "https://github.com/tvproductions/xplane-fdau/issues"
+Repository = "https://github.com/tvproductions/xplane-fdau"
 
 [dependency-groups]
 dev = [
@@ -63,7 +63,7 @@ source-exclude = [
 ]
 
 [tool.coverage.run]
-source = ["xplane_fdr"]
+source = ["xplane_fdau"]
 branch = false
 
 [tool.coverage.report]

@@ -1,4 +1,4 @@
-"""Validate local xplane-fdr release artifacts without publishing them."""
+"""Validate local xplane-fdau release artifacts without publishing them."""
 
 from __future__ import annotations
 
@@ -17,8 +17,8 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
-PACKAGE = "xplane_fdr"
-PROJECT = "xplane-fdr"
+PACKAGE = "xplane_fdau"
+PROJECT = "xplane-fdau"
 RELEASE_VERSION = "0.1.0"
 
 

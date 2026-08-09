@@ -1,10 +1,10 @@
-"""Contracts for the stable :mod:`xplane_fdr` import surface."""
+"""Contracts for the stable native FDR import surface."""
 
 from __future__ import annotations
 
 import unittest
 
-import xplane_fdr
+import xplane_fdau.formats.xplane_fdr as native_fdr
 
 
 class PublicAPITests(unittest.TestCase):
@@ -50,6 +50,6 @@ class PublicAPITests(unittest.TestCase):
             "resolve_recording_definition",
         }
 
-        self.assertTrue(required.issubset(set(xplane_fdr.__all__)))
+        self.assertTrue(required.issubset(set(native_fdr.__all__)))
         for name in required:
-            self.assertIsNotNone(getattr(xplane_fdr, name))
+            self.assertIsNotNone(getattr(native_fdr, name))

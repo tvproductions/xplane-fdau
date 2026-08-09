@@ -14,7 +14,7 @@ import tempfile
 from typing import Literal, cast
 import unittest
 
-from xplane_fdr import (
+from xplane_fdau.formats.xplane_fdr import (
     FDRConfigError,
     FDRDatarefConfig,
     FDRMetadataConfig,
@@ -341,10 +341,10 @@ class FDRConfigSchemaTests(unittest.TestCase):
     """The packaged editor contract mirrors runtime structure without adding dependencies."""
 
     def test_schema_is_available_as_an_installed_package_resource(self) -> None:
-        resource = files("xplane_fdr.schemas").joinpath("fdr-record-config-v1.schema.json")
+        resource = files("xplane_fdau.formats.xplane_fdr.schemas").joinpath("fdr-record-config-v1.schema.json")
         schema = json.loads(resource.read_text(encoding="utf-8"))
 
-        self.assertEqual("https://tvproductions.github.io/xplane-fdr/schemas/fdr-record-config-v1.schema.json", schema["$id"])
+        self.assertEqual("https://tvproductions.github.io/xplane-fdau/schemas/fdr-record-config-v1.schema.json", schema["$id"])
         self.assertEqual(["schema_version"], schema["required"])
         self.assertFalse(schema["additionalProperties"])
         self.assertEqual(1, schema["properties"]["schema_version"]["const"])
@@ -359,7 +359,7 @@ class FDRConfigSchemaTests(unittest.TestCase):
             self.assertNotIn(forbidden, serialized.lower())
 
     def test_schema_patterns_match_runtime_basename_and_single_line_rules(self) -> None:
-        schema = json.loads(files("xplane_fdr.schemas").joinpath("fdr-record-config-v1.schema.json").read_text(encoding="utf-8"))
+        schema = json.loads(files("xplane_fdau.formats.xplane_fdr.schemas").joinpath("fdr-record-config-v1.schema.json").read_text(encoding="utf-8"))
         properties = schema["properties"]
         single_line_patterns = (
             (properties["metadata"]["properties"]["aircraft_path"]["pattern"], "Aircraft/Test.acf"),

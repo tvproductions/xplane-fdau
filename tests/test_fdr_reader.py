@@ -10,7 +10,7 @@ from typing import override
 from unittest import mock
 import unittest
 
-from xplane_fdr import FDRParseError, FDRReader, FDRSampleStream, FDRValidationError
+from xplane_fdau.formats.xplane_fdr import FDRParseError, FDRReader, FDRSampleStream, FDRValidationError
 
 
 FIXTURE_ROOT = Path(__file__).parent / "fixtures" / "fdr"

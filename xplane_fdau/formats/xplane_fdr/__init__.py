@@ -73,7 +73,6 @@ __all__ = [
     "FDRTrajectorySource",
     "FDRValidationError",
     "FDRWriter",
-    "__version__",
     "compose_profiles",
     "get_profile",
     "list_profiles",
@@ -82,5 +81,3 @@ __all__ = [
     "resolve_recording_definition",
     "recording_to_geojson",
 ]
-
-__version__ = "0.1.0"

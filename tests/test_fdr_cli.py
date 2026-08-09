@@ -13,8 +13,8 @@ from typing import override
 from unittest import mock
 import unittest
 
-from xplane_fdr import FDROutputError
-from xplane_fdr.cli import _write_atomic_json, build_parser, main
+from xplane_fdau.formats.xplane_fdr import FDROutputError
+from xplane_fdau.cli import _write_atomic_json, build_parser, main
 
 
 VALID_FDR = """A
@@ -128,7 +128,7 @@ class FDRCliTests(unittest.TestCase):
         self.assertEqual(1, status)
         self.assertEqual("", stdout)
         self.assertEqual(1, len(stderr.splitlines()))
-        self.assertIn("xplane-fdr: validate failed", stderr)
+        self.assertIn("xplane-fdau: validate failed", stderr)
         self.assertIn(f"{self.input}:3:", stderr)
         self.assertNotIn("Traceback", stderr)
 
@@ -257,8 +257,8 @@ class FDRCliTests(unittest.TestCase):
         output = self.root / "flight.geojson"
 
         with (
-            mock.patch("xplane_fdr.cli.json.dumps", side_effect=ValueError("strict JSON failure")),
-            mock.patch("xplane_fdr.cli._create_partial") as create_partial,
+            mock.patch("xplane_fdau.cli.json.dumps", side_effect=ValueError("strict JSON failure")),
+            mock.patch("xplane_fdau.cli._create_partial") as create_partial,
         ):
             status, stdout, stderr = self.capture_main(["to-geojson", str(self.input), str(output)])
 
@@ -269,7 +269,7 @@ class FDRCliTests(unittest.TestCase):
 
     def test_console_script_executes_the_public_help_surface(self) -> None:
         completed = subprocess.run(
-            ["uv", "run", "--frozen", "xplane-fdr", "--help"],
+            ["uv", "run", "--frozen", "xplane-fdau", "--help"],
             cwd=Path(__file__).parents[1],
             capture_output=True,
             text=True,
@@ -304,7 +304,7 @@ class FDRCliAtomicOutputTests(unittest.TestCase):
             self.assertTrue(source_path.name.endswith(".partial"))
             real_link(source_path, destination_path)
 
-        with mock.patch("xplane_fdr.cli.os.link", side_effect=observe_link):
+        with mock.patch("xplane_fdau.cli.os.link", side_effect=observe_link):
             _write_atomic_json({"type": "FeatureCollection", "features": []}, output, overwrite=False)
 
         self.assertEqual(1, len(observed))
@@ -325,11 +325,11 @@ class FDRCliAtomicOutputTests(unittest.TestCase):
                     failure = stage if stage in {"write", "flush"} else "none"
                     return partial, FailingAtomicStream(partial, failure=failure)
 
-                patches = [mock.patch("xplane_fdr.cli._create_partial", side_effect=create_partial)]
+                patches = [mock.patch("xplane_fdau.cli._create_partial", side_effect=create_partial)]
                 if stage == "fsync":
-                    patches.append(mock.patch("xplane_fdr.cli.os.fsync", side_effect=OSError("injected fsync failure")))
+                    patches.append(mock.patch("xplane_fdau.cli.os.fsync", side_effect=OSError("injected fsync failure")))
                 elif stage == "link":
-                    patches.append(mock.patch("xplane_fdr.cli.os.link", side_effect=OSError("injected link failure")))
+                    patches.append(mock.patch("xplane_fdau.cli.os.link", side_effect=OSError("injected link failure")))
 
                 with patches[0]:
                     if len(patches) == 1:
@@ -354,8 +354,8 @@ class FDRCliAtomicOutputTests(unittest.TestCase):
             raise FileExistsError("injected link race")
 
         with (
-            mock.patch("xplane_fdr.cli._create_partial", side_effect=create_partial),
-            mock.patch("xplane_fdr.cli.os.link", side_effect=race_destination),
+            mock.patch("xplane_fdau.cli._create_partial", side_effect=create_partial),
+            mock.patch("xplane_fdau.cli.os.link", side_effect=race_destination),
             self.assertRaisesRegex(ValueError, "injected link race"),
         ):
             _write_atomic_json({"type": "FeatureCollection"}, output, overwrite=False)
@@ -379,8 +379,8 @@ class FDRCliAtomicOutputTests(unittest.TestCase):
             real_unlink(path)
 
         with (
-            mock.patch("xplane_fdr.cli._create_partial", side_effect=create_partial),
-            mock.patch("xplane_fdr.cli.os.unlink", side_effect=fail_partial_unlink),
+            mock.patch("xplane_fdau.cli._create_partial", side_effect=create_partial),
+            mock.patch("xplane_fdau.cli.os.unlink", side_effect=fail_partial_unlink),
             self.assertRaises(FDROutputError) as caught,
         ):
             _write_atomic_json({"type": "FeatureCollection"}, output, overwrite=False)
@@ -407,8 +407,8 @@ class FDRCliAtomicOutputTests(unittest.TestCase):
                 raise FileNotFoundError("partial was already removed")
 
         with (
-            mock.patch("xplane_fdr.cli._create_partial", side_effect=create_partial),
-            mock.patch("xplane_fdr.cli.os.unlink", side_effect=remove_partial_then_report_missing),
+            mock.patch("xplane_fdau.cli._create_partial", side_effect=create_partial),
+            mock.patch("xplane_fdau.cli.os.unlink", side_effect=remove_partial_then_report_missing),
         ):
             try:
                 _write_atomic_json({"type": "FeatureCollection"}, output, overwrite=False)
@@ -435,8 +435,8 @@ class FDRCliAtomicOutputTests(unittest.TestCase):
             real_unlink(path)
 
         with (
-            mock.patch("xplane_fdr.cli._create_partial", side_effect=create_partial),
-            mock.patch("xplane_fdr.cli.os.unlink", side_effect=replace_destination_then_fail),
+            mock.patch("xplane_fdau.cli._create_partial", side_effect=create_partial),
+            mock.patch("xplane_fdau.cli.os.unlink", side_effect=replace_destination_then_fail),
             self.assertRaisesRegex(ValueError, "injected partial unlink failure after replacement"),
         ):
             _write_atomic_json({"type": "FeatureCollection"}, output, overwrite=False)
@@ -451,7 +451,7 @@ class FDRCliAtomicOutputTests(unittest.TestCase):
         input_path.write_text(VALID_FDR, encoding="utf-8")
         output = self.root / "flight.geojson"
 
-        with mock.patch("xplane_fdr.cli.os.unlink", side_effect=OSError("injected partial cleanup failure")):
+        with mock.patch("xplane_fdau.cli.os.unlink", side_effect=OSError("injected partial cleanup failure")):
             stdout = io.StringIO()
             stderr = io.StringIO()
             with redirect_stdout(stdout), redirect_stderr(stderr):
@@ -474,7 +474,7 @@ class FDRCliAtomicOutputTests(unittest.TestCase):
             return partial, FailingAtomicStream(partial, failure="write", close_failure=True)
 
         with (
-            mock.patch("xplane_fdr.cli._create_partial", side_effect=create_partial),
+            mock.patch("xplane_fdau.cli._create_partial", side_effect=create_partial),
             self.assertRaises(BaseExceptionGroup) as caught,
         ):
             _write_atomic_json({"type": "FeatureCollection"}, output, overwrite=False)
@@ -489,14 +489,14 @@ class FDRCliAtomicOutputTests(unittest.TestCase):
         output = self.root / "flight.geojson"
         output.write_text("existing\n", encoding="utf-8")
 
-        with mock.patch("xplane_fdr.cli.os.replace", side_effect=OSError("injected replace failure")):
+        with mock.patch("xplane_fdau.cli.os.replace", side_effect=OSError("injected replace failure")):
             with self.assertRaisesRegex(ValueError, "injected replace failure"):
                 _write_atomic_json({"type": "FeatureCollection"}, output, overwrite=True)
 
         self.assertEqual("existing\n", output.read_text(encoding="utf-8"))
         self.assertEqual([], list(self.root.glob(f".{output.name}.*.partial")))
 
-        with mock.patch("xplane_fdr.cli.os.link", side_effect=AssertionError("overwrite must not link")):
+        with mock.patch("xplane_fdau.cli.os.link", side_effect=AssertionError("overwrite must not link")):
             _write_atomic_json({"type": "FeatureCollection", "features": []}, output, overwrite=True)
 
         self.assertEqual("FeatureCollection", json.loads(output.read_text(encoding="utf-8"))["type"])

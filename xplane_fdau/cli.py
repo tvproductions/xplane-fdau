@@ -11,10 +11,10 @@ import secrets
 import sys
 from typing import cast, NoReturn, override, TextIO
 
-from .errors import FDRError, FDROutputError
-from .models import FDRRecording
-from .reader import FDRReader
-from .geojson import recording_to_geojson
+from xplane_fdau.formats.xplane_fdr.errors import FDRError, FDROutputError
+from xplane_fdau.formats.xplane_fdr.geojson import recording_to_geojson
+from xplane_fdau.formats.xplane_fdr.models import FDRRecording
+from xplane_fdau.formats.xplane_fdr.reader import FDRReader
 
 
 _MANDATORY_FIELDS = (
@@ -57,7 +57,7 @@ def _first_utc_date(value: str) -> date:
 
 def build_parser() -> argparse.ArgumentParser:
     """Build the documented offline command parser."""
-    parser = _ArgumentParser(prog="xplane-fdr", description="Offline X-Plane FDR tools")
+    parser = _ArgumentParser(prog="xplane-fdau", description="Offline X-Plane FDR tools")
     commands = parser.add_subparsers(dest="command", required=True)
 
     validate = commands.add_parser("validate", help="strictly validate an FDR file")
@@ -285,7 +285,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         _run_command(arguments)
     except (FDRError, OSError, ValueError, BaseExceptionGroup) as error:
-        sys.stderr.write(f"xplane-fdr: {arguments.command} failed: {_format_error(error)}\n")
+        sys.stderr.write(f"xplane-fdau: {arguments.command} failed: {_format_error(error)}\n")
         return 1
     return 0
 

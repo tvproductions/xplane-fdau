@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Literal, cast
 import unittest
 
-from xplane_fdr import (
+from xplane_fdau.formats.xplane_fdr import (
     FDRConfigError,
     FDRDataref,
     FDRError,

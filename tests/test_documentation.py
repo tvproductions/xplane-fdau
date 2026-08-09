@@ -94,7 +94,7 @@ class DocumentationTests(unittest.TestCase):
     def test_documented_schema_url_has_a_published_schema_artifact(self) -> None:
         """The schema URL in a user configuration must not lead to a Pages 404."""
         published = ROOT / "docs/schemas/fdr-record-config-v1.schema.json"
-        packaged = ROOT / "xplane_fdr/schemas/fdr-record-config-v1.schema.json"
+        packaged = ROOT / "xplane_fdau/formats/xplane_fdr/schemas/fdr-record-config-v1.schema.json"
 
         self.assertTrue(published.is_file())
         self.assertEqual(packaged.read_bytes(), published.read_bytes())

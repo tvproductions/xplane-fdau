@@ -12,7 +12,7 @@ from typing import cast, Literal, override
 from unittest import mock
 import unittest
 
-from xplane_fdr import (
+from xplane_fdau.formats.xplane_fdr import (
     FDRDataref,
     FDRHeader,
     FDRMetadata,
@@ -295,9 +295,9 @@ class FDRWriterPathPublicationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             destination = Path(directory) / "flight.fdr"
             with (
-                mock.patch("xplane_fdr.writer.os.fsync", wraps=os.fsync) as fsync,
-                mock.patch("xplane_fdr.writer.os.link", wraps=os.link) as link,
-                mock.patch("xplane_fdr.writer.os.replace", wraps=os.replace) as replace,
+                mock.patch("xplane_fdau.formats.xplane_fdr.writer.os.fsync", wraps=os.fsync) as fsync,
+                mock.patch("xplane_fdau.formats.xplane_fdr.writer.os.link", wraps=os.link) as link,
+                mock.patch("xplane_fdau.formats.xplane_fdr.writer.os.replace", wraps=os.replace) as replace,
             ):
                 sink = FDRWriter().open(make_header(), destination)
                 partial = sink.partial_path
@@ -341,7 +341,7 @@ class FDRWriterPathPublicationTests(unittest.TestCase):
                     raise OSError("partial unlink failed")
                 real_unlink(path)
 
-            with mock.patch("xplane_fdr.writer.os.unlink", side_effect=fail_partial_unlink):
+            with mock.patch("xplane_fdau.formats.xplane_fdr.writer.os.unlink", side_effect=fail_partial_unlink):
                 with FDRWriter().open(make_header(), destination) as sink:
                     sink.write_sample(make_sample())
                     partial = cast(Path, sink.partial_path)
@@ -372,7 +372,7 @@ class FDRWriterPathPublicationTests(unittest.TestCase):
                 if Path(path) == partial:
                     raise FileNotFoundError("partial already absent")
 
-            with mock.patch("xplane_fdr.writer.os.unlink", side_effect=remove_partial_then_report_missing):
+            with mock.patch("xplane_fdau.formats.xplane_fdr.writer.os.unlink", side_effect=remove_partial_then_report_missing):
                 try:
                     sink.commit()
                 except Exception as error:
@@ -389,7 +389,7 @@ class FDRWriterPathPublicationTests(unittest.TestCase):
             sink.write_sample(make_sample())
             self.assertEqual("existing", destination.read_text(encoding="utf-8"))
 
-            with mock.patch("xplane_fdr.writer.os.replace", wraps=os.replace) as replace:
+            with mock.patch("xplane_fdau.formats.xplane_fdr.writer.os.replace", wraps=os.replace) as replace:
                 sink.commit()
 
             replace.assert_called_once()
@@ -402,7 +402,7 @@ class FDRWriterPathPublicationTests(unittest.TestCase):
             sink.write_sample(make_sample())
             partial = cast(Path, sink.partial_path)
 
-            with mock.patch("xplane_fdr.writer.os.fsync", side_effect=OSError("sync failed")):
+            with mock.patch("xplane_fdau.formats.xplane_fdr.writer.os.fsync", side_effect=OSError("sync failed")):
                 with self.assertRaises(FDROutputError) as caught:
                     sink.commit()
 

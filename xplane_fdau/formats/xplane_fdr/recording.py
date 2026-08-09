@@ -135,7 +135,7 @@ def _resolved_destination(
     else:
         instant = started_at_utc if started_at_utc is not None else utc_clock()
         started = _utc_instant(instant, "recording start")
-        resolved_filename = f"xplane-fdr-{started:%Y%m%dT%H%M%S}{started.microsecond:06d}Z.fdr"
+        resolved_filename = f"xplane-fdau-{started:%Y%m%dT%H%M%S}{started.microsecond:06d}Z.fdr"
     return directory / resolved_filename
 
 

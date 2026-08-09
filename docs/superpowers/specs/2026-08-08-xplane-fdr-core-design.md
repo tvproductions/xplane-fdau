@@ -1,5 +1,12 @@
 # xplane-fdr Core Design
 
+> **Superseded 2026-08-09:** The approved project identity and architecture are
+> now the virtual FDAU/FDIU ecosystem described in
+> `docs/architecture/xplane12_virtual_fdau_ecosystem_design.md`. The native FDR
+> implementation remains retained migration material under
+> `docs/superpowers/specs/2026-08-09-xplane-fdau-identity-fdr-kernel-migration-design.md`.
+> This document is historical and must not drive new implementation.
+
 ## Purpose
 
 Create `xplane-fdr` as the reusable, capture-neutral implementation of the

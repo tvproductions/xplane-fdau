@@ -1,5 +1,29 @@
 # Project Handoff
 
+## 2026-08-09 architecture revision
+
+The user approved an overall revision from the unreleased narrow `xplane-fdr`
+library to the virtual FDAU/FDIU architecture. GitHub now hosts the repository
+at `https://github.com/tvproductions/xplane-fdau.git`; the local remote and
+package have not yet been migrated.
+
+The authoritative parent architecture, copied with q4xpcc provenance, is:
+
+- `docs/architecture/xplane12_virtual_fdau_ecosystem_design.md`
+
+The first repository-specific increment awaiting written-spec review is:
+
+- `docs/superpowers/specs/2026-08-09-xplane-fdau-identity-fdr-kernel-migration-design.md`
+
+Do not rename modules, move the linked worktree, update the remote, or begin
+implementation until that specification is approved and the Superpowers
+`writing-plans` workflow produces a reviewed implementation plan. The existing
+native FDR implementation and its history are retained migration material; no
+release, tag, push, or publication is authorized during the migration.
+
+The remainder of this handoff records the superseded narrow design and is kept
+only as historical implementation context.
+
 ## Start Here
 
 The core design is approved at commit

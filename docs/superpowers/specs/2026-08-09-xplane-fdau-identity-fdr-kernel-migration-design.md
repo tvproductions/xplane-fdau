@@ -1,6 +1,6 @@
 # xplane-fdau Identity and Native FDR Kernel Migration Design
 
-**Status:** Draft for written-spec review  
+**Status:** Approved / implemented but unreleased
 **Date:** 2026-08-09  
 **Decision owner:** Jeff / tvproductions
 

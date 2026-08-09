@@ -12,10 +12,36 @@ import unittest
 from unittest import mock
 
 from tools import installed_smoke
+import xplane_fdau
 from xplane_fdau.formats.xplane_fdr import FDRReader
 
 
 class InstalledSmokeTests(unittest.TestCase):
+    def test_all_installed_runtime_modules_are_discovered_and_imported(self) -> None:
+        expected = {
+            "xplane_fdau",
+            "xplane_fdau.cli",
+            "xplane_fdau.formats",
+            "xplane_fdau.formats.xplane_fdr",
+            "xplane_fdau.formats.xplane_fdr.config",
+            "xplane_fdau.formats.xplane_fdr.definition",
+            "xplane_fdau.formats.xplane_fdr.errors",
+            "xplane_fdau.formats.xplane_fdr.geojson",
+            "xplane_fdau.formats.xplane_fdr.models",
+            "xplane_fdau.formats.xplane_fdr.profiles",
+            "xplane_fdau.formats.xplane_fdr.reader",
+            "xplane_fdau.formats.xplane_fdr.schemas",
+            "xplane_fdau.formats.xplane_fdr.writer",
+            "xplane_fdau.sinks",
+            "xplane_fdau.sinks.xplane_fdr",
+        }
+
+        imported = installed_smoke.import_all_modules(xplane_fdau)
+
+        self.assertEqual(expected, set(imported))
+        for name in imported:
+            self.assertIn(name, sys.modules)
+
     def test_checkout_path_detection_rejects_checkout_import(self) -> None:
         checkout = Path("C:/work/xplane-fdr").resolve()
         with self.assertRaisesRegex(installed_smoke.SmokeError, "checkout"):

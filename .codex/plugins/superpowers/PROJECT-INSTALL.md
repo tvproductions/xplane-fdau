@@ -10,7 +10,7 @@ This project vendors a fresh Superpowers installation for Codex in two places:
 - `.codex/plugins/superpowers/`: a self-contained copy of the Codex plugin
   metadata, assets, hooks, license, README, and skills.
 
-Project-specific operational skills will be designed for `xplane-fdr` after
-the written specification is approved. They should aim for operational parity
-with `xplane-webapi` while preserving this project's standard-library-only
-runtime contract. Instructions in `AGENTS.md` take precedence.
+Project-specific operational skills are maintained for `xplane-fdau` beneath
+`.codex/skills/`. They preserve this project's standard-library-only runtime,
+`unittest`, and unreleased non-publishing contracts. Instructions in `AGENTS.md`
+take precedence.

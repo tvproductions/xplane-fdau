@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import importlib
 import importlib.resources
 import importlib.util
 from pathlib import Path
+import pkgutil
 import subprocess
 import sys
 import tempfile
+from types import ModuleType
 
 
 MINIMAL_V3 = (
@@ -41,6 +44,17 @@ def ensure_legacy_package_absent() -> None:
     """Reject an environment that still exposes the unreleased legacy package."""
     if importlib.util.find_spec("xplane_fdr") is not None:
         raise SmokeError("legacy xplane_fdr package is installed")
+
+
+def import_all_modules(package: ModuleType) -> tuple[str, ...]:
+    """Discover and import every module shipped below one installed package."""
+    package_path = getattr(package, "__path__", None)
+    if package_path is None:
+        raise SmokeError(f"{package.__name__} is not an importable package")
+    names = (package.__name__, *(module.name for module in pkgutil.walk_packages(package_path, f"{package.__name__}.")))
+    for name in names:
+        importlib.import_module(name)
+    return names
 
 
 def validate_command_path(command: Path, interpreter: Path) -> Path:
@@ -79,6 +93,7 @@ def smoke(version: str, *, checkout: Path) -> None:
     if xplane_fdau.__version__ != version:
         raise SmokeError(f"installed version is {xplane_fdau.__version__}, expected {version}")
     ensure_legacy_package_absent()
+    import_all_modules(xplane_fdau)
     for name in xplane_fdau.__all__:
         getattr(xplane_fdau, name)
     schema = importlib.resources.files("xplane_fdau.formats.xplane_fdr").joinpath("schemas/fdr-record-config-v1.schema.json")

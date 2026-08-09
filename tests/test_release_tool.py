@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import base64
+import csv
+import hashlib
 import io
 from pathlib import Path
 import stat
@@ -10,6 +13,7 @@ import tempfile
 import unittest
 import warnings
 import zipfile
+from collections.abc import Callable
 from contextlib import redirect_stderr
 
 from tools import release
@@ -23,6 +27,25 @@ class ReleaseToolTests(unittest.TestCase):
                 files[source.as_posix()] = source.read_bytes()
         return files
 
+    def _wheel_record(self, files: dict[str, bytes], record_name: str) -> bytes:
+        output = io.StringIO(newline="")
+        writer = csv.writer(output, lineterminator="\n")
+        for name, payload in sorted(files.items()):
+            if name == record_name:
+                continue
+            digest = base64.urlsafe_b64encode(hashlib.sha256(payload).digest()).rstrip(b"=").decode("ascii")
+            writer.writerow((name, f"sha256={digest}", str(len(payload))))
+        writer.writerow((record_name, "", ""))
+        return output.getvalue().encode("utf-8")
+
+    def _replace_record_field(self, payload: bytes, row: int, column: int, value: str) -> bytes:
+        rows = list(csv.reader(io.StringIO(payload.decode("utf-8"), newline=""), strict=True))
+        rows[row][column] = value
+        output = io.StringIO(newline="")
+        writer = csv.writer(output, lineterminator="\n")
+        writer.writerows(rows)
+        return output.getvalue().encode("utf-8")
+
     def _make_dist(
         self,
         directory: Path,
@@ -31,6 +54,7 @@ class ReleaseToolTests(unittest.TestCase):
         wheel_tag: bytes | None = None,
         wheel_updates: dict[str, bytes] | None = None,
         wheel_remove: set[str] | None = None,
+        wheel_record: bytes | Callable[[bytes], bytes] | None = None,
         wheel_duplicates: tuple[str, bytes] | None = None,
         wheel_link: str | None = None,
         tar_updates: dict[str, bytes] | None = None,
@@ -38,13 +62,13 @@ class ReleaseToolTests(unittest.TestCase):
         tar_link: tuple[str, str] | None = None,
     ) -> None:
         metadata = wheel_metadata or b"Metadata-Version: 2.4\nName: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.12\n"
+        record_name = "xplane_fdau-0.1.0.dist-info/RECORD"
         wheel_files = self._package_files()
         wheel_files.update(
             {
                 "xplane_fdau-0.1.0.dist-info/METADATA": metadata,
                 "xplane_fdau-0.1.0.dist-info/WHEEL": wheel_tag or b"Wheel-Version: 1.0\nGenerator: test\nRoot-Is-Purelib: true\nTag: py3-none-any\n",
                 "xplane_fdau-0.1.0.dist-info/entry_points.txt": b"[console_scripts]\nxplane-fdau = xplane_fdau.cli:main\n\n",
-                "xplane_fdau-0.1.0.dist-info/RECORD": b"",
                 "xplane_fdau-0.1.0.dist-info/licenses/LICENSE": Path("LICENSE").read_bytes(),
             }
         )
@@ -52,6 +76,14 @@ class ReleaseToolTests(unittest.TestCase):
             wheel_files.update(wheel_updates)
         for name in wheel_remove or ():
             wheel_files.pop(name, None)
+        if record_name not in (wheel_remove or set()):
+            generated_record = self._wheel_record(wheel_files, record_name)
+            if isinstance(wheel_record, bytes):
+                wheel_files[record_name] = wheel_record
+            elif wheel_record is not None:
+                wheel_files[record_name] = wheel_record(generated_record)
+            else:
+                wheel_files[record_name] = generated_record
         wheel = directory / "xplane_fdau-0.1.0-py3-none-any.whl"
         with zipfile.ZipFile(wheel, "w") as archive:
             for name in (
@@ -125,6 +157,32 @@ class ReleaseToolTests(unittest.TestCase):
 
         self.assertEqual("xplane_fdau-0.1.0-py3-none-any.whl", artifacts.wheel.name)
         self.assertEqual("xplane_fdau-0.1.0.tar.gz", artifacts.sdist.name)
+
+    def test_check_dist_rejects_invalid_wheel_record_manifests(self) -> None:
+        digest = base64.urlsafe_b64encode(hashlib.sha256(b"").digest()).rstrip(b"=").decode("ascii")
+        cases: dict[str, bytes | Callable[[bytes], bytes]] = {
+            "empty": b"",
+            "malformed-encoding": b"\xff",
+            "malformed-csv": b'"unterminated,sha256=AAAA,1\n',
+            "wrong-column-count": b"only,two\n",
+            "missing-row": lambda payload: b"\n".join(payload.splitlines()[1:]) + b"\n",
+            "extra-row": lambda payload: payload + f"extra.py,sha256={digest},0\n".encode(),
+            "duplicate-row": lambda payload: payload + payload.splitlines(keepends=True)[0],
+            "traversal-row": lambda payload: payload + f"../evil.py,sha256={digest},0\n".encode(),
+            "wrong-digest": lambda payload: self._replace_record_field(payload, 0, 1, f"sha256={'A' * 43}"),
+            "padded-digest": lambda payload: self._replace_record_field(payload, 0, 1, f"sha256={'A' * 43}="),
+            "invalid-algorithm": lambda payload: self._replace_record_field(payload, 0, 1, f"md5={'A' * 43}"),
+            "wrong-size": lambda payload: self._replace_record_field(payload, 0, 2, "999999"),
+            "non-decimal-size": lambda payload: self._replace_record_field(payload, 0, 2, "1.0"),
+            "record-row-digest": lambda payload: self._replace_record_field(payload, -1, 1, f"sha256={digest}"),
+            "record-row-size": lambda payload: self._replace_record_field(payload, -1, 2, "0"),
+        }
+
+        for name, record in cases.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as raw:
+                self._make_dist(Path(raw), wheel_record=record)
+                with self.assertRaisesRegex(release.ReleaseError, "RECORD"):
+                    release.check_dist(Path(raw))
 
     def test_check_dist_rejects_hostile_metadata_and_internal_wheel_tag(self) -> None:
         cases = {

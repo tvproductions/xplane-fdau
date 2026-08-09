@@ -13,6 +13,29 @@ ROOT = Path(__file__).resolve().parents[1]
 class DocumentationTests(unittest.TestCase):
     """Protect the active FDAU and native-FDR documentation contract."""
 
+    def test_superseded_core_plan_cannot_be_mistaken_for_active_work(self) -> None:
+        """Agents must reach current authority before historical execution steps."""
+        plan = self._read_required_text(ROOT / "docs/superpowers/plans/2026-08-08-xplane-fdr-core.md")
+
+        notice = "**Superseded — non-executable:**"
+        self.assertIn(notice, plan)
+        self.assertLess(plan.index(notice), plan.index("**For agentic workers:**"))
+        self.assertIn(
+            "../../architecture/xplane12_virtual_fdau_ecosystem_design.md",
+            plan,
+        )
+        self.assertIn(
+            "../specs/2026-08-09-xplane-fdau-identity-fdr-kernel-migration-design.md",
+            plan,
+        )
+
+    def test_migration_spec_records_approved_unreleased_implementation_status(self) -> None:
+        """The governing migration spec must no longer invite draft review."""
+        specification = self._read_required_text(ROOT / "docs/superpowers/specs/2026-08-09-xplane-fdau-identity-fdr-kernel-migration-design.md")
+
+        self.assertIn("**Status:** Approved / implemented but unreleased", specification)
+        self.assertNotIn("**Status:** Draft", specification)
+
     def test_mkdocs_navigation_names_every_published_page(self) -> None:
         """A missing navigation entry makes a complete page undiscoverable."""
         config = (ROOT / "mkdocs.yml").read_text(encoding="utf-8")
@@ -164,6 +187,17 @@ class DocumentationTests(unittest.TestCase):
             self.assertNotIn("xplane-fdr inspect", text, path)
             self.assertNotIn("xplane-fdr validate", text, path)
             self.assertNotIn("xplane-fdr to-geojson", text, path)
+
+    def test_active_plugin_guidance_and_runtime_docstrings_use_fdau_identity(self) -> None:
+        """Current agent guidance and shipped help must name the installed project."""
+        plugin_guidance = self._read_required_text(ROOT / ".codex/plugins/superpowers/PROJECT-INSTALL.md")
+        runtime_paths = tuple(sorted((ROOT / "xplane_fdau").rglob("*.py")))
+        runtime_text = "\n".join(self._read_required_text(path) for path in runtime_paths)
+
+        self.assertIn("Project-specific operational skills are maintained for `xplane-fdau`", plugin_guidance)
+        self.assertNotIn("will be designed for `xplane-fdr`", plugin_guidance)
+        self.assertIn(":mod:`xplane_fdau.formats.xplane_fdr`", runtime_text)
+        self.assertNotIn(":mod:`xplane_fdr`", runtime_text)
 
     def test_migration_closeout_preserves_the_unreleased_next_contract_boundary(self) -> None:
         """The next agent must not release or skip the canonical contract sequence."""

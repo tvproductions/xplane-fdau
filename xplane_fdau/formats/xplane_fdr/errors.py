@@ -6,7 +6,7 @@ from os import PathLike
 
 
 class FDRError(ValueError):
-    """Base class for errors raised by :mod:`xplane_fdr`."""
+    """Base class for errors raised by :mod:`xplane_fdau.formats.xplane_fdr`."""
 
     def __init__(self, message: str) -> None:
         self.message = message

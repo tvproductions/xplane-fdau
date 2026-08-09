@@ -1,5 +1,11 @@
 # xplane-fdr Core Implementation Plan
 
+> **Superseded — non-executable:** Do not execute this historical plan. Current
+> authority is the
+> [virtual FDAU/FDIU ecosystem architecture](../../architecture/xplane12_virtual_fdau_ecosystem_design.md)
+> and the
+> [xplane-fdau identity/native-FDR migration specification](../specs/2026-08-09-xplane-fdau-identity-fdr-kernel-migration-design.md).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build and verify the independently releasable `xplane-fdr` standard-library-only package for X-Plane FDR v3/v4 reading, canonical v4 writing, push-first recording, configuration, profiles, GeoJSON, and offline commands.

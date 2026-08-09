@@ -4,11 +4,15 @@ from __future__ import annotations
 
 import argparse
 import ast
+import base64
+import csv
 from dataclasses import dataclass
 from email.parser import BytesParser
 import hashlib
+import io
 import json
 from pathlib import Path, PurePosixPath
+import re
 import stat
 import tarfile
 import tomllib
@@ -189,6 +193,47 @@ def _check_wheel_metadata(payload: bytes) -> None:
             raise ReleaseError(f"wheel WHEEL metadata must contain exactly {field}: {value}")
 
 
+def _check_wheel_record(
+    payload: bytes,
+    names: set[str],
+    read: Callable[[str], bytes],
+    *,
+    record_name: str,
+) -> None:
+    try:
+        text = payload.decode("utf-8")
+        rows = list(csv.reader(io.StringIO(text, newline=""), strict=True))
+    except (UnicodeDecodeError, csv.Error) as error:
+        raise ReleaseError(f"wheel RECORD is malformed: {error}") from error
+
+    entries: dict[str, tuple[str, str]] = {}
+    for line, row in enumerate(rows, start=1):
+        if len(row) != 3:
+            raise ReleaseError(f"wheel RECORD row {line} must contain exactly three columns")
+        name, digest, size = row
+        canonical = _safe_member_path(name, label="wheel RECORD").as_posix()
+        if canonical in entries:
+            raise ReleaseError(f"wheel RECORD contains duplicate row: {canonical}")
+        entries[canonical] = (digest, size)
+
+    if set(entries) != names:
+        missing = sorted(names - set(entries))
+        extra = sorted(set(entries) - names)
+        raise ReleaseError(f"wheel RECORD rows differ from file members; missing={missing}, extra={extra}")
+
+    for name, (digest, size) in entries.items():
+        if name == record_name:
+            if digest or size:
+                raise ReleaseError("wheel RECORD self-row must have empty digest and size")
+            continue
+        data = read(name)
+        expected_digest = base64.urlsafe_b64encode(hashlib.sha256(data).digest()).rstrip(b"=").decode("ascii")
+        if re.fullmatch(r"sha256=[A-Za-z0-9_-]{43}", digest) is None or digest != f"sha256={expected_digest}":
+            raise ReleaseError(f"wheel RECORD digest is invalid for {name}")
+        if size != str(len(data)):
+            raise ReleaseError(f"wheel RECORD size is invalid for {name}")
+
+
 def _check_package_payloads(read: Callable[[str], bytes], names: set[str], version: str, *, label: str) -> None:
     expected = _expected_package_files()
     package_names = {name for name in names if name.startswith(f"{PACKAGE}/")}
@@ -222,6 +267,8 @@ def _check_wheel(wheel: Path, version: str) -> None:
         }
         if set(names) != expected_names or set(directories) != _expected_directories(expected_names):
             raise ReleaseError("wheel members differ from the exact expected artifact set")
+        record_name = f"{dist_info}/RECORD"
+        _check_wheel_record(archive.read(record_name), set(names), archive.read, record_name=record_name)
         _check_metadata(archive.read(f"{dist_info}/METADATA"), version, label="wheel")
         _check_wheel_metadata(archive.read(f"{dist_info}/WHEEL"))
         expected_entry_points = b"[console_scripts]\nxplane-fdau = xplane_fdau.cli:main\n\n"

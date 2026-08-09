@@ -16,6 +16,9 @@ classifiers = [
 requires-python = ">=3.12"
 dependencies = []
 
+[project.scripts]
+xplane-fdr = "xplane_fdr.cli:main"
+
 [project.urls]
 Homepage = "https://tvproductions.github.io/xplane-fdr/"
 Documentation = "https://tvproductions.github.io/xplane-fdr/"

@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
+import math
 import os
 from pathlib import Path
 import re
 from typing import Callable, NoReturn, override, Protocol, TypeVar, cast
 
 from .errors import FDRParseError, FDRValidationError
-from .models import FDRDataref, FDRHeader, FDRMetadata, FDRRecording, FDRSample
+from .models import FDRDataref, FDRHeader, FDRLegacyColumn, FDRMetadata, FDRRecording, FDRSample
 
 
 _VERSION_PATTERN = re.compile(r"^([0-9]+)(?:\s+.*)?$")
@@ -26,6 +27,54 @@ _DATE_FORMATS = (
 )
 _READ_SIZE = 8192
 _T = TypeVar("_T")
+
+_VERSION_3_SOURCE_LABELS = (
+    "time",
+    "Longitude",
+    "Latitude",
+    "Altitude",
+    "HDG",
+    "Pitch",
+    "Roll",
+    "BaroA",
+    "AltMSL",
+    "VSpd",
+    "TAS",
+    "IAS",
+    "GndSpd",
+    "Stall Warning",
+    "flap",
+    "flap",
+    "OAT",
+    "wind",
+    "wind speed",
+    "FQtyL",
+    "FQtyR",
+    "volt1",
+    "amp1",
+    "OilP",
+    "OilT",
+    "Eng1 Percent Power",
+    "RPM",
+    "MAP",
+    "FFlow",
+    "CHT-1",
+    "CHT-2",
+    "CHT-3",
+    "CHT-4",
+    "CHT-5",
+    "CHT-6",
+    "EGT-1",
+    "EGT-2",
+    "EGT-3",
+    "EGT-4",
+    "EGT-5",
+    "EGT-6",
+)
+_VERSION_3_DUPLICATE_FIELD_IDS = {14: "flap[0]", 15: "flap[1]"}
+_VERSION_3_LEGACY_COLUMNS = tuple(
+    FDRLegacyColumn(_VERSION_3_DUPLICATE_FIELD_IDS.get(index, label), comment=label) for index, label in enumerate(_VERSION_3_SOURCE_LABELS)
+)
 
 
 class _ReadableText(Protocol):
@@ -85,6 +134,8 @@ class FDRSampleStream(Iterator[FDRSample]):
         self._owned = owned
         self._lines = _NormalizedLines(source)
         self._first_sample: tuple[int, str] | None = None
+        self._v3_start_time: time | None = None
+        self._v3_previous_elapsed: int | float | None = None
         self._closed = False
         self.header = self._parse_header()
 
@@ -118,6 +169,8 @@ class FDRSampleStream(Iterator[FDRSample]):
             if not stripped:
                 continue
             kind = stripped.partition(",")[0].strip()
+            if self.header.source_version == 3 and kind == "DATA":
+                return self._parse_sample(stripped, line)
             if kind in {"COMM", "DREF"} or _METADATA_PATTERN.fullmatch(kind):
                 self._parse_error(line, "header record after samples began")
             return self._parse_sample(stripped, line)
@@ -140,8 +193,8 @@ class FDRSampleStream(Iterator[FDRSample]):
         if version_match is None:
             self._parse_error(version_line, "version line must begin with an integer and optional suffix text")
         version = int(version_match.group(1))
-        if version != 4:
-            self._parse_error(version_line, "reader supports version 4 only")
+        if version not in {3, 4}:
+            self._parse_error(version_line, "reader supports versions 3 and 4 only")
 
         comments: list[str] = []
         metadata: list[FDRMetadata] = []
@@ -154,7 +207,7 @@ class FDRSampleStream(Iterator[FDRSample]):
                 continue
             kind, separator, payload = stripped.partition(",")
             kind = kind.strip()
-            if ":" in kind:
+            if (version == 3 and kind == "DATA") or (version == 4 and ":" in kind):
                 self._first_sample = (line, stripped)
                 break
             if not separator:
@@ -163,7 +216,7 @@ class FDRSampleStream(Iterator[FDRSample]):
             last_header_line = line
             if kind == "COMM":
                 comments.append(payload)
-            elif kind == "DREF":
+            elif kind == "DREF" and version == 4:
                 dataref = self._parse_dataref(payload, line)
                 self._validate_dataref_append(origin, comments, metadata, datarefs, dataref, local_date, line)
                 datarefs.append(dataref)
@@ -171,17 +224,22 @@ class FDRSampleStream(Iterator[FDRSample]):
                 metadata.append(self._validated(FDRMetadata, line, kind, payload))
                 if kind == "DATE":
                     local_date = self._parse_date(payload, line)
+                elif kind == "TIME" and version == 3:
+                    self._v3_start_time = self._parse_time(payload, line, name="TIME")
             else:
                 self._parse_error(line, "metadata key must be four-character uppercase text")
+        if version == 3 and self._v3_start_time is None:
+            required_line = self._first_sample[0] if self._first_sample is not None else last_header_line
+            self._parse_error(required_line, "version 3 requires a valid TIME header")
         return self._validated(
             FDRHeader,
             last_header_line,
-            source_version=4,
+            source_version=version,
             source_origin=origin,
             comments=tuple(comments),
             metadata=tuple(metadata),
-            datarefs=tuple(datarefs),
-            legacy_columns=(),
+            datarefs=tuple(datarefs) if version == 4 else (),
+            legacy_columns=_VERSION_3_LEGACY_COLUMNS if version == 3 else (),
             local_date=local_date,
         )
 
@@ -232,18 +290,16 @@ class FDRSampleStream(Iterator[FDRSample]):
         self._parse_error(line, "DATE must be MM/DD/YYYY, MM/DD/YY, or YYYY-MM-DD")
 
     def _parse_sample(self, text: str, line: int) -> FDRSample:
+        if self.header.source_version == 3:
+            return self._parse_v3_sample(text, line)
+        return self._parse_v4_sample(text, line)
+
+    def _parse_v4_sample(self, text: str, line: int) -> FDRSample:
         fields = tuple(field.strip() for field in text.split(","))
         expected = 7 + len(self.header.datarefs)
         if len(fields) != expected:
             self._parse_error(line, f"sample requires exactly {expected} columns")
-        timestamp = fields[0]
-        if _TIMESTAMP_PATTERN.fullmatch(timestamp) is None:
-            self._parse_error(line, "invalid UTC time")
-        hour, remainder = timestamp.split(":", 1)
-        try:
-            time_utc = time.fromisoformat(f"{hour.zfill(2)}:{remainder}")
-        except ValueError:
-            self._parse_error(line, "invalid UTC time")
+        time_utc = self._parse_time(fields[0], line, name="UTC time")
         numbers = tuple(self._parse_number(value, line, "sample number") for value in fields[1:])
         return self._validated(
             FDRSample,
@@ -258,6 +314,50 @@ class FDRSampleStream(Iterator[FDRSample]):
             additional_values=numbers[6:],
             legacy_values=(),
         )
+
+    def _parse_v3_sample(self, text: str, line: int) -> FDRSample:
+        fields = tuple(field.strip() for field in text.split(","))
+        if not fields or fields[0] != "DATA":
+            self._parse_error(line, "version 3 sample must begin with DATA")
+        values = fields[1:]
+        if len(values) != len(_VERSION_3_LEGACY_COLUMNS):
+            self._parse_error(line, "version 3 DATA requires exactly 41 values")
+        numbers = tuple(self._parse_number(value, line, "sample number") for value in values)
+        elapsed = numbers[0]
+        if elapsed < 0 or (type(elapsed) is float and not math.isfinite(elapsed)):
+            raise FDRValidationError("elapsed seconds must be finite and non-negative", source=self._source_name, line=line)
+        if self._v3_previous_elapsed is not None and elapsed < self._v3_previous_elapsed:
+            raise FDRValidationError("elapsed seconds must be non-decreasing", source=self._source_name, line=line)
+        if self._v3_start_time is None:  # pragma: no cover - protected by eager header parsing
+            self._parse_error(line, "version 3 requires a valid TIME header")
+        try:
+            resolved = datetime.combine(date.min, self._v3_start_time) + timedelta(seconds=elapsed)
+        except OverflowError as error:
+            raise FDRValidationError("elapsed seconds are out of range", source=self._source_name, line=line) from error
+        sample = self._validated(
+            FDRSample,
+            line,
+            time_utc=resolved.time(),
+            longitude=numbers[1],
+            latitude=numbers[2],
+            altitude_msl_ft=numbers[3],
+            heading_magnetic_deg=numbers[4],
+            pitch_deg=numbers[5],
+            roll_deg=numbers[6],
+            additional_values=(),
+            legacy_values=numbers,
+        )
+        self._v3_previous_elapsed = elapsed
+        return sample
+
+    def _parse_time(self, value: str, line: int, *, name: str) -> time:
+        if _TIMESTAMP_PATTERN.fullmatch(value) is None:
+            self._parse_error(line, f"invalid {name}")
+        hour, remainder = value.split(":", 1)
+        try:
+            return time.fromisoformat(f"{hour.zfill(2)}:{remainder}")
+        except ValueError:
+            self._parse_error(line, f"invalid {name}")
 
     def _parse_number(self, value: str, line: int, name: str) -> int | float:
         if _NUMBER_PATTERN.fullmatch(value) is None and _NONFINITE_PATTERN.fullmatch(value) is None:
@@ -278,7 +378,7 @@ class FDRSampleStream(Iterator[FDRSample]):
 
 
 class FDRReader:
-    """Read version 4 FDR paths and caller-owned text streams."""
+    """Read version 3 or 4 FDR paths and caller-owned text streams."""
 
     def open(self, source: str | os.PathLike[str] | _ReadableText) -> FDRSampleStream:
         """Open a lazy sample stream and parse its header."""

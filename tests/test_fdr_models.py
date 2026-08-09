@@ -454,6 +454,12 @@ class FDRRecordingTests(unittest.TestCase):
         self.assertEqual((), result.recording.samples[0].legacy_values)
         self.assertEqual((-87.9048, 41.9742), (result.recording.samples[0].longitude, result.recording.samples[0].latitude))
 
+    def test_v3_normalization_requires_opt_in_even_without_samples_or_columns(self) -> None:
+        recording = FDRRecording(FDRHeader(3, "A", (), (), (), (), None), ())
+
+        with self.assertRaises(FDRValidationError):
+            recording.normalized_v4()
+
     def test_v4_normalization_is_identity_without_omissions(self) -> None:
         recording = FDRRecording(make_v4_header(), (make_sample(),))
 

@@ -1,4 +1,4 @@
-"""Tests for incremental version 4 FDR parsing."""
+"""Tests for incremental version 3 and version 4 FDR parsing."""
 
 from __future__ import annotations
 
@@ -15,10 +15,146 @@ from xplane_fdr import FDRParseError, FDRReader, FDRSampleStream, FDRValidationE
 
 FIXTURE_ROOT = Path(__file__).parent / "fixtures" / "fdr"
 
+V3_LEGACY_FIELD_IDS = (
+    "time",
+    "Longitude",
+    "Latitude",
+    "Altitude",
+    "HDG",
+    "Pitch",
+    "Roll",
+    "BaroA",
+    "AltMSL",
+    "VSpd",
+    "TAS",
+    "IAS",
+    "GndSpd",
+    "Stall Warning",
+    "flap[0]",
+    "flap[1]",
+    "OAT",
+    "wind",
+    "wind speed",
+    "FQtyL",
+    "FQtyR",
+    "volt1",
+    "amp1",
+    "OilP",
+    "OilT",
+    "Eng1 Percent Power",
+    "RPM",
+    "MAP",
+    "FFlow",
+    "CHT-1",
+    "CHT-2",
+    "CHT-3",
+    "CHT-4",
+    "CHT-5",
+    "CHT-6",
+    "EGT-1",
+    "EGT-2",
+    "EGT-3",
+    "EGT-4",
+    "EGT-5",
+    "EGT-6",
+)
+V3_LEGACY_SOURCE_LABELS = (
+    "time",
+    "Longitude",
+    "Latitude",
+    "Altitude",
+    "HDG",
+    "Pitch",
+    "Roll",
+    "BaroA",
+    "AltMSL",
+    "VSpd",
+    "TAS",
+    "IAS",
+    "GndSpd",
+    "Stall Warning",
+    "flap",
+    "flap",
+    "OAT",
+    "wind",
+    "wind speed",
+    "FQtyL",
+    "FQtyR",
+    "volt1",
+    "amp1",
+    "OilP",
+    "OilT",
+    "Eng1 Percent Power",
+    "RPM",
+    "MAP",
+    "FFlow",
+    "CHT-1",
+    "CHT-2",
+    "CHT-3",
+    "CHT-4",
+    "CHT-5",
+    "CHT-6",
+    "EGT-1",
+    "EGT-2",
+    "EGT-3",
+    "EGT-4",
+    "EGT-5",
+    "EGT-6",
+)
+
+V3_ROW_VALUES = (
+    "0",
+    "-87.9048",
+    "41.9742",
+    "640",
+    "270",
+    "2",
+    "-1",
+    "29.92",
+    "640",
+    "0",
+    "100",
+    "95",
+    "98",
+    "0",
+    "0",
+    "0",
+    "20",
+    "180",
+    "10",
+    "20",
+    "20",
+    "28",
+    "0",
+    "45",
+    "180",
+    "75",
+    "2500",
+    "24",
+    "10",
+    "350",
+    "351",
+    "352",
+    "353",
+    "354",
+    "355",
+    "1300",
+    "1301",
+    "1302",
+    "1303",
+    "1304",
+    "1305",
+)
+
 
 def fdr_text(*records: str, origin: str = "A", version: str = "4") -> str:
     """Build literal FDR text without borrowing parser logic."""
     return "\n".join((origin, version, *records, ""))
+
+
+def v3_data(*, elapsed: str = "0", values: tuple[str, ...] = V3_ROW_VALUES) -> str:
+    """Build one literal version 3 DATA row with a replaceable elapsed field."""
+    return ",".join(("DATA", elapsed, *values[1:]))
 
 
 class NamedStringIO(io.StringIO):
@@ -174,6 +310,142 @@ class FDRReaderValidV4Tests(unittest.TestCase):
         self.assertIs(type(sample.roll_deg), float)
         self.assertEqual(int(huge), sample.altitude_msl_ft)
         self.assertEqual((int(huge),), sample.additional_values)
+
+
+class FDRReaderValidV3Tests(unittest.TestCase):
+    """Verify the licensed-example-backed fixed version 3 grammar."""
+
+    def test_fixture_preserves_exact_schema_values_and_common_navigation(self) -> None:
+        recording = FDRReader().read(FIXTURE_ROOT / "version3-minimal.fdr")
+
+        self.assertEqual((3, "A"), (recording.header.source_version, recording.header.source_origin))
+        self.assertEqual("18:30:00", recording.header.metadata_value("TIME"))
+        self.assertEqual(V3_LEGACY_FIELD_IDS, tuple(column.identifier for column in recording.header.legacy_columns))
+        self.assertEqual(V3_LEGACY_SOURCE_LABELS, tuple(column.comment for column in recording.header.legacy_columns))
+        self.assertEqual(len(recording.header.legacy_columns), len(recording.samples[0].legacy_values))
+        self.assertEqual(41, len(recording.samples[0].legacy_values))
+        self.assertEqual(
+            (-87.9048, 41.9742, 640, 270, 2, -1),
+            (
+                recording.samples[0].longitude,
+                recording.samples[0].latitude,
+                recording.samples[0].altitude_msl_ft,
+                recording.samples[0].heading_magnetic_deg,
+                recording.samples[0].pitch_deg,
+                recording.samples[0].roll_deg,
+            ),
+        )
+        self.assertEqual((-87.9048, 41.9742, 640, 270, 2, -1), recording.samples[0].legacy_values[1:7])
+        self.assertEqual((time(18, 30), time(18, 30, 1)), tuple(sample.time_utc for sample in recording.samples))
+        self.assertEqual(1305, recording.samples[0].legacy_values[-1])
+        self.assertEqual((), recording.samples[0].additional_values)
+
+    def test_version_suffix_and_dref_records_do_not_change_fixed_width(self) -> None:
+        recording = FDRReader().read(
+            NamedStringIO(
+                fdr_text(
+                    "TIME, 01:02:03",
+                    "DREF, sim/cockpit2/gauges/indicators/altitude_ft_pilot 1",
+                    v3_data(),
+                    version="3 X-Plane 12.4.3",
+                )
+            )
+        )
+
+        self.assertEqual(3, recording.header.source_version)
+        self.assertEqual((), recording.header.datarefs)
+        self.assertEqual(
+            "sim/cockpit2/gauges/indicators/altitude_ft_pilot 1",
+            recording.header.metadata_value("DREF"),
+        )
+        self.assertEqual(41, len(recording.samples[0].legacy_values))
+
+    def test_elapsed_seconds_resolve_fractional_time_and_midnight_rollover(self) -> None:
+        recording = FDRReader().read(
+            NamedStringIO(
+                fdr_text(
+                    "TIME, 23:59:59.500000",
+                    v3_data(elapsed="0"),
+                    v3_data(elapsed="0.75"),
+                    version="3",
+                )
+            )
+        )
+
+        self.assertEqual((time(23, 59, 59, 500000), time(0, 0, 0, 250000)), tuple(s.time_utc for s in recording.samples))
+        self.assertEqual((0, 0.75), tuple(s.legacy_values[0] for s in recording.samples))
+        self.assertEqual(0.75, recording.duration.total_seconds())
+
+    def test_normalization_requires_opt_in_reports_all_fields_and_retains_navigation(self) -> None:
+        recording = FDRReader().read(FIXTURE_ROOT / "version3-minimal.fdr")
+
+        with self.assertRaises(FDRValidationError):
+            recording.normalized_v4()
+        result = recording.normalized_v4(allow_lossy_legacy=True)
+
+        self.assertEqual(V3_LEGACY_FIELD_IDS, result.omitted_legacy_field_ids)
+        self.assertEqual((), result.recording.header.legacy_columns)
+        self.assertEqual((), result.recording.samples[0].legacy_values)
+        self.assertEqual(
+            (-87.9048, 41.9742, 640, 270, 2, -1),
+            (
+                result.recording.samples[0].longitude,
+                result.recording.samples[0].latitude,
+                result.recording.samples[0].altitude_msl_ft,
+                result.recording.samples[0].heading_magnetic_deg,
+                result.recording.samples[0].pitch_deg,
+                result.recording.samples[0].roll_deg,
+            ),
+        )
+
+
+class FDRReaderMalformedV3Tests(unittest.TestCase):
+    """Verify v3 TIME and fixed-row failures carry source line context."""
+
+    def assert_v3_parse_error(self, text: str, *, line: int, message_part: str) -> None:
+        source = NamedStringIO(text)
+        with self.assertRaises(FDRParseError) as caught:
+            FDRReader().read(source)
+        self.assertEqual(("memory.fdr", line), (caught.exception.source, caught.exception.line))
+        self.assertIn(message_part, caught.exception.message)
+
+    def test_time_header_is_required_and_must_be_zulu_time(self) -> None:
+        cases = (
+            (fdr_text(v3_data(), version="3"), 3, "TIME"),
+            (fdr_text("TIME, 24:00:00", v3_data(), version="3"), 3, "TIME"),
+            (fdr_text("TIME, 12:00", v3_data(), version="3"), 3, "TIME"),
+        )
+        for text, line, message in cases:
+            with self.subTest(text=text):
+                self.assert_v3_parse_error(text, line=line, message_part=message)
+
+    def test_data_rows_require_exact_verified_41_value_width(self) -> None:
+        for values in (V3_ROW_VALUES[:-1], (*V3_ROW_VALUES, "999")):
+            with self.subTest(width=len(values)):
+                self.assert_v3_parse_error(
+                    fdr_text("TIME, 12:00:00", v3_data(values=values), version="3"),
+                    line=4,
+                    message_part="41",
+                )
+
+    def test_elapsed_seconds_must_be_non_negative_and_ordered(self) -> None:
+        cases = (
+            (fdr_text("TIME, 12:00:00", v3_data(elapsed="-1"), version="3"), 4),
+            (
+                fdr_text(
+                    "TIME, 12:00:00",
+                    v3_data(elapsed="2"),
+                    v3_data(elapsed="1"),
+                    version="3",
+                ),
+                5,
+            ),
+        )
+        for text, line in cases:
+            with self.subTest(line=line), self.assertRaises(FDRValidationError) as caught:
+                FDRReader().read(NamedStringIO(text))
+            self.assertEqual(("memory.fdr", line), (caught.exception.source, caught.exception.line))
+            self.assertIn("elapsed seconds", caught.exception.message)
 
 
 class FDRReaderOwnershipTests(unittest.TestCase):

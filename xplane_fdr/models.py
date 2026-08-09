@@ -263,8 +263,8 @@ class FDRRecording:
     def normalized_v4(self, *, allow_lossy_legacy: bool = False) -> FDRNormalizationResult:
         """Return v4 data, requiring an explicit opt-in to omit legacy columns."""
         omitted = tuple(column.identifier for column in self.header.legacy_columns)
-        if omitted and not allow_lossy_legacy:
-            raise FDRValidationError("legacy values require allow_lossy_legacy=True for v4 normalization")
+        if self.header.source_version == 3 and not allow_lossy_legacy:
+            raise FDRValidationError("version 3 normalization requires allow_lossy_legacy=True")
         if not omitted and self.header.source_version == 4:
             return FDRNormalizationResult(self, ())
         normalized_header = replace(self.header, source_version=4, legacy_columns=())

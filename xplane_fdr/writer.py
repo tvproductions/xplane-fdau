@@ -112,6 +112,23 @@ def _wrapped_output_error(error: OSError, artifact_path: Path | None) -> FDROutp
         return wrapped
 
 
+def _publish_without_replacement(partial_path: Path, destination: Path) -> None:
+    os.link(partial_path, destination)
+    try:
+        os.unlink(partial_path)
+    except BaseException as primary:
+        wrapped_primary = _wrapped_output_error(primary, partial_path) if isinstance(primary, OSError) else primary
+        try:
+            os.unlink(destination)
+        except BaseException as rollback:
+            wrapped_rollback = _wrapped_output_error(rollback, destination) if isinstance(rollback, OSError) else rollback
+            raise BaseExceptionGroup(
+                "FDR partial cleanup and destination rollback failed",
+                [wrapped_primary, wrapped_rollback],
+            ) from None
+        raise wrapped_primary.with_traceback(wrapped_primary.__traceback__)
+
+
 class FDRStreamWriter:
     """Incrementally write validated samples and explicitly commit or abort."""
 
@@ -184,8 +201,7 @@ class FDRStreamWriter:
             if self._overwrite:
                 os.replace(partial_path, self._destination)
             else:
-                os.link(partial_path, self._destination)
-                os.unlink(partial_path)
+                _publish_without_replacement(partial_path, self._destination)
         except BaseException as primary:
             self._abort_after(primary)
         self._state = "committed"

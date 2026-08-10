@@ -11,6 +11,18 @@ Completed implementation plan:
 
 Identity and native-FDR-kernel migration: implemented and verified, but unreleased.
 
+## Current roadmap and design review
+
+`ROADMAP.md` is the capability-order and release-gate authority. `BACKLOG.md`
+is the measurable delivery ledger. The active canonical-contract design is:
+
+`docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md`
+
+That specification is drafted for written review and is not yet implementation
+authority. After approval it is executed through four separately reviewed plans
+tracked as backlog slices `C1` through `C4`; the first plan is the canonical
+contract foundation. Do not collapse the four slices into one oversized plan.
+
 The project is the unreleased `xplane-fdau` virtual FDAU/FDIU distribution:
 
 - Repository: `https://github.com/tvproductions/xplane-fdau.git`

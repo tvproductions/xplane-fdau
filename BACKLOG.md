@@ -10,8 +10,8 @@ slice receives one focused plan and one independently reviewable outcome.
 ## Current position
 
 - `M0` FDAU identity/native-FDR migration: `verified`.
-- Active design: Markdown-native backlog governance tooling epic.
-- Active child slice: `T1.1` authority contract and inventory normalization.
+- Active design: Source-layout migration and installed-import isolation.
+- Active child slice: `B1.1` source-layout migration.
 - Canonical contract design: written review remains pending for `C1.1`.
 - Release: prohibited.
 - Push/tag/publication: prohibited.
@@ -28,6 +28,28 @@ Before any release, separately reviewed increments must implement:
 
 The child slices below refine this sequence without weakening or reordering it.
 
+## Build-foundation child dashboard
+
+The governing [source-layout design](docs/superpowers/specs/2026-08-09-src-layout-migration-design.md)
+covers the selected pre-canonical build correction.
+
+| Child | Outcome | Status | Depends on | Spec | Plan | Gates |
+| --- | --- | --- | --- | --- | --- | --- |
+| `B1.1` | Source-layout migration and installed-import isolation | `designing` | `M0` | [design](docs/superpowers/specs/2026-08-09-src-layout-migration-design.md) | — | 0/5 |
+
+### B1.1 — Source-layout migration and installed-import isolation
+
+- [ ] The complete runtime package exists only under `src/xplane_fdau` and
+      `uv_build` uses `module-root = "src"`.
+- [ ] Quality, coverage, import-boundary, documentation, and release tooling
+      address the new physical source root without weakening existing checks.
+- [ ] Repository-root and installed-wheel tests prove imports resolve through
+      the installed project rather than a top-level checkout package.
+- [ ] Wheel members and public imports remain unchanged while source-archive
+      members use the required `src/xplane_fdau` path.
+- [ ] The full quality, strict documentation, distribution, and
+      installed-artifact gates pass with no release, tag, or package publication.
+
 ## Canonical-contract child dashboard
 
 All canonical child slices are governed by the current draft
@@ -38,7 +60,7 @@ when it is selected for execution.
 
 | Child | Outcome | Status | Depends on | Plan | Gates |
 | --- | --- | --- | --- | --- | --- |
-| `C1.1` | Canonical JSON and number encoding | `designing` | `M0` | — | 0/4 |
+| `C1.1` | Canonical JSON and number encoding | `designing` | `B1.1` | — | 0/4 |
 | `C1.2` | Identity, hashes, references, authority, provenance | `queued` | `C1.1` | — | 0/4 |
 | `C1.3` | Typed values and payload references | `queued` | `C1.2` | — | 0/4 |
 | `C1.4` | Clock domains, UTC, anchors, simulator timing | `queued` | `C1.2` | — | 0/4 |

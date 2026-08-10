@@ -64,7 +64,9 @@ points, or percentage extrapolated from unequal work.
 ```text
 M0 Identity and native FDR kernel                                      verified
  |
- +-> C1 Foundation -> C2 Catalogs -> C3 Evidence records -> C4 Closure
+ +-> B1 Source-layout isolation
+      |
+      +-> C1 Foundation -> C2 Catalogs -> C3 Evidence records -> C4 Closure
       |
       +-> A1 Acquisition, lifecycle, continuity, and fan-out
            |
@@ -85,13 +87,19 @@ Each epic expands into the child slices below.
 | --- | --- |
 | `M0` | Identity and native FDR kernel migration verified but unreleased |
 
+## B1 — Build foundation epic
+
+| Child | Outcome | Depends on |
+| --- | --- | --- |
+| `B1.1` | Source-layout migration and installed-import isolation | `M0` |
+
 ## C — Canonical semantic contract kernel
 
 ### C1 — Contract foundation epic
 
 | Child | Outcome | Depends on |
 | --- | --- | --- |
-| `C1.1` | Canonical JSON and binary64/integer encoding | `M0` |
+| `C1.1` | Canonical JSON and binary64/integer encoding | `B1.1` |
 | `C1.2` | Identity, hashing, references, authority, and provenance | `C1.1` |
 | `C1.3` | Typed values and content-addressed payload references | `C1.2` |
 | `C1.4` | Clock domains, UTC instants, anchors, and simulator timing | `C1.2` |

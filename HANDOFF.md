@@ -17,6 +17,15 @@ Identity and native-FDR-kernel migration: implemented and verified, but unreleas
 is the measurable delivery ledger. Point Superpowers to the backlog and advance
 one primary child slice per run.
 
+The selected pre-canonical build correction is `B1.1`, governed by:
+
+`docs/superpowers/specs/2026-08-09-src-layout-migration-design.md`
+
+It moves the runtime package to `src/xplane_fdau` and strengthens installed
+import isolation without changing the distribution identity, public API, or
+runtime dependency boundary. The written specification is drafted for review
+and is not yet implementation authority.
+
 The active repository-governance design is:
 
 `docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md`

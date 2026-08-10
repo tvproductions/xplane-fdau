@@ -786,51 +786,37 @@ wire format, so version 1 requires no compatibility alias or migration shim.
 
 ## Delivery sequence and plan boundaries
 
-`ROADMAP.md` and `BACKLOG.md` track this increment as four separately
-executable slices beneath this one normative semantic specification. This keeps
-the wire model coherent without creating one oversized implementation plan.
+`ROADMAP.md` treats `C1` through `C4` as architectural epics. `BACKLOG.md`
+decomposes them into eighteen run-sized child slices:
 
-### C1 — Canonical contract foundation
+1. `C1.1` canonical JSON and number encoding;
+2. `C1.2` identity, hashing, references, authority, and provenance;
+3. `C1.3` typed values and payload references;
+4. `C1.4` clock domains, UTC, anchors, and simulator timing;
+5. `C1.5` validity and quality vocabulary;
+6. `C2.1` measurement-definition model;
+7. `C2.2` measurement catalog and schema;
+8. `C2.3` source-binding definition;
+9. `C2.4` binding catalog and cross-catalog validation;
+10. `C3.1` raw-observation record and schema;
+11. `C3.2` measurement-sample record and schema;
+12. `C3.3` raw/sample lineage and validation;
+13. `C3.4` measurement-frame record and schema;
+14. `C3.5` frame closure, ordering, and validation;
+15. `C4.1` schema resource parity and version inventory;
+16. `C4.2` cross-language conformance corpus;
+17. `C4.3` public API and documentation closure; and
+18. `C4.4` artifact matrix and independent review.
 
-Plan:
-`docs/superpowers/plans/2026-08-09-xplane-fdau-contract-foundation.md`
-
-The plan implements common errors, identity, provenance, canonical JSON,
-content hashing, shared values, payload references, timing, validity, and
-quality. It ends with a usable, independently testable foundation and golden
-canonical vectors.
-
-### C2 — Measurement and source-binding catalogs
-
-Plan:
-`docs/superpowers/plans/2026-08-09-xplane-fdau-measurement-binding-catalogs.md`
-
-The plan implements measurement and source-binding definitions, their catalog
-schemas, exact references, and pure cross-catalog validation. It ends with
-provider-neutral synthetic fixtures and proves no stock/provider content ships.
-
-### C3 — Observation, sample, and frame records
-
-Plan:
-`docs/superpowers/plans/2026-08-09-xplane-fdau-observation-sample-frame-contracts.md`
-
-The plan implements raw observations, measurement samples, measurement frames,
-their schemas, lineage, ordering, and pure cross-contract validation. It does
-not introduce acquisition behavior.
-
-### C4 — Contract conformance and artifact closure
-
-Plan:
-`docs/superpowers/plans/2026-08-09-xplane-fdau-contract-conformance-closure.md`
-
-The plan completes the shared accepted/rejected/canonical corpus,
-documentation, resource parity, release-boundary hardening, fresh artifacts,
-installed-wheel verification, and independent review.
+Each child receives one focused implementation plan when selected. One agent
+run advances one primary child slice; cross-cutting documentation and backlog
+updates do not silently complete another child. Plan tasks remain beneath their
+child slice rather than becoming substitute backlog items.
 
 Every plan uses test-first `unittest` steps, frequent scoped commits, focused
-and complete verification, and its exact `BACKLOG.md` acceptance gates. A later
-plan cannot weaken an earlier plan's verified contract. No release action is
-part of any plan.
+and complete verification, and the exact acceptance gates in `BACKLOG.md`. A
+later plan cannot weaken an earlier child slice's verified contract. No release
+action is part of any plan.
 
 ## Acceptance criteria
 

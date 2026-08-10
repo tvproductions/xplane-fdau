@@ -19,9 +19,11 @@ is the measurable delivery ledger. The active canonical-contract design is:
 `docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md`
 
 That specification is drafted for written review and is not yet implementation
-authority. After approval it is executed through four separately reviewed plans
-tracked as backlog slices `C1` through `C4`; the first plan is the canonical
-contract foundation. Do not collapse the four slices into one oversized plan.
+authority. `C1` through `C4` are architectural epics, decomposed in `BACKLOG.md`
+into child slices `C1.1` through `C4.4`. Point Superpowers to the backlog and
+advance one primary child slice per run. The first slice is `C1.1`, canonical
+JSON and number encoding. Do not create a separate repository-local handoff
+workflow or collapse an epic into one implementation plan.
 
 The project is the unreleased `xplane-fdau` virtual FDAU/FDIU distribution:
 

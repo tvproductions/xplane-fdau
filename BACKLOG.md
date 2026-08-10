@@ -1,28 +1,19 @@
 # xplane-fdau Backlog
 
-- **Status:** Active delivery ledger
+- **Status:** Active delivery ledger and Superpowers entry point
 - **Updated:** 2026-08-09
 
-`ROADMAP.md` defines capability order and release gates. This file tracks each
-reviewable delivery slice, its dependencies, governing documents, status, and
-measurable acceptance evidence.
+Read `ROADMAP.md` for architecture order and dependencies. Then use this file to
+select one primary child slice whose prerequisites are verified. Each child
+slice receives one focused plan and one independently reviewable outcome.
 
-## Dashboard
+## Current position
 
-| ID | Outcome | Status | Depends on | Specification | Implementation plan | Verified gates |
-| --- | --- | --- | --- | --- | --- | --- |
-| `M0` | FDAU identity and native FDR kernel migration | `verified` | — | [Design](docs/superpowers/specs/2026-08-09-xplane-fdau-identity-fdr-kernel-migration-design.md) | [Plan](docs/superpowers/plans/2026-08-09-xplane-fdau-identity-fdr-kernel-migration.md) | 6/6 |
-| `C1` | Canonical contract foundation | `designing` | `M0` | [Draft design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/6 |
-| `C2` | Measurement and source-binding catalogs | `designing` | `C1` | [Draft design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/6 |
-| `C3` | Observation, sample, and frame records | `designing` | `C2` | [Draft design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/6 |
-| `C4` | Contract conformance and artifact closure | `designing` | `C3` | [Draft design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/6 |
-| `A1` | Acquisition profiles, demand, lifecycle, continuity, and fan-out | `queued` | `C4` | — | — | 0/5 |
-| `R1` | Canonical archive, manifest, recovery, and replay | `queued` | `A1` | — | — | 0/5 |
-| `P1` | Canonical-to-native-FDR projection with loss reporting | `queued` | `R1` | — | — | 0/5 |
-| `G1` | Canonical vertical-slice review and release-readiness decision | `queued` | `P1` | — | — | 0/5 |
-
-Gate counts are derived from the checklists below. A count and its checkbox
-evidence must change in the same commit.
+- `M0` FDAU identity/native-FDR migration: `verified`.
+- Active design: canonical contract kernel.
+- Active child slice: `C1.1` canonical JSON and number encoding.
+- Release: prohibited.
+- Push/tag/publication: prohibited.
 
 ## Canonical release boundary
 
@@ -34,181 +25,244 @@ Before any release, separately reviewed increments must implement:
 4. projection from canonical samples to the native FDR sink with explicit loss
    reporting.
 
-The slice IDs and gates below refine this sequence without weakening or
-reordering it.
+The child slices below refine this sequence without weakening or reordering it.
 
-## Active canonical-contract increment
+## Canonical-contract child dashboard
 
-The canonical-contract design is one normative semantic specification with four
-separately executable plans. This prevents a single oversized implementation
-plan while keeping shared wire decisions coherent.
+All canonical child slices are governed by the current draft
+[canonical-contract design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md).
+Only `C1.1` is active during the current design run. After written approval,
+the covered children become `specified`; each receives its own plan when it is
+selected for execution.
 
-### C1 — Canonical contract foundation
+| Child | Outcome | Status | Depends on | Plan | Gates |
+| --- | --- | --- | --- | --- | --- |
+| `C1.1` | Canonical JSON and number encoding | `designing` | `M0` | — | 0/4 |
+| `C1.2` | Identity, hashes, references, authority, provenance | `queued` | `C1.1` | — | 0/4 |
+| `C1.3` | Typed values and payload references | `queued` | `C1.2` | — | 0/4 |
+| `C1.4` | Clock domains, UTC, anchors, simulator timing | `queued` | `C1.2` | — | 0/4 |
+| `C1.5` | Validity and quality vocabulary | `queued` | `C1.2` | — | 0/4 |
+| `C2.1` | Measurement-definition model | `queued` | `C1.3`, `C1.5` | — | 0/4 |
+| `C2.2` | Measurement catalog and schema | `queued` | `C2.1` | — | 0/4 |
+| `C2.3` | Source-binding definition | `queued` | `C2.2` | — | 0/4 |
+| `C2.4` | Binding catalog and cross-validation | `queued` | `C2.3` | — | 0/4 |
+| `C3.1` | Raw-observation record and schema | `queued` | `C1.3`–`C1.5`, `C2.4` | — | 0/4 |
+| `C3.2` | Measurement-sample record and schema | `queued` | `C3.1` | — | 0/4 |
+| `C3.3` | Raw/sample lineage and validation | `queued` | `C3.2` | — | 0/4 |
+| `C3.4` | Measurement-frame record and schema | `queued` | `C3.3` | — | 0/4 |
+| `C3.5` | Frame closure, ordering, and validation | `queued` | `C3.4` | — | 0/4 |
+| `C4.1` | Schema parity and version inventory | `queued` | `C3.5` | — | 0/4 |
+| `C4.2` | Cross-language conformance corpus | `queued` | `C4.1` | — | 0/4 |
+| `C4.3` | Public APIs and documentation | `queued` | `C4.2` | — | 0/4 |
+| `C4.4` | Artifact matrix and independent review | `queued` | `C4.3` | — | 0/5 |
 
-**Outcome:** Deterministic, language-neutral identity, canonical JSON, shared
-value, timing, provenance, validity, and quality primitives.
+Gate counts are derived from the checklists below and change only with committed
+evidence.
 
-**Planned plan:**
-`docs/superpowers/plans/2026-08-09-xplane-fdau-contract-foundation.md`
+## Canonical-contract acceptance gates
 
-Acceptance gates:
+### C1.1 — Canonical JSON and number encoding
 
-- [ ] Exact canonical JSON and SHA-256 golden vectors pass.
-- [ ] Identity, definition/record reference, authority, provenance, and producer
-      contracts are immutable and strictly validated.
-- [ ] Signed 64-bit, finite binary64, Unicode, structured value, and payload
-      reference contracts pass boundary tests.
-- [ ] UTC, monotonic/source clock, anchor, simulator-time, and acquisition-phase
-      contracts preserve distinct semantics.
-- [ ] Validity and closed canonical quality vocabularies pass invariant tests.
-- [ ] Source, quality, import-boundary, and installed-wheel gates remain green
-      with no runtime dependency.
+- [ ] Exact UTF-8, Unicode, object-key, array, string-escaping, and final-LF
+      vectors pass.
+- [ ] Signed 64-bit integer and finite binary64 canonical lexical vectors pass.
+- [ ] Duplicate keys, non-NFC/surrogate text, overflow, and non-finite values
+      fail with exact error context.
+- [ ] Canonical bytes and SHA-256 results are deterministic without relying on
+      incidental `json.dumps()` float spelling.
 
-### C2 — Measurement and source-binding catalogs
+### C1.2 — Identity, hashing, references, authority, and provenance
 
-**Outcome:** Provider-neutral semantic catalogs and exact binding references,
-with no shipped provider or aircraft content.
+- [ ] Semantic IDs, revisions, UUIDs, generations, and sequences enforce exact
+      syntax and range.
+- [ ] Definition and record self-hashes use the specified canonical preimages.
+- [ ] Definition/record references pin identity, revision/version, and hash.
+- [ ] Authority, provenance, and producer values are immutable and round-trip.
 
-**Planned plan:**
-`docs/superpowers/plans/2026-08-09-xplane-fdau-measurement-binding-catalogs.md`
+### C1.3 — Typed values and payload references
 
-Acceptance gates:
+- [ ] Boolean, integer, real, string, enumeration, vector, array, and byte-only
+      representations retain exact type and order.
+- [ ] Boolean/numeric coercion, unauthorized nulls, invalid shapes, and invalid
+      enum values fail closed.
+- [ ] Payload references preserve media type, length, hash, role, and retention
+      status without reading storage.
+- [ ] Programmatic and loaded validation produce equivalent property paths.
 
-- [ ] Measurement definition/catalog models and version-1 schema pass strict
-      construction, load, hash, order, and round-trip tests.
-- [ ] Source-binding definition/catalog models and version-1 schema pass the
-      same strict gates.
-- [ ] Every binding pins one measurement ID, revision, and content hash.
-- [ ] Pure cross-catalog validation rejects missing, incompatible, or ambiguous
-      references without executing transforms.
-- [ ] Catalog schemas and synthetic conformance fixtures are packaged exactly.
-- [ ] Artifact inspection proves no stock DataRefs, aircraft catalogs, provider
-      adapters, executable expressions, or ARINC constants ship.
+### C1.4 — Clock domains, UTC, anchors, and simulator timing
 
-### C3 — Observation, sample, and frame records
+- [ ] Clock domains/readings preserve unit, resolution, origin, scope, and
+      producer identity.
+- [ ] UTC instants preserve exact nanosecond text and explicit `Z`.
+- [ ] Same-domain comparison succeeds while unrelated-domain comparison fails.
+- [ ] Clock anchors, uncertainty, source timing, simulator timing, replay/pause,
+      cycle, and acquisition-phase values round-trip without invention.
 
-**Outcome:** Immutable canonical evidence records with exact timing, quality,
-ordering, and raw lineage.
+### C1.5 — Validity and acquisition quality
 
-**Planned plan:**
-`docs/superpowers/plans/2026-08-09-xplane-fdau-observation-sample-frame-contracts.md`
+- [ ] Validity is a closed state independent of quality flags.
+- [ ] Quality flags are closed, unique, and lexically ordered.
+- [ ] Empty quality flags do not manufacture validity.
+- [ ] Operational findings and tolerances cannot enter acquisition quality.
 
-Acceptance gates:
+### C2.1 — Measurement-definition model
 
-- [ ] Raw-observation model and version-1 schema preserve provider/resource,
-      type/shape, value/status, generation, and timing evidence.
-- [ ] Measurement-sample model and version-1 schema preserve exact catalog
-      references, normalization status, validity, quality, freshness, and raw
-      lineage.
-- [ ] Measurement-frame model and version-1 schema preserve canonical sample
-      ordering and actual observation arrival order.
-- [ ] Pure sample/frame validators reject reference, representation, unit,
-      range, timing, epoch, order, and lineage conflicts.
-- [ ] Failed reads/conversions cannot acquire fabricated values, timestamps, or
-      validity.
-- [ ] No acquisition engine, transform execution, payload storage, archive, or
-      native projection behavior is introduced.
+- [ ] Representation-specific, unit/unitless, frame/datum/axis, precision,
+      resolution, range, and enumeration invariants pass.
+- [ ] Freshness, interpolation, discontinuity, sensitivity, applicability, and
+      provenance fields are explicit.
+- [ ] Irrelevant representation fields and semantic revision mismatches fail.
+- [ ] Synthetic definitions are immutable, hash-stable, and round-trip.
 
-### C4 — Contract conformance and artifact closure
+### C2.2 — Measurement catalog and schema
 
-**Outcome:** One independently reviewed, distributable contract kernel whose
-schemas, implementation, fixtures, documentation, and artifacts agree.
+- [ ] Catalog ID/revision/hash, authority, provenance, scope, and definition
+      ordering are exact.
+- [ ] Duplicate or noncanonical definition order fails closed.
+- [ ] Version-1 measurement-catalog schema matches runtime shape.
+- [ ] No provider resource identity or stock X-Plane catalog content ships.
 
-**Planned plan:**
-`docs/superpowers/plans/2026-08-09-xplane-fdau-contract-conformance-closure.md`
+### C2.3 — Source-binding definition
 
-Acceptance gates:
+- [ ] Each binding pins one exact measurement reference.
+- [ ] Provider/adapter, resource, expected/observed shape boundary, native unit,
+      applicability, dependencies, companions, phase, and replay policy are
+      explicit.
+- [ ] Transform/calibration references contain identity and data-only parameters,
+      never executable expressions.
+- [ ] Failure dispositions and irrelevant fields fail closed.
 
-- [ ] Accepted/rejected fixture manifest covers every family, boundary, error
-      class, property path, canonical byte vector, and expected hash.
-- [ ] Packaged schemas and documentation copies are byte-identical and
-      independently versioned.
-- [ ] Documentation clearly separates measurements/bindings,
-      observations/samples, FDAU frames/ARINC frames, and acquisition
-      quality/operational evaluation.
-- [ ] Complete native FDR and canonical-contract `unittest` suites and all
-      repository quality gates pass.
-- [ ] Fresh wheel/sdist and installed-wheel smoke tests pass on Python
-      3.12–3.14 with exact resources and no runtime dependencies.
-- [ ] Independent review finds no unresolved load-bearing defect; version
-      `0.1.0` remains unreleased.
+### C2.4 — Binding catalog and cross-validation
 
-## Remaining release-path increments
+- [ ] Binding catalog identity, ordering, uniqueness, schema, and hashes pass.
+- [ ] Missing or mismatched measurement references fail.
+- [ ] Direct bindings enforce unit/representation/shape/applicability parity.
+- [ ] Transformed bindings validate declarations without executing or claiming
+      algorithm conformance.
 
-The exact gates below are architectural exit conditions. Each item receives a
-reviewed specification and may be split into smaller executable plans before
-implementation.
+### C3.1 — Raw-observation record and schema
 
-### A1 — Acquisition profiles, demand, lifecycle, continuity, and fan-out
+- [ ] Provider/adapter/resource, generations, type/shape, timing, status, and
+      value evidence round-trip exactly.
+- [ ] Inline value, payload reference, and absent value are mutually exclusive.
+- [ ] Status/value combinations enforce the approved matrix.
+- [ ] Receiver timing is never relabeled as source timing.
 
-- [ ] Immutable acquisition profiles and consumer demands are specified.
-- [ ] Compatible demand merge and contradictory-demand rejection are proven.
-- [ ] Lifecycle/epoch transitions and continuity classification are proven.
-- [ ] Generic sink/subscriber fan-out, backpressure, and failure isolation are
-      proven without provider imports.
-- [ ] Independent review and installed-artifact gates pass.
+### C3.2 — Measurement-sample record and schema
 
-### R1 — Canonical archive, manifest, recovery, and replay
+- [ ] Sample/session/stream/epoch/sequence and exact definition references pass.
+- [ ] Normalized value/unit, applied transforms, validity, quality, and freshness
+      obey local invariants.
+- [ ] Absent or failed normalization cannot contain a fabricated value.
+- [ ] Version-1 sample schema matches runtime shape and canonical hash.
 
-- [ ] Canonical archive preserves every accepted observation and sample lineage
-      within declared retention policy.
-- [ ] Manifest hashes, relationships, provenance, and terminal results are
-      deterministic and complete.
-- [ ] Atomic publication, checkpoint, partial recovery, and no-replace behavior
-      are proven under injected failures.
-- [ ] Deterministic replay reproduces identities, ordering, timing semantics,
-      and declared epoch behavior.
-- [ ] Long-session, artifact, independent-review, and installed-wheel gates
-      pass.
+### C3.3 — Raw/sample lineage and validation
 
-### P1 — Canonical-to-native-FDR projection
+- [ ] Every sample reaches one complete observation or immutable record reference.
+- [ ] Ordered derivation-parent references remain intact and cycle-free within
+      the supplied validation closure.
+- [ ] Catalog-resolved sample representation, unit, range, binding, status, and
+      quality validation passes.
+- [ ] Missing, mismatched, or stale lineage fails with exact context.
 
-- [ ] Projection maps exact measurement/binding references to every native FDR
-      field.
-- [ ] Omitted measurements, defaults/placeholders, conversions, rounding,
-      precision loss, and v3/v4 limitations are reported.
-- [ ] Canonical evidence remains authoritative and is not rewritten through the
-      lossy projection.
-- [ ] End-to-end canonical-to-sink tests and X-Plane-oriented fixture tests pass.
-- [ ] Independent review and installed-artifact gates pass.
+### C3.4 — Measurement-frame record and schema
 
-### G1 — Canonical vertical-slice review
+- [ ] Frame identity, acquisition instant, samples, observations, producer, and
+      limitations round-trip.
+- [ ] Complete raw observations preserve arrival order.
+- [ ] Samples preserve canonical semantic order and use frame-local observation
+      references.
+- [ ] Version-1 frame schema matches runtime shape and canonical hash.
 
-- [ ] `C1`–`C4`, `A1`, `R1`, and `P1` are verified with durable evidence.
-- [ ] Cross-slice identity, timing, quality, lineage, recovery, replay, and loss
-      semantics are consistent.
-- [ ] Runtime and built artifacts remain standard-library-only and
-      provider-neutral.
-- [ ] The release candidate passes the complete Python 3.12–3.14 matrix outside
-      the checkout.
-- [ ] A separate reviewed decision either authorizes release preparation or
-      records remaining blockers; this gate itself does not publish anything.
+### C3.5 — Frame closure, ordering, and validation
 
-## Later governed work
+- [ ] Sample and observation identities are unique and reference closure is
+      complete.
+- [ ] Noncanonical sample order fails rather than being silently rewritten.
+- [ ] Frame/session/stream/epoch/timing conflicts fail with exact context.
+- [ ] Multiple corroborating bindings for one measurement are accepted.
 
-| ID | Work | Status | Required before design or implementation |
+### C4.1 — Schema resource parity and version inventory
+
+- [ ] All five version-1 schema resources have exact IDs and family mappings.
+- [ ] Packaged and documentation schema copies are byte-identical.
+- [ ] Schema inventory rejects missing, duplicate, or unrecognized families.
+- [ ] Installed resources contain no provider or standards implementation.
+
+### C4.2 — Cross-language conformance corpus
+
+- [ ] Manifest covers accepted, rejected, and canonical cases for every family.
+- [ ] Rejected cases pin expected error class and JSON property path.
+- [ ] Accepted cases pin canonical bytes and SHA-256.
+- [ ] Boundary corpus covers numeric, Unicode, timing, ordering, lineage, and
+      reference semantics.
+
+### C4.3 — Public API and documentation
+
+- [ ] Root package remains version-only; semantic packages expose exact owned
+      names.
+- [ ] Documentation distinguishes measurement/binding, observation/sample,
+      FDAU/ARINC frames, and acquisition/operational quality.
+- [ ] Native FDR APIs and documentation remain unchanged and green.
+- [ ] Runtime import-boundary tests reject providers, hosts, networks, and
+      third-party imports.
+
+### C4.4 — Artifact matrix and independent review
+
+- [ ] Complete `unittest` and repository quality gates pass.
+- [ ] Fresh wheel/sdist contain exact schemas, fixtures/resources, and no runtime
+      dependency or provider content.
+- [ ] Installed-wheel smoke passes on Python 3.12, 3.13, and 3.14 outside the
+      checkout.
+- [ ] Independent review has no unresolved load-bearing finding.
+- [ ] Version `0.1.0` remains unreleased and no push/tag/publication occurs.
+
+## Future release-path child dashboard
+
+These child boundaries are architectural backlog. Their acceptance gates become
+measurable when each governing specification is reviewed; none is implementation
+authority yet.
+
+| Child range | Epic outcome | Status | Entry dependency |
 | --- | --- | --- | --- |
-| `I1` | q4xpcc Phase 24A integration | `queued` | Verified canonical slice and consumer-owned adapter plan |
-| `I2` | xpwebapi corroboration adapter | `queued` | Stable contract kernel and consumer-owned development plan |
-| `S1` | Standards baseline/traceability contract | `queued` | Stable contract identities and separate standards specification |
-| `S2` | ARINC 717 profile and codec | `blocked` | Licensed edition, scoped profile, FRED relationship, golden vectors |
-| `S3` | ARINC 647A/FRED boundary | `blocked` | Licensed edition and redistribution decision |
-| `S4` | ARINC 429 profile and codec | `blocked` | Licensed edition and concrete source/target/use case |
-| `F1` | FDM analysis | `deferred` | Canonical archive plus separate downstream project specification |
-| `F2` | FOQA governance/claims | `deferred` | Organizational approval, governance, validation, and legal review |
+| `A1.1`–`A1.9` | Profiles, demand, transforms, lifecycle, cadence, continuity, fan-out, acquisition session | `queued` | `C4.4` |
+| `R1.1`–`R1.7` | Descriptor, archive, writer, manifest, recovery, replay, long-session closure | `queued` | `A1.9` |
+| `P1.1`–`P1.6` | Profiles, native spine/DREF projection, timing, loss report, sink closure | `queued` | `R1.7` |
+| `G1` | Independent canonical vertical-slice reconciliation | `queued` | `C4.4`, `A1.9`, `R1.7`, `P1.6` |
 
-Native X-Plane textual `.fdr` v3/v4 remains only a lossy FDAU projection and
-sink. ARINC and FDM/FOQA work cannot be pulled into an earlier slice by changing
-this backlog alone.
+Exact child names and dependencies are defined in `ROADMAP.md`. Do not merge an
+epic back into one plan when its design begins.
 
-## Backlog maintenance rules
+## Parallel governed tracks
 
-1. The dashboard status must agree with its linked spec, plan, and checklist.
-2. A proposed path is not implementation authority.
-3. Each implementation plan must produce one independently testable outcome.
-4. New requirements enter as a backlog item or an explicit acceptance-gate
-   amendment, never as an untracked plan expansion.
-5. A checked gate cites committed verification evidence in its plan or handoff.
-6. `verified` requires every gate checked and independent review resolved.
-7. `released` requires a separate authorized release action; no current item is
-   authorized for release.
+FDM/FOQA work remains downstream and separately governed; it is not part of the
+canonical runtime or release gate.
+
+| Child | Work | Status | Dependency |
+| --- | --- | --- | --- |
+| `I1.1` | q4xpcc contract/fixture integration | `queued` | `C4.4` |
+| `I1.2` | q4xpcc live acquisition integration | `queued` | `A1.9`, consumer plan |
+| `I2.1` | xpwebapi corroboration adapter | `queued` | `C4.4`, consumer plan |
+| `S1.1` | Standards baseline/traceability contract | `queued` | `C4.4` |
+| `S2.1`–`S2.2` | ARINC 717 profile and codec | `blocked` | Licensed source, `S1.1`, `R1.7` |
+| `S3.1` | ARINC 647A/FRED boundary | `blocked` | Licensed source, `S1.1` |
+| `S4.1` | ARINC 429 concrete profile | `blocked` | Licensed source/use case, `S1.1` |
+| `F1.1` | Downstream FDM project | `deferred` | `R1.7`, separate governance |
+| `F2.1` | FOQA workflow or claims | `deferred` | External organizational governance |
+
+## Backlog rules
+
+1. Point Superpowers to this file at the start of a run.
+2. Select one primary child slice with satisfied prerequisites.
+3. A child needs an approved spec before `specified` and an approved plan before
+   `planned`.
+4. Plan tasks remain beneath the child; they do not become competing backlog
+   items.
+5. New requirements enter as a child or an explicit gate amendment, never an
+   untracked plan expansion.
+6. Gate counts and checkboxes change in the same commit as their evidence.
+7. `verified` requires every child gate and independent review to pass.
+8. Cross-cutting documentation may change during a run, but only the selected
+   child may be claimed complete.
+9. `released` requires separate authorization; no current item is authorized
+   for release.

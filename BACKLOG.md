@@ -10,8 +10,9 @@ slice receives one focused plan and one independently reviewable outcome.
 ## Current position
 
 - `M0` FDAU identity/native-FDR migration: `verified`.
-- Active design: canonical contract kernel.
-- Active child slice: `C1.1` canonical JSON and number encoding.
+- Active design: Markdown-native backlog status skill.
+- Active child slice: `T1.1` backlog status and state management.
+- Canonical contract design: written review remains pending for `C1.1`.
 - Release: prohibited.
 - Push/tag/publication: prohibited.
 
@@ -31,9 +32,9 @@ The child slices below refine this sequence without weakening or reordering it.
 
 All canonical child slices are governed by the current draft
 [canonical-contract design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md).
-Only `C1.1` is active during the current design run. After written approval,
-the covered children become `specified`; each receives its own plan when it is
-selected for execution.
+`C1.1` remains `designing` while its written review is pending. After written
+approval, the covered children become `specified`; each receives its own plan
+when it is selected for execution.
 
 | Child | Outcome | Status | Depends on | Plan | Gates |
 | --- | --- | --- | --- | --- | --- |
@@ -249,6 +250,27 @@ canonical runtime or release gate.
 | `S4.1` | ARINC 429 concrete profile | `blocked` | Licensed source/use case, `S1.1` |
 | `F1.1` | Downstream FDM project | `deferred` | `R1.7`, separate governance |
 | `F2.1` | FOQA workflow or claims | `deferred` | External organizational governance |
+
+## Repository governance tooling
+
+| Child | Work | Status | Dependency | Spec | Plan | Gates |
+| --- | --- | --- | --- | --- | --- | --- |
+| `T1.1` | Markdown-native backlog status and state management | `designing` | `M0` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/9 |
+
+### T1.1 — Markdown-native backlog status and state management
+
+- [ ] Project-local skill triggers for status, resume, adherence, and state
+      management requests.
+- [ ] Every roadmap child has an explicit backlog inventory entry.
+- [ ] Status, audit, next-action, human, and versioned JSON reports pass.
+- [ ] Structural and adherence defects block with exact context.
+- [ ] Dry-run-first state and gate mutations pass stale-state and atomic-write
+      tests.
+- [ ] All skill and script tests use the standard-library framework and pass.
+- [ ] Full hygiene runs the strict backlog audit.
+- [ ] Built and installed artifacts exclude the repository tooling.
+- [ ] Independent review resolves all load-bearing findings without changing
+      release or publication authorization.
 
 ## Backlog rules
 

@@ -45,6 +45,8 @@ plan, status, and acceptance gates in `BACKLOG.md`.
 | `specified` | The written specification is approved. |
 | `planned` | An approved executable implementation plan exists. |
 | `in_progress` | Plan tasks are being implemented. |
+| `implemented` | Approved plan tasks are complete, but review is not closed. |
+| `reviewed` | Independent review is complete with no unresolved load-bearing finding. |
 | `verified` | All child-slice acceptance gates pass with committed evidence. |
 | `blocked` | A named external decision or prerequisite prevents progress. |
 | `deferred` | Deliberately outside the active release path. |
@@ -179,6 +181,15 @@ Contract integration can begin after `C4.4`; it does not wait for `G1`. Live
 q4xpcc acquisition depends on the completed acquisition epic. ARINC codec work
 waits for licensed, edition-pinned normative sources and the relevant canonical
 recording boundary.
+
+## T1 — Repository governance tooling epic
+
+This track governs agent-harness delivery tooling. It is independent of the
+runtime architecture and never ships in the xplane-fdau distribution.
+
+| Child | Outcome | Dependency | State |
+| --- | --- | --- | --- |
+| `T1.1` | Markdown-native backlog status and state management | `M0` | `designing` |
 
 ## Version 0.1.0 release gates
 

@@ -1,79 +1,97 @@
-# xplane-fdau Markdown-Native Backlog Status Skill Design
+# xplane-fdau Markdown-Native Backlog Governance Tooling Design
 
-- **Status:** Draft for written review
+- **Governance:** active
+- **Status:** draft
 - **Date:** 2026-08-09
 - **Decision owner:** Jeff / tvproductions
-- **Source roadmap child:** `T1.1` — Markdown-native backlog status and state
-  management
+- **Roadmap epic:** `T1`
+- **Roadmap children:** `T1.1`, `T1.2`, `T1.3`, `T1.4`, `T1.5`, `T1.6`
+- **Approval:** —
 
 ## Authority and purpose
 
-`ROADMAP.md` is the architecture-order and dependency authority. `BACKLOG.md`
-is the mutable delivery ledger and durable Superpowers entry point. This
-specification defines repository-local agent tooling that derives measured
-status from those files, checks specification and plan adherence, recommends
-the next Superpowers action, and performs explicit guarded state changes.
+`ROADMAP.md` is the node-identity, kind, order, and dependency authority.
+`BACKLOG.md` is the only mutable delivery-state authority and the durable
+Superpowers entry point. This specification defines repository-local tooling
+that measures xplane-fdau delivery from those files, validates governing specs
+and plans, recommends the next Superpowers action, and performs explicit guarded
+state changes.
 
 The tooling governs only xplane-fdau. It does not manage consumer projects,
 coordinate sibling repository state, or become part of the distributed Python
-library. q4xpcc may consume xplane-fdau through the library's published
-contracts, but its own backlog remains independently governed.
+library. q4xpcc and other consumers keep independent backlogs.
 
-Version `0.1.0` remains unreleased. This tooling cannot authorize a push, tag,
-publication, or release.
+Version `0.1.0` remains unreleased. This tooling cannot authorize a Git remote
+write, tag, publication, or release.
 
 ## Decision summary
 
 The project will add a `backlog-status` skill backed by a modular,
-standard-library-only Markdown state engine. The engine will:
+standard-library-only Markdown state engine. Six run-sized children deliver the
+capability:
 
-1. parse the complete roadmap inventory and mutable backlog state;
-2. validate identities, dependencies, lifecycle states, acceptance gates, and
-   specification/plan adherence;
-3. report human-readable and versioned JSON status;
-4. recommend the next eligible child and Superpowers workflow stage;
-5. apply only explicit, validated, dry-run-first state changes;
-6. preserve unrelated Markdown prose and formatting;
-7. fail closed on structural or adherence defects; and
-8. remain repository-local and absent from distribution artifacts.
+| Child | Outcome |
+| --- | --- |
+| `T1.1` | Markdown authority contract and explicit inventory normalization |
+| `T1.2` | Typed parser, human status report, and versioned JSON |
+| `T1.3` | Structural audit and spec/plan adherence |
+| `T1.4` | Deterministic next-action selection |
+| `T1.5` | Guarded child-state and gate-evidence mutations |
+| `T1.6` | Skill, session-entry, hygiene, and artifact closure |
 
-The initial engine will be deliberately smaller than q4xpcc's evidence-heavy
-backlog implementation. It may mature as this repository develops, but new
-capability must enter through focused rules, modules, fixtures, and tests.
-Child-specific product evidence belongs in normal repository tests rather than
-in generic Markdown parsing code.
+One governing design covers these exact children. Each child receives one
+focused implementation plan and one independently reviewable run.
+
+The engine may mature as the repository develops, but new capability must enter
+through focused models, rules, fixtures, and tests. Child-specific product
+semantics remain in normal repository tests rather than accumulating in the
+generic Markdown parser.
 
 ## Goals
 
-This increment will:
+This epic will:
 
 1. make backlog and resume answers reproducible from repository evidence;
-2. inventory every roadmap child rather than only the active release epic;
-3. enforce one explicitly selected primary child per run;
-4. distinguish architectural order from mutable delivery state;
+2. inventory every roadmap node without treating every node as local work;
+3. enforce one selected local child per run;
+4. keep mutable state in exactly one authoritative file;
 5. enforce lifecycle prerequisites without inferring completion;
 6. detect drift among roadmap, backlog, specs, plans, gates, and evidence;
 7. make state changes reviewable as ordinary Markdown diffs;
 8. give Superpowers a deterministic next-action recommendation;
-9. provide stable output for both agents and repository checks; and
-10. establish extension boundaries that prevent a single project-specific
-    script from becoming an unstructured monolith.
+9. provide stable human and machine-readable reports; and
+10. preserve modular growth boundaries learned from q4xpcc.
 
 ## Non-goals
 
-This increment will not:
+This epic will not:
 
 - change the FDAU runtime architecture or public library API;
-- ship backlog tooling in the wheel or source distribution;
+- ship governance tooling in the wheel or source distribution;
 - manage q4xpcc, Ortho4XP, xpwebapi, or any other repository;
-- use conversation history as status evidence;
-- infer completion from file presence, recent commits, or checked plan tasks
-  alone;
+- use conversation history as delivery evidence;
+- infer completion from file presence, recent commits, or plan task marks alone;
 - execute implementation plans or edit product source;
 - stage, commit, fetch, pull, merge, rebase, push, tag, publish, or release;
-- introduce a second handoff database or generated Markdown authority; or
-- freeze the future command surface when repository evidence justifies a
-  reviewed extension.
+- create a second handoff database or generated Markdown authority; or
+- implement a release transition while the current release prohibition exists.
+
+## Roadmap node taxonomy
+
+The roadmap parser recognizes five nonoverlapping node kinds:
+
+| Kind | Contract | Locally selectable? | Mutable delivery state? |
+| --- | --- | --- | --- |
+| Milestone | Verified prerequisite such as `M0` | No | No |
+| Epic | Ordered group of local children | No | No |
+| Local child | Independently planned xplane-fdau outcome | Yes | Yes, in `BACKLOG.md` |
+| Release gate | Cross-child reconciliation such as `G1` | No | Derived gate state only |
+| External boundary | Consumer/downstream handoff owned elsewhere | No | No |
+
+The report inventories all five kinds. Only local children appear in the
+mutable local-child inventory or can be selected and transitioned. Release-gate
+readiness is derived from local prerequisites and recorded gate evidence.
+External boundaries are report-only architecture context.
 
 ## Authority model
 
@@ -81,41 +99,332 @@ This increment will not:
 
 `ROADMAP.md` owns:
 
-- child IDs and human-readable outcomes;
-- epic membership and roadmap ordering;
-- dependencies and release-path relationships;
-- the allowed lifecycle vocabulary; and
-- release gates and separately governed tracks.
+- exact node identity and kind;
+- epic membership and roadmap order;
+- local dependency identities;
+- external prerequisites and boundary handoff conditions;
+- release-path relationships; and
+- the allowed local-child lifecycle vocabulary.
 
-Every roadmap child must be individually addressable. Ranges may be used in
-explanatory prose, but not as substitutes for inventory records.
+Roadmap child tables contain no mutable delivery-state column. Dependency
+ranges in authoring prose expand to exact identities before evaluation.
 
 ### Backlog authority
 
 `BACKLOG.md` owns:
 
-- the selected primary child;
-- current child state;
-- governing spec and plan links;
-- dependency presentation copied from the roadmap;
-- acceptance-gate counts and evidence links;
-- blocked or deferred reasons; and
+- the single selected local child or an explicit empty selection;
+- every local child's current lifecycle state;
+- governing design and implementation-plan links;
+- copied local dependencies for drift detection;
+- acceptance gates and derived satisfied/total counts;
+- blocking/deferred reason and resume state; and
 - the current release and publication prohibition.
 
-The backlog remains hand-authored Markdown. It is neither generated from JSON
-nor mirrored into another mutable state file.
+The backlog remains hand-authored Markdown. It is not generated from JSON and
+is not mirrored into another mutable state file.
 
-### Evidence authority
+### Governance artifact authority
 
-`docs/superpowers/specs/` and `docs/superpowers/plans/` provide governance
-evidence. Repository-relative evidence links attached to gates provide review
-and verification evidence. Git status and recent commits provide useful
-observations, but they do not change lifecycle state or satisfy gates.
+`docs/superpowers/specs/` contains governing designs. One design may cover an
+ordered, nonempty set of exact local children. `docs/superpowers/plans/`
+contains implementation plans. Every active plan covers exactly one local
+child and cites one governing design.
+
+Historical artifacts remain preserved. They receive explicit historical
+metadata and a disposition instead of being misreported as active orphans.
+
+### Evidence and Git authority
+
+Acceptance evidence is an explicit repository artifact with the metadata
+defined below. Git cannot prove semantic success, but it proves whether an
+evidence artifact is tracked and whether its indexed or committed bytes match
+the link being reviewed. Recent commits and dirty state remain observations;
+they never advance lifecycle state implicitly.
 
 `HANDOFF.md` remains a concise pointer required by repository instructions. It
 does not duplicate the complete state ledger.
 
-## Skill contract
+## Managed Markdown contract
+
+### Roadmap structures
+
+The parser recognizes roadmap node kind from its exact containing heading and
+table header:
+
+- `Milestones` contains `Milestone | Outcome`;
+- local epic sections contain `Child | Outcome | Depends on` tables;
+- the standards epic adds `External prerequisite` as a fourth column;
+- `Release gates` contains `Gate | Outcome | Depends on`;
+- `External consumer and downstream boundaries` contains
+  `Boundary | Owner | xplane-fdau handoff condition`; and
+- `M0` is the named verified milestone in the release-path section.
+
+Narrative ranges are permitted, but every local child and external boundary
+must also have one explicit table row. Duplicate identities across kinds are
+invalid.
+
+### Backlog current position
+
+`## Current position` contains exactly one managed selection line:
+
+```markdown
+- Active child: `T1.1`.
+```
+
+An empty selection is represented as:
+
+```markdown
+- Active child: —.
+```
+
+Other current-position prose is preserved and ignored by the selection parser.
+
+### Unified local-child inventory
+
+`T1.1` migrates all local children into one `## Local child inventory` table
+with this exact header and column order:
+
+| Child | Outcome | Status | Depends on | Spec | Plan | Gates | Review | Resume | Reason |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+
+Rules for cells are:
+
+- `Child` is one exact roadmap local-child ID in roadmap order.
+- `Outcome` exactly matches the roadmap outcome after Markdown whitespace
+  folding.
+- `Status` is one lifecycle token from this specification.
+- `Depends on` is an ordered comma-separated list of exact local IDs or `M0`;
+  no prose is allowed.
+- `Spec` is one repository-relative Markdown link or `—`.
+- `Plan` is one repository-relative Markdown link or `—`.
+- `Gates` is the derived `<satisfied>/<total>` count or `—` before gates exist.
+- `Review` is one accepted child-level review-evidence link for `reviewed` or
+  later; otherwise it is `—`.
+- `Resume` is required only for `blocked` or `deferred`; otherwise it is `—`.
+- `Reason` is required only for `blocked` or `deferred`; otherwise it is `—`.
+
+Every roadmap local child appears exactly once. Milestones, epics, release
+gates, and external boundaries never appear in this table.
+
+### Acceptance-gate sections
+
+Each governed local child with defined gates has one exact heading:
+
+```markdown
+### T1.1 — Markdown authority contract and explicit inventory normalization
+```
+
+Open gates use:
+
+```markdown
+- [ ] Gate statement.
+```
+
+Satisfied gates use one or more evidence links:
+
+```markdown
+- [x] Gate statement. — Evidence: [verification](.superpowers/sdd/example/verification.md)
+```
+
+The statement text is immutable after evidence is attached unless the gate is
+reopened first. Evidence links are ordered lexically by normalized repository
+path. Gate ordinal is its one-based position beneath the child heading. Gate
+counts are derived and never edited independently.
+
+Each active design contains one matching `### <child> — <outcome>` subsection
+under `## Acceptance criteria`. Backlog gate statements must match those design
+criteria exactly after task-list removal and Markdown whitespace folding. Gate
+additions or wording changes amend the governing design and backlog together.
+
+### Release-gate dashboard
+
+`## Release-gate dashboard` uses the exact header:
+
+| Gate | Outcome | Gate state | Prerequisites | Evidence |
+| --- | --- | --- | --- | --- |
+
+Gate state is `waiting`, `ready`, or `satisfied`. `waiting` and `ready` are
+derived from prerequisite state. `satisfied` additionally requires eligible
+gate evidence. Release gates are never selected as implementation children.
+
+## Governance artifact metadata
+
+### Active design metadata
+
+An active design begins with this exact metadata family after its title:
+
+```markdown
+- **Governance:** active
+- **Status:** draft
+- **Date:** 2026-08-09
+- **Decision owner:** Jeff / tvproductions
+- **Roadmap epic:** `T1`
+- **Roadmap children:** `T1.1`, `T1.2`
+- **Approval:** —
+```
+
+Design status is `draft`, `approved`, `implemented`, or `superseded`.
+`approved` or later requires `Approval` in the form
+`YYYY-MM-DD — <decision owner>`. Covered children are exact, unique, in roadmap
+order, and may span only the named epic unless the roadmap explicitly declares
+a cross-epic design.
+
+### Active implementation-plan metadata
+
+An active plan begins with:
+
+```markdown
+- **Governance:** active
+- **Status:** draft
+- **Date:** 2026-08-09
+- **Roadmap child:** `T1.1`
+- **Source specification:** `docs/superpowers/specs/example-design.md`
+- **Approval:** —
+- **Completion evidence:** —
+```
+
+Plan status is `draft`, `approved`, `in_progress`, `completed`, or
+`superseded`. `approved` or later requires an approval value. `completed`
+requires a repository-relative completion-evidence link. A plan covers exactly
+one local child, and that child must be covered by the cited approved design.
+
+### Historical metadata
+
+A preserved pre-governance artifact begins with:
+
+```markdown
+- **Governance:** historical
+- **Status:** completed
+- **Disposition:** Completed under `M0`.
+```
+
+Historical status is `completed` or `superseded`. Disposition is required and
+must name the completed milestone, replacement artifact, or replacement child.
+Historical artifacts are reported but do not compete for selection or next
+action. `T1.1` migrates all existing specs and plans to one of these exact
+contracts.
+
+## Evidence artifact contract
+
+Each evidence link resolves to a repository-relative regular Markdown file
+whose metadata is:
+
+```markdown
+# Verification Evidence
+
+- **Child:** `T1.1`
+- **Gate:** `1`
+- **Kind:** verification
+- **Result:** passed
+- **Date:** 2026-08-09
+- **Subject:** Local-child inventory contract
+```
+
+`Kind` is `verification`, `review`, `artifact`, or `approval`. `Result` is
+`passed` for verification/artifact evidence and `accepted` for review/approval
+evidence. `Gate` is a positive integer for gate evidence and `—` for
+child-level plan-completion or review evidence. Child and gate must match the
+referring gate or child-level field. Subject is nonempty.
+The body records the relevant commands, inspected artifacts, findings, or
+decision without a prescribed prose template.
+
+Eligible evidence:
+
+- parses under the exact metadata contract;
+- is inside the repository without absolute or parent traversal;
+- is present in the Git index;
+- has no unstaged byte changes;
+- matches the referring child and gate or child-level field; and
+- has an eligible kind/result for the gate requirement.
+
+Index presence establishes that backlog and evidence can land together. Final
+`verified` state additionally requires a clean post-commit audit proving the
+same evidence bytes are in `HEAD`. The engine never treats an arbitrary source
+file or test file as gate evidence.
+
+## Lifecycle model
+
+Local-child status is one of:
+
+`queued`, `designing`, `specified`, `planned`, `in_progress`, `implemented`,
+`reviewed`, `verified`, `blocked`, `deferred`, or `released`.
+
+Minimum evidence is:
+
+| Status | Required evidence |
+| --- | --- |
+| `queued` | Roadmap identity and dependencies |
+| `designing` | Linked active draft design covering the child |
+| `specified` | Linked approved design covering the child |
+| `planned` | Approved design and linked approved single-child plan |
+| `in_progress` | Selected child and linked plan marked `in_progress` |
+| `implemented` | Plan marked `completed` with eligible child-level completion evidence |
+| `reviewed` | Implemented state plus accepted evidence linked from `Review` |
+| `verified` | Reviewed state plus every gate satisfied by eligible `HEAD` evidence |
+| `blocked` | Required resume state and explicit blocking reason |
+| `deferred` | Required resume state and explicit governance reason |
+| `released` | Outside T1 mutation scope while release remains prohibited |
+
+### Closed transition graph
+
+The allowed forward path is:
+
+```text
+queued -> designing -> specified -> planned -> in_progress
+       -> implemented -> reviewed -> verified
+```
+
+Explicit reopening moves are:
+
+```text
+specified -> designing
+planned -> specified
+in_progress -> planned
+implemented -> in_progress
+reviewed -> implemented
+verified -> reviewed
+```
+
+Any nonreleased state may move to `blocked` or `deferred`. The mutation stores
+the prior state in `Resume`. A blocked/deferred child may return only to that
+exact resume state after an explicit reason-bearing command. Direct skips,
+arbitrary regressions, and any transition to `released` are rejected by T1.
+
+Only `in_progress` requires the child to be selected. Selecting a child does not
+change its lifecycle state. At most one local child is selected.
+
+## Structural and adherence audit
+
+The audit rejects:
+
+- unknown, duplicate, missing, or cross-kind identities;
+- local dependency cycles, unknown dependencies, or unsatisfied transitions;
+- roadmap/backlog dependency or outcome drift;
+- missing or duplicate local inventory rows;
+- a selected nonlocal or unknown node;
+- malformed status, resume, reason, link, or gate-count cells;
+- malformed governance metadata;
+- active designs with unknown, unordered, or duplicate children;
+- active plans with zero or multiple children or an invalid source design;
+- active artifacts without required approval/completion metadata;
+- historical artifacts without an explicit disposition;
+- malformed, ineligible, mismatched, or dirty evidence;
+- lifecycle claims beyond their evidence; and
+- release-state or release-authorization changes prohibited by this design.
+
+Findings have severity `error` or `warning`. Every error blocks `next`, mutation,
+and completion claims. Codes are stable lowercase dotted identifiers such as
+`roadmap.duplicate-id`, `backlog.dependency-drift`,
+`artifact.plan.multiple-children`, or `evidence.gate-mismatch`. A finding
+contains code, severity, repository-relative path, one-based line when known,
+node ID when relevant, gate ordinal when relevant, and actionable message.
+
+Findings sort by severity (`error` first), path, line with missing lines last,
+code, node, and gate. The audit reports independent findings in one pass where
+safe; an authoritative parse failure stops dependent rules for that file.
+
+## Skill and module contract
 
 The project-local skill will live at:
 
@@ -133,266 +442,293 @@ The project-local skill will live at:
         └── rules.py
 ```
 
-`SKILL.md` will trigger when a user asks where xplane-fdau stands, what remains,
-how to resume, whether Superpowers artifacts cover the backlog, or requests a
-controlled backlog state change. It will direct the agent to run the script
-instead of answering from memory.
+`SKILL.md` triggers for status, remaining work, resume, coverage/adherence,
+next-action, and controlled state requests. It directs the agent to run the
+script instead of answering from memory.
 
-The modules are responsibility boundaries, not a promise that each must begin
-large. The CLI remains thin. Markdown parsing, rule evaluation, reporting, and
-mutation do not depend on one another's private implementation details.
+The CLI remains thin. Model, parsing, rules, reporting, and mutation expose
+focused public functions and do not depend on one another's private details.
 
-## Initial command model
+## Command delivery by child
 
-The initial CLI supports:
+`T1.1` establishes and migrates the Markdown contracts without activating a
+repository audit command.
+
+`T1.2` adds:
 
 ```powershell
 uv run python .codex/skills/backlog-status/scripts/backlog_status.py status
 uv run python .codex/skills/backlog-status/scripts/backlog_status.py status --json
+```
+
+`T1.3` adds:
+
+```powershell
 uv run python .codex/skills/backlog-status/scripts/backlog_status.py audit
+```
+
+`T1.4` adds:
+
+```powershell
 uv run python .codex/skills/backlog-status/scripts/backlog_status.py next
-uv run python .codex/skills/backlog-status/scripts/backlog_status.py select T1.1 --expect-current C1.1
-uv run python .codex/skills/backlog-status/scripts/backlog_status.py transition T1.1 specified --expect designing
-uv run python .codex/skills/backlog-status/scripts/backlog_status.py record-gate T1.1 1 --expect-open --evidence tests/test_backlog_status_skill.py
-uv run python .codex/skills/backlog-status/scripts/backlog_status.py reopen-gate T1.1 1 --expect-closed --reason "Evidence contract changed"
+```
+
+`T1.5` adds dry-run-first mutation commands:
+
+```powershell
+uv run python .codex/skills/backlog-status/scripts/backlog_status.py select T1.2 --expect-current T1.1
+uv run python .codex/skills/backlog-status/scripts/backlog_status.py transition T1.2 specified --expect designing
+uv run python .codex/skills/backlog-status/scripts/backlog_status.py record-gate T1.2 1 --expect-open --evidence .superpowers/sdd/t1.2/gate-1.md
+uv run python .codex/skills/backlog-status/scripts/backlog_status.py reopen-gate T1.2 1 --expect-closed --reason "Evidence contract changed"
+uv run python .codex/skills/backlog-status/scripts/backlog_status.py suspend T1.2 blocked --expect in_progress --reason "Named prerequisite unavailable"
+uv run python .codex/skills/backlog-status/scripts/backlog_status.py resume T1.2 --expect blocked --resume in_progress --reason "Prerequisite restored"
 ```
 
 Mutation commands render a proposed diff and make no change unless `--apply`
-is present. Future commands may be added when repository needs justify them.
-They must follow the same validation, dry-run, atomicity, and test contracts.
+is present. `--target-sha256` may pin the current backlog bytes explicitly; when
+omitted, the command pins the hash read at process start and verifies it again
+before publication.
 
-## Parsed model
+## Next-action contract
 
-The internal model uses frozen typed values for:
+`next` follows this exact order:
 
-- roadmap children, epic membership, order, dependencies, and state;
-- backlog entries, selected-child identity, links, reasons, and gate totals;
-- acceptance gates, ordinal identity, checked state, and evidence links;
-- specification and plan records with their declared child and source paths;
-- audit findings with severity, rule ID, file, line, child, and message; and
-- next-action recommendations with child, lifecycle stage, reason, and command.
-
-IDs are compared exactly. Human text may be normalized only where the format
-contract explicitly permits it. Dependency ranges in roadmap prose expand to
-exact child identities before evaluation.
-
-## Markdown contract
-
-The parser recognizes named headings and tables rather than arbitrary visual
-layout. The implementation plan will migrate the backlog so that every roadmap
-child has an explicit row with at least:
-
-| Field | Meaning |
-| --- | --- |
-| Child | Exact roadmap identity |
-| Outcome | Human-readable deliverable |
-| Status | Current lifecycle state |
-| Depends on | Exact dependency identities or external reason |
-| Spec | Governing specification link or em dash |
-| Plan | Governing implementation-plan link or em dash |
-| Gates | Derived satisfied/total count |
-
-Acceptance gates remain Markdown task-list items beneath an exact child
-heading. A satisfied gate includes a repository-relative evidence link on the
-same logical item. Gate counts are derived, never independently edited totals.
-
-The parser reports duplicate headings, duplicate rows, missing columns,
-unrecognized status values, malformed links, ambiguous ranges, and gate-count
-drift. It never silently repairs malformed input during a read-only command.
-
-## Lifecycle and adherence rules
-
-The roadmap lifecycle vocabulary remains authoritative. The engine enforces
-these minimum prerequisites:
-
-| State | Required evidence |
-| --- | --- |
-| `queued` | Roadmap identity and dependencies |
-| `designing` | Governing draft specification |
-| `specified` | Written specification approval recorded in the spec and backlog |
-| `planned` | Approved child-specific implementation plan |
-| `in_progress` | Selected child and an open approved plan |
-| `implemented` | Completed approved plan with implementation evidence |
-| `reviewed` | Independent review with no unresolved load-bearing finding |
-| `verified` | Reviewed state plus all gates with committed evidence |
-| `blocked` | Explicit blocking reason |
-| `deferred` | Explicit governance reason |
-| `released` | Verified state plus separately authorized release evidence |
-
-The engine rejects unknown dependencies, cycles, unsatisfied prerequisites,
-missing required links, unknown child references, orphan specs/plans, and
-claims that exceed their evidence. A queued future child may lack detailed
-gates, a spec, and a plan. Once its epic becomes active, the missing governance
-becomes blocking according to lifecycle state.
-
-Repository-governance tooling such as `T1.1` can become `verified` but cannot
-enter `released`, because it is not part of the distributed product.
-
-Specs and plans must cite an exact source child. Plan links do not prove plan
-completion. Checked tasks do not prove independent review or acceptance-gate
-closure. Suggested state changes are reported but never applied implicitly.
-
-## Next-action selection
-
-`next` follows this order:
-
-1. Stop and report blocking audit findings.
-2. If a primary child is selected, resume it at its current Superpowers stage.
-3. If that child is blocked, report the exact reason without selecting another
-   child silently.
-4. If no child is selected, choose the first dependency-satisfied child in
+1. Stop on any audit error.
+2. If a local child is selected and suspended, return `wait` with its reason.
+3. If a local child is selected, recommend its required lifecycle action.
+4. If no child is selected, choose the first dependency-ready local child in
    roadmap order.
-5. Recommend exactly one of: brainstorm/refine the spec, request written spec
-   review, write the implementation plan, execute the plan, request review,
-   verify gates, or wait for a named prerequisite.
+5. Never recommend a milestone, epic, release gate, or external boundary as an
+   implementation child.
 
-The recommendation contains its evidence and remains informational. It cannot
-invoke another workflow or mutate the backlog by itself.
+Action is one of:
+
+`refine_spec`, `request_spec_review`, `write_plan`, `execute_plan`,
+`request_review`, `verify`, or `wait`.
+
+The recommendation contains its evidence and suggested command but remains
+informational. It cannot invoke another workflow or mutate state.
 
 ## Mutation safety
 
-State-changing commands:
+Every state-changing command:
 
-- require explicit `--apply`;
-- require an expected current selection, lifecycle state, or gate state for
-  every mutation;
-- re-read and revalidate files immediately before publication;
-- reject stale input or a changed target hash;
-- update only recognized fields or gate items;
-- preserve unrelated prose and final-line conventions;
-- write a same-directory temporary file and publish atomically;
-- validate the complete candidate document before replacement;
-- remove an unpublished temporary file after failure where possible; and
-- print the resulting diff and audit result.
+- requires explicit `--apply` to publish;
+- requires expected current selection, lifecycle state, or gate state;
+- re-reads and hashes authoritative files before publication;
+- validates the complete candidate document before replacement;
+- updates only exact managed cells or gate items;
+- preserves unrelated prose, encoding, newline style, and final-line state;
+- writes a same-directory uniquely named temporary file;
+- publishes with atomic replacement;
+- removes an unpublished temporary file after failure where possible; and
+- prints the resulting unified diff and post-change audit.
 
-No command performs a Git write. Agents use the existing guarded local commit
-workflow after reviewing the Markdown diff.
+Failure before replacement leaves original bytes unchanged. A post-replacement
+failure names the published path and final audit so callers do not repeat a
+successful change blindly. No mutation command performs a Git write.
 
-## Reporting contract
+## Reporting and JSON schema version 1
 
-Human output includes:
+Human status includes authority paths, selected child, lifecycle state,
+dependency readiness, governing artifacts, gates/evidence, findings, roadmap
+node summaries, Git observations, and recommendation.
 
-- roadmap and backlog paths;
-- selected child and lifecycle state;
-- dependency readiness;
-- spec, plan, gate, and evidence summary;
-- blocking findings and warnings;
-- next eligible child; and
-- recommended Superpowers action.
+JSON output has this exact top-level shape and no additional keys:
 
-JSON output begins with `schema_version: 1` and represents the same facts with
-stable field names and deterministic ordering. Human wording may improve
-without a schema-version change; incompatible JSON shape changes require a new
-schema version and compatibility tests.
+```json
+{
+  "schema_version": 1,
+  "repository": "xplane-fdau",
+  "valid": true,
+  "roadmap": {
+    "milestones": [],
+    "epics": [],
+    "local_children": [],
+    "release_gates": [],
+    "external_boundaries": []
+  },
+  "backlog": {
+    "active_child": null,
+    "children": [],
+    "release_gates": []
+  },
+  "artifacts": {
+    "specifications": [],
+    "plans": [],
+    "historical": []
+  },
+  "findings": [],
+  "recommendation": null,
+  "git": {
+    "branch": "main",
+    "dirty": false,
+    "recent_commits": []
+  }
+}
+```
 
-Exit status is:
+Arrays use roadmap order except findings, artifacts, and recent commits.
+Artifacts sort by repository path; recent commits retain newest-first Git order.
+Object shapes and exact key order are:
 
-- `0` for a valid report, valid dry-run, or successful applied change;
-- `1` for audit findings or a refused mutation; and
-- `2` for invalid command-line usage.
+| Object | Keys in order |
+| --- | --- |
+| Milestone | `id`, `kind`, `title` |
+| Epic | `id`, `kind`, `title`, `children` |
+| Local roadmap child | `id`, `kind`, `epic`, `title`, `dependencies`, `external_prerequisite` |
+| Release gate | `id`, `kind`, `title`, `dependencies` |
+| External boundary | `id`, `kind`, `title`, `owner`, `handoff_condition` |
+| Backlog child | `id`, `status`, `dependencies`, `specification`, `plan`, `gates`, `review_evidence`, `resume_state`, `reason`, `dependency_ready` |
+| Gate summary | `satisfied`, `total`, `items` |
+| Gate item | `ordinal`, `statement`, `satisfied`, `evidence` |
+| Backlog release gate | `id`, `state`, `evidence` |
+| Active specification | `path`, `governance`, `status`, `epic`, `children`, `approval` |
+| Active plan | `path`, `governance`, `status`, `child`, `source_specification`, `approval`, `completion_evidence` |
+| Historical artifact | `path`, `governance`, `status`, `disposition` |
+| Finding | `code`, `severity`, `path`, `line`, `node`, `gate`, `message` |
+| Recommendation | `action`, `child`, `reason`, `command` |
+| Recent commit | `sha`, `subject` |
 
-## Failure handling
+IDs, titles, paths, statuses, actions, reasons, commands, subjects, and evidence
+links are strings. `children`, `dependencies`, `items`, `evidence`, and
+`recent_commits` are arrays. `ordinal`, `satisfied`, and `total` are integers;
+booleans are used only for `valid`, `dirty`, `dependency_ready`, and gate-item
+`satisfied`. Optional scalar values are JSON `null`; keys are never omitted.
+Repository paths always use `/` separators.
 
-Every blocking finding names the rule, file, line when available, child or
-gate, and actionable message. Multiple independent findings are reported in a
-single audit where safe. Parse failure in an authoritative structure prevents
-mutation because the engine cannot prove a safe edit boundary.
+Output uses UTF-8, two-space indentation, the displayed object-key order, and
+one final LF. It contains no timestamps. Incompatible field or semantic changes
+require a new schema version and compatibility fixtures.
 
-An applied mutation is all-or-nothing. Failure before atomic publication leaves
-the original bytes unchanged. Failure after publication is reported with the
-published path and final audit state so callers do not repeat a successful
-change blindly.
+Exit status is `0` for a valid report/dry-run/applied change, `1` for audit
+errors or refused mutation, and `2` for invalid command usage. Warnings alone
+do not change exit status.
 
 ## Testing contract
 
 All tests, fixtures, examples, and validation commands use Python's standard
 library test framework. This is a hard repository invariant.
 
-Skill implementation follows test-first development. Before adding the skill
-or behavior, the implementation plan adds a failing `unittest` that proves the
-missing trigger, parse rule, lifecycle rule, report, or mutation behavior.
+Every behavior begins with a failing `unittest` proving the missing trigger,
+parse rule, audit rule, report, recommendation, or mutation. Tests include:
 
-The test surface includes:
-
-- skill frontmatter and trigger language;
-- complete roadmap/backlog inventory and current-repository integration;
-- valid and malformed Markdown fixtures;
-- duplicate, missing, ranged, unknown, and cyclic identities;
-- lifecycle transitions and prerequisites;
-- specification and plan adherence;
-- gate evidence and derived counts;
-- next-action selection for every state;
-- human and JSON reports;
-- dry-run and apply behavior;
-- stale-state refusal, atomic publication, and failure cleanup;
-- preservation of unrelated prose and formatting; and
-- distribution and runtime-import exclusion.
+- exact skill trigger and frontmatter behavior;
+- node-kind, inventory, metadata, lifecycle, evidence, and JSON fixtures;
+- duplicates, omissions, ranges, unknowns, cycles, and cross-kind conflicts;
+- multi-child designs, single-child plans, and historical dispositions;
+- every forward, reopen, suspend, resume, and refused transition;
+- finding codes, severity, ordering, paths, lines, and gate context;
+- next action for every lifecycle and suspension state;
+- dry-run/apply, stale hashes, atomic publication, and cleanup failures;
+- Markdown byte preservation outside managed structures;
+- current-repository integration after each migration gate; and
+- source and installed distribution exclusion.
 
 Temporary-directory fixtures exercise writes without touching the working
 backlog. Full repository quality and documentation checks remain required.
 
 ## Workflow integration
 
-Repository instructions will require session entry to run `audit` and `next`
-after reading the governing documents. Superpowers continues to start from
-`BACKLOG.md`. Focused specs and plans cite their exact child, and explicit
-transitions record their links.
+`T1.6` updates repository instructions to run `audit` and `next` at session
+entry after reading governing documents. Superpowers continues to start from
+`BACKLOG.md`. The full hygiene workflow runs the strict audit only after `T1.1`
+through `T1.5` are migrated and verified, avoiding a permanently failing
+bootstrap gate.
 
-The full hygiene workflow runs the strict audit. Structural or adherence
-defects block the next Superpowers action and the local completion claim.
-Informational Git observations remain warnings unless an explicit mutation
-safety rule is violated.
-
-`HANDOFF.md` remains a concise pointer to the backlog and current written-review
-gate. It does not become a second state system.
+Focused plans cite one exact child. Explicit transitions record approved spec
+and plan links. `HANDOFF.md` remains a concise pointer to the backlog and
+written-review gate rather than a second state system.
 
 ## Growth policy
 
-The tool is expected to mature. New commands, evidence adapters, or structural
-operations are acceptable when repeated repository work demonstrates the need.
-Each extension must:
+New commands, evidence adapters, or structural operations are allowed when
+repeated repository work proves the need. Each extension must:
 
-1. begin with a failing standard-library test;
-2. preserve the authority boundaries in this design;
-3. add a focused model or rule instead of child-specific branching in the CLI;
-4. define human and JSON behavior where relevant;
-5. preserve dry-run and atomic-write safety for mutations; and
-6. update the skill, fixtures, documentation, and backlog gates together.
+1. enter the roadmap/backlog as a run-sized child or gate amendment;
+2. begin with a failing standard-library test;
+3. preserve the authority and node-kind boundaries;
+4. add a focused model or rule rather than child-specific CLI branching;
+5. define human and JSON behavior where relevant;
+6. preserve dry-run and atomic-write safety for mutations; and
+7. update skill guidance, fixtures, and governance documentation together.
 
 When a module becomes difficult to understand independently, it splits by
-responsibility before additional evidence families are added.
+responsibility before more evidence families are added.
 
 ## Acceptance criteria
 
-`T1.1` is verified only when:
+### T1.1 — Authority and inventory
 
-1. the project-local skill triggers for status, resume, adherence, and state
-   management requests;
-2. the complete roadmap inventory is represented by explicit backlog entries;
-3. status, audit, next-action, human, and versioned JSON reports pass;
-4. structural and adherence defects return a blocking result with exact
-   context;
-5. dry-run-first selection, transition, gate-recording, and gate-reopening
-   commands pass stale-state and atomic-publication tests;
-6. all skill and script tests use the standard-library framework and pass;
-7. full hygiene includes the strict backlog audit;
-8. built and installed distribution checks prove the tooling is absent from the
-   runtime library; and
-9. independent review has no unresolved load-bearing finding while release and
-   publication remain prohibited.
+- Roadmap milestones, epics, local children, release gates, and external
+  boundaries have exact nonoverlapping contracts.
+- `BACKLOG.md` is the only mutable delivery-state authority.
+- Every local child has one explicit inventory row; external boundaries have no
+  local delivery status.
+- Existing specs and plans have valid governance metadata or an explicit
+  historical disposition.
+
+### T1.2 — Parser and reports
+
+- Frozen typed models and the strict Markdown parser pass valid and malformed
+  fixture cases.
+- Human status reports the complete roadmap inventory and local delivery state
+  without inferring completion.
+- JSON schema version 1 matches the exact documented shape and ordering.
+- The migrated current repository parses and reports without a structural
+  finding.
+
+### T1.3 — Audit and adherence
+
+- Identity, kind, dependency, cycle, lifecycle, gate-count, and link rules fail
+  closed with stable finding codes.
+- Multi-child governing designs, single-child plans, and historical artifacts
+  follow the exact metadata contract.
+- Lifecycle prerequisites and eligible evidence are validated without treating
+  presence as proof.
+- Audit reports all independent findings with file, line, node, and exact
+  context and returns a blocking result when required.
+
+### T1.4 — Next action
+
+- A selected local child resumes at its exact Superpowers lifecycle stage.
+- With no selection, the first dependency-ready local child is recommended in
+  roadmap order.
+- Blocking findings or a blocked selected child stop recommendation without
+  silent substitution.
+- Milestones, epics, release gates, and external boundaries are never
+  recommended as implementation children.
+
+### T1.5 — Mutations
+
+- Every mutation is dry-run-first and requires explicit apply authority.
+- Expected selection/state/gate values and target hashes reject stale changes.
+- Selection and lifecycle transitions enforce the exact transition graph and
+  prerequisites.
+- Gate recording and reopening enforce the typed evidence contract.
+- Candidate validation, atomic publication, failure cleanup, and unrelated
+  Markdown preservation pass.
+
+### T1.6 — Workflow closure
+
+- Project-local skill triggers for status, resume, adherence, next action, and
+  controlled state requests.
+- Session instructions and the concise handoff pointer invoke the backlog
+  workflow without creating another state authority.
+- Full hygiene runs the strict backlog audit.
+- Built and installed artifacts exclude all repository-governance tooling.
+- All standard-library tests and independent review pass without changing
+  release or publication authorization.
 
 ## Implementation sequence
 
-After written approval of this specification, one focused implementation plan
-will execute `T1.1` in this order:
+After written approval, implementation proceeds one child and one plan per run:
 
-1. failing skill and inventory tests;
-2. read-only model, parser, audit, and reports;
-3. spec/plan adherence and next-action rules;
-4. failing mutation tests followed by dry-run and atomic apply behavior;
-5. explicit backlog inventory migration;
-6. session-entry and hygiene integration;
-7. distribution-boundary and installed-artifact verification; and
-8. independent review and closeout.
+1. `T1.1` normalizes Markdown authority and existing artifact metadata.
+2. `T1.2` implements typed parsing and reports.
+3. `T1.3` implements audit and adherence.
+4. `T1.4` implements next-action selection.
+5. `T1.5` implements guarded mutations.
+6. `T1.6` integrates the skill, session entry, hygiene, and artifact closure.
 
-No implementation begins before this written specification is reviewed.
+No implementation begins before this amended written specification is reviewed.

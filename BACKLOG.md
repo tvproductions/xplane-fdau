@@ -10,8 +10,8 @@ slice receives one focused plan and one independently reviewable outcome.
 ## Current position
 
 - `M0` FDAU identity/native-FDR migration: `verified`.
-- Active design: Markdown-native backlog status skill.
-- Active child slice: `T1.1` backlog status and state management.
+- Active design: Markdown-native backlog governance tooling epic.
+- Active child slice: `T1.1` authority contract and inventory normalization.
 - Canonical contract design: written review remains pending for `C1.1`.
 - Release: prohibited.
 - Push/tag/publication: prohibited.
@@ -229,62 +229,140 @@ authority yet.
 | `A1.1`–`A1.9` | Profiles, demand, transforms, lifecycle, cadence, continuity, fan-out, acquisition session | `queued` | `C4.4` |
 | `R1.1`–`R1.7` | Descriptor, archive, writer, manifest, recovery, replay, long-session closure | `queued` | `A1.9` |
 | `P1.1`–`P1.6` | Profiles, native spine/DREF projection, timing, loss report, sink closure | `queued` | `R1.7` |
-| `G1` | Independent canonical vertical-slice reconciliation | `queued` | `C4.4`, `A1.9`, `R1.7`, `P1.6` |
-
 Exact child names and dependencies are defined in `ROADMAP.md`. Do not merge an
 epic back into one plan when its design begins.
 
-## Parallel governed tracks
+## Release-gate dashboard
+
+Release-gate readiness is derived from its prerequisites and evidence. A gate
+is not a selectable implementation child.
+
+| Gate | Outcome | Gate state | Prerequisites | Evidence |
+| --- | --- | --- | --- | --- |
+| `G1` | Independent canonical vertical-slice reconciliation | `waiting` | `C4.4`, `A1.9`, `R1.7`, `P1.6` | — |
+
+## Standards child dashboard
+
+These are local xplane-fdau children. External licensed-source requirements are
+recorded as blocking reasons rather than invented local dependencies.
+
+| Child | Work | Status | Depends on | External prerequisite | Spec | Plan | Gates |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `S1.1` | Standards baseline and traceability contract | `queued` | `C4.4` | — | — | — | — |
+| `S2.1` | ARINC 717 profile specification | `blocked` | `S1.1`, `R1.7` | Licensed edition-pinned source | — | — | — |
+| `S2.2` | ARINC 717 codec and conformance corpus | `blocked` | `S2.1` | Licensed edition-pinned source | — | — | — |
+| `S3.1` | ARINC 647A/FRED configuration boundary | `blocked` | `S1.1` | Licensed edition-pinned source | — | — | — |
+| `S4.1` | ARINC 429 concrete profile | `blocked` | `S1.1` | Licensed source and concrete use case | — | — | — |
+
+## External consumer and downstream boundaries
 
 FDM/FOQA work remains downstream and separately governed; it is not part of the
 canonical runtime or release gate.
 
-| Child | Work | Status | Dependency |
-| --- | --- | --- | --- |
-| `I1.1` | q4xpcc contract/fixture integration | `queued` | `C4.4` |
-| `I1.2` | q4xpcc live acquisition integration | `queued` | `A1.9`, consumer plan |
-| `I2.1` | xpwebapi corroboration adapter | `queued` | `C4.4`, consumer plan |
-| `S1.1` | Standards baseline/traceability contract | `queued` | `C4.4` |
-| `S2.1`–`S2.2` | ARINC 717 profile and codec | `blocked` | Licensed source, `S1.1`, `R1.7` |
-| `S3.1` | ARINC 647A/FRED boundary | `blocked` | Licensed source, `S1.1` |
-| `S4.1` | ARINC 429 concrete profile | `blocked` | Licensed source/use case, `S1.1` |
-| `F1.1` | Downstream FDM project | `deferred` | `R1.7`, separate governance |
-| `F2.1` | FOQA workflow or claims | `deferred` | External organizational governance |
+These boundaries are report-only. They have no local delivery status and cannot
+be selected or mutated by xplane-fdau tooling.
+
+| Boundary | Owner | xplane-fdau handoff condition |
+| --- | --- | --- |
+| `I1.1` | q4xpcc | Contract/fixture adoption may begin after `C4.4`. |
+| `I1.2` | q4xpcc | Live XPLM acquisition adoption may begin after `A1.9`. |
+| `I2.1` | xpwebapi adapter owner | Corroboration-adapter work may begin after `C4.4`. |
+| `F1.1` | Separate FDM project | Canonical archive consumption may begin after `R1.7`. |
+| `F2.1` | External FOQA governance | Workflow and claims require separate organizational approval. |
 
 ## Repository governance tooling
 
-| Child | Work | Status | Dependency | Spec | Plan | Gates |
+The governing [T1 design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md)
+covers the six run-sized tooling children below. Each child receives its own
+implementation plan when selected.
+
+| Child | Work | Status | Depends on | Spec | Plan | Gates |
 | --- | --- | --- | --- | --- | --- | --- |
-| `T1.1` | Markdown-native backlog status and state management | `designing` | `M0` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/9 |
+| `T1.1` | Markdown authority contract and inventory normalization | `designing` | `M0` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 |
+| `T1.2` | Typed parser, status report, and versioned JSON | `queued` | `T1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 |
+| `T1.3` | Structural audit and spec/plan adherence | `queued` | `T1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 |
+| `T1.4` | Deterministic next-action selection | `queued` | `T1.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 |
+| `T1.5` | Guarded child-state and gate-evidence mutations | `queued` | `T1.3`, `T1.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/5 |
+| `T1.6` | Skill, session-entry, hygiene, and artifact closure | `queued` | `T1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/5 |
 
-### T1.1 — Markdown-native backlog status and state management
+### T1.1 — Markdown authority contract and inventory normalization
 
-- [ ] Project-local skill triggers for status, resume, adherence, and state
-      management requests.
-- [ ] Every roadmap child has an explicit backlog inventory entry.
-- [ ] Status, audit, next-action, human, and versioned JSON reports pass.
-- [ ] Structural and adherence defects block with exact context.
-- [ ] Dry-run-first state and gate mutations pass stale-state and atomic-write
-      tests.
-- [ ] All skill and script tests use the standard-library framework and pass.
+- [ ] Roadmap milestones, epics, local children, release gates, and external
+      boundaries have exact nonoverlapping contracts.
+- [ ] `BACKLOG.md` is the only mutable delivery-state authority.
+- [ ] Every local child has one explicit inventory row; external boundaries
+      have no local delivery status.
+- [ ] Existing specs and plans have valid governance metadata or an explicit
+      historical disposition.
+
+### T1.2 — Typed parser, status report, and versioned JSON
+
+- [ ] Frozen typed models and the strict Markdown parser pass valid and
+      malformed fixture cases.
+- [ ] Human status reports the complete roadmap inventory and local delivery
+      state without inferring completion.
+- [ ] JSON schema version 1 matches the exact documented shape and ordering.
+- [ ] The migrated current repository parses and reports without a structural
+      finding.
+
+### T1.3 — Structural audit and spec/plan adherence
+
+- [ ] Identity, kind, dependency, cycle, lifecycle, gate-count, and link rules
+      fail closed with stable finding codes.
+- [ ] Multi-child governing designs, single-child plans, and historical
+      artifacts follow the exact metadata contract.
+- [ ] Lifecycle prerequisites and eligible evidence are validated without
+      treating presence as proof.
+- [ ] Audit reports all independent findings with file, line, node, and exact
+      context and returns a blocking result when required.
+
+### T1.4 — Deterministic next-action selection
+
+- [ ] A selected local child resumes at its exact Superpowers lifecycle stage.
+- [ ] With no selection, the first dependency-ready local child is recommended
+      in roadmap order.
+- [ ] Blocking findings or a blocked selected child stop recommendation without
+      silent substitution.
+- [ ] Milestones, epics, release gates, and external boundaries are never
+      recommended as implementation children.
+
+### T1.5 — Guarded child-state and gate-evidence mutations
+
+- [ ] Every mutation is dry-run-first and requires explicit apply authority.
+- [ ] Expected selection/state/gate values and target hashes reject stale
+      changes.
+- [ ] Selection and lifecycle transitions enforce the exact transition graph
+      and prerequisites.
+- [ ] Gate recording and reopening enforce the typed evidence contract.
+- [ ] Candidate validation, atomic publication, failure cleanup, and unrelated
+      Markdown preservation pass.
+
+### T1.6 — Skill, session-entry, hygiene, and artifact closure
+
+- [ ] Project-local skill triggers for status, resume, adherence, next action,
+      and controlled state requests.
+- [ ] Session instructions and the concise handoff pointer invoke the backlog
+      workflow without creating another state authority.
 - [ ] Full hygiene runs the strict backlog audit.
-- [ ] Built and installed artifacts exclude the repository tooling.
-- [ ] Independent review resolves all load-bearing findings without changing
+- [ ] Built and installed artifacts exclude all repository-governance tooling.
+- [ ] All standard-library tests and independent review pass without changing
       release or publication authorization.
 
 ## Backlog rules
 
 1. Point Superpowers to this file at the start of a run.
 2. Select one primary child slice with satisfied prerequisites.
-3. A child needs an approved spec before `specified` and an approved plan before
+3. A governing design may cover an ordered set of exact children; an
+   implementation plan covers exactly one child.
+4. A child needs an approved spec before `specified` and an approved plan before
    `planned`.
-4. Plan tasks remain beneath the child; they do not become competing backlog
+5. Plan tasks remain beneath the child; they do not become competing backlog
    items.
-5. New requirements enter as a child or an explicit gate amendment, never an
+6. New requirements enter as a child or an explicit gate amendment, never an
    untracked plan expansion.
-6. Gate counts and checkboxes change in the same commit as their evidence.
-7. `verified` requires every child gate and independent review to pass.
-8. Cross-cutting documentation may change during a run, but only the selected
+7. Gate counts and checkboxes change in the same commit as their evidence.
+8. `verified` requires every child gate and independent review to pass.
+9. Cross-cutting documentation may change during a run, but only the selected
    child may be claimed complete.
-9. `released` requires separate authorization; no current item is authorized
+10. `released` requires separate authorization; no current item is authorized
    for release.

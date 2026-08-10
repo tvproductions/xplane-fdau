@@ -21,10 +21,11 @@ The active repository-governance design is:
 
 `docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md`
 
-It defines `T1.1`, a Markdown-native backlog status and guarded state-management
-skill. The written specification is drafted for review and is not yet
-implementation authority. It remains repository-local and does not govern
-consumer projects or ship in the distribution.
+It defines the repository-local `T1` governance-tooling epic as six run-sized
+children, `T1.1` through `T1.6`. The selected child is `T1.1`, Markdown authority
+and explicit inventory normalization. The amended written specification is
+drafted for review and is not yet implementation authority. The tooling does
+not govern consumer projects or ship in the distribution.
 
 The canonical-contract design remains:
 

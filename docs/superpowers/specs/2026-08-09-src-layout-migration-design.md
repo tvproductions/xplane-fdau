@@ -1,12 +1,12 @@
 # xplane-fdau Source-Layout Migration Design
 
 - **Governance:** active
-- **Status:** draft
+- **Status:** approved
 - **Date:** 2026-08-09
 - **Decision owner:** Jeff / tvproductions
 - **Roadmap epic:** `B1`
 - **Roadmap children:** `B1.1`
-- **Approval:** —
+- **Approval:** 2026-08-09 — Jeff / tvproductions
 
 ## Context
 

@@ -11,7 +11,7 @@ slice receives one focused plan and one independently reviewable outcome.
 
 - `M0` FDAU identity/native-FDR migration: `verified`.
 - Active design: Repository backlog-governance tooling.
-- Active child slice: `T1.1` Markdown authority and inventory normalization.
+- Active child: `T1.1`.
 - `B1.1` source-layout migration: `specified` with a draft plan; resumes after
   `T3.1` is verified.
 - Canonical contract design: written review remains pending for `C1.1`.
@@ -30,16 +30,66 @@ Before any release, separately reviewed increments must implement:
 
 The child slices below refine this sequence without weakening or reordering it.
 
-## Build-foundation child dashboard
+## Local child inventory
 
-The approved [source-layout design](docs/superpowers/specs/2026-08-09-src-layout-migration-design.md)
-and its [draft implementation plan](docs/superpowers/plans/2026-08-09-src-layout-migration.md)
-cover the pre-canonical build correction after repository-workflow governance
-is verified.
+| Child | Outcome | Status | Depends on | Spec | Plan | Gates | Review | Resume | Reason |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `B1.1` | Source-layout migration and installed-import isolation | `specified` | `T3.1` | [design](docs/superpowers/specs/2026-08-09-src-layout-migration-design.md) | [draft plan](docs/superpowers/plans/2026-08-09-src-layout-migration.md) | 0/5 | — | — | — |
+| `C1.1` | Canonical JSON and binary64/integer encoding | `designing` | `B1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C1.2` | Identity, hashing, references, authority, and provenance | `queued` | `C1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C1.3` | Typed values and content-addressed payload references | `queued` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C1.4` | Clock domains, UTC instants, anchors, and simulator timing | `queued` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C1.5` | Validity states and acquisition-quality vocabulary | `queued` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C2.1` | Measurement-definition model and semantic invariants | `queued` | `C1.3`, `C1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C2.2` | Measurement catalog, schema, ordering, and references | `queued` | `C2.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C2.3` | Source-binding definition and transform references | `queued` | `C2.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C2.4` | Binding catalog and pure cross-catalog validation | `queued` | `C2.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C3.1` | Raw-observation record and schema | `queued` | `C1.3`, `C1.4`, `C1.5`, `C2.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C3.2` | Measurement-sample record and schema | `queued` | `C3.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C3.3` | Raw/sample lineage and cross-contract validation | `queued` | `C3.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C3.4` | Measurement-frame record and schema | `queued` | `C3.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C3.5` | Frame closure, canonical ordering, and validation | `queued` | `C3.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C4.1` | Schema resource parity and version inventory | `queued` | `C3.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C4.2` | Accepted, rejected, and canonical conformance corpus | `queued` | `C4.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C4.3` | Public API and contract documentation closure | `queued` | `C4.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C4.4` | Built/installed artifact matrix and independent review | `queued` | `C4.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/5 | — | — | — |
+| `A1.1` | Acquisition-profile contracts | `queued` | `C4.4` | — | — | — | — | — | — |
+| `A1.2` | Consumer demand contracts and lifecycle | `queued` | `A1.1` | — | — | — | — | — | — |
+| `A1.3` | Demand compatibility, merge, and generation resolution | `queued` | `A1.2` | — | — | — | — | — | — |
+| `A1.4` | Allow-listed transform registry and execution | `queued` | `C2.4`, `A1.3` | — | — | — | — | — | — |
+| `A1.5` | Source/session lifecycle and epoch transitions | `queued` | `C3.5`, `A1.3` | — | — | — | — | — | — |
+| `A1.6` | Cadence, downsampling, interpolation, and resampling policy | `queued` | `A1.3`, `A1.5` | — | — | — | — | — | — |
+| `A1.7` | Continuity evaluator and continuity report | `queued` | `A1.5`, `A1.6` | — | — | — | — | — | — |
+| `A1.8` | Generic fan-out, sink isolation, and backpressure evidence | `queued` | `A1.6`, `A1.7` | — | — | — | — | — | — |
+| `A1.9` | Acquisition-session orchestration and installed closure | `queued` | `A1.4`, `A1.5`, `A1.6`, `A1.7`, `A1.8` | — | — | — | — | — | — |
+| `R1.1` | Recording-session descriptor and artifact identities | `queued` | `A1.9` | — | — | — | — | — | — |
+| `R1.2` | Canonical archive logical format and raw-retention model | `queued` | `R1.1` | — | — | — | — | — | — |
+| `R1.3` | Checkpointed writer and atomic/no-replace publication | `queued` | `R1.2` | — | — | — | — | — | — |
+| `R1.4` | Artifact manifest graph, integrity, and relationships | `queued` | `R1.3` | — | — | — | — | — | — |
+| `R1.5` | Partial-artifact recovery and terminal results | `queued` | `R1.3`, `R1.4` | — | — | — | — | — | — |
+| `R1.6` | Deterministic replay source and epoch semantics | `queued` | `R1.5` | — | — | — | — | — | — |
+| `R1.7` | Long-session, corruption, recovery, and replay closure | `queued` | `R1.6` | — | — | — | — | — | — |
+| `P1.1` | Projection-profile and field-mapping contracts | `queued` | `R1.7` | — | — | — | — | — | — |
+| `P1.2` | Mandatory native trajectory-spine projection | `queued` | `P1.1` | — | — | — | — | — | — |
+| `P1.3` | Version-4 DataRef extension projection | `queued` | `P1.2` | — | — | — | — | — | — |
+| `P1.4` | Projection timing and resampling behavior | `queued` | `P1.1`, `A1.6` | — | — | — | — | — | — |
+| `P1.5` | Omission, default, conversion, and precision-loss report | `queued` | `P1.2`, `P1.3`, `P1.4` | — | — | — | — | — | — |
+| `P1.6` | End-to-end canonical-to-native-sink verification | `queued` | `P1.5` | — | — | — | — | — | — |
+| `S1.1` | Edition-pinned standards baseline and traceability contract | `queued` | `C4.4` | — | — | — | — | — | — |
+| `S2.1` | ARINC 717 profile specification | `blocked` | `S1.1`, `R1.7` | — | — | — | — | `queued` | Licensed edition-pinned source is unavailable. |
+| `S2.2` | ARINC 717 codec and conformance corpus | `blocked` | `S2.1` | — | — | — | — | `queued` | Licensed edition-pinned source is unavailable. |
+| `S3.1` | ARINC 647A/FRED configuration boundary | `blocked` | `S1.1` | — | — | — | — | `queued` | Licensed edition-pinned source is unavailable. |
+| `S4.1` | ARINC 429 profile for a concrete source or target | `blocked` | `S1.1` | — | — | — | — | `queued` | A licensed source and concrete use case are unavailable. |
+| `T1.1` | Markdown authority contract and explicit inventory normalization | `specified` | `M0` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [draft plan](docs/superpowers/plans/2026-08-15-xplane-fdau-backlog-authority-normalization.md) | 0/4 | — | — | — |
+| `T1.2` | Typed parser, status report, and versioned JSON | `specified` | `T1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 | — | — | — |
+| `T1.3` | Structural audit and spec/plan adherence | `specified` | `T1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 | — | — | — |
+| `T1.4` | Deterministic next-action selection | `specified` | `T1.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 | — | — | — |
+| `T1.5` | Guarded child-state and gate-evidence mutations | `specified` | `T1.3`, `T1.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/5 | — | — | — |
+| `T1.6` | Skill, session-entry, hygiene, and artifact closure | `specified` | `T1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/5 | — | — | — |
+| `T2.1` | Canonical repo-hygiene and fresh artifact verification | `specified` | `T1.6` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/5 | — | — | — |
+| `T3.1` | Guarded local Git synchronization with push disabled | `specified` | `T2.1` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/5 | — | — | — |
 
-| Child | Outcome | Status | Depends on | Spec | Plan | Gates |
-| --- | --- | --- | --- | --- | --- | --- |
-| `B1.1` | Source-layout migration and installed-import isolation | `specified` | `T3.1` | [design](docs/superpowers/specs/2026-08-09-src-layout-migration-design.md) | [draft plan](docs/superpowers/plans/2026-08-09-src-layout-migration.md) | 0/5 |
+## Local-child acceptance gates
 
 ### B1.1 — Source-layout migration and installed-import isolation
 
@@ -53,40 +103,6 @@ is verified.
       members use the required `src/xplane_fdau` path.
 - [ ] The full quality, strict documentation, distribution, and
       installed-artifact gates pass with no release, tag, or package publication.
-
-## Canonical-contract child dashboard
-
-All canonical child slices are governed by the current draft
-[canonical-contract design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md).
-`C1.1` remains `designing` while its written review is pending. After written
-approval, the covered children become `specified`; each receives its own plan
-when it is selected for execution.
-
-| Child | Outcome | Status | Depends on | Plan | Gates |
-| --- | --- | --- | --- | --- | --- |
-| `C1.1` | Canonical JSON and number encoding | `designing` | `B1.1` | — | 0/4 |
-| `C1.2` | Identity, hashes, references, authority, provenance | `queued` | `C1.1` | — | 0/4 |
-| `C1.3` | Typed values and payload references | `queued` | `C1.2` | — | 0/4 |
-| `C1.4` | Clock domains, UTC, anchors, simulator timing | `queued` | `C1.2` | — | 0/4 |
-| `C1.5` | Validity and quality vocabulary | `queued` | `C1.2` | — | 0/4 |
-| `C2.1` | Measurement-definition model | `queued` | `C1.3`, `C1.5` | — | 0/4 |
-| `C2.2` | Measurement catalog and schema | `queued` | `C2.1` | — | 0/4 |
-| `C2.3` | Source-binding definition | `queued` | `C2.2` | — | 0/4 |
-| `C2.4` | Binding catalog and cross-validation | `queued` | `C2.3` | — | 0/4 |
-| `C3.1` | Raw-observation record and schema | `queued` | `C1.3`–`C1.5`, `C2.4` | — | 0/4 |
-| `C3.2` | Measurement-sample record and schema | `queued` | `C3.1` | — | 0/4 |
-| `C3.3` | Raw/sample lineage and validation | `queued` | `C3.2` | — | 0/4 |
-| `C3.4` | Measurement-frame record and schema | `queued` | `C3.3` | — | 0/4 |
-| `C3.5` | Frame closure, ordering, and validation | `queued` | `C3.4` | — | 0/4 |
-| `C4.1` | Schema parity and version inventory | `queued` | `C3.5` | — | 0/4 |
-| `C4.2` | Cross-language conformance corpus | `queued` | `C4.1` | — | 0/4 |
-| `C4.3` | Public APIs and documentation | `queued` | `C4.2` | — | 0/4 |
-| `C4.4` | Artifact matrix and independent review | `queued` | `C4.3` | — | 0/5 |
-
-Gate counts are derived from the checklists below and change only with committed
-evidence.
-
-## Canonical-contract acceptance gates
 
 ### C1.1 — Canonical JSON and number encoding
 
@@ -244,20 +260,6 @@ evidence.
 - [ ] Independent review has no unresolved load-bearing finding.
 - [ ] Version `0.1.0` remains unreleased and no push/tag/publication occurs.
 
-## Future release-path child dashboard
-
-These child boundaries are architectural backlog. Their acceptance gates become
-measurable when each governing specification is reviewed; none is implementation
-authority yet.
-
-| Child range | Epic outcome | Status | Entry dependency |
-| --- | --- | --- | --- |
-| `A1.1`–`A1.9` | Profiles, demand, transforms, lifecycle, cadence, continuity, fan-out, acquisition session | `queued` | `C4.4` |
-| `R1.1`–`R1.7` | Descriptor, archive, writer, manifest, recovery, replay, long-session closure | `queued` | `A1.9` |
-| `P1.1`–`P1.6` | Profiles, native spine/DREF projection, timing, loss report, sink closure | `queued` | `R1.7` |
-Exact child names and dependencies are defined in `ROADMAP.md`. Do not merge an
-epic back into one plan when its design begins.
-
 ## Release-gate dashboard
 
 Release-gate readiness is derived from its prerequisites and evidence. A gate
@@ -266,19 +268,6 @@ is not a selectable implementation child.
 | Gate | Outcome | Gate state | Prerequisites | Evidence |
 | --- | --- | --- | --- | --- |
 | `G1` | Independent canonical vertical-slice reconciliation | `waiting` | `C4.4`, `A1.9`, `R1.7`, `P1.6` | — |
-
-## Standards child dashboard
-
-These are local xplane-fdau children. External licensed-source requirements are
-recorded as blocking reasons rather than invented local dependencies.
-
-| Child | Work | Status | Depends on | External prerequisite | Spec | Plan | Gates |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| `S1.1` | Standards baseline and traceability contract | `queued` | `C4.4` | — | — | — | — |
-| `S2.1` | ARINC 717 profile specification | `blocked` | `S1.1`, `R1.7` | Licensed edition-pinned source | — | — | — |
-| `S2.2` | ARINC 717 codec and conformance corpus | `blocked` | `S2.1` | Licensed edition-pinned source | — | — | — |
-| `S3.1` | ARINC 647A/FRED configuration boundary | `blocked` | `S1.1` | Licensed edition-pinned source | — | — | — |
-| `S4.1` | ARINC 429 concrete profile | `blocked` | `S1.1` | Licensed source and concrete use case | — | — | — |
 
 ## External consumer and downstream boundaries
 
@@ -295,28 +284,6 @@ be selected or mutated by xplane-fdau tooling.
 | `I2.1` | xpwebapi adapter owner | Corroboration-adapter work may begin after `C4.4`. |
 | `F1.1` | Separate FDM project | Canonical archive consumption may begin after `R1.7`. |
 | `F2.1` | External FOQA governance | Workflow and claims require separate organizational approval. |
-
-## Repository governance tooling
-
-The governing [T1 design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md)
-covers the six run-sized tooling children below. Each child receives its own
-implementation plan when selected.
-
-The approved [local workflow skills design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md)
-translates q4xpcc's remaining project-local `repo-hygiene` and `git-sync`
-capabilities without copying their implementation. `T2.1` and `T3.1` are
-specified and wait for their dependencies before planning or execution.
-
-| Child | Work | Status | Depends on | Spec | Plan | Gates |
-| --- | --- | --- | --- | --- | --- | --- |
-| `T1.1` | Markdown authority contract and inventory normalization | `in_progress` | `M0` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-08-15-xplane-fdau-backlog-authority-normalization.md) | 0/4 |
-| `T1.2` | Typed parser, status report, and versioned JSON | `specified` | `T1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 |
-| `T1.3` | Structural audit and spec/plan adherence | `specified` | `T1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 |
-| `T1.4` | Deterministic next-action selection | `specified` | `T1.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 |
-| `T1.5` | Guarded child-state and gate-evidence mutations | `specified` | `T1.3`, `T1.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/5 |
-| `T1.6` | Skill, session-entry, hygiene, and artifact closure | `specified` | `T1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/5 |
-| `T2.1` | Canonical repo-hygiene and fresh artifact verification | `specified` | `T1.6` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/5 |
-| `T3.1` | Guarded local Git synchronization with push disabled | `specified` | `T2.1` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/5 |
 
 ### T1.1 — Markdown authority contract and inventory normalization
 

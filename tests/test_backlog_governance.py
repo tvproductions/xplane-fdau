@@ -116,5 +116,77 @@ class RoadmapAuthorityTests(unittest.TestCase):
         self.assertIn("`BACKLOG.md` is the durable Superpowers entry point", roadmap)
 
 
+class BacklogAuthorityTests(unittest.TestCase):
+    def test_current_position_has_one_exact_selection_line(self) -> None:
+        backlog = read_text(BACKLOG)
+        selection_lines = [line for line in backlog.splitlines() if line.startswith("- Active child:")]
+        self.assertEqual(["- Active child: `T1.1`."], selection_lines)
+        self.assertNotIn("Active child slice:", backlog)
+
+    def test_inventory_matches_every_roadmap_child_once_in_order(self) -> None:
+        roadmap = roadmap_child_rows()
+        inventory = table_rows(read_text(BACKLOG), INVENTORY_HEADER)
+        self.assertEqual(54, len(inventory))
+        self.assertEqual(
+            [(identity(row[0]), row[1], row[2]) for row in roadmap],
+            [(identity(row[0]), row[1], row[3]) for row in inventory],
+        )
+
+    def test_inventory_excludes_nonchildren_and_range_rows(self) -> None:
+        inventory = table_rows(read_text(BACKLOG), INVENTORY_HEADER)
+        inventory_ids = [identity(row[0]) for row in inventory]
+        excluded = {"M0", "G1", "I1.1", "I1.2", "I2.1", "F1.1", "F2.1"}
+        self.assertFalse(set(inventory_ids) & excluded)
+        self.assertEqual(len(inventory_ids), len(set(inventory_ids)))
+        self.assertNotRegex("\n".join(row[0] for row in inventory), r"[–—]")
+
+    def test_inventory_owns_complete_mutable_state_cells(self) -> None:
+        inventory = table_rows(read_text(BACKLOG), INVENTORY_HEADER)
+        allowed_statuses = {
+            "`queued`",
+            "`designing`",
+            "`specified`",
+            "`planned`",
+            "`in_progress`",
+            "`implemented`",
+            "`reviewed`",
+            "`verified`",
+            "`blocked`",
+            "`deferred`",
+            "`released`",
+        }
+        for row in inventory:
+            child, _outcome, status, dependencies, spec, plan, gates, review, resume, reason = row
+            self.assertIn(status, allowed_statuses, child)
+            self.assertRegex(dependencies, r"^`(?:M0|[A-Z][0-9]+\.[0-9]+)`(?:, `(?:M0|[A-Z][0-9]+\.[0-9]+)`)*$")
+            self.assertTrue(spec == "—" or spec.startswith("[design](docs/superpowers/specs/"), child)
+            self.assertTrue(
+                plan == "—" or plan.startswith("[draft plan](docs/superpowers/plans/") or plan.startswith("[plan](docs/superpowers/plans/"),
+                child,
+            )
+            self.assertRegex(gates, r"^(?:—|[0-9]+/[0-9]+)$")
+            self.assertEqual("—", review)
+            if status == "`blocked`":
+                self.assertEqual("`queued`", resume)
+                self.assertNotEqual("—", reason)
+            else:
+                self.assertEqual("—", resume)
+                self.assertEqual("—", reason)
+
+    def test_no_second_child_status_dashboard_remains(self) -> None:
+        backlog = read_text(BACKLOG)
+        self.assertEqual(1, backlog.count("| Child | Outcome | Status |"))
+        for obsolete_heading in (
+            "## Build-foundation child dashboard",
+            "## Canonical-contract child dashboard",
+            "## Future release-path child dashboard",
+            "## Standards child dashboard",
+            "## Repository governance tooling",
+        ):
+            self.assertNotIn(obsolete_heading, backlog)
+        self.assertIn("## Release-gate dashboard", backlog)
+        self.assertIn("## External consumer and downstream boundaries", backlog)
+
+
 if __name__ == "__main__":
     unittest.main()

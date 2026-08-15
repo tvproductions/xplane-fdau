@@ -187,6 +187,14 @@ class BacklogAuthorityTests(unittest.TestCase):
         self.assertIn("## Release-gate dashboard", backlog)
         self.assertIn("## External consumer and downstream boundaries", backlog)
 
+    def test_all_child_gate_headings_are_within_the_unified_section(self) -> None:
+        backlog = read_text(BACKLOG)
+        section_start = backlog.index("## Local-child acceptance gates")
+        section_end = backlog.index("\n## Release-gate dashboard", section_start)
+        for heading in re.finditer(r"^### [A-Z][0-9]+\.[0-9]+ — ", backlog, re.MULTILINE):
+            self.assertGreater(heading.start(), section_start)
+            self.assertLess(heading.start(), section_end)
+
 
 if __name__ == "__main__":
     unittest.main()

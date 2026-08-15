@@ -260,31 +260,6 @@ The child slices below refine this sequence without weakening or reordering it.
 - [ ] Independent review has no unresolved load-bearing finding.
 - [ ] Version `0.1.0` remains unreleased and no push/tag/publication occurs.
 
-## Release-gate dashboard
-
-Release-gate readiness is derived from its prerequisites and evidence. A gate
-is not a selectable implementation child.
-
-| Gate | Outcome | Gate state | Prerequisites | Evidence |
-| --- | --- | --- | --- | --- |
-| `G1` | Independent canonical vertical-slice reconciliation | `waiting` | `C4.4`, `A1.9`, `R1.7`, `P1.6` | — |
-
-## External consumer and downstream boundaries
-
-FDM/FOQA work remains downstream and separately governed; it is not part of the
-canonical runtime or release gate.
-
-These boundaries are report-only. They have no local delivery status and cannot
-be selected or mutated by xplane-fdau tooling.
-
-| Boundary | Owner | xplane-fdau handoff condition |
-| --- | --- | --- |
-| `I1.1` | q4xpcc | Contract/fixture adoption may begin after `C4.4`. |
-| `I1.2` | q4xpcc | Live XPLM acquisition adoption may begin after `A1.9`. |
-| `I2.1` | xpwebapi adapter owner | Corroboration-adapter work may begin after `C4.4`. |
-| `F1.1` | Separate FDM project | Canonical archive consumption may begin after `R1.7`. |
-| `F2.1` | External FOQA governance | Workflow and claims require separate organizational approval. |
-
 ### T1.1 — Markdown authority contract and inventory normalization
 
 - [ ] Roadmap milestones, epics, local children, release gates, and external
@@ -380,6 +355,31 @@ be selected or mutated by xplane-fdau tooling.
 - [ ] Temporary-repository tests, current-repository dry-run, complete quality
       gates, and independent review pass without changing release
       authorization.
+
+## Release-gate dashboard
+
+Release-gate readiness is derived from its prerequisites and evidence. A gate
+is not a selectable implementation child.
+
+| Gate | Outcome | Gate state | Prerequisites | Evidence |
+| --- | --- | --- | --- | --- |
+| `G1` | Independent canonical vertical-slice reconciliation | `waiting` | `C4.4`, `A1.9`, `R1.7`, `P1.6` | — |
+
+## External consumer and downstream boundaries
+
+FDM/FOQA work remains downstream and separately governed; it is not part of the
+canonical runtime or release gate.
+
+These boundaries are report-only. They have no local delivery status and cannot
+be selected or mutated by xplane-fdau tooling.
+
+| Boundary | Owner | xplane-fdau handoff condition |
+| --- | --- | --- |
+| `I1.1` | q4xpcc | Contract/fixture adoption may begin after `C4.4`. |
+| `I1.2` | q4xpcc | Live XPLM acquisition adoption may begin after `A1.9`. |
+| `I2.1` | xpwebapi adapter owner | Corroboration-adapter work may begin after `C4.4`. |
+| `F1.1` | Separate FDM project | Canonical archive consumption may begin after `R1.7`. |
+| `F2.1` | External FOQA governance | Workflow and claims require separate organizational approval. |
 
 ## Backlog rules
 

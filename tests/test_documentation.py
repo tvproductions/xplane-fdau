@@ -29,11 +29,17 @@ class DocumentationTests(unittest.TestCase):
             plan,
         )
 
-    def test_migration_spec_records_approved_unreleased_implementation_status(self) -> None:
-        """The governing migration spec must no longer invite draft review."""
+    def test_migration_spec_records_historical_unreleased_completion(self) -> None:
+        """The completed migration remains historical and unreleased."""
         specification = self._read_required_text(ROOT / "docs/superpowers/specs/2026-08-09-xplane-fdau-identity-fdr-kernel-migration-design.md")
 
-        self.assertIn("**Status:** Approved / implemented but unreleased", specification)
+        self.assertIn("- **Governance:** historical", specification)
+        self.assertIn("- **Status:** completed", specification)
+        self.assertIn("- **Disposition:** Completed under `M0`.", specification)
+        self.assertIn(
+            "> **Historical completion:** Implemented and verified under `M0`, but version\n> `0.1.0` remains unreleased.",
+            specification,
+        )
         self.assertNotIn("**Status:** Draft", specification)
 
     def test_mkdocs_navigation_names_every_published_page(self) -> None:

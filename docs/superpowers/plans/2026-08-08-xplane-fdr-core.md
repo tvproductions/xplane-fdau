@@ -1,5 +1,9 @@
 # xplane-fdr Core Implementation Plan
 
+- **Governance:** historical
+- **Status:** superseded
+- **Disposition:** Replaced by `docs/superpowers/plans/2026-08-09-xplane-fdau-identity-fdr-kernel-migration.md` under `M0`.
+
 > **Superseded — non-executable:** Do not execute this historical plan. Current
 > authority is the
 > [virtual FDAU/FDIU ecosystem architecture](../../architecture/xplane12_virtual_fdau_ecosystem_design.md)

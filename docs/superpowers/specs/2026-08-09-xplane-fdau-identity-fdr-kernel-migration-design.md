@@ -1,8 +1,11 @@
 # xplane-fdau Identity and Native FDR Kernel Migration Design
 
-**Status:** Approved / implemented but unreleased
-**Date:** 2026-08-09  
-**Decision owner:** Jeff / tvproductions
+- **Governance:** historical
+- **Status:** completed
+- **Disposition:** Completed under `M0`.
+
+> **Historical completion:** Implemented and verified under `M0`, but version
+> `0.1.0` remains unreleased.
 
 ## Authority and purpose
 

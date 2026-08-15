@@ -1,5 +1,12 @@
 # xplane-fdau Identity and Native FDR Kernel Migration Implementation Plan
 
+- **Governance:** historical
+- **Status:** completed
+- **Disposition:** Completed under `M0`.
+
+> **Historical completion:** Implemented and verified under `M0`, but version
+> `0.1.0` remains unreleased.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Transform the unreleased `xplane-fdr` project into the unreleased `xplane-fdau` distribution while preserving the reviewed native X-Plane FDR kernel beneath explicit format and sink boundaries.

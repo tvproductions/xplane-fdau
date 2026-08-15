@@ -63,6 +63,24 @@ def roadmap_rows(header: tuple[str, ...]) -> list[tuple[str, ...]]:
     return table_rows(read_text(ROADMAP), header)
 
 
+def metadata(path: Path) -> dict[str, str]:
+    lines = read_text(path).splitlines()
+    result: dict[str, str] = {}
+    started = False
+    for line in lines[1:]:
+        if not started and not line:
+            continue
+        match = re.fullmatch(r"- \*\*([^*]+):\*\* (.+)", line)
+        if match is None:
+            if started:
+                break
+            continue
+        started = True
+        key, value = match.groups()
+        result[key] = value
+    return result
+
+
 def roadmap_child_rows() -> list[tuple[str, ...]]:
     lines = read_text(ROADMAP).splitlines()
     rows: list[tuple[str, ...]] = []
@@ -194,6 +212,94 @@ class BacklogAuthorityTests(unittest.TestCase):
         for heading in re.finditer(r"^### [A-Z][0-9]+\.[0-9]+ — ", backlog, re.MULTILINE):
             self.assertGreater(heading.start(), section_start)
             self.assertLess(heading.start(), section_end)
+
+
+class GovernanceArtifactTests(unittest.TestCase):
+    def test_every_spec_uses_one_complete_governance_family(self) -> None:
+        for path in sorted((ROOT / "docs/superpowers/specs").glob("*.md")):
+            values = metadata(path)
+            self.assertIn(values.get("Governance"), {"active", "historical"}, path)
+            if values["Governance"] == "active":
+                self.assertEqual(
+                    {
+                        "Governance",
+                        "Status",
+                        "Date",
+                        "Decision owner",
+                        "Roadmap epic",
+                        "Roadmap children",
+                        "Approval",
+                    },
+                    set(values),
+                    path,
+                )
+                self.assertIn(values["Status"], {"draft", "approved", "implemented", "superseded"}, path)
+            else:
+                self.assertEqual({"Governance", "Status", "Disposition"}, set(values), path)
+                self.assertIn(values["Status"], {"completed", "superseded"}, path)
+
+    def test_every_plan_uses_one_complete_governance_family(self) -> None:
+        for path in sorted((ROOT / "docs/superpowers/plans").glob("*.md")):
+            values = metadata(path)
+            self.assertIn(values.get("Governance"), {"active", "historical"}, path)
+            if values["Governance"] == "active":
+                self.assertEqual(
+                    {
+                        "Governance",
+                        "Status",
+                        "Date",
+                        "Roadmap child",
+                        "Source specification",
+                        "Approval",
+                        "Completion evidence",
+                    },
+                    set(values),
+                    path,
+                )
+                self.assertIn(
+                    values["Status"],
+                    {"draft", "approved", "in_progress", "completed", "superseded"},
+                    path,
+                )
+            else:
+                self.assertEqual({"Governance", "Status", "Disposition"}, set(values), path)
+                self.assertIn(values["Status"], {"completed", "superseded"}, path)
+
+    def test_active_artifact_assignments_match_current_roadmap_children(self) -> None:
+        active_specs = {
+            path.name: metadata(path) for path in sorted((ROOT / "docs/superpowers/specs").glob("*.md")) if metadata(path).get("Governance") == "active"
+        }
+        active_plans = {
+            path.name: metadata(path) for path in sorted((ROOT / "docs/superpowers/plans").glob("*.md")) if metadata(path).get("Governance") == "active"
+        }
+        self.assertEqual(
+            {
+                "2026-08-09-src-layout-migration-design.md",
+                "2026-08-09-xplane-fdau-backlog-status-skill-design.md",
+                "2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md",
+                "2026-08-15-xplane-fdau-local-workflow-skills-design.md",
+            },
+            set(active_specs),
+        )
+        self.assertEqual(
+            {
+                "2026-08-09-src-layout-migration.md",
+                "2026-08-15-xplane-fdau-backlog-authority-normalization.md",
+            },
+            set(active_plans),
+        )
+        self.assertEqual("`T1.1`", active_plans["2026-08-15-xplane-fdau-backlog-authority-normalization.md"]["Roadmap child"])
+
+    def test_historical_artifacts_name_their_disposition(self) -> None:
+        historical_paths = (
+            ROOT / "docs/superpowers/specs/2026-08-08-xplane-fdr-core-design.md",
+            ROOT / "docs/superpowers/specs/2026-08-09-xplane-fdau-identity-fdr-kernel-migration-design.md",
+            ROOT / "docs/superpowers/plans/2026-08-08-xplane-fdr-core.md",
+            ROOT / "docs/superpowers/plans/2026-08-09-xplane-fdau-identity-fdr-kernel-migration.md",
+        )
+        for path in historical_paths:
+            self.assertIn(metadata(path)["Status"], {"completed", "superseded"})
+            self.assertNotEqual("—", metadata(path)["Disposition"])
 
 
 if __name__ == "__main__":

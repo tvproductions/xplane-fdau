@@ -1,5 +1,9 @@
 # xplane-fdr Core Design
 
+- **Governance:** historical
+- **Status:** superseded
+- **Disposition:** Replaced by `docs/superpowers/specs/2026-08-09-xplane-fdau-identity-fdr-kernel-migration-design.md` under `M0`.
+
 > **Superseded 2026-08-09:** The approved project identity and architecture are
 > now the virtual FDAU/FDIU ecosystem described in
 > `docs/architecture/xplane12_virtual_fdau_ecosystem_design.md`. The native FDR

@@ -1,8 +1,12 @@
 # xplane-fdau Canonical Measurement Contract Kernel Design
 
-- **Status:** Draft for written review
+- **Governance:** active
+- **Status:** draft
 - **Date:** 2026-08-09
 - **Decision owner:** Jeff / tvproductions
+- **Roadmap epic:** `C`
+- **Roadmap children:** `C1.1`, `C1.2`, `C1.3`, `C1.4`, `C1.5`, `C2.1`, `C2.2`, `C2.3`, `C2.4`, `C3.1`, `C3.2`, `C3.3`, `C3.4`, `C3.5`, `C4.1`, `C4.2`, `C4.3`, `C4.4`
+- **Approval:** —
 
 ## Authority and purpose
 

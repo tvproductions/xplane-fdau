@@ -1,11 +1,11 @@
 # xplane-fdau Backlog Authority and Inventory Normalization Implementation Plan
 
 - **Governance:** active
-- **Status:** draft
+- **Status:** approved
 - **Date:** 2026-08-15
 - **Roadmap child:** `T1.1`
 - **Source specification:** `docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md`
-- **Approval:** —
+- **Approval:** 2026-08-15 — Jeff / tvproductions
 - **Completion evidence:** —
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

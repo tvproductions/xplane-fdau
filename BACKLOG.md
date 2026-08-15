@@ -302,22 +302,21 @@ The governing [T1 design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-
 covers the six run-sized tooling children below. Each child receives its own
 implementation plan when selected.
 
-The draft [local workflow skills design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md)
+The approved [local workflow skills design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md)
 translates q4xpcc's remaining project-local `repo-hygiene` and `git-sync`
-capabilities without copying their implementation. `T2.1` and `T3.1` remain
-queued until their governing design is approved and their dependencies are
-verified.
+capabilities without copying their implementation. `T2.1` and `T3.1` are
+specified and wait for their dependencies before planning or execution.
 
 | Child | Work | Status | Depends on | Spec | Plan | Gates |
 | --- | --- | --- | --- | --- | --- | --- |
-| `T1.1` | Markdown authority contract and inventory normalization | `designing` | `M0` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 |
-| `T1.2` | Typed parser, status report, and versioned JSON | `queued` | `T1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 |
-| `T1.3` | Structural audit and spec/plan adherence | `queued` | `T1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 |
-| `T1.4` | Deterministic next-action selection | `queued` | `T1.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 |
-| `T1.5` | Guarded child-state and gate-evidence mutations | `queued` | `T1.3`, `T1.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/5 |
-| `T1.6` | Skill, session-entry, hygiene, and artifact closure | `queued` | `T1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/5 |
-| `T2.1` | Canonical repo-hygiene and fresh artifact verification | `queued` | `T1.6` | [draft design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/5 |
-| `T3.1` | Guarded local Git synchronization with push disabled | `queued` | `T2.1` | [draft design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/5 |
+| `T1.1` | Markdown authority contract and inventory normalization | `specified` | `M0` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 |
+| `T1.2` | Typed parser, status report, and versioned JSON | `specified` | `T1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 |
+| `T1.3` | Structural audit and spec/plan adherence | `specified` | `T1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 |
+| `T1.4` | Deterministic next-action selection | `specified` | `T1.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 |
+| `T1.5` | Guarded child-state and gate-evidence mutations | `specified` | `T1.3`, `T1.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/5 |
+| `T1.6` | Skill, session-entry, hygiene, and artifact closure | `specified` | `T1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/5 |
+| `T2.1` | Canonical repo-hygiene and fresh artifact verification | `specified` | `T1.6` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/5 |
+| `T3.1` | Guarded local Git synchronization with push disabled | `specified` | `T2.1` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/5 |
 
 ### T1.1 — Markdown authority contract and inventory normalization
 

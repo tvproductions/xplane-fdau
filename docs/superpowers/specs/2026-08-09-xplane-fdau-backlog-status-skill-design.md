@@ -1,12 +1,12 @@
 # xplane-fdau Markdown-Native Backlog Governance Tooling Design
 
 - **Governance:** active
-- **Status:** draft
+- **Status:** approved
 - **Date:** 2026-08-09
 - **Decision owner:** Jeff / tvproductions
 - **Roadmap epic:** `T1`
 - **Roadmap children:** `T1.1`, `T1.2`, `T1.3`, `T1.4`, `T1.5`, `T1.6`
-- **Approval:** —
+- **Approval:** 2026-08-15 — Jeff / tvproductions
 
 ## Authority and purpose
 

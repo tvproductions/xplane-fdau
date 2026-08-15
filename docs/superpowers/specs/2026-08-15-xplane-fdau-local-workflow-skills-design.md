@@ -1,12 +1,12 @@
 # xplane-fdau Local Workflow Skills Design
 
 - **Governance:** active
-- **Status:** draft
+- **Status:** approved
 - **Date:** 2026-08-15
 - **Decision owner:** Jeff / tvproductions
 - **Roadmap epic:** `T2`
 - **Roadmap children:** `T2.1`, `T3.1`
-- **Approval:** —
+- **Approval:** 2026-08-15 — Jeff / tvproductions
 
 ## Authority and purpose
 

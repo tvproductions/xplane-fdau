@@ -38,10 +38,10 @@ The active repository-governance design is:
 It defines the repository-local `T1` governance-tooling epic as six run-sized
 children, `T1.1` through `T1.6`. The selected child is `T1.1`, Markdown authority
 and explicit inventory normalization. The amended written specification is
-drafted for review and is not yet implementation authority. The tooling does
-not govern consumer projects or ship in the distribution.
+approved. `T1.1` is specified and ready for its focused implementation plan.
+The tooling does not govern consumer projects or ship in the distribution.
 
-The draft translation of q4xpcc's remaining project-local workflows is:
+The approved translation of q4xpcc's remaining project-local workflows is:
 
 `docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md`
 

@@ -42,8 +42,8 @@ approved. `T1.1` is planned, and its approved focused implementation plan is:
 
 `docs/superpowers/plans/2026-08-15-xplane-fdau-backlog-authority-normalization.md`
 
-The plan is approved for subagent-driven execution. The tooling does not govern
-consumer projects or ship in the distribution.
+The plan is in progress under subagent-driven execution. The tooling does not
+govern consumer projects or ship in the distribution.
 
 The approved translation of q4xpcc's remaining project-local workflows is:
 

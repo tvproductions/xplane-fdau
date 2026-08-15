@@ -1,7 +1,7 @@
 # xplane-fdau Backlog Authority and Inventory Normalization Implementation Plan
 
 - **Governance:** active
-- **Status:** approved
+- **Status:** in_progress
 - **Date:** 2026-08-15
 - **Roadmap child:** `T1.1`
 - **Source specification:** `docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md`

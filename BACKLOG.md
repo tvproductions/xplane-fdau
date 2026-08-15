@@ -309,7 +309,7 @@ specified and wait for their dependencies before planning or execution.
 
 | Child | Work | Status | Depends on | Spec | Plan | Gates |
 | --- | --- | --- | --- | --- | --- | --- |
-| `T1.1` | Markdown authority contract and inventory normalization | `planned` | `M0` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-08-15-xplane-fdau-backlog-authority-normalization.md) | 0/4 |
+| `T1.1` | Markdown authority contract and inventory normalization | `in_progress` | `M0` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-08-15-xplane-fdau-backlog-authority-normalization.md) | 0/4 |
 | `T1.2` | Typed parser, status report, and versioned JSON | `specified` | `T1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 |
 | `T1.3` | Structural audit and spec/plan adherence | `specified` | `T1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 |
 | `T1.4` | Deterministic next-action selection | `specified` | `T1.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 |

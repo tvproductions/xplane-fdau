@@ -120,7 +120,7 @@ Each epic expands into the child slices below.
 
 | Child | Outcome | Depends on |
 | --- | --- | --- |
-| `C3.1` | Raw-observation record and schema | `C1.3`–`C1.5`, `C2.4` |
+| `C3.1` | Raw-observation record and schema | `C1.3`, `C1.4`, `C1.5`, `C2.4` |
 | `C3.2` | Measurement-sample record and schema | `C3.1` |
 | `C3.3` | Raw/sample lineage and cross-contract validation | `C3.2` |
 | `C3.4` | Measurement-frame record and schema | `C3.3` |
@@ -147,7 +147,7 @@ Each epic expands into the child slices below.
 | `A1.6` | Cadence, downsampling, interpolation, and resampling policy | `A1.3`, `A1.5` |
 | `A1.7` | Continuity evaluator and continuity report | `A1.5`, `A1.6` |
 | `A1.8` | Generic fan-out, sink isolation, and backpressure evidence | `A1.6`, `A1.7` |
-| `A1.9` | Acquisition-session orchestration and installed closure | `A1.4`–`A1.8` |
+| `A1.9` | Acquisition-session orchestration and installed closure | `A1.4`, `A1.5`, `A1.6`, `A1.7`, `A1.8` |
 
 ## R1 — Canonical recording and replay epic
 
@@ -169,7 +169,7 @@ Each epic expands into the child slices below.
 | `P1.2` | Mandatory native trajectory-spine projection | `P1.1` |
 | `P1.3` | Version-4 DataRef extension projection | `P1.2` |
 | `P1.4` | Projection timing and resampling behavior | `P1.1`, `A1.6` |
-| `P1.5` | Omission, default, conversion, and precision-loss report | `P1.2`–`P1.4` |
+| `P1.5` | Omission, default, conversion, and precision-loss report | `P1.2`, `P1.3`, `P1.4` |
 | `P1.6` | End-to-end canonical-to-native-sink verification | `P1.5` |
 
 ## Release gates

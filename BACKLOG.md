@@ -1,7 +1,7 @@
 # xplane-fdau Backlog
 
 - **Status:** Active delivery ledger and Superpowers entry point
-- **Updated:** 2026-08-09
+- **Updated:** 2026-08-15
 
 Read `ROADMAP.md` for architecture order and dependencies. Then use this file to
 select one primary child slice whose prerequisites are verified. Each child
@@ -10,8 +10,10 @@ slice receives one focused plan and one independently reviewable outcome.
 ## Current position
 
 - `M0` FDAU identity/native-FDR migration: `verified`.
-- Active design: Source-layout migration and installed-import isolation.
-- Active child slice: `B1.1` source-layout migration.
+- Active design: Repository backlog-governance tooling.
+- Active child slice: `T1.1` Markdown authority and inventory normalization.
+- `B1.1` source-layout migration: `specified` with a draft plan; resumes after
+  `T3.1` is verified.
 - Canonical contract design: written review remains pending for `C1.1`.
 - Release: prohibited.
 - Push/tag/publication: prohibited.
@@ -30,12 +32,14 @@ The child slices below refine this sequence without weakening or reordering it.
 
 ## Build-foundation child dashboard
 
-The governing [source-layout design](docs/superpowers/specs/2026-08-09-src-layout-migration-design.md)
-covers the selected pre-canonical build correction.
+The approved [source-layout design](docs/superpowers/specs/2026-08-09-src-layout-migration-design.md)
+and its [draft implementation plan](docs/superpowers/plans/2026-08-09-src-layout-migration.md)
+cover the pre-canonical build correction after repository-workflow governance
+is verified.
 
 | Child | Outcome | Status | Depends on | Spec | Plan | Gates |
 | --- | --- | --- | --- | --- | --- | --- |
-| `B1.1` | Source-layout migration and installed-import isolation | `designing` | `M0` | [design](docs/superpowers/specs/2026-08-09-src-layout-migration-design.md) | — | 0/5 |
+| `B1.1` | Source-layout migration and installed-import isolation | `specified` | `T3.1` | [design](docs/superpowers/specs/2026-08-09-src-layout-migration-design.md) | [draft plan](docs/superpowers/plans/2026-08-09-src-layout-migration.md) | 0/5 |
 
 ### B1.1 — Source-layout migration and installed-import isolation
 
@@ -298,6 +302,12 @@ The governing [T1 design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-
 covers the six run-sized tooling children below. Each child receives its own
 implementation plan when selected.
 
+The draft [local workflow skills design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md)
+translates q4xpcc's remaining project-local `repo-hygiene` and `git-sync`
+capabilities without copying their implementation. `T2.1` and `T3.1` remain
+queued until their governing design is approved and their dependencies are
+verified.
+
 | Child | Work | Status | Depends on | Spec | Plan | Gates |
 | --- | --- | --- | --- | --- | --- | --- |
 | `T1.1` | Markdown authority contract and inventory normalization | `designing` | `M0` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 |
@@ -306,6 +316,8 @@ implementation plan when selected.
 | `T1.4` | Deterministic next-action selection | `queued` | `T1.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 |
 | `T1.5` | Guarded child-state and gate-evidence mutations | `queued` | `T1.3`, `T1.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/5 |
 | `T1.6` | Skill, session-entry, hygiene, and artifact closure | `queued` | `T1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/5 |
+| `T2.1` | Canonical repo-hygiene and fresh artifact verification | `queued` | `T1.6` | [draft design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/5 |
+| `T3.1` | Guarded local Git synchronization with push disabled | `queued` | `T2.1` | [draft design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/5 |
 
 ### T1.1 — Markdown authority contract and inventory normalization
 
@@ -369,6 +381,39 @@ implementation plan when selected.
 - [ ] Built and installed artifacts exclude all repository-governance tooling.
 - [ ] All standard-library tests and independent review pass without changing
       release or publication authorization.
+
+### T2.1 — Canonical repo-hygiene and fresh artifact verification
+
+- [ ] The canonical `repo-hygiene` skill replaces `hygiene` and runs status,
+      offline lock, backlog audit, quality, strict documentation, and pre-commit
+      gates at full strength.
+- [ ] Every run builds one fresh wheel/sdist pair outside the checkout and
+      validates exact metadata, members, payload bytes, and
+      repository-governance exclusion.
+- [ ] Successful temporary artifacts are safely removed while failed artifacts
+      are preserved at a reported exact path for diagnosis.
+- [ ] Routine hygiene performs no implicit network inquiry, repository
+      mutation, or installed Python-version matrix and retains focused
+      supporting skills.
+- [ ] All standard-library tests, current-repository integration, artifact
+      checks, and independent review pass without changing release
+      authorization.
+
+### T3.1 — Guarded local Git synchronization with push disabled
+
+- [ ] Dry-run and JSON reports deterministically expose branch, remote, scope,
+      ahead/behind/divergence, actions, warnings, blockers, and expected state.
+- [ ] Apply revalidates pinned state, performs reviewed auto-add, full hygiene,
+      intentional commit, fast-forward pull or rebase, and repairable merge-head
+      backup/linearization with final verification.
+- [ ] Detached, conflicting, stale, unexpected, missing-remote, failed-fetch,
+      failed-hygiene, and unrepairable-merge states fail closed without partial
+      unsafe continuation.
+- [ ] Push is absent from both CLI and implementation, and no tag, publication,
+      release, force, or verification-bypass path exists.
+- [ ] Temporary-repository tests, current-repository dry-run, complete quality
+      gates, and independent review pass without changing release
+      authorization.
 
 ## Backlog rules
 

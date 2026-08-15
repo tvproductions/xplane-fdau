@@ -1,7 +1,7 @@
 # xplane-fdau Roadmap
 
 - **Status:** Active planning authority
-- **Updated:** 2026-08-09
+- **Updated:** 2026-08-15
 - **Decision owner:** Jeff / tvproductions
 
 ## Purpose
@@ -64,7 +64,9 @@ points, or percentage extrapolated from unequal work.
 ```text
 M0 Identity and native FDR kernel                                      verified
  |
- +-> B1 Source-layout isolation
+ +-> T1 Backlog governance -> T2 Repository hygiene -> T3 Guarded Git sync
+      |
+      +-> B1 Source-layout isolation
       |
       +-> C1 Foundation -> C2 Catalogs -> C3 Evidence records -> C4 Closure
       |
@@ -91,7 +93,7 @@ Each epic expands into the child slices below.
 
 | Child | Outcome | Depends on |
 | --- | --- | --- |
-| `B1.1` | Source-layout migration and installed-import isolation | `M0` |
+| `B1.1` | Source-layout migration and installed-import isolation | `T3.1` |
 
 ## C — Canonical semantic contract kernel
 
@@ -224,6 +226,26 @@ runtime architecture and never ships in the xplane-fdau distribution.
 | `T1.4` | Deterministic next-action selection | `T1.3` |
 | `T1.5` | Guarded child-state and gate-evidence mutations | `T1.3`, `T1.4` |
 | `T1.6` | Skill, session-entry, hygiene, and artifact closure | `T1.5` |
+
+## T2 — Repository hygiene tooling epic
+
+This track translates q4xpcc's full-strength repository-hygiene discipline to
+the xplane-fdau distribution boundary. It is repository tooling and never ships
+in the distribution. The local-workflow-skills design is explicitly a
+cross-epic design spanning `T2.1` and its dependent `T3.1` child.
+
+| Child | Outcome | Depends on |
+| --- | --- | --- |
+| `T2.1` | Canonical repo-hygiene and fresh artifact verification | `T1.6` |
+
+## T3 — Guarded Git synchronization tooling epic
+
+This track translates q4xpcc's dry-run/apply Git synchronization state machine
+while retaining xplane-fdau's push and release prohibition.
+
+| Child | Outcome | Depends on |
+| --- | --- | --- |
+| `T3.1` | Guarded local Git synchronization with push disabled | `T2.1` |
 
 ## Version 0.1.0 release gates
 

@@ -732,3 +732,11 @@ After written approval, implementation proceeds one child and one plan per run:
 6. `T1.6` integrates the skill, session entry, hygiene, and artifact closure.
 
 No implementation begins before this amended written specification is reviewed.
+
+After `T1.6` is verified, repository-workflow onboarding continues through
+`T2.1` canonical `repo-hygiene` and `T3.1` guarded Git synchronization as
+specified by
+`docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md`.
+Those children translate the remaining q4xpcc-local workflow capabilities and
+remain outside this T1 implementation boundary. `B1.1` resumes only after
+`T3.1` is verified.

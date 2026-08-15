@@ -17,14 +17,19 @@ Identity and native-FDR-kernel migration: implemented and verified, but unreleas
 is the measurable delivery ledger. Point Superpowers to the backlog and advance
 one primary child slice per run.
 
-The selected pre-canonical build correction is `B1.1`, governed by:
+The pre-canonical build correction is `B1.1`, governed by:
 
 `docs/superpowers/specs/2026-08-09-src-layout-migration-design.md`
 
 It moves the runtime package to `src/xplane_fdau` and strengthens installed
 import isolation without changing the distribution identity, public API, or
-runtime dependency boundary. The written specification is drafted for review
-and is not yet implementation authority.
+runtime dependency boundary. The written specification is approved and its
+draft plan is:
+
+`docs/superpowers/plans/2026-08-09-src-layout-migration.md`
+
+`B1.1` is `specified`, not implemented, and resumes only after the local
+repository-workflow sequence through `T3.1` is verified.
 
 The active repository-governance design is:
 
@@ -35,6 +40,16 @@ children, `T1.1` through `T1.6`. The selected child is `T1.1`, Markdown authorit
 and explicit inventory normalization. The amended written specification is
 drafted for review and is not yet implementation authority. The tooling does
 not govern consumer projects or ship in the distribution.
+
+The draft translation of q4xpcc's remaining project-local workflows is:
+
+`docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md`
+
+It defines `T2.1` canonical full-strength `repo-hygiene` followed by `T3.1`
+q4xpcc-style guarded Git synchronization with push disabled. Superpowers
+remains an external dependency; no Superpowers skill is copied or treated as a
+local onboarding target. q4xpcc is read-only design input and is not a runtime,
+tooling, or checkout dependency.
 
 The canonical-contract design remains:
 

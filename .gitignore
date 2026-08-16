@@ -203,6 +203,10 @@ cython_debug/
 # Temporary file for partial code execution
 tempCodeRunnerFile.py
 
+# Project-local Superpowers checkout and skill discovery link
+.agents/superpowers/
+.agents/skills/superpowers/
+
 # Local agent workflow scratch and isolated worktrees
 .superpowers/
 .worktrees/

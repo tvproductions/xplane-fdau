@@ -194,14 +194,15 @@ class DocumentationTests(unittest.TestCase):
             self.assertNotIn("xplane-fdr validate", text, path)
             self.assertNotIn("xplane-fdr to-geojson", text, path)
 
-    def test_active_plugin_guidance_and_runtime_docstrings_use_fdau_identity(self) -> None:
+    def test_active_agent_guidance_and_runtime_docstrings_use_fdau_identity(self) -> None:
         """Current agent guidance and shipped help must name the installed project."""
-        plugin_guidance = self._read_required_text(ROOT / ".codex/plugins/superpowers/PROJECT-INSTALL.md")
+        agent_guidance = "\n".join(self._read_required_text(path) for path in (ROOT / "AGENTS.md", ROOT / "HANDOFF.md"))
         runtime_paths = tuple(sorted((ROOT / "xplane_fdau").rglob("*.py")))
         runtime_text = "\n".join(self._read_required_text(path) for path in runtime_paths)
 
-        self.assertIn("Project-specific operational skills are maintained for `xplane-fdau`", plugin_guidance)
-        self.assertNotIn("will be designed for `xplane-fdr`", plugin_guidance)
+        self.assertIn("xplane-fdau", agent_guidance)
+        self.assertIn(".agents/superpowers", agent_guidance)
+        self.assertNotIn("will be designed for `xplane-fdr`", agent_guidance)
         self.assertIn(":mod:`xplane_fdau.formats.xplane_fdr`", runtime_text)
         self.assertNotIn(":mod:`xplane_fdr`", runtime_text)
 

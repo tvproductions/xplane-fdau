@@ -36,15 +36,16 @@ The active repository-governance design is:
 `docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md`
 
 It defines the repository-local `T1` governance-tooling epic as six run-sized
-children, `T1.1` through `T1.6`. The selected child is `T1.1`, Markdown authority
-and explicit inventory normalization. The amended written specification is
-approved. `T1.1`'s completed implementation plan is:
+children, `T1.1` through `T1.6`. `T1.1`, Markdown authority and explicit
+inventory normalization, is historical verified work. Its completed
+implementation plan is:
 
 `docs/superpowers/plans/2026-08-15-xplane-fdau-backlog-authority-normalization.md`
 
 `T1.1` is `verified`: all four gates and the accepted independent review have
-committed evidence. `T1.2` is selected and `in_progress` under its approved
-focused implementation plan:
+committed evidence. `T1.2` is selected and `implemented` with four committed
+verification gates; it awaits independent review under its approved focused
+implementation plan:
 
 `docs/superpowers/plans/2026-08-16-xplane-fdau-typed-backlog-status-reporting.md`
 
@@ -57,8 +58,12 @@ The approved translation of q4xpcc's remaining project-local workflows is:
 It defines `T2.1` canonical full-strength `repo-hygiene` followed by `T3.1`
 q4xpcc-style guarded Git synchronization with push disabled. Superpowers
 remains an external dependency; no Superpowers skill is copied or treated as a
-local onboarding target. q4xpcc is read-only design input and is not a runtime,
-tooling, or checkout dependency.
+local onboarding target. The ignored `.agents/superpowers` checkout supplies
+the upstream workflow through the ignored `.agents/skills/superpowers`
+discovery junction; `.codex/skills` remains project-specific. Completed
+feature worktrees merge back to `main`, pass merged-result verification, and
+are removed with their temporary branches. q4xpcc is read-only design input
+and is not a runtime, tooling, or checkout dependency.
 
 The canonical-contract design remains:
 

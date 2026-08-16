@@ -1,7 +1,7 @@
 # xplane-fdau Roadmap
 
 - **Status:** Active planning authority
-- **Updated:** 2026-08-15
+- **Updated:** 2026-08-16
 - **Decision owner:** Jeff / tvproductions
 
 ## Purpose
@@ -209,13 +209,13 @@ These records state when xplane-fdau can be consumed. They are owned by the
 named external project, are not local child slices, do not appear with mutable
 delivery state in `BACKLOG.md`, and cannot be selected by local tooling.
 
-| Boundary | Owner | xplane-fdau handoff condition |
-| --- | --- | --- |
-| `I1.1` | q4xpcc | Contract-model and fixture adoption may begin after `C4.4`. |
-| `I1.2` | q4xpcc | Live XPLM acquisition adoption may begin after `A1.9`. |
-| `I2.1` | xpwebapi adapter owner | Development/corroboration adapter work may begin after `C4.4`. |
-| `F1.1` | Separate downstream FDM project | Canonical archive consumption may begin after `R1.7`. |
-| `F2.1` | External FOQA governance | Organizational workflow and claims require separate approval. |
+| Boundary | Outcome | Owner | xplane-fdau handoff condition |
+| --- | --- | --- | --- |
+| `I1.1` | q4xpcc contract-model and fixture adoption | q4xpcc | Contract-model and fixture adoption may begin after `C4.4`. |
+| `I1.2` | q4xpcc live XPLM acquisition adoption | q4xpcc | Live XPLM acquisition adoption may begin after `A1.9`. |
+| `I2.1` | Development/corroboration adapter adoption | xpwebapi adapter owner | Development/corroboration adapter work may begin after `C4.4`. |
+| `F1.1` | Canonical archive consumption | Separate downstream FDM project | Canonical archive consumption may begin after `R1.7`. |
+| `F2.1` | External FOQA governance and claims | External FOQA governance | Organizational workflow and claims require separate approval. |
 
 ## T1 — Repository governance tooling epic
 

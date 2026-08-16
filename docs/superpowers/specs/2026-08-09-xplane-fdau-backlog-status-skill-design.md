@@ -8,6 +8,33 @@
 - **Roadmap children:** `T1.1`, `T1.2`, `T1.3`, `T1.4`, `T1.5`, `T1.6`
 - **Approval:** 2026-08-15 — Jeff / tvproductions
 
+## 2026-08-16 T1.2 contract amendment
+
+The managed external-boundary table has four columns in this exact order:
+
+```markdown
+| Boundary | Outcome | Owner | xplane-fdau handoff condition |
+| --- | --- | --- | --- |
+```
+
+`Outcome` is the sole authoritative source for the schema-version-1
+`ExternalBoundary.title` field. Owner and handoff-condition prose must not be
+substituted for it.
+
+All managed table delimiter rows have exactly the same cell count as their
+recognized header. Governance artifacts have exactly one blank line between
+their title and the immediately contiguous metadata block. Managed Markdown
+links and inline-code metadata path values use the same repository-relative
+path grammar: non-empty `/`-separated segments with no Windows drive,
+absolute path, URI scheme, traversal segment, backslash, or empty segment.
+
+Roadmap epic identity syntax is `[A-Z][0-9]*`, so `S` is valid. A roadmap
+child remains a dotted local-child identity. Syntax parsing preserves displayed
+gate counts independently from parsed gate items and maps exact em-dash
+Approval and Completion-evidence values to absent optional values. Git status
+integration exercises the real current checkout without changing repository
+state, while unit coverage retains the exact read-only Git command contract.
+
 ## Authority and purpose
 
 `ROADMAP.md` is the node-identity, kind, order, and dependency authority.
@@ -157,7 +184,7 @@ table header:
 - the standards epic adds `External prerequisite` as a fourth column;
 - `Release gates` contains `Gate | Outcome | Depends on`;
 - `External consumer and downstream boundaries` contains
-  `Boundary | Owner | xplane-fdau handoff condition`; and
+  `Boundary | Outcome | Owner | xplane-fdau handoff condition`; and
 - `M0` is the named verified milestone in the release-path section.
 
 Narrative ranges are permitted, but every local child and external boundary

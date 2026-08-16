@@ -1,12 +1,12 @@
 # xplane-fdau Typed Backlog Status Reporting Implementation Plan
 
 - **Governance:** active
-- **Status:** in_progress
+- **Status:** completed
 - **Date:** 2026-08-16
 - **Roadmap child:** `T1.2`
 - **Source specification:** `docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md`
 - **Approval:** 2026-08-16 — Jeff / tvproductions
-- **Completion evidence:** —
+- **Completion evidence:** `.superpowers/sdd/2026-08-16-t1-2-typed-backlog-status-reporting/completion.md`
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -35,7 +35,60 @@
 
 `T1.2` owns syntax-level parsing and reporting. It accepts a repository only when each managed structure can be represented by the approved typed shape. Examples of parser failures in this child are a malformed table separator, an invalid identity token, an invalid status token, a malformed managed link, a malformed task item, a missing required metadata field, or a non-integer gate count.
 
-`T1.2` deliberately does not decide whether identities are duplicated across files, dependencies form a cycle, backlog outcomes drift from the roadmap, a plan covers the wrong child, evidence is eligible, or a lifecycle claim is justified. Those are `T1.3` rules. The status report therefore returns `valid: true` after successful syntax parsing, an empty `findings` array, and `recommendation: null`. A parse failure exits `1` with exact path/line context; schema-version-1 JSON for structurally audited failure states begins with `T1.3`.
+`T1.2` deliberately does not decide whether identities are duplicated across files, dependencies form a cycle, backlog outcomes drift from the roadmap, displayed gate counts agree with parsed task items, a plan covers the wrong child, approval/completion fields justify an artifact status, evidence is eligible, or a lifecycle claim is justified. Those are `T1.3` rules. The status report therefore returns `valid: true` after successful syntax parsing, an empty `findings` array, and `recommendation: null`. A parse failure exits `1` with exact path/line context; schema-version-1 JSON for structurally audited failure states begins with `T1.3`.
+
+## 2026-08-16 accepted-review remediation amendment
+
+This completed plan is explicitly reopened as `in_progress` to remediate the
+accepted independent-review findings. It will return to `completed` only after
+fresh verification and regenerated eligible completion evidence. `T1.2`
+remains selected at `implemented`, `4/4`, with `Review: —`; this remediation
+does not create review evidence or authorize `reviewed`, `verified`, or release
+state.
+
+The remediation was re-closed as `completed` on 2026-08-16 after fresh focused,
+static, current-repository, complete-quality, and documentation verification.
+Gate 1, Gate 4, and completion evidence were regenerated; Gate 2 and Gate 3
+were inspected and retained because their subjects and commands did not change.
+
+The parser and tests additionally require:
+
+- exact managed-table delimiter/header cell-count parity, including too-few
+  and too-many delimiter cases for every managed table family;
+- exactly one blank line between a governance-artifact title and the
+  immediately contiguous metadata block, rejecting zero, multiple, and
+  intervening non-metadata lines;
+- one platform-independent repository-relative path validator shared by
+  Markdown links and inline-code metadata values, rejecting Windows drives,
+  absolute paths, URI schemes, traversal, backslashes, and empty segments;
+- epic syntax `[A-Z][0-9]*`, including `S`, while child identities remain
+  dotted local-child identities;
+- first-difference line attribution for unexpected, differing, or missing
+  artifact metadata keys;
+- independent parsing of displayed gate counts and gate items, plus exact
+  em-dash Approval and Completion-evidence values as `None`;
+- preservation of exact read-only Git-command unit tests and an unmocked
+  current-checkout integration test that proves repository state is unchanged;
+  and
+- an external-boundary `Outcome` column as the sole source for
+  `ExternalBoundary.title`, using the five authoritative outcomes in
+  `ROADMAP.md`.
+
+The original stale verification selector was
+`uv run python -m unittest tests.test_backlog_status_cli.CurrentRepositoryStatusTests -v`.
+Its exact replacement is
+`uv run python -m unittest tests.test_backlog_status_cli.BacklogStatusCliTests.test_current_repository_status_reports_human_and_json -v`.
+
+### 2026-08-16 accepted-review erratum 2
+
+The completed plan remains `completed`; this focused correction does not reopen
+its lifecycle. The original `_cells` example used
+`line.text.strip("|").split("|")`, which removes every leading and trailing
+delimiter and can conceal extra empty edge cells. Its exact replacement is
+`line.text[1:-1].split("|")`: after requiring one leading and one trailing
+delimiter, remove exactly those two delimiters so doubled-leading,
+doubled-trailing, and doubled-both rows retain the extra empty cells and fail
+the managed-family cell-count check.
 
 ---
 
@@ -471,7 +524,7 @@ def _read(path: Path) -> tuple[_Line, ...]:
 def _cells(path: Path, line: _Line, expected: int) -> tuple[str, ...]:
     if not line.text.startswith("|") or not line.text.endswith("|"):
         raise MarkdownParseError(path, line.number, "managed table row must begin and end with '|'")
-    values = tuple(cell.strip() for cell in line.text.strip("|").split("|"))
+    values = tuple(cell.strip() for cell in line.text[1:-1].split("|"))
     if len(values) != expected:
         raise MarkdownParseError(path, line.number, f"managed table row requires {expected} cells")
     return values
@@ -507,7 +560,7 @@ Do not check duplicates, unknown dependencies, cross-kind collisions, cycles, or
 3. parse backtick statuses against `CHILD_STATUSES`;
 4. parse spec/plan/review/resume/reason cells without deciding whether they are lifecycle-appropriate;
 5. join each inventory row with its matching acceptance-gate heading by ID and derive `GateSummary(satisfied, total, items)` from task items, folding indented continuation lines with single spaces while retaining the first task-item line as source context;
-6. require the displayed gate count to equal the task-item count as syntax-local consistency, while leaving evidence eligibility to `T1.3`; and
+6. parse the displayed gate count into `GateSummary.satisfied` and `GateSummary.total`, parse task items independently, and leave equality/count adherence to `T1.3`; and
 7. parse the release-gate dashboard into typed rows.
 
 Checked gates require one or more repository-relative evidence links after exact ` — Evidence:` text. Open gates contain no evidence suffix. A `Gates` cell of `—` becomes `GateSummary(0, 0, ())` and requires no acceptance section. Store `dependency_ready=False` during parsing; `report.py` derives it from the complete snapshot in Task 4.
@@ -565,12 +618,12 @@ malformed = (
     ("active-design-missing-owner.md", "active design metadata keys"),
     ("active-plan-multiple-child.md", "Roadmap child requires one identity"),
     ("historical-missing-disposition.md", "historical metadata keys"),
-    ("approved-without-approval.md", "approved artifact requires Approval"),
-    ("completed-without-evidence.md", "completed plan requires Completion evidence"),
+    ("active-design-invalid-status.md", "invalid active design status"),
+    ("active-plan-invalid-status.md", "invalid active plan status"),
 )
 ```
 
-These are metadata-shape failures. Whether a plan's child is covered by its source design remains `T1.3`.
+These are metadata-shape failures. Whether a plan's child is covered by its source design, an approved artifact has nonempty approval evidence, or a completed plan has nonempty completion evidence remains `T1.3`.
 
 - [ ] **Step 3: Run the artifact parser tests to prove RED**
 
@@ -616,7 +669,7 @@ def parse_repository(root: Path) -> RepositorySnapshot:
     )
 ```
 
-`_parse_artifact` must read one contiguous metadata block immediately after the title, require exact key sets and order, enforce controlled governance/status values, and normalize paths relative to `root` with `/`. It must enforce shape-local approval/completion presence but not source-spec existence, child coverage, lifecycle consistency, or evidence eligibility.
+`_parse_artifact` must read one contiguous metadata block immediately after the title, require exact key sets and order, enforce controlled governance/status values, and normalize paths relative to `root` with `/`. Required metadata keys must exist, but `Approval` and `Completion evidence` may parse from `—` to `None` regardless of status. Source-spec existence, child coverage, status-conditional evidence, lifecycle consistency, and evidence eligibility remain `T1.3` rules.
 
 - [ ] **Step 5: Run parser, governance, and static checks**
 
@@ -821,6 +874,8 @@ Expected: one local commit; no push.
 
 - Modify: `.codex/skills/backlog-status/scripts/backlog/report.py`
 - Modify: `.codex/skills/backlog-status/scripts/backlog_status.py`
+- Modify: `.codex/skills/backlog-status/scripts/backlog/parse.py`
+- Modify: `tests/test_backlog_status_parse.py`
 - Modify: `tests/test_backlog_status_report.py`
 - Modify: `tests/test_backlog_status_cli.py`
 
@@ -913,6 +968,12 @@ Import `render_json` from `backlog.report` and restore `arguments = parser.parse
 
 - [ ] **Step 5: Add the current-repository integration test**
 
+Before asserting the report output, add a focused parser regression proving
+that the canonical single blank line between an artifact title and its
+contiguous metadata block is accepted. Preserve strict metadata key order and
+reject any additional content before the metadata block. This is a syntax
+integration correction only; it does not add `T1.3` artifact-adherence rules.
+
 In `tests/test_backlog_status_cli.py`, execute both forms against `ROOT`:
 
 ```python
@@ -951,7 +1012,7 @@ Expected: every command exits `0`. The two documented status commands run succes
 - [ ] **Step 7: Commit schema-v1 reporting**
 
 ```text
-git add .codex/skills/backlog-status/scripts/backlog/report.py tests/test_backlog_status_report.py tests/test_backlog_status_cli.py
+git add .codex/skills/backlog-status/scripts/backlog/parse.py .codex/skills/backlog-status/scripts/backlog/report.py tests/test_backlog_status_parse.py tests/test_backlog_status_report.py tests/test_backlog_status_cli.py
 git diff --cached --check
 git commit -m "feat: emit versioned backlog status json"
 ```
@@ -1007,7 +1068,7 @@ git status --short
 uv run python -m unittest tests.test_backlog_status_parse -v
 uv run python -m unittest tests.test_backlog_status_report.HumanStatusReportTests -v
 uv run python -m unittest tests.test_backlog_status_report.JsonStatusReportTests -v
-uv run python -m unittest tests.test_backlog_status_cli.CurrentRepositoryStatusTests -v
+uv run python -m unittest tests.test_backlog_status_cli.BacklogStatusCliTests.test_current_repository_status_reports_human_and_json -v
 ```
 
 Expected: the pre-closeout tree is clean and each focused acceptance group passes independently.

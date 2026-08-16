@@ -18,7 +18,7 @@ CHILD_HEADER = ("Child", "Outcome", "Depends on")
 STANDARDS_HEADER = ("Child", "Outcome", "Depends on", "External prerequisite")
 GATE_HEADER = ("Gate", "Outcome", "Depends on")
 BACKLOG_GATE_HEADER = ("Gate", "Outcome", "Gate state", "Prerequisites", "Evidence")
-BOUNDARY_HEADER = ("Boundary", "Owner", "xplane-fdau handoff condition")
+BOUNDARY_HEADER = ("Boundary", "Outcome", "Owner", "xplane-fdau handoff condition")
 INVENTORY_HEADER = (
     "Child",
     "Outcome",
@@ -166,6 +166,16 @@ class RoadmapAuthorityTests(unittest.TestCase):
         self.assertEqual(["M0"], milestones)
         self.assertEqual(["G1"], gates)
         self.assertEqual(["I1.1", "I1.2", "I2.1", "F1.1", "F2.1"], boundaries)
+        self.assertEqual(
+            [
+                "q4xpcc contract-model and fixture adoption",
+                "q4xpcc live XPLM acquisition adoption",
+                "Development/corroboration adapter adoption",
+                "Canonical archive consumption",
+                "External FOQA governance and claims",
+            ],
+            [row[1] for row in roadmap_rows(BOUNDARY_HEADER)],
+        )
         self.assertEqual(54, len(children))
         self.assertEqual(54, len(set(children)))
         kinds = [set(milestones), set(epics), set(children), set(gates), set(boundaries)]

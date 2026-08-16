@@ -33,7 +33,7 @@ The child slices below refine this sequence without weakening or reordering it.
 ## Local child inventory
 
 | Child | Outcome | Status | Depends on | Spec | Plan | Gates | Review | Resume | Reason |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `B1.1` | Source-layout migration and installed-import isolation | `specified` | `T3.1` | [design](docs/superpowers/specs/2026-08-09-src-layout-migration-design.md) | [draft plan](docs/superpowers/plans/2026-08-09-src-layout-migration.md) | 0/5 | — | — | — |
 | `C1.1` | Canonical JSON and binary64/integer encoding | `designing` | `B1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C1.2` | Identity, hashing, references, authority, and provenance | `queued` | `C1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
@@ -81,7 +81,7 @@ The child slices below refine this sequence without weakening or reordering it.
 | `S3.1` | ARINC 647A/FRED configuration boundary | `blocked` | `S1.1` | — | — | — | — | `queued` | Licensed edition-pinned source is unavailable. |
 | `S4.1` | ARINC 429 profile for a concrete source or target | `blocked` | `S1.1` | — | — | — | — | `queued` | A licensed source and concrete use case are unavailable. |
 | `T1.1` | Markdown authority contract and explicit inventory normalization | `verified` | `M0` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-08-15-xplane-fdau-backlog-authority-normalization.md) | 4/4 | [review](.superpowers/sdd/2026-08-15-t1-1-backlog-authority-normalization/review.md) | — | — |
-| `T1.2` | Typed parser, status report, and versioned JSON | `in_progress` | `T1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-08-16-xplane-fdau-typed-backlog-status-reporting.md) | 0/4 | — | — | — |
+| `T1.2` | Typed parser, status report, and versioned JSON | `implemented` | `T1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-08-16-xplane-fdau-typed-backlog-status-reporting.md) | 4/4 | — | — | — |
 | `T1.3` | Structural audit and spec/plan adherence | `specified` | `T1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 | — | — | — |
 | `T1.4` | Deterministic next-action selection | `specified` | `T1.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 | — | — | — |
 | `T1.5` | Guarded child-state and gate-evidence mutations | `specified` | `T1.3`, `T1.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/5 | — | — | — |
@@ -272,13 +272,13 @@ The child slices below refine this sequence without weakening or reordering it.
 
 ### T1.2 — Typed parser, status report, and versioned JSON
 
-- [ ] Frozen typed models and the strict Markdown parser pass valid and
-      malformed fixture cases.
-- [ ] Human status reports the complete roadmap inventory and local delivery
-      state without inferring completion.
-- [ ] JSON schema version 1 matches the exact documented shape and ordering.
-- [ ] The migrated current repository parses and reports without a structural
-      finding.
+- [x] Frozen typed models and the strict Markdown parser pass valid and
+      malformed fixture cases. — Evidence: [verification](.superpowers/sdd/2026-08-16-t1-2-typed-backlog-status-reporting/gate-1.md)
+- [x] Human status reports the complete roadmap inventory and local delivery
+      state without inferring completion. — Evidence: [verification](.superpowers/sdd/2026-08-16-t1-2-typed-backlog-status-reporting/gate-2.md)
+- [x] JSON schema version 1 matches the exact documented shape and ordering. — Evidence: [verification](.superpowers/sdd/2026-08-16-t1-2-typed-backlog-status-reporting/gate-3.md)
+- [x] The migrated current repository parses and reports without a structural
+      finding. — Evidence: [verification](.superpowers/sdd/2026-08-16-t1-2-typed-backlog-status-reporting/gate-4.md)
 
 ### T1.3 — Structural audit and spec/plan adherence
 

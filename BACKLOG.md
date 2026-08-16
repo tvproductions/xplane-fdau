@@ -1,7 +1,7 @@
 # xplane-fdau Backlog
 
 - **Status:** Active delivery ledger and Superpowers entry point
-- **Updated:** 2026-08-15
+- **Updated:** 2026-08-16
 
 Read `ROADMAP.md` for architecture order and dependencies. Then use this file to
 select one primary child slice whose prerequisites are verified. Each child
@@ -11,7 +11,7 @@ slice receives one focused plan and one independently reviewable outcome.
 
 - `M0` FDAU identity/native-FDR migration: `verified`.
 - Active design: Repository backlog-governance tooling.
-- Active child: —.
+- Active child: `T1.2`.
 - `B1.1` source-layout migration: `specified` with a draft plan; resumes after
   `T3.1` is verified.
 - Canonical contract design: written review remains pending for `C1.1`.
@@ -81,7 +81,7 @@ The child slices below refine this sequence without weakening or reordering it.
 | `S3.1` | ARINC 647A/FRED configuration boundary | `blocked` | `S1.1` | — | — | — | — | `queued` | Licensed edition-pinned source is unavailable. |
 | `S4.1` | ARINC 429 profile for a concrete source or target | `blocked` | `S1.1` | — | — | — | — | `queued` | A licensed source and concrete use case are unavailable. |
 | `T1.1` | Markdown authority contract and explicit inventory normalization | `verified` | `M0` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-08-15-xplane-fdau-backlog-authority-normalization.md) | 4/4 | [review](.superpowers/sdd/2026-08-15-t1-1-backlog-authority-normalization/review.md) | — | — |
-| `T1.2` | Typed parser, status report, and versioned JSON | `specified` | `T1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 | — | — | — |
+| `T1.2` | Typed parser, status report, and versioned JSON | `in_progress` | `T1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-08-16-xplane-fdau-typed-backlog-status-reporting.md) | 0/4 | — | — | — |
 | `T1.3` | Structural audit and spec/plan adherence | `specified` | `T1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 | — | — | — |
 | `T1.4` | Deterministic next-action selection | `specified` | `T1.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 | — | — | — |
 | `T1.5` | Guarded child-state and gate-evidence mutations | `specified` | `T1.3`, `T1.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/5 | — | — | — |

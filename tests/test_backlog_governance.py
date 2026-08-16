@@ -204,7 +204,7 @@ class BacklogAuthorityTests(unittest.TestCase):
     def test_current_position_has_one_exact_selection_line(self) -> None:
         backlog = read_text(BACKLOG)
         selection_lines = [line for line in backlog.splitlines() if line.startswith("- Active child:")]
-        self.assertEqual(["- Active child: —."], selection_lines)
+        self.assertEqual(["- Active child: `T1.2`."], selection_lines)
         self.assertNotIn("Active child slice:", backlog)
 
     def test_inventory_matches_every_roadmap_child_once_in_order(self) -> None:
@@ -503,10 +503,12 @@ class GovernanceArtifactTests(unittest.TestCase):
             {
                 "2026-08-09-src-layout-migration.md",
                 "2026-08-15-xplane-fdau-backlog-authority-normalization.md",
+                "2026-08-16-xplane-fdau-typed-backlog-status-reporting.md",
             },
             set(active_plans),
         )
         self.assertEqual("`T1.1`", active_plans["2026-08-15-xplane-fdau-backlog-authority-normalization.md"]["Roadmap child"])
+        self.assertEqual("`T1.2`", active_plans["2026-08-16-xplane-fdau-typed-backlog-status-reporting.md"]["Roadmap child"])
 
     def test_historical_artifacts_name_their_disposition(self) -> None:
         historical_paths = (

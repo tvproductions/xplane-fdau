@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
+import tempfile
 import unittest
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -273,14 +275,73 @@ class GovernanceArtifactTests(unittest.TestCase):
                 continue
             evidence = values["Completion evidence"]
             self.assertNotEqual("—", evidence, path)
-            self.assertNotRegex(evidence, r"\[[^]]+\]\([^)]+\)", path)
-            match = re.fullmatch(r"`([^`]+)`", evidence)
-            self.assertIsNotNone(match, path)
-            if match is None:
+            inline_match = re.fullmatch(r"`([^`]+)`", evidence)
+            link_match = re.fullmatch(r"\[[^]]+\]\(([^)]+)\)", evidence)
+            self.assertTrue(inline_match is not None or link_match is not None, path)
+            if inline_match is not None:
+                evidence_path = inline_match.group(1)
+            elif link_match is not None:
+                evidence_path = link_match.group(1)
+            else:
                 continue
-            resolved = (ROOT / match.group(1)).resolve()
+            candidate = Path(evidence_path)
+            self.assertFalse(candidate.is_absolute(), path)
+            resolved = (ROOT / candidate).resolve()
             self.assertTrue(resolved.is_relative_to(root), path)
+            self.assertEqual(resolved.relative_to(root).as_posix(), evidence_path, path)
             self.assertTrue(resolved.is_file(), path)
+            if not resolved.is_relative_to((ROOT / "docs").resolve()):
+                self.assertIsNotNone(inline_match, path)
+
+    def test_completion_evidence_rejects_absolute_and_noncanonical_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            plan_directory = root / "docs/superpowers/plans"
+            plan_directory.mkdir(parents=True)
+            evidence = root / ".superpowers/sdd/example/completion.md"
+            evidence.parent.mkdir(parents=True)
+            evidence.write_text("evidence\n", encoding="utf-8")
+            plan = plan_directory / "completed.md"
+            for value in (
+                str(evidence),
+                ".superpowers/sdd/example/../example/completion.md",
+            ):
+                plan.write_text(
+                    "# Test Plan\n\n"
+                    "- **Governance:** active\n"
+                    "- **Status:** completed\n"
+                    "- **Date:** 2026-08-15\n"
+                    "- **Roadmap child:** `T1.1`\n"
+                    "- **Source specification:** `docs/superpowers/specs/example.md`\n"
+                    "- **Approval:** 2026-08-15 — Jeff / tvproductions\n"
+                    f"- **Completion evidence:** `{value}`\n",
+                    encoding="utf-8",
+                )
+                with patch(__name__ + ".ROOT", root):
+                    with self.assertRaises(AssertionError):
+                        self.test_completed_active_plan_completion_evidence_is_inline_repo_relative_file()
+
+    def test_completion_evidence_permits_markdown_link_inside_docs_tree(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            plan_directory = root / "docs/superpowers/plans"
+            plan_directory.mkdir(parents=True)
+            evidence = root / "docs/evidence/completion.md"
+            evidence.parent.mkdir(parents=True)
+            evidence.write_text("evidence\n", encoding="utf-8")
+            (plan_directory / "completed.md").write_text(
+                "# Test Plan\n\n"
+                "- **Governance:** active\n"
+                "- **Status:** completed\n"
+                "- **Date:** 2026-08-15\n"
+                "- **Roadmap child:** `T1.1`\n"
+                "- **Source specification:** `docs/superpowers/specs/example.md`\n"
+                "- **Approval:** 2026-08-15 — Jeff / tvproductions\n"
+                "- **Completion evidence:** [completion](docs/evidence/completion.md)\n",
+                encoding="utf-8",
+            )
+            with patch(__name__ + ".ROOT", root):
+                self.test_completed_active_plan_completion_evidence_is_inline_repo_relative_file()
 
     def test_active_artifact_assignments_match_current_roadmap_children(self) -> None:
         active_specs = {

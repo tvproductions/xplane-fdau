@@ -7,6 +7,11 @@
   for the active slice, status, governing documents, and acceptance evidence.
 - Read the complete parent architecture at
   `docs/architecture/xplane12_virtual_fdau_ecosystem_design.md`.
+- Read the repository-owned scope amendment at
+  `docs/architecture/xplane_fdau_core_scope_amendment.md`. It governs the
+  X-Plane-specific core purpose, external client/adapter boundary, local
+  ARINC and FDM/FOQA ownership, and Python compatibility policy where the
+  provenance-locked parent architecture differs.
 - Read the completed migration specification at
   `docs/superpowers/specs/2026-08-09-xplane-fdau-identity-fdr-kernel-migration-design.md`
   and its completed plan at

@@ -10,6 +10,12 @@
 > and the
 > [xplane-fdau identity/native-FDR migration specification](../specs/2026-08-09-xplane-fdau-identity-fdr-kernel-migration-design.md).
 
+> **Current architecture — 2026-08-16:** The
+> [`xplane_fdau_core_scope_amendment.md`](../../architecture/xplane_fdau_core_scope_amendment.md)
+> governs current product ownership and Python policy. The commands and exact
+> metadata below describe a superseded historical execution target and must not
+> be reused as present implementation authority.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build and verify the independently releasable `xplane-fdr` standard-library-only package for X-Plane FDR v3/v4 reading, canonical v4 writing, push-first recording, configuration, profiles, GeoJSON, and offline commands.

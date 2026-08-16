@@ -8,6 +8,15 @@
 - **Roadmap children:** `B1.1`
 - **Approval:** 2026-08-09 — Jeff / tvproductions
 
+## Architecture relationship
+
+The source-layout decision implements the transport-free package boundary in
+[`xplane_fdau_core_scope_amendment.md`](../../architecture/xplane_fdau_core_scope_amendment.md).
+The distribution remains X-Plane-specific even though it has no simulator or
+network imports. Moving to `src/` must preserve a single standard-library-only
+package in which canonical FDAU, native FDR, ARINC, and FDM/FOQA capabilities
+can be added through later reviewed increments.
+
 ## Context
 
 The original xplane-fdr bootstrap copied the flat package layout inherited by

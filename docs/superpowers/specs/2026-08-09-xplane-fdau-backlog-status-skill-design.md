@@ -8,6 +8,15 @@
 - **Roadmap children:** `T1.1`, `T1.2`, `T1.3`, `T1.4`, `T1.5`, `T1.6`
 - **Approval:** 2026-08-15 — Jeff / tvproductions
 
+## Architecture relationship
+
+The node taxonomy implements the current architecture indexed by
+[`xplane_fdau_core_scope_amendment.md`](../../architecture/xplane_fdau_core_scope_amendment.md).
+Reusable ARINC and FDM/FOQA work is represented as local children. An external
+boundary represents consumer adoption or organizational authority—such as an
+approved FOQA program and its regulatory claims—not reusable analysis code
+owned by another project.
+
 ## 2026-08-16 T1.2 contract amendment
 
 The managed external-boundary table has four columns in this exact order:
@@ -113,7 +122,7 @@ The roadmap parser recognizes five nonoverlapping node kinds:
 | Epic | Ordered group of local children | No | No |
 | Local child | Independently planned xplane-fdau outcome | Yes | Yes, in `BACKLOG.md` |
 | Release gate | Cross-child reconciliation such as `G1` | No | Derived gate state only |
-| External boundary | Consumer/downstream handoff owned elsewhere | No | No |
+| External boundary | Consumer adoption or organizational authority owned elsewhere | No | No |
 
 The report inventories all five kinds. Only local children appear in the
 mutable local-child inventory or can be selected and transitioned. Release-gate

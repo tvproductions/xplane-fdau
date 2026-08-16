@@ -11,6 +11,15 @@
 > `docs/superpowers/specs/2026-08-09-xplane-fdau-identity-fdr-kernel-migration-design.md`.
 > This document is historical and must not drive new implementation.
 
+> **Current architecture — 2026-08-16:** The repository-owned
+> [`xplane_fdau_core_scope_amendment.md`](../../architecture/xplane_fdau_core_scope_amendment.md)
+> now governs product purpose and ownership. It retains native FDR inside the
+> broader X-Plane-specific, transport-free FDAU core; assigns reusable ARINC
+> and FDM/FOQA behavior to that core; keeps concrete simulator adapters in
+> external clients; and replaces a project-wide exact Python 3.12.x assumption
+> with the reviewed 3.12-3.14 compatibility range. The design below remains an
+> execution-history record only.
+
 ## Purpose
 
 Create `xplane-fdr` as the reusable, capture-neutral implementation of the

@@ -7,6 +7,15 @@
 > **Historical completion:** Implemented and verified under `M0`, but version
 > `0.1.0` remains unreleased.
 
+> **Current architecture — 2026-08-16:** This completed migration remains the
+> historical authority for `M0` execution. The repository-owned
+> [`xplane_fdau_core_scope_amendment.md`](../../architecture/xplane_fdau_core_scope_amendment.md)
+> now governs the broader product boundary: `xplane-fdau` is the
+> X-Plane-specific, transport-free core; reusable ARINC and FDM/FOQA behavior
+> is local; concrete XPPython3/XPLM and `xplane-webapi` implementations are
+> external clients; and the core targets Python 3.12-3.14 rather than an exact
+> project-wide 3.12.x pin.
+
 ## Authority and purpose
 
 The approved cross-project architecture is
@@ -295,6 +304,7 @@ remains prohibited until separately reviewed increments implement at least:
 4. an end-to-end projection from canonical samples to the native FDR sink with
    explicit loss reporting.
 
-q4xpcc and xpwebapi integration follows their own reviewed plans after those
-contracts exist. ARINC profiles and downstream FDM/FOQA remain later,
-independently governed work.
+q4xpcc and `xplane-webapi` client integration follows their own reviewed plans
+after those contracts exist. ARINC profiles and FDM/FOQA support remain later,
+independently governed local `xplane-fdau` work under the current architecture
+amendment.

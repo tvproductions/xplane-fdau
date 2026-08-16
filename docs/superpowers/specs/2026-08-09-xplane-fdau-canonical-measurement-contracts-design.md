@@ -14,9 +14,15 @@ The authoritative parent architecture is
 `docs/architecture/xplane12_virtual_fdau_ecosystem_design.md`. The completed
 identity and native-format migration is specified in
 `docs/superpowers/specs/2026-08-09-xplane-fdau-identity-fdr-kernel-migration-design.md`.
+The later
+`docs/architecture/xplane_fdau_core_scope_amendment.md` is authoritative for
+the X-Plane-specific core purpose, external client/adapter boundary, local
+ARINC and FDM/FOQA ownership, and Python compatibility policy.
 
 This specification defines the first canonical FDAU contract increment after
-that migration. It establishes provider-neutral measurement, binding, raw
+that migration. Here, provider-neutral means neutral among X-Plane access
+paths and recorded evidence; it does not mean simulator-neutral. The increment
+establishes provider-neutral measurement, binding, raw
 observation, measurement sample, measurement frame, timing, quality, lineage,
 canonical JSON, schema, and conformance-fixture contracts. It does not acquire
 data or perform recording.
@@ -82,8 +88,9 @@ This increment will not:
   recovery, deterministic replay, or native FDR projection;
 - retrieve or store content-addressed payloads;
 - add ARINC labels, words, sync patterns, frame layouts, encoders, decoders,
-  tables, profiles, or conformance claims;
-- add FDM/FOQA thresholds, analysis, workflow, or governance;
+  tables, profiles, or conformance claims in this increment;
+- add FDM/FOQA analysis profiles, derived parameters, event processing,
+  aggregation, reports, review records, or policy ports in this increment;
 - add compatibility aliases at the package root;
 - add a runtime dependency, host import, network client, thread, event loop, or
   plugin loader; or
@@ -694,6 +701,34 @@ No generic measurement, binding, observation, sample, or frame schema contains
 ARINC labels, SDI/SSM bits, sync words, subframe placement, or recorder-specific
 constants.
 
+## FDM/FOQA extension boundary
+
+FDM and FOQA-support mechanics are firm local product responsibilities under
+the core-scope amendment, but are not implemented by this canonical-contract
+increment. Later analysis contracts consume canonical samples, frames,
+archives, quality, timing, continuity, lineage, and replay without changing
+their meaning or adding analysis policy to acquisition records.
+
+The dependency path remains:
+
+```text
+X-Plane client observation
+        -> canonical qualified evidence
+        -> flight/phase segmentation and derived parameters
+        -> versioned event-set evaluation
+        -> candidate and validated findings
+        -> aggregation, trends, and report projections
+```
+
+Acquisition validity describes the evidence. An operational finding describes
+an analysis result under a versioned profile. The later FDM/FOQA layer must
+preserve that distinction, declare parameter and continuity prerequisites,
+carry derivation and event-definition provenance, and refuse to silently treat
+inadequate evidence as valid. FAA AC 120-82 informs the analysis and review
+model through the governing amendment; approved-program governance,
+de-identification authority, identity custody, corrective-action decisions,
+and regulatory claims remain external organizational responsibilities.
+
 ## Verification strategy
 
 All tests use `unittest`; pytest remains prohibited.
@@ -992,5 +1027,5 @@ After independent review, the next specifications remain:
 2. canonical archive, artifact manifest, recovery, and deterministic replay;
 3. projection from canonical samples to the native X-Plane FDR sink with
    explicit loss reporting; and
-4. later edition-pinned standards profiles and downstream FDM/FOQA work under
-   their separate governance.
+4. later edition-pinned standards profiles and local FDM/FOQA-support work,
+   each under a separately reviewed local increment.

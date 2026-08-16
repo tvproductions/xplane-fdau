@@ -8,6 +8,13 @@
 - **Approval:** 2026-08-16 — Jeff / tvproductions
 - **Completion evidence:** `.superpowers/sdd/2026-08-16-t1-2-typed-backlog-status-reporting/completion.md`
 
+> **Current architecture — 2026-08-16:** The parser delivered by this completed
+> plan reports the local-analysis and external-governance distinction defined
+> by
+> [`xplane_fdau_core_scope_amendment.md`](../../architecture/xplane_fdau_core_scope_amendment.md)
+> through current `ROADMAP.md` and `BACKLOG.md` data. The implementation steps
+> below remain the historical `T1.2` execution record.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Implement the `T1.2` repository-local typed Markdown parser and deterministic human/JSON status reports without implementing later audit, recommendation, mutation, hygiene, or Git-synchronization behavior.

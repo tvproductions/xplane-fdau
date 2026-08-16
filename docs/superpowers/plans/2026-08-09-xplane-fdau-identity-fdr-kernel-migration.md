@@ -7,6 +7,13 @@
 > **Historical completion:** Implemented and verified under `M0`, but version
 > `0.1.0` remains unreleased.
 
+> **Current architecture — 2026-08-16:** The
+> [`xplane_fdau_core_scope_amendment.md`](../../architecture/xplane_fdau_core_scope_amendment.md)
+> governs current product ownership and Python policy. This completed plan's
+> increment exclusions and `>=3.12` commands record what was executed under
+> `M0`; they do not place ARINC or FDM/FOQA outside the current core or impose
+> an exact project-wide Python 3.12.x pin.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Transform the unreleased `xplane-fdr` project into the unreleased `xplane-fdau` distribution while preserving the reviewed native X-Plane FDR kernel beneath explicit format and sink boundaries.

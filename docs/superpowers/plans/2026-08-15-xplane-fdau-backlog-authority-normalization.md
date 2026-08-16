@@ -8,6 +8,12 @@
 - **Approval:** 2026-08-15 — Jeff / tvproductions
 - **Completion evidence:** `.superpowers/sdd/2026-08-15-t1-1-backlog-authority-normalization/completion.md`
 
+> **Current architecture — 2026-08-16:** The Markdown authority established by
+> this completed plan now inventories local ARINC and FDM/FOQA-support work and
+> external client/program-governance boundaries according to
+> [`xplane_fdau_core_scope_amendment.md`](../../architecture/xplane_fdau_core_scope_amendment.md).
+> The steps below remain the historical `T1.1` execution record.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Establish the exact Markdown authority, inventory, and governance-metadata contracts required by `T1.1` without implementing the later backlog parser, audit command, mutation engine, or workflow skills.

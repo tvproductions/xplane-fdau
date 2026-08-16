@@ -265,6 +265,23 @@ class GovernanceArtifactTests(unittest.TestCase):
                 self.assertEqual({"Governance", "Status", "Disposition"}, set(values), path)
                 self.assertIn(values["Status"], {"completed", "superseded"}, path)
 
+    def test_completed_active_plan_completion_evidence_is_inline_repo_relative_file(self) -> None:
+        root = ROOT.resolve()
+        for path in sorted((ROOT / "docs/superpowers/plans").glob("*.md")):
+            values = metadata(path)
+            if values.get("Governance") != "active" or values.get("Status") != "completed":
+                continue
+            evidence = values["Completion evidence"]
+            self.assertNotEqual("—", evidence, path)
+            self.assertNotRegex(evidence, r"\[[^]]+\]\([^)]+\)", path)
+            match = re.fullmatch(r"`([^`]+)`", evidence)
+            self.assertIsNotNone(match, path)
+            if match is None:
+                continue
+            resolved = (ROOT / match.group(1)).resolve()
+            self.assertTrue(resolved.is_relative_to(root), path)
+            self.assertTrue(resolved.is_file(), path)
+
     def test_active_artifact_assignments_match_current_roadmap_children(self) -> None:
         active_specs = {
             path.name: metadata(path) for path in sorted((ROOT / "docs/superpowers/specs").glob("*.md")) if metadata(path).get("Governance") == "active"

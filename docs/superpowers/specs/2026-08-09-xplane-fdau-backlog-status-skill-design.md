@@ -286,8 +286,12 @@ An active plan begins with:
 
 Plan status is `draft`, `approved`, `in_progress`, `completed`, or
 `superseded`. `approved` or later requires an approval value. `completed`
-requires a repository-relative completion-evidence link. A plan covers exactly
-one local child, and that child must be covered by the cited approved design.
+requires a repository-relative completion-evidence value. When that evidence
+lives outside MkDocs' docs tree, its value is an inline-code repository-relative
+path, not a Markdown link; it remains inside the repository and resolves to a
+regular file. This representation preserves strict not-found link validation.
+A plan covers exactly one local child, and that child must be covered by the
+cited approved design.
 
 ### Historical metadata
 

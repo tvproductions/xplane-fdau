@@ -1,12 +1,12 @@
 # xplane-fdau Backlog Authority and Inventory Normalization Implementation Plan
 
 - **Governance:** active
-- **Status:** in_progress
+- **Status:** completed
 - **Date:** 2026-08-15
 - **Roadmap child:** `T1.1`
 - **Source specification:** `docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md`
 - **Approval:** 2026-08-15 — Jeff / tvproductions
-- **Completion evidence:** —
+- **Completion evidence:** `.superpowers/sdd/2026-08-15-t1-1-backlog-authority-normalization/completion.md`
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -803,7 +803,7 @@ In this plan's metadata, set:
 ```markdown
 - **Status:** completed
 - **Approval:** 2026-08-15 — Jeff / tvproductions
-- **Completion evidence:** [.superpowers/sdd/2026-08-15-t1-1-backlog-authority-normalization/completion.md](../../../.superpowers/sdd/2026-08-15-t1-1-backlog-authority-normalization/completion.md)
+- **Completion evidence:** `.superpowers/sdd/2026-08-15-t1-1-backlog-authority-normalization/completion.md`
 ```
 
 In `HANDOFF.md`, replace the T1.1 planning sentence with a concise statement that the plan is completed, the child is `implemented`, all four gates have committed evidence, and independent review is the next required action. Do not reproduce the full inventory.

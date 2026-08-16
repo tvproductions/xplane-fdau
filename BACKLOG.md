@@ -80,7 +80,7 @@ The child slices below refine this sequence without weakening or reordering it.
 | `S2.2` | ARINC 717 codec and conformance corpus | `blocked` | `S2.1` | — | — | — | — | `queued` | Licensed edition-pinned source is unavailable. |
 | `S3.1` | ARINC 647A/FRED configuration boundary | `blocked` | `S1.1` | — | — | — | — | `queued` | Licensed edition-pinned source is unavailable. |
 | `S4.1` | ARINC 429 profile for a concrete source or target | `blocked` | `S1.1` | — | — | — | — | `queued` | A licensed source and concrete use case are unavailable. |
-| `T1.1` | Markdown authority contract and explicit inventory normalization | `specified` | `M0` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [draft plan](docs/superpowers/plans/2026-08-15-xplane-fdau-backlog-authority-normalization.md) | 0/4 | — | — | — |
+| `T1.1` | Markdown authority contract and explicit inventory normalization | `implemented` | `M0` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-08-15-xplane-fdau-backlog-authority-normalization.md) | 4/4 | — | — | — |
 | `T1.2` | Typed parser, status report, and versioned JSON | `specified` | `T1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 | — | — | — |
 | `T1.3` | Structural audit and spec/plan adherence | `specified` | `T1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 | — | — | — |
 | `T1.4` | Deterministic next-action selection | `specified` | `T1.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 | — | — | — |
@@ -262,13 +262,13 @@ The child slices below refine this sequence without weakening or reordering it.
 
 ### T1.1 — Markdown authority contract and inventory normalization
 
-- [ ] Roadmap milestones, epics, local children, release gates, and external
-      boundaries have exact nonoverlapping contracts.
-- [ ] `BACKLOG.md` is the only mutable delivery-state authority.
-- [ ] Every local child has one explicit inventory row; external boundaries
-      have no local delivery status.
-- [ ] Existing specs and plans have valid governance metadata or an explicit
-      historical disposition.
+- [x] Roadmap milestones, epics, local children, release gates, and external
+      boundaries have exact nonoverlapping contracts. — Evidence: [verification](.superpowers/sdd/2026-08-15-t1-1-backlog-authority-normalization/gate-1.md)
+- [x] `BACKLOG.md` is the only mutable delivery-state authority. — Evidence: [verification](.superpowers/sdd/2026-08-15-t1-1-backlog-authority-normalization/gate-2.md)
+- [x] Every local child has one explicit inventory row; external boundaries
+      have no local delivery status. — Evidence: [verification](.superpowers/sdd/2026-08-15-t1-1-backlog-authority-normalization/gate-3.md)
+- [x] Existing specs and plans have valid governance metadata or an explicit
+      historical disposition. — Evidence: [verification](.superpowers/sdd/2026-08-15-t1-1-backlog-authority-normalization/gate-4.md)
 
 ### T1.2 — Typed parser, status report, and versioned JSON
 

@@ -16,6 +16,8 @@ plugins:
 
 nav:
   - Overview: index.md
+  - Architecture:
+      - Core scope: architecture/xplane_fdau_core_scope_amendment.md
   - Usage:
       - Native FDR: usage/native-fdr.md
   - Reference:

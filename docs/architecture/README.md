@@ -11,12 +11,20 @@ The documents were copied byte-for-byte from the q4xpcc repository at commit
 - `xplane12_foqa_fdr_addon_design_spec_v2.md`
   (`sha256:9333d74bdb2ffeb9a8d21fdf508393289bf1e230f775f55cd36a5ae01dbd23ad`)
 
-The virtual FDAU/FDIU ecosystem design is the authoritative parent
+The virtual FDAU/FDIU ecosystem design is the provenance-locked parent
 architecture. The older FOQA/FDR illustration is retained only as its
 supersession notice directs; it is not normative guidance.
 
+The later
+[`xplane_fdau_core_scope_amendment.md`](xplane_fdau_core_scope_amendment.md)
+records the approved repository-specific clarification that `xplane-fdau` is
+an X-Plane-specific, transport-free core; that reusable ARINC and X-Plane
+FDM/FOQA behavior belongs here; and that concrete XPPython3/XPLM and
+`xplane-webapi` implementations remain external clients. The amendment is
+authoritative for those ownership and purpose questions without modifying the
+imported documents or their provenance hashes.
+
 Repository-specific specifications under `docs/superpowers/specs/` refine the
-parent architecture into independently reviewable implementation increments.
+current architecture into independently reviewable implementation increments.
 They may narrow an increment's delivery scope, but they may not contradict the
-parent architecture's ownership, dependency, regulatory, or conformance
-boundaries.
+amended ownership, dependency, regulatory, or conformance boundaries.

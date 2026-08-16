@@ -172,8 +172,8 @@ repository documentation warning or error.
 git diff --check
 Exit code: 0
 
-git diff --exit-code -- .secrets.baseline
-Exit code: 0
+git diff --no-ext-diff --unified=0 f870a71 -- .secrets.baseline
+Output: four `line_number` replacements only
 ```
 
 The same complete-candidate commands were rerun immediately before the
@@ -183,20 +183,23 @@ the direct and coverage runs, strict MkDocs exit 0, and staged diff check exit
 
 ## Secrets-baseline comparison
 
-The working and `HEAD` baseline blob IDs are identical:
+The independent recovery review compared the baseline against review base
+`f870a71` and found that the earlier refresh had also changed serialization,
+`generated_at`, and scan-filter configuration. This correction restores the
+base configuration and serialization while retaining only the four required
+line-number updates:
 
 ```text
-working_blob=<identical to HEAD>
-head_blob=<identical to working tree>
+base_to_candidate_diff=<four line_number replacements only>
 finding_count=4
 ```
 
 All four entries remain `Hex High Entropy String`, `is_secret: false`: two
 architecture provenance hashes at lines 473-474 of the completed migration
 plan and the same two expected values at lines 152-153 of
-`tests/test_documentation.py`. The governed changes did not shift those files,
-so the user-approved line-only refresh exception was not needed. No baseline
-format change and no new secret finding occurred.
+`tests/test_documentation.py`. The metadata normalization shifted those source
+locations, so the approved line-only refresh was required. No baseline format,
+filter, generated timestamp, or secret-finding change remains.
 
 ## Commits
 
@@ -221,8 +224,9 @@ format change and no new secret finding occurred.
   outcome; every gate statement and evidence suffix is byte-preserved.
 - Confirmed no runtime, parser, status, audit, mutation, skill, Git-sync,
   dependency, remote, tag, publication, or release behavior changed.
-- Confirmed `.secrets.baseline` is byte-identical to `HEAD` with the same four
-  verified-false findings.
+- Confirmed the candidate `.secrets.baseline` retains the same four
+  verified-false findings and differs from review base `f870a71` only in the
+  four required line numbers.
 
 ## Concerns
 

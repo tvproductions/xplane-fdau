@@ -42,10 +42,11 @@ approved. `T1.1`'s completed implementation plan is:
 
 `docs/superpowers/plans/2026-08-15-xplane-fdau-backlog-authority-normalization.md`
 
-`T1.1` is `reviewed`, all four gates have committed evidence, and the
-independent review was accepted after its secrets-baseline finding was
-resolved. Verification is the next required lifecycle action. The tooling does
-not govern consumer projects or ship in the distribution.
+`T1.1` is `verified`: all four gates and the accepted independent review have
+committed evidence. No local child is selected. `T1.2` is the first
+dependency-ready child; it remains `specified` and requires its own focused
+implementation plan in a later run. The tooling does not govern consumer
+projects or ship in the distribution.
 
 The approved translation of q4xpcc's remaining project-local workflows is:
 

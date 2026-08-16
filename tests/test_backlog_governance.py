@@ -204,7 +204,7 @@ class BacklogAuthorityTests(unittest.TestCase):
     def test_current_position_has_one_exact_selection_line(self) -> None:
         backlog = read_text(BACKLOG)
         selection_lines = [line for line in backlog.splitlines() if line.startswith("- Active child:")]
-        self.assertEqual(["- Active child: `T1.1`."], selection_lines)
+        self.assertEqual(["- Active child: —."], selection_lines)
         self.assertNotIn("Active child slice:", backlog)
 
     def test_inventory_matches_every_roadmap_child_once_in_order(self) -> None:
@@ -260,11 +260,11 @@ class BacklogAuthorityTests(unittest.TestCase):
                 self.assertEqual("—", resume)
                 self.assertEqual("—", reason)
 
-    def test_t1_1_review_evidence_is_accepted(self) -> None:
+    def test_t1_1_is_verified_with_accepted_review_evidence(self) -> None:
         inventory = table_rows(read_text(BACKLOG), INVENTORY_HEADER)
         row = next(row for row in inventory if identity(row[0]) == "T1.1")
         review_link = "[review](.superpowers/sdd/2026-08-15-t1-1-backlog-authority-normalization/review.md)"
-        self.assertEqual("`reviewed`", row[2])
+        self.assertEqual("`verified`", row[2])
         self.assertEqual(review_link, row[7])
 
         evidence_path = ROOT / ".superpowers/sdd/2026-08-15-t1-1-backlog-authority-normalization/review.md"

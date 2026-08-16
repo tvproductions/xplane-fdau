@@ -23,6 +23,7 @@
 - Keep the distributed `xplane_fdau` runtime standard-library-only and do not add a runtime or tooling dependency on q4xpcc, xpwebapi, XPPython3, XPLM, or a network client.
 - Treat q4xpcc only as recorded design input; do not copy its backlog implementation.
 - Modify only Markdown governance documents, focused repository tests, and `.superpowers/sdd/` evidence in this child.
+- Permit only the tool-generated `.secrets.baseline` update required solely by shifted governed-document line numbers; it must introduce no new secret finding.
 - Do not implement a production parser, status command, audit command, next-action selector, mutation command, `repo-hygiene`, or guarded Git synchronization in `T1.1`.
 - Do not push, tag, publish, create a release, or mark version `0.1.0` released.
 - Preserve the approved T1.1 gate text byte-for-byte apart from Markdown line wrapping before attaching evidence.

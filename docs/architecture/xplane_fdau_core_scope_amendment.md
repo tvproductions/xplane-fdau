@@ -1,7 +1,8 @@
 # X-Plane FDAU core scope amendment
 
-**Status:** Approved direction; written review requested  
-**Date:** 2026-08-16  
+**Status:** Approved
+**Date:** 2026-08-16
+**Approval:** 2026-08-16 — Jeff / tvproductions
 **Scope:** `xplane-fdau` purpose, ownership, adapter boundaries, standards,
 FDM/FOQA, and Python compatibility
 
@@ -261,11 +262,11 @@ than allowed to become permanent infrastructure drift.
 The canonical vertical-slice release gate remains unchanged. This amendment
 does not pull ARINC or FOQA implementation into the first release gate.
 
-Subsequent roadmap and backlog revisions must:
+The roadmap and backlog implement this decision as follows:
 
 - retain the local standards epics and make their shared-client purpose
   explicit;
-- replace the separate-downstream FDM/FOQA ownership entries with local,
+- replace the former separate-downstream FDM/FOQA ownership entries with local,
   dependency-ordered analysis epics;
 - retain external organizational governance as a boundary on regulatory and
   program claims, not as ownership of the reusable analysis code;

@@ -11,8 +11,11 @@ delivery work. It answers what must exist, in what order, and which gates
 prevent release. It is not a substitute for a design specification or an
 implementation plan.
 
-- `docs/architecture/xplane12_virtual_fdau_ecosystem_design.md` owns the
-  cross-project architecture.
+- `docs/architecture/xplane12_virtual_fdau_ecosystem_design.md` is the
+  provenance-locked parent architecture.
+- `docs/architecture/xplane_fdau_core_scope_amendment.md` owns the clarified
+  X-Plane-specific core purpose, external client boundary, local ARINC and
+  FDM/FOQA ownership, and Python compatibility policy.
 - `ROADMAP.md` owns node identity and kind, capability order, dependencies,
   epics, release gates, and external boundaries.
 - `BACKLOG.md` is the durable Superpowers entry point and owns child-slice
@@ -34,7 +37,7 @@ work owned by other projects:
 | Epic | Related local capability family such as canonical contracts | No |
 | Local child | One independently testable, reviewable xplane-fdau outcome | Yes—one primary local child per run |
 | Release gate | Cross-child reconciliation before a separate release decision | No |
-| External boundary | Consumer or downstream work owned outside xplane-fdau | No |
+| External boundary | Consumer adoption or organizational authority owned outside xplane-fdau | No |
 
 The former `C1`–`C4`, `A1`, `R1`, and `P1` labels are epics. They are not
 implementation-plan units. A child slice receives its own specification link,
@@ -64,9 +67,10 @@ points, or percentage extrapolated from unequal work.
 ```text
 M0 Identity and native FDR kernel                                      verified
  |
- +-> T1 Backlog governance -> T2 Repository hygiene -> T3 Guarded Git sync
-      |
-      +-> B1 Source-layout isolation
+ +-> T1 Backlog governance -> T2.1 Repository hygiene
+      |                           |
+      |                           +-> T2.2 Dependency refresh --+
+      |                           +-> T3.1 Guarded Git sync -----+-> B1 Source-layout isolation
       |
       +-> C1 Foundation -> C2 Catalogs -> C3 Evidence records -> C4 Closure
       |
@@ -79,6 +83,11 @@ M0 Identity and native FDR kernel                                      verified
                      +-> G1 Independent vertical-slice review
                           |
                           +-> separate 0.1.0 release decision
+
+Later local capability branches:
+
+C4/R1 -> S edition-pinned ARINC standards
+C4/R1 -> F1 flight data monitoring and FOQA support
 ```
 
 Each epic expands into the child slices below.
@@ -93,7 +102,7 @@ Each epic expands into the child slices below.
 
 | Child | Outcome | Depends on |
 | --- | --- | --- |
-| `B1.1` | Source-layout migration and installed-import isolation | `T3.1` |
+| `B1.1` | Source-layout migration and installed-import isolation | `T2.2`, `T3.1` |
 
 ## C — Canonical semantic contract kernel
 
@@ -203,19 +212,41 @@ prerequisites, not local child identities.
 | `S3.1` | ARINC 647A/FRED configuration boundary | `S1.1` | Licensed edition-pinned source |
 | `S4.1` | ARINC 429 profile for a concrete source or target | `S1.1` | Licensed source and concrete use case |
 
+These are shared, standard-library-only implementations for every FDAU client.
+They map canonical X-Plane evidence to or from explicitly scoped ARINC
+representations; concrete bus, device, network, and simulator I/O remains in
+external clients.
+
+## F1 — Flight data monitoring and FOQA support epic
+
+These local children implement the deterministic technical analysis system
+defined by the core-scope amendment and informed by FAA AC 120-82. They do not
+claim to establish an approved FOQA program, legal protection, or
+organizational decision authority, and they do not weaken release gate `G1`.
+
+| Child | Outcome | Depends on |
+| --- | --- | --- |
+| `F1.1` | AC 120-82 terminology, analysis ports, profiles, evidence, and finding contracts | `C4.4`, `R1.7` |
+| `F1.2` | Evidence qualification, flight/phase segmentation, and derived-parameter provenance | `F1.1`, `A1.7` |
+| `F1.3` | Versioned event sets, prerequisites, detection, and severity | `F1.2` |
+| `F1.4` | Candidate/validated finding lifecycle and auditable review records | `F1.3` |
+| `F1.5` | Comparable-profile aggregation, trend analysis, and report projections | `F1.4` |
+| `F1.6` | De-identification/security/retention policy ports and end-to-end analysis conformance | `F1.5` |
+
 ## External consumer and downstream boundaries
 
-These records state when xplane-fdau can be consumed. They are owned by the
-named external project, are not local child slices, do not appear with mutable
-delivery state in `BACKLOG.md`, and cannot be selected by local tooling.
+These records state when xplane-fdau can be consumed or when external
+organizational authority is required. They are not local child slices, do not
+appear with mutable delivery state in `BACKLOG.md`, and cannot be selected by
+local tooling. Reusable FDM/FOQA code is local `F1` work; only approved-program
+governance and claims remain external.
 
 | Boundary | Outcome | Owner | xplane-fdau handoff condition |
 | --- | --- | --- | --- |
 | `I1.1` | q4xpcc contract-model and fixture adoption | q4xpcc | Contract-model and fixture adoption may begin after `C4.4`. |
 | `I1.2` | q4xpcc live XPLM acquisition adoption | q4xpcc | Live XPLM acquisition adoption may begin after `A1.9`. |
 | `I2.1` | Development/corroboration adapter adoption | xpwebapi adapter owner | Development/corroboration adapter work may begin after `C4.4`. |
-| `F1.1` | Canonical archive consumption | Separate downstream FDM project | Canonical archive consumption may begin after `R1.7`. |
-| `F2.1` | External FOQA governance and claims | External FOQA governance | Organizational workflow and claims require separate approval. |
+| `F2.1` | Approved FOQA program governance and claims | Authorized external organization | Program approval, identity custody, corrective-action authority, protections, and regulatory claims require separate organizational authority. |
 
 ## T1 — Repository governance tooling epic
 
@@ -231,16 +262,19 @@ runtime architecture and never ships in the xplane-fdau distribution.
 | `T1.5` | Guarded child-state and gate-evidence mutations | `T1.3`, `T1.4` |
 | `T1.6` | Skill, session-entry, hygiene, and artifact closure | `T1.5` |
 
-## T2 — Repository hygiene tooling epic
+## T2 — Repository maintenance tooling epic
 
-This track translates q4xpcc's full-strength repository-hygiene discipline to
-the xplane-fdau distribution boundary. It is repository tooling and never ships
-in the distribution. The local-workflow-skills design is explicitly a
-cross-epic design spanning `T2.1` and its dependent `T3.1` child.
+This track translates q4xpcc's full-strength repository-hygiene and dependency
+refresh discipline to the xplane-fdau distribution boundary. It is repository
+tooling and never ships in the distribution. The local-workflow-skills design
+is explicitly a cross-epic design spanning `T2.1`, `T2.2`, and the peer `T3.1`
+child. The external Superpowers checkout is excluded from parity comparison and
+dependency refresh.
 
 | Child | Outcome | Depends on |
 | --- | --- | --- |
 | `T2.1` | Canonical repo-hygiene and fresh artifact verification | `T1.6` |
+| `T2.2` | Governed dependency and toolchain refresh | `T2.1` |
 
 ## T3 — Guarded Git synchronization tooling epic
 

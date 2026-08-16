@@ -41,8 +41,9 @@ EXPECTED_EPIC_MEMBERS = {
     "R1": ("R1.1", "R1.2", "R1.3", "R1.4", "R1.5", "R1.6", "R1.7"),
     "P1": ("P1.1", "P1.2", "P1.3", "P1.4", "P1.5", "P1.6"),
     "S": ("S1.1", "S2.1", "S2.2", "S3.1", "S4.1"),
+    "F1": ("F1.1", "F1.2", "F1.3", "F1.4", "F1.5", "F1.6"),
     "T1": ("T1.1", "T1.2", "T1.3", "T1.4", "T1.5", "T1.6"),
-    "T2": ("T2.1",),
+    "T2": ("T2.1", "T2.2"),
     "T3": ("T3.1",),
 }
 
@@ -165,19 +166,18 @@ class RoadmapAuthorityTests(unittest.TestCase):
 
         self.assertEqual(["M0"], milestones)
         self.assertEqual(["G1"], gates)
-        self.assertEqual(["I1.1", "I1.2", "I2.1", "F1.1", "F2.1"], boundaries)
+        self.assertEqual(["I1.1", "I1.2", "I2.1", "F2.1"], boundaries)
         self.assertEqual(
             [
                 "q4xpcc contract-model and fixture adoption",
                 "q4xpcc live XPLM acquisition adoption",
                 "Development/corroboration adapter adoption",
-                "Canonical archive consumption",
-                "External FOQA governance and claims",
+                "Approved FOQA program governance and claims",
             ],
             [row[1] for row in roadmap_rows(BOUNDARY_HEADER)],
         )
-        self.assertEqual(54, len(children))
-        self.assertEqual(54, len(set(children)))
+        self.assertEqual(61, len(children))
+        self.assertEqual(61, len(set(children)))
         kinds = [set(milestones), set(epics), set(children), set(gates), set(boundaries)]
         for index, current in enumerate(kinds):
             for other in kinds[index + 1 :]:
@@ -195,6 +195,9 @@ class RoadmapAuthorityTests(unittest.TestCase):
         self.assertEqual("`C1.3`, `C1.4`, `C1.5`, `C2.4`", by_child["C3.1"])
         self.assertEqual("`A1.4`, `A1.5`, `A1.6`, `A1.7`, `A1.8`", by_child["A1.9"])
         self.assertEqual("`P1.2`, `P1.3`, `P1.4`", by_child["P1.5"])
+        self.assertEqual("`C4.4`, `R1.7`", by_child["F1.1"])
+        self.assertEqual("`T2.1`", by_child["T2.2"])
+        self.assertEqual("`T2.2`, `T3.1`", by_child["B1.1"])
 
     def test_roadmap_has_no_mutable_child_status_column(self) -> None:
         roadmap = read_text(ROADMAP)
@@ -220,7 +223,7 @@ class BacklogAuthorityTests(unittest.TestCase):
     def test_inventory_matches_every_roadmap_child_once_in_order(self) -> None:
         roadmap = roadmap_child_rows()
         inventory = table_rows(read_text(BACKLOG), INVENTORY_HEADER)
-        self.assertEqual(54, len(inventory))
+        self.assertEqual(61, len(inventory))
         self.assertEqual(
             [(identity(row[0]), row[1], row[2]) for row in roadmap],
             [(identity(row[0]), row[1], row[3]) for row in inventory],
@@ -229,7 +232,7 @@ class BacklogAuthorityTests(unittest.TestCase):
     def test_inventory_excludes_nonchildren_and_range_rows(self) -> None:
         inventory = table_rows(read_text(BACKLOG), INVENTORY_HEADER)
         inventory_ids = [identity(row[0]) for row in inventory]
-        excluded = {"M0", "G1", "I1.1", "I1.2", "I2.1", "F1.1", "F2.1"}
+        excluded = {"M0", "G1", "I1.1", "I1.2", "I2.1", "F2.1"}
         self.assertFalse(set(inventory_ids) & excluded)
         self.assertEqual(len(inventory_ids), len(set(inventory_ids)))
         self.assertNotRegex("\n".join(row[0] for row in inventory), r"[–—]")
@@ -253,7 +256,12 @@ class BacklogAuthorityTests(unittest.TestCase):
             child, _outcome, status, dependencies, spec, plan, gates, review, resume, reason = row
             self.assertIn(status, allowed_statuses, child)
             self.assertRegex(dependencies, r"^`(?:M0|[A-Z][0-9]+\.[0-9]+)`(?:, `(?:M0|[A-Z][0-9]+\.[0-9]+)`)*$")
-            self.assertTrue(spec == "—" or spec.startswith("[design](docs/superpowers/specs/"), child)
+            self.assertTrue(
+                spec == "—"
+                or spec.startswith("[design](docs/superpowers/specs/")
+                or spec == "[architecture](docs/architecture/xplane_fdau_core_scope_amendment.md)",
+                child,
+            )
             self.assertTrue(
                 plan == "—" or plan.startswith("[draft plan](docs/superpowers/plans/") or plan.startswith("[plan](docs/superpowers/plans/"),
                 child,

@@ -4,7 +4,13 @@
 
 The authoritative parent architecture is
 `docs/architecture/xplane12_virtual_fdau_ecosystem_design.md`, copied with its
-recorded q4xpcc provenance. The implemented repository-specific specification is
+recorded q4xpcc provenance. The approved repository-owned scope amendment is
+`docs/architecture/xplane_fdau_core_scope_amendment.md`. It makes
+`xplane-fdau` the X-Plane-specific, transport-free core; assigns reusable
+ARINC and FDM/FOQA-support behavior here; and keeps concrete XPPython3/XPLM and
+`xplane-webapi` implementations in external clients.
+
+The implemented repository-specific migration specification is
 `docs/superpowers/specs/2026-08-09-xplane-fdau-identity-fdr-kernel-migration-design.md`.
 Completed implementation plan:
 `docs/superpowers/plans/2026-08-09-xplane-fdau-identity-fdr-kernel-migration.md`.
@@ -28,8 +34,8 @@ draft plan is:
 
 `docs/superpowers/plans/2026-08-09-src-layout-migration.md`
 
-`B1.1` is `specified`, not implemented, and resumes only after the local
-repository-workflow sequence through `T3.1` is verified.
+`B1.1` is `specified`, not implemented, and resumes only after peer local
+repository-workflow prerequisites `T2.2` and `T3.1` are verified.
 
 The active repository-governance design is:
 
@@ -55,10 +61,14 @@ The approved translation of q4xpcc's remaining project-local workflows is:
 
 `docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md`
 
-It defines `T2.1` canonical full-strength `repo-hygiene` followed by `T3.1`
-q4xpcc-style guarded Git synchronization with push disabled. Superpowers
-remains an external dependency; no Superpowers skill is copied or treated as a
-local onboarding target. The ignored `.agents/superpowers` checkout supplies
+It defines `T2.1` canonical full-strength `repo-hygiene`, followed by peer
+children `T2.2` governed dependency/toolchain refresh and `T3.1` q4xpcc-style
+guarded Git synchronization with push disabled. `T2.2` keeps an exact `uv` pin
+moving toward new stable releases while ordinary development dependencies use
+compatible declarations plus the complete lock. Superpowers remains an
+external dependency and is excluded from parity comparison and dependency
+refresh; no Superpowers skill is copied or treated as a local onboarding
+target. The ignored `.agents/superpowers` checkout supplies
 the upstream workflow through the ignored `.agents/skills/superpowers`
 discovery junction; `.codex/skills` remains project-specific. Completed
 feature worktrees merge back to `main`, pass merged-result verification, and
@@ -80,7 +90,8 @@ The project is the unreleased `xplane-fdau` virtual FDAU/FDIU distribution:
 - Repository: `https://github.com/tvproductions/xplane-fdau.git`
 - Distribution: `xplane-fdau`
 - Import package: `xplane_fdau`
-- Python: 3.12 and newer
+- Approved Python policy: `>=3.12,<3.15`, verified on 3.12, 3.13, and 3.14;
+  the metadata-bound update is queued in `T2.2`
 - Runtime dependencies: none
 
 Native X-Plane FDR v3/v4 remains retained migration material beneath explicit
@@ -97,8 +108,11 @@ Before any release, separately reviewed increments must define, in order:
 4. projection from canonical samples to the native FDR sink with explicit loss
    reporting.
 
-ARINC profiles and codecs remain later standards-governed work. FDM/FOQA remains
-later downstream analysis and governance work.
+ARINC profiles and codecs remain later local standards-governed work using
+licensed, edition-pinned sources. FDM and FOQA-support mechanics are later
+local `F1.1` through `F1.6` work informed by FAA AC 120-82. Approved-program
+governance, identity custody, corrective-action authority, protections, and
+regulatory claims remain external.
 
 ## Release boundary
 

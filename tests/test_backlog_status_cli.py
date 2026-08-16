@@ -81,7 +81,7 @@ class BacklogStatusCliTests(unittest.TestCase):
         human = self.run_cli(["status"], root=ROOT)
 
         self.assertEqual(0, human.code, human.stderr)
-        self.assertIn("54 local children", human.stdout)
+        self.assertIn("61 local children", human.stdout)
 
         machine = self.run_cli(["status", "--json"], root=ROOT)
 
@@ -90,8 +90,8 @@ class BacklogStatusCliTests(unittest.TestCase):
         self.assertTrue(payload["valid"])
         self.assertEqual([], payload["findings"])
         self.assertIsNone(payload["recommendation"])
-        self.assertEqual(54, len(payload["roadmap"]["local_children"]))
-        self.assertEqual(54, len(payload["backlog"]["children"]))
+        self.assertEqual(61, len(payload["roadmap"]["local_children"]))
+        self.assertEqual(61, len(payload["backlog"]["children"]))
 
     def test_unknown_command_is_invalid_usage(self) -> None:
         invalid = self.run_cli(["audit"], root=FIXTURE)

@@ -1,5 +1,9 @@
 # xplane-fdau Architecture Propagation Implementation Plan
 
+- **Governance:** historical
+- **Status:** completed
+- **Disposition:** Approved architecture propagation completed on the temporary design branch; preserved as the execution record for the 2026-08-16 scope amendment.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make every active xplane-fdau design and governance surface express the approved X-Plane-specific, transport-free core; local ARINC and FDM/FOQA ownership; external client adapters; multi-version Python policy; and governed dependency-refresh parity.

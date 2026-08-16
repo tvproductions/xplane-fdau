@@ -212,7 +212,7 @@
 
 - [ ] **Step 5: Run the full repository hygiene gate**
 
-  Run: `uv run python tools/hygiene.py`
+  Run: `uv run python .codex/skills/hygiene/scripts/hygiene.py`
 
   Expected: all `unittest`, coverage, quality, pre-commit, artifact, and hygiene checks pass.
 

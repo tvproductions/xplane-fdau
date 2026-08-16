@@ -33,7 +33,7 @@ recording model or archive.
 
 The client adapter owns acquisition transport: it reads simulator values,
 chooses cadence scheduling, manages connections and plugin lifecycle, and
-submits observations through core ports. Capture adapters are not bundled.
+submits observations through core ports; capture adapters are not bundled.
 
 ## Offline native FDR commands
 

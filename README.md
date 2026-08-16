@@ -5,9 +5,10 @@ for X-Plane. It defines the shared FDAU/FDIU domain contracts and processing
 used by external XPPython3/XPLM and `xplane-webapi` clients, but never connects
 to X-Plane itself. It is X-Plane-specific, not simulator-neutral.
 
-Version `0.1.0` is unreleased. It has no runtime dependencies and is tested on
-Python 3.12, 3.13, and 3.14. Python 3.12 is the compatibility floor for code
-composed into an XPPython3 client, not an exact project-wide `3.12.x` pin.
+Version `0.1.0` is unreleased. It has no runtime dependencies and uses only the
+Python standard library. It is tested on Python 3.12, 3.13, and 3.14. Python
+3.12 is the compatibility floor for code composed into an XPPython3 client,
+not an exact project-wide `3.12.x` pin.
 
 The core is the home for canonical flight-data acquisition semantics,
 recording, recovery, replay, native X-Plane FDR support, edition-pinned ARINC

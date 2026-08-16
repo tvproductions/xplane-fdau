@@ -104,7 +104,7 @@ The child slices below refine this sequence without weakening or reordering it.
 - [ ] The full quality, strict documentation, distribution, and
       installed-artifact gates pass with no release, tag, or package publication.
 
-### C1.1 — Canonical JSON and number encoding
+### C1.1 — Canonical JSON and binary64/integer encoding
 
 - [ ] Exact UTF-8, Unicode, object-key, array, string-escaping, and final-LF
       vectors pass.
@@ -122,7 +122,7 @@ The child slices below refine this sequence without weakening or reordering it.
 - [ ] Definition/record references pin identity, revision/version, and hash.
 - [ ] Authority, provenance, and producer values are immutable and round-trip.
 
-### C1.3 — Typed values and payload references
+### C1.3 — Typed values and content-addressed payload references
 
 - [ ] Boolean, integer, real, string, enumeration, vector, array, and byte-only
       representations retain exact type and order.
@@ -132,7 +132,7 @@ The child slices below refine this sequence without weakening or reordering it.
       status without reading storage.
 - [ ] Programmatic and loaded validation produce equivalent property paths.
 
-### C1.4 — Clock domains, UTC, anchors, and simulator timing
+### C1.4 — Clock domains, UTC instants, anchors, and simulator timing
 
 - [ ] Clock domains/readings preserve unit, resolution, origin, scope, and
       producer identity.
@@ -141,14 +141,14 @@ The child slices below refine this sequence without weakening or reordering it.
 - [ ] Clock anchors, uncertainty, source timing, simulator timing, replay/pause,
       cycle, and acquisition-phase values round-trip without invention.
 
-### C1.5 — Validity and acquisition quality
+### C1.5 — Validity states and acquisition-quality vocabulary
 
 - [ ] Validity is a closed state independent of quality flags.
 - [ ] Quality flags are closed, unique, and lexically ordered.
 - [ ] Empty quality flags do not manufacture validity.
 - [ ] Operational findings and tolerances cannot enter acquisition quality.
 
-### C2.1 — Measurement-definition model
+### C2.1 — Measurement-definition model and semantic invariants
 
 - [ ] Representation-specific, unit/unitless, frame/datum/axis, precision,
       resolution, range, and enumeration invariants pass.
@@ -157,7 +157,7 @@ The child slices below refine this sequence without weakening or reordering it.
 - [ ] Irrelevant representation fields and semantic revision mismatches fail.
 - [ ] Synthetic definitions are immutable, hash-stable, and round-trip.
 
-### C2.2 — Measurement catalog and schema
+### C2.2 — Measurement catalog, schema, ordering, and references
 
 - [ ] Catalog ID/revision/hash, authority, provenance, scope, and definition
       ordering are exact.
@@ -165,7 +165,7 @@ The child slices below refine this sequence without weakening or reordering it.
 - [ ] Version-1 measurement-catalog schema matches runtime shape.
 - [ ] No provider resource identity or stock X-Plane catalog content ships.
 
-### C2.3 — Source-binding definition
+### C2.3 — Source-binding definition and transform references
 
 - [ ] Each binding pins one exact measurement reference.
 - [ ] Provider/adapter, resource, expected/observed shape boundary, native unit,
@@ -175,7 +175,7 @@ The child slices below refine this sequence without weakening or reordering it.
       never executable expressions.
 - [ ] Failure dispositions and irrelevant fields fail closed.
 
-### C2.4 — Binding catalog and cross-validation
+### C2.4 — Binding catalog and pure cross-catalog validation
 
 - [ ] Binding catalog identity, ordering, uniqueness, schema, and hashes pass.
 - [ ] Missing or mismatched measurement references fail.
@@ -199,7 +199,7 @@ The child slices below refine this sequence without weakening or reordering it.
 - [ ] Absent or failed normalization cannot contain a fabricated value.
 - [ ] Version-1 sample schema matches runtime shape and canonical hash.
 
-### C3.3 — Raw/sample lineage and validation
+### C3.3 — Raw/sample lineage and cross-contract validation
 
 - [ ] Every sample reaches one complete observation or immutable record reference.
 - [ ] Ordered derivation-parent references remain intact and cycle-free within
@@ -217,7 +217,7 @@ The child slices below refine this sequence without weakening or reordering it.
       references.
 - [ ] Version-1 frame schema matches runtime shape and canonical hash.
 
-### C3.5 — Frame closure, ordering, and validation
+### C3.5 — Frame closure, canonical ordering, and validation
 
 - [ ] Sample and observation identities are unique and reference closure is
       complete.
@@ -232,7 +232,7 @@ The child slices below refine this sequence without weakening or reordering it.
 - [ ] Schema inventory rejects missing, duplicate, or unrecognized families.
 - [ ] Installed resources contain no provider or standards implementation.
 
-### C4.2 — Cross-language conformance corpus
+### C4.2 — Accepted, rejected, and canonical conformance corpus
 
 - [ ] Manifest covers accepted, rejected, and canonical cases for every family.
 - [ ] Rejected cases pin expected error class and JSON property path.
@@ -240,7 +240,7 @@ The child slices below refine this sequence without weakening or reordering it.
 - [ ] Boundary corpus covers numeric, Unicode, timing, ordering, lineage, and
       reference semantics.
 
-### C4.3 — Public API and documentation
+### C4.3 — Public API and contract documentation closure
 
 - [ ] Root package remains version-only; semantic packages expose exact owned
       names.
@@ -250,7 +250,7 @@ The child slices below refine this sequence without weakening or reordering it.
 - [ ] Runtime import-boundary tests reject providers, hosts, networks, and
       third-party imports.
 
-### C4.4 — Artifact matrix and independent review
+### C4.4 — Built/installed artifact matrix and independent review
 
 - [ ] Complete `unittest` and repository quality gates pass.
 - [ ] Fresh wheel/sdist contain exact schemas, fixtures/resources, and no runtime
@@ -260,7 +260,7 @@ The child slices below refine this sequence without weakening or reordering it.
 - [ ] Independent review has no unresolved load-bearing finding.
 - [ ] Version `0.1.0` remains unreleased and no push/tag/publication occurs.
 
-### T1.1 — Markdown authority contract and inventory normalization
+### T1.1 — Markdown authority contract and explicit inventory normalization
 
 - [x] Roadmap milestones, epics, local children, release gates, and external
       boundaries have exact nonoverlapping contracts. — Evidence: [verification](.superpowers/sdd/2026-08-15-t1-1-backlog-authority-normalization/gate-1.md)
@@ -363,7 +363,7 @@ is not a selectable implementation child.
 
 | Gate | Outcome | Gate state | Prerequisites | Evidence |
 | --- | --- | --- | --- | --- |
-| `G1` | Independent canonical vertical-slice reconciliation | `waiting` | `C4.4`, `A1.9`, `R1.7`, `P1.6` | — |
+| `G1` | Canonical vertical-slice reconciliation | `waiting` | `C4.4`, `A1.9`, `R1.7`, `P1.6` | — |
 
 ## External consumer and downstream boundaries
 

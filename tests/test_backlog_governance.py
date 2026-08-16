@@ -17,6 +17,7 @@ MILESTONE_HEADER = ("Milestone", "Outcome")
 CHILD_HEADER = ("Child", "Outcome", "Depends on")
 STANDARDS_HEADER = ("Child", "Outcome", "Depends on", "External prerequisite")
 GATE_HEADER = ("Gate", "Outcome", "Depends on")
+BACKLOG_GATE_HEADER = ("Gate", "Outcome", "Gate state", "Prerequisites", "Evidence")
 BOUNDARY_HEADER = ("Boundary", "Owner", "xplane-fdau handoff condition")
 INVENTORY_HEADER = (
     "Child",
@@ -30,6 +31,20 @@ INVENTORY_HEADER = (
     "Resume",
     "Reason",
 )
+EXPECTED_EPIC_MEMBERS = {
+    "B1": ("B1.1",),
+    "C1": ("C1.1", "C1.2", "C1.3", "C1.4", "C1.5"),
+    "C2": ("C2.1", "C2.2", "C2.3", "C2.4"),
+    "C3": ("C3.1", "C3.2", "C3.3", "C3.4", "C3.5"),
+    "C4": ("C4.1", "C4.2", "C4.3", "C4.4"),
+    "A1": ("A1.1", "A1.2", "A1.3", "A1.4", "A1.5", "A1.6", "A1.7", "A1.8", "A1.9"),
+    "R1": ("R1.1", "R1.2", "R1.3", "R1.4", "R1.5", "R1.6", "R1.7"),
+    "P1": ("P1.1", "P1.2", "P1.3", "P1.4", "P1.5", "P1.6"),
+    "S": ("S1.1", "S2.1", "S2.2", "S3.1", "S4.1"),
+    "T1": ("T1.1", "T1.2", "T1.3", "T1.4", "T1.5", "T1.6"),
+    "T2": ("T2.1",),
+    "T3": ("T3.1",),
+}
 
 
 def read_text(path: Path) -> str:
@@ -63,6 +78,28 @@ def identity(cell: str) -> str:
 
 def roadmap_rows(header: tuple[str, ...]) -> list[tuple[str, ...]]:
     return table_rows(read_text(ROADMAP), header)
+
+
+def roadmap_epics() -> dict[str, tuple[str, ...]]:
+    lines = read_text(ROADMAP).splitlines()
+    epics: dict[str, tuple[str, ...]] = {}
+    for index, line in enumerate(lines):
+        match = re.fullmatch(r"#{2,3} ([A-Z][0-9]*) — .+ epic", line)
+        if match is None:
+            continue
+        epic = match.group(1)
+        table_start = next(
+            candidate
+            for candidate in range(index + 1, len(lines))
+            if tuple(cell.strip() for cell in lines[candidate].strip().strip("|").split("|")) in {CHILD_HEADER, STANDARDS_HEADER}
+        )
+        members: list[str] = []
+        for row in lines[table_start + 2 :]:
+            if not row.startswith("|"):
+                break
+            members.append(identity(row.strip().strip("|").split("|")[0].strip()))
+        epics[epic] = tuple(members)
+    return epics
 
 
 def metadata(path: Path) -> dict[str, str]:
@@ -100,9 +137,28 @@ def roadmap_child_rows() -> list[tuple[str, ...]]:
     return rows
 
 
+def acceptance_headings(path: Path) -> list[str]:
+    lines = read_text(path).splitlines()
+    starts = [lines.index(heading) + 1 for heading in ("## Acceptance criteria", "## Local-child acceptance gates") if heading in lines]
+    if not starts:
+        return []
+    index = starts[0]
+    headings: list[str] = []
+    for line in lines[index:]:
+        if line.startswith("## "):
+            break
+        if line.startswith("### "):
+            headings.append(line.removeprefix("### "))
+    return headings
+
+
 class RoadmapAuthorityTests(unittest.TestCase):
+    def test_epic_identities_and_membership_are_exact(self) -> None:
+        self.assertEqual(EXPECTED_EPIC_MEMBERS, roadmap_epics())
+
     def test_node_kinds_are_explicit_complete_and_nonoverlapping(self) -> None:
         milestones = [identity(row[0]) for row in roadmap_rows(MILESTONE_HEADER)]
+        epics = list(roadmap_epics())
         children = [identity(row[0]) for row in roadmap_child_rows()]
         gates = [identity(row[0]) for row in roadmap_rows(GATE_HEADER)]
         boundaries = [identity(row[0]) for row in roadmap_rows(BOUNDARY_HEADER)]
@@ -112,7 +168,7 @@ class RoadmapAuthorityTests(unittest.TestCase):
         self.assertEqual(["I1.1", "I1.2", "I2.1", "F1.1", "F2.1"], boundaries)
         self.assertEqual(54, len(children))
         self.assertEqual(54, len(set(children)))
-        kinds = [set(milestones), set(children), set(gates), set(boundaries)]
+        kinds = [set(milestones), set(epics), set(children), set(gates), set(boundaries)]
         for index, current in enumerate(kinds):
             for other in kinds[index + 1 :]:
                 self.assertFalse(current & other)
@@ -137,6 +193,14 @@ class RoadmapAuthorityTests(unittest.TestCase):
 
 
 class BacklogAuthorityTests(unittest.TestCase):
+    def test_acceptance_headings_match_exact_roadmap_outcomes(self) -> None:
+        outcomes = {identity(row[0]): row[1] for row in roadmap_child_rows()}
+        governed = [identity(row[0]) for row in table_rows(read_text(BACKLOG), INVENTORY_HEADER) if row[6] != "—"]
+        self.assertEqual(
+            [f"{child} — {outcomes[child]}" for child in governed],
+            acceptance_headings(BACKLOG),
+        )
+
     def test_current_position_has_one_exact_selection_line(self) -> None:
         backlog = read_text(BACKLOG)
         selection_lines = [line for line in backlog.splitlines() if line.startswith("- Active child:")]
@@ -207,6 +271,14 @@ class BacklogAuthorityTests(unittest.TestCase):
         self.assertIn("## Release-gate dashboard", backlog)
         self.assertIn("## External consumer and downstream boundaries", backlog)
 
+    def test_release_gate_dashboard_matches_roadmap_outcomes_and_prerequisites(self) -> None:
+        roadmap = roadmap_rows(GATE_HEADER)
+        backlog = table_rows(read_text(BACKLOG), BACKLOG_GATE_HEADER)
+        self.assertEqual(
+            [(identity(row[0]), row[1], row[2]) for row in roadmap],
+            [(identity(row[0]), row[1], row[3]) for row in backlog],
+        )
+
     def test_all_child_gate_headings_are_within_the_unified_section(self) -> None:
         backlog = read_text(BACKLOG)
         section_start = backlog.index("## Local-child acceptance gates")
@@ -217,6 +289,50 @@ class BacklogAuthorityTests(unittest.TestCase):
 
 
 class GovernanceArtifactTests(unittest.TestCase):
+    def test_active_design_acceptance_headings_match_exact_roadmap_outcomes(self) -> None:
+        outcomes = {identity(row[0]): row[1] for row in roadmap_child_rows()}
+        for path in sorted((ROOT / "docs/superpowers/specs").glob("*.md")):
+            values = metadata(path)
+            if values.get("Governance") != "active":
+                continue
+            children = re.findall(r"`([A-Z][0-9]+\.[0-9]+)`", values["Roadmap children"])
+            self.assertEqual(
+                [f"{child} — {outcomes[child]}" for child in children],
+                acceptance_headings(path),
+                path,
+            )
+
+    def test_active_design_epic_assignments_match_roadmap_contract(self) -> None:
+        expected = {
+            "2026-08-09-src-layout-migration-design.md": ("`B1`", ("B1.1",)),
+            "2026-08-09-xplane-fdau-backlog-status-skill-design.md": (
+                "`T1`",
+                EXPECTED_EPIC_MEMBERS["T1"],
+            ),
+            "2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md": (
+                "`C1`",
+                EXPECTED_EPIC_MEMBERS["C1"] + EXPECTED_EPIC_MEMBERS["C2"] + EXPECTED_EPIC_MEMBERS["C3"] + EXPECTED_EPIC_MEMBERS["C4"],
+            ),
+            "2026-08-15-xplane-fdau-local-workflow-skills-design.md": (
+                "`T2`",
+                EXPECTED_EPIC_MEMBERS["T2"] + EXPECTED_EPIC_MEMBERS["T3"],
+            ),
+        }
+        actual: dict[str, tuple[str, tuple[str, ...]]] = {}
+        for path in sorted((ROOT / "docs/superpowers/specs").glob("*.md")):
+            values = metadata(path)
+            if values.get("Governance") != "active":
+                continue
+            children = tuple(re.findall(r"`([A-Z][0-9]+\.[0-9]+)`", values["Roadmap children"]))
+            actual[path.name] = (values["Roadmap epic"], children)
+        self.assertEqual(expected, actual)
+        self.assertIn(
+            "The canonical measurement-contract design is explicitly a cross-epic design "
+            "spanning `C1`, `C2`, `C3`, and `C4`; its governance metadata is anchored by "
+            "`Roadmap epic: C1`.",
+            re.sub(r"\s+", " ", read_text(ROADMAP)),
+        )
+
     def test_every_spec_uses_one_complete_governance_family(self) -> None:
         for path in sorted((ROOT / "docs/superpowers/specs").glob("*.md")):
             values = metadata(path)

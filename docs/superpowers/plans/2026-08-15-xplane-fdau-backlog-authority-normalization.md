@@ -12,7 +12,7 @@
 
 **Goal:** Establish the exact Markdown authority, inventory, and governance-metadata contracts required by `T1.1` without implementing the later backlog parser, audit command, mutation engine, or workflow skills.
 
-**Architecture:** Keep `ROADMAP.md` authoritative for node identity, kind, order, and dependencies, and consolidate all mutable local-child delivery state into one exact table in `BACKLOG.md`. Protect this hand-authored contract with focused standard-library tests that inspect only the current repository documents; production parsing and reporting remain reserved for `T1.2`. Normalize every existing specification and plan to either the active or historical metadata family, then close the four `T1.1` gates with committed Markdown evidence.
+**Architecture:** Keep `ROADMAP.md` authoritative for node identity, kind, epic membership, order, and dependencies, and consolidate all mutable local-child delivery state into one exact table in `BACKLOG.md`. Protect this hand-authored contract with focused standard-library tests that inspect only the current repository documents; production parsing and reporting remain reserved for `T1.2`. Normalize every existing specification and plan to either the active or historical metadata family, enforce exact roadmap-outcome parity for acceptance headings and the release-gate dashboard, then close the four `T1.1` gates with committed Markdown evidence.
 
 **Tech Stack:** Markdown, Python 3.12+ standard library, Python `unittest`, `uv`, Ruff, ty, coverage, Bandit, detect-secrets, MkDocs, and Git.
 
@@ -30,13 +30,36 @@
 
 ---
 
+## Final-review amendment (2026-08-15)
+
+After the completed plan entered final review, Jeff / tvproductions approved one
+correction wave for four load-bearing contract defects. This amendment is
+recorded transparently in the completed plan rather than rewriting the review
+history silently:
+
+1. epic identities and exact membership are now part of the test-only roadmap
+   contract and the nonoverlap proof;
+2. the canonical design is anchored by `Roadmap epic: C1`, with `ROADMAP.md`
+   explicitly authorizing its exact `C1`–`C4` cross-epic coverage;
+3. every governed backlog acceptance heading and every active-design child
+   subsection must equal `<child> — <ROADMAP outcome>` exactly; and
+4. the backlog release-gate dashboard must use the exact roadmap `G1` outcome
+   and prerequisites.
+
+The corrected Task 1–4 examples and instructions below supersede their
+epic-blind, `Roadmap epic: C`, shortened-heading, and drifted-release-outcome
+forms. The amendment does not create review evidence or change `T1.1` beyond
+`implemented`, `4/4`, selected, with `Review` still `—`.
+
+---
+
 ## File map
 
 | File | Responsibility in this plan |
 | --- | --- |
-| `ROADMAP.md` | Exact, nonoverlapping node-kind tables; explicit dependency identities; no mutable status. |
+| `ROADMAP.md` | Exact, nonoverlapping node kinds including epic membership; explicit dependency identities and authorized cross-epic designs; no mutable status. |
 | `BACKLOG.md` | The one active-child selection, one complete local-child inventory, acceptance gates, release-gate dashboard, and release prohibition. |
-| `tests/test_backlog_governance.py` | Focused current-repository contract tests; test-only Markdown helpers, not the T1.2 production parser. |
+| `tests/test_backlog_governance.py` | Focused current-repository epic, heading-parity, release-gate-parity, inventory, and metadata contract tests; test-only Markdown helpers, not the T1.2 production parser. |
 | `docs/superpowers/specs/*.md` | Active-design or historical-design metadata normalization. |
 | `docs/superpowers/plans/*.md` | Active-plan or historical-plan metadata normalization, including this T1.1 plan. |
 | `.superpowers/sdd/2026-08-15-t1-1-backlog-authority-normalization/*.md` | One evidence file per T1.1 gate plus child-level completion evidence. |
@@ -64,7 +87,7 @@ Do not begin Task 1 from a draft or merely specified state.
 
 ---
 
-### Task 1: Make roadmap node kinds and dependencies exact
+### Task 1: Make roadmap node kinds, epic membership, and dependencies exact
 
 **Files:**
 
@@ -74,7 +97,7 @@ Do not begin Task 1 from a draft or merely specified state.
 **Interfaces:**
 
 - Consumes: the approved roadmap table headers and node taxonomy in `docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md`.
-- Produces: `roadmap_rows(header: tuple[str, ...]) -> list[tuple[str, ...]]` and `roadmap_child_rows() -> list[tuple[str, ...]]`, test-only extractors used by Task 2; exact roadmap child ordering and dependency cells with no ranges.
+- Produces: `roadmap_rows(header: tuple[str, ...]) -> list[tuple[str, ...]]`, `roadmap_epics() -> dict[str, tuple[str, ...]]`, and `roadmap_child_rows() -> list[tuple[str, ...]]`, test-only extractors used by Task 2; exact epic identity/membership, roadmap child ordering, and dependency cells with no ranges.
 
 - [ ] **Step 1: Add the failing roadmap contract tests**
 
@@ -111,6 +134,20 @@ INVENTORY_HEADER = (
     "Resume",
     "Reason",
 )
+EXPECTED_EPIC_MEMBERS = {
+    "B1": ("B1.1",),
+    "C1": ("C1.1", "C1.2", "C1.3", "C1.4", "C1.5"),
+    "C2": ("C2.1", "C2.2", "C2.3", "C2.4"),
+    "C3": ("C3.1", "C3.2", "C3.3", "C3.4", "C3.5"),
+    "C4": ("C4.1", "C4.2", "C4.3", "C4.4"),
+    "A1": ("A1.1", "A1.2", "A1.3", "A1.4", "A1.5", "A1.6", "A1.7", "A1.8", "A1.9"),
+    "R1": ("R1.1", "R1.2", "R1.3", "R1.4", "R1.5", "R1.6", "R1.7"),
+    "P1": ("P1.1", "P1.2", "P1.3", "P1.4", "P1.5", "P1.6"),
+    "S": ("S1.1", "S2.1", "S2.2", "S3.1", "S4.1"),
+    "T1": ("T1.1", "T1.2", "T1.3", "T1.4", "T1.5", "T1.6"),
+    "T2": ("T2.1",),
+    "T3": ("T3.1",),
+}
 
 
 def read_text(path: Path) -> str:
@@ -146,6 +183,32 @@ def roadmap_rows(header: tuple[str, ...]) -> list[tuple[str, ...]]:
     return table_rows(read_text(ROADMAP), header)
 
 
+def roadmap_epics() -> dict[str, tuple[str, ...]]:
+    lines = read_text(ROADMAP).splitlines()
+    epics: dict[str, tuple[str, ...]] = {}
+    for index, line in enumerate(lines):
+        match = re.fullmatch(r"#{2,3} ([A-Z][0-9]*) — .+ epic", line)
+        if match is None:
+            continue
+        epic = match.group(1)
+        table_start = next(
+            candidate
+            for candidate in range(index + 1, len(lines))
+            if tuple(
+                cell.strip()
+                for cell in lines[candidate].strip().strip("|").split("|")
+            )
+            in {CHILD_HEADER, STANDARDS_HEADER}
+        )
+        members: list[str] = []
+        for row in lines[table_start + 2 :]:
+            if not row.startswith("|"):
+                break
+            members.append(identity(row.strip().strip("|").split("|")[0].strip()))
+        epics[epic] = tuple(members)
+    return epics
+
+
 def roadmap_child_rows() -> list[tuple[str, ...]]:
     lines = read_text(ROADMAP).splitlines()
     rows: list[tuple[str, ...]] = []
@@ -164,8 +227,12 @@ def roadmap_child_rows() -> list[tuple[str, ...]]:
 
 
 class RoadmapAuthorityTests(unittest.TestCase):
+    def test_epic_identities_and_membership_are_exact(self) -> None:
+        self.assertEqual(EXPECTED_EPIC_MEMBERS, roadmap_epics())
+
     def test_node_kinds_are_explicit_complete_and_nonoverlapping(self) -> None:
         milestones = [identity(row[0]) for row in roadmap_rows(MILESTONE_HEADER)]
+        epics = list(roadmap_epics())
         children = [identity(row[0]) for row in roadmap_child_rows()]
         gates = [identity(row[0]) for row in roadmap_rows(GATE_HEADER)]
         boundaries = [identity(row[0]) for row in roadmap_rows(BOUNDARY_HEADER)]
@@ -175,7 +242,7 @@ class RoadmapAuthorityTests(unittest.TestCase):
         self.assertEqual(["I1.1", "I1.2", "I2.1", "F1.1", "F2.1"], boundaries)
         self.assertEqual(54, len(children))
         self.assertEqual(54, len(set(children)))
-        kinds = [set(milestones), set(children), set(gates), set(boundaries)]
+        kinds = [set(milestones), set(epics), set(children), set(gates), set(boundaries)]
         for index, current in enumerate(kinds):
             for other in kinds[index + 1 :]:
                 self.assertFalse(current & other)
@@ -211,7 +278,10 @@ Run:
 uv run python -m unittest tests.test_backlog_governance.RoadmapAuthorityTests -v
 ```
 
-Expected: `test_authoritative_dependency_cells_use_exact_identities` fails on the `C3.1`, `A1.9`, and `P1.5` range cells. The other two tests pass.
+Expected: `test_authoritative_dependency_cells_use_exact_identities` fails on
+the `C3.1`, `A1.9`, and `P1.5` range cells. The exact epic
+identity/membership test and the node-kind nonoverlap test, now including
+epics, pass.
 
 - [ ] **Step 3: Expand the three authoritative dependency ranges**
 
@@ -225,6 +295,11 @@ In `ROADMAP.md`, make these exact replacements:
 
 Do not add status to a roadmap table and do not change the release-path or external-boundary meaning.
 
+Under `## C — Canonical semantic contract kernel`, explicitly declare that
+the canonical measurement-contract design spans the exact `C1`, `C2`, `C3`,
+and `C4` epics and is anchored by `Roadmap epic: C1`. `C` remains only the
+grouping heading and is never accepted as an epic identity.
+
 - [ ] **Step 4: Run the focused roadmap tests**
 
 Run:
@@ -233,7 +308,9 @@ Run:
 uv run python -m unittest tests.test_backlog_governance.RoadmapAuthorityTests -v
 ```
 
-Expected: all three roadmap tests pass.
+Expected: every roadmap test passes, including exact epic membership and the
+five-way milestone/epic/local-child/release-gate/external-boundary nonoverlap
+proof.
 
 - [ ] **Step 5: Commit the roadmap contract**
 
@@ -340,6 +417,12 @@ class BacklogAuthorityTests(unittest.TestCase):
         self.assertIn("## External consumer and downstream boundaries", backlog)
 ```
 
+Final-review correction: also add failing tests that derive every governed
+child's exact `### <child> — <ROADMAP outcome>` heading from the roadmap and
+compare the release-gate dashboard's `Gate`, `Outcome`, and `Prerequisites`
+cells directly with the roadmap release-gate table. The expected `G1` outcome
+is exactly `Canonical vertical-slice reconciliation`.
+
 - [ ] **Step 2: Run the backlog tests and confirm the legacy-dashboard failures**
 
 Run:
@@ -348,7 +431,10 @@ Run:
 uv run python -m unittest tests.test_backlog_governance.BacklogAuthorityTests -v
 ```
 
-Expected: all five tests fail because the selection line is legacy text, there is no exact unified inventory, and several status dashboards still exist.
+Expected: the inventory tests fail because the selection line is legacy text,
+there is no exact unified inventory, and several status dashboards still
+exist. The final-review parity tests additionally fail on shortened acceptance
+headings and the drifted backlog `G1` outcome.
 
 - [ ] **Step 3: Replace the status dashboards with one exact inventory**
 
@@ -360,7 +446,12 @@ In `BACKLOG.md`:
 4. Add all 54 local children in the same order and with the same full outcome text as `ROADMAP.md`.
 5. Expand the `C3.1`, `A1.9`, and `P1.5` dependency ranges to exact ordered IDs.
 6. Remove the five legacy status dashboards while preserving every child acceptance-gate section under a single `## Local-child acceptance gates` heading.
-7. Preserve the release-gate dashboard, external-boundary table, backlog rules, and release prohibition as report-only/non-child structures.
+7. Normalize every governed child acceptance heading to exact
+   `### <child> — <ROADMAP outcome>` text without changing any gate statement
+   or evidence suffix.
+8. Preserve the release-gate dashboard, external-boundary table, backlog rules,
+   and release prohibition as report-only/non-child structures, and set the
+   `G1` outcome and prerequisites to exact roadmap parity.
 
 Populate mutable cells with this exact policy:
 
@@ -399,7 +490,8 @@ Run:
 uv run python -m unittest tests.test_backlog_governance -v
 ```
 
-Expected: all eight tests from Tasks 1 and 2 pass.
+Expected: all focused tests from Tasks 1 and 2 pass, including epic identity,
+acceptance-heading parity, and release-gate parity.
 
 - [ ] **Step 5: Inspect the authority diff and commit it**
 
@@ -554,6 +646,12 @@ class GovernanceArtifactTests(unittest.TestCase):
             self.assertNotEqual("—", metadata(path)["Disposition"])
 ```
 
+Final-review correction: also add exact active-design assignment tests that
+derive the roadmap epic identities and membership, require the canonical
+design to be anchored by `C1` while covering exact ordered children from
+`C1`–`C4`, and require each active design's acceptance subsections to match its
+ordered `Roadmap children` as exact `<child> — <ROADMAP outcome>` headings.
+
 - [ ] **Step 2: Run the artifact tests and confirm the legacy-header failures**
 
 Run:
@@ -562,7 +660,12 @@ Run:
 uv run python -m unittest tests.test_backlog_governance.GovernanceArtifactTests -v
 ```
 
-Expected: the tests fail for the two legacy core artifacts, the two completed migration artifacts, and the draft canonical-contract design because they do not yet use an exact governance family.
+Expected: the tests fail for the two legacy core artifacts, the two completed
+migration artifacts, and the draft canonical-contract design because they do
+not yet use an exact governance family. The final-review tests additionally
+fail while the canonical design uses invalid epic `C`, lacks its authorized
+cross-epic declaration, or an active design uses shortened/missing acceptance
+headings.
 
 - [ ] **Step 3: Apply exact historical metadata to superseded core artifacts**
 
@@ -612,12 +715,16 @@ Replace the existing short header in `docs/superpowers/specs/2026-08-09-xplane-f
 - **Status:** draft
 - **Date:** 2026-08-09
 - **Decision owner:** Jeff / tvproductions
-- **Roadmap epic:** `C`
+- **Roadmap epic:** `C1`
 - **Roadmap children:** `C1.1`, `C1.2`, `C1.3`, `C1.4`, `C1.5`, `C2.1`, `C2.2`, `C2.3`, `C2.4`, `C3.1`, `C3.2`, `C3.3`, `C3.4`, `C3.5`, `C4.1`, `C4.2`, `C4.3`, `C4.4`
 - **Approval:** —
 ```
 
 Do not approve the canonical-contract design or change its technical content.
+Add one exact acceptance subsection per covered canonical child, in metadata
+order, using the exact roadmap outcome as its heading and the already-governed
+backlog gate statements as its body. This corrects the structural omission
+without approving the draft or changing any gate meaning.
 
 - [ ] **Step 6: Run focused governance and existing documentation tests**
 
@@ -681,13 +788,16 @@ Expected: every command exits `0`; the full quality command uses `unittest`, and
 Run:
 
 ```text
-git grep -n "| Milestone | Outcome |\|| Child | Outcome | Depends on |\|| Gate | Outcome | Depends on |\|| Boundary | Owner | xplane-fdau handoff condition |" -- ROADMAP.md
+git grep -n "epic$\|| Milestone | Outcome |\|| Child | Outcome | Depends on |\|| Gate | Outcome | Depends on |\|| Boundary | Owner | xplane-fdau handoff condition |" -- ROADMAP.md
 git grep -n "^- Active child:\|^## Local child inventory\|^| Child | Outcome | Status |" -- BACKLOG.md
 git grep -n "I1.1\|I1.2\|I2.1\|F1.1\|F2.1" -- BACKLOG.md
 git grep -n "Governance:\|Disposition:" -- docs/superpowers/specs docs/superpowers/plans
 ```
 
-Expected: roadmap kind headers are distinct; there is one exact selection and one exact inventory header; external boundaries occur only in the report-only boundary section; every spec and plan has a governance marker and every historical artifact has a disposition.
+Expected: roadmap epic headings and the other kind headers are distinct; there
+is one exact selection and one exact inventory header; external boundaries
+occur only in the report-only boundary section; every spec and plan has a
+governance marker and every historical artifact has a disposition.
 
 - [ ] **Step 3: Create exact gate and completion evidence**
 
@@ -706,9 +816,9 @@ Create the five files with the bodies below. The verification statements are ass
 - **Subject:** Exact nonoverlapping roadmap node contracts
 
 The focused governance tests, full quality gate, strict documentation build,
-and direct roadmap-table inspection passed. Milestones, local children, release
-gates, and external boundaries use distinct explicit table contracts and exact
-dependency identities.
+and direct roadmap-table inspection passed. Milestones, epics, local children,
+release gates, and external boundaries use distinct explicit contracts, exact
+epic membership, and exact dependency identities.
 ```
 
 `gate-2.md`:
@@ -774,9 +884,10 @@ historical completed/superseded disposition.
 - **Date:** 2026-08-15
 - **Subject:** T1.1 plan completion
 
-All approved implementation-plan tasks completed. The focused governance tests,
-full repository quality gate, strict documentation build, and Markdown diff
-checks passed. Independent review remains a separate lifecycle transition.
+All approved implementation-plan tasks and the user-approved final-review
+correction completed. The focused governance tests, full repository quality
+gate, strict documentation build, Markdown diff checks, and secrets-baseline
+comparison passed. Independent review remains a separate lifecycle transition.
 ```
 
 - [ ] **Step 4: Attach evidence without claiming independent review**
@@ -848,7 +959,7 @@ Expected: the commit succeeds, the worktree is clean, the branch is only locally
 
 ## Plan self-review
 
-- **Specification coverage:** Task 1 covers exact nonoverlapping roadmap kinds; Task 2 makes `BACKLOG.md` the single complete mutable child-state authority; Task 3 migrates every current governance artifact; Task 4 supplies one eligible evidence artifact per T1.1 gate and preserves the independent-review boundary.
+- **Specification coverage:** Task 1 covers exact nonoverlapping roadmap kinds and epic membership; Task 2 makes `BACKLOG.md` the single complete mutable child-state authority and enforces acceptance/release-outcome parity; Task 3 migrates every current governance artifact, including the corrected C1-anchored cross-epic canonical design; Task 4 supplies one eligible evidence artifact per T1.1 gate and preserves the independent-review boundary.
 - **Scope boundary:** The plan introduces no production parser, command, mutation engine, skill, runtime code, runtime dependency, network behavior, or release behavior. Those remain with `T1.2` and later children.
 - **Type/name consistency:** The test-only helpers are consistently named `read_text`, `table_rows`, `identity`, `roadmap_rows`, and `metadata`; later tasks consume only those definitions.
 - **Placeholder scan:** Every file, command, expected result, metadata value, link target, lifecycle transition, and evidence body needed for execution is explicit.

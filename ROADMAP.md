@@ -97,6 +97,10 @@ Each epic expands into the child slices below.
 
 ## C — Canonical semantic contract kernel
 
+The canonical measurement-contract design is explicitly a cross-epic design
+spanning `C1`, `C2`, `C3`, and `C4`; its governance metadata is anchored by
+`Roadmap epic: C1`.
+
 ### C1 — Contract foundation epic
 
 | Child | Outcome | Depends on |

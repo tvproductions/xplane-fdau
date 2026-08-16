@@ -4,7 +4,7 @@
 - **Status:** draft
 - **Date:** 2026-08-09
 - **Decision owner:** Jeff / tvproductions
-- **Roadmap epic:** `C`
+- **Roadmap epic:** `C1`
 - **Roadmap children:** `C1.1`, `C1.2`, `C1.3`, `C1.4`, `C1.5`, `C2.1`, `C2.2`, `C2.3`, `C2.4`, `C3.1`, `C3.2`, `C3.3`, `C3.4`, `C3.5`, `C4.1`, `C4.2`, `C4.3`, `C4.4`
 - **Approval:** —
 
@@ -824,33 +824,164 @@ action is part of any plan.
 
 ## Acceptance criteria
 
-This increment is complete only when:
+The cross-epic design is complete only when every separately planned child
+satisfies its exact acceptance subsection below.
 
-1. the five version-1 contract families have normative packaged schemas;
-2. frozen Python values and strict loaders implement the same wire shapes;
-3. canonical JSON bytes and content hashes match the shared golden vectors;
-4. catalogs distinguish semantic definitions from source bindings and ship no
-   real provider content;
-5. every binding pins one exact measurement definition;
-6. raw observations preserve provider, resource, type, shape, timing, status,
-   and value evidence without invention;
-7. samples preserve exact definition references, normalized value/status,
-   validity, quality, timing, and raw lineage;
-8. frames are deterministic, preserve observation order, and make no ARINC
-   framing claim;
-9. UTC, monotonic, source, simulator, and cycle timing cannot be confused;
-10. cross-contract validators reject incompatible references and semantics
-    without executing transforms;
-11. accepted and rejected language-neutral fixtures cover boundary and failure
-    behavior with exact canonical bytes and hashes;
-12. all runtime modules remain standard-library-only, synchronous,
-    capture-neutral, and free of provider/network/host imports;
-13. the complete native FDR regression suite remains green;
-14. built and installed artifacts contain the exact new schemas and no stock
-    catalogs, adapters, ARINC behavior, or runtime dependencies;
-15. all repository quality and installed-wheel gates pass on supported Python
-    versions; and
-16. no push, tag, publication, or release occurs.
+### C1.1 — Canonical JSON and binary64/integer encoding
+
+- Exact UTF-8, Unicode, object-key, array, string-escaping, and final-LF
+  vectors pass.
+- Signed 64-bit integer and finite binary64 canonical lexical vectors pass.
+- Duplicate keys, non-NFC/surrogate text, overflow, and non-finite values fail
+  with exact error context.
+- Canonical bytes and SHA-256 results are deterministic without relying on
+  incidental `json.dumps()` float spelling.
+
+### C1.2 — Identity, hashing, references, authority, and provenance
+
+- Semantic IDs, revisions, UUIDs, generations, and sequences enforce exact
+  syntax and range.
+- Definition and record self-hashes use the specified canonical preimages.
+- Definition/record references pin identity, revision/version, and hash.
+- Authority, provenance, and producer values are immutable and round-trip.
+
+### C1.3 — Typed values and content-addressed payload references
+
+- Boolean, integer, real, string, enumeration, vector, array, and byte-only
+  representations retain exact type and order.
+- Boolean/numeric coercion, unauthorized nulls, invalid shapes, and invalid
+  enum values fail closed.
+- Payload references preserve media type, length, hash, role, and retention
+  status without reading storage.
+- Programmatic and loaded validation produce equivalent property paths.
+
+### C1.4 — Clock domains, UTC instants, anchors, and simulator timing
+
+- Clock domains/readings preserve unit, resolution, origin, scope, and
+  producer identity.
+- UTC instants preserve exact nanosecond text and explicit `Z`.
+- Same-domain comparison succeeds while unrelated-domain comparison fails.
+- Clock anchors, uncertainty, source timing, simulator timing, replay/pause,
+  cycle, and acquisition-phase values round-trip without invention.
+
+### C1.5 — Validity states and acquisition-quality vocabulary
+
+- Validity is a closed state independent of quality flags.
+- Quality flags are closed, unique, and lexically ordered.
+- Empty quality flags do not manufacture validity.
+- Operational findings and tolerances cannot enter acquisition quality.
+
+### C2.1 — Measurement-definition model and semantic invariants
+
+- Representation-specific, unit/unitless, frame/datum/axis, precision,
+  resolution, range, and enumeration invariants pass.
+- Freshness, interpolation, discontinuity, sensitivity, applicability, and
+  provenance fields are explicit.
+- Irrelevant representation fields and semantic revision mismatches fail.
+- Synthetic definitions are immutable, hash-stable, and round-trip.
+
+### C2.2 — Measurement catalog, schema, ordering, and references
+
+- Catalog ID/revision/hash, authority, provenance, scope, and definition
+  ordering are exact.
+- Duplicate or noncanonical definition order fails closed.
+- Version-1 measurement-catalog schema matches runtime shape.
+- No provider resource identity or stock X-Plane catalog content ships.
+
+### C2.3 — Source-binding definition and transform references
+
+- Each binding pins one exact measurement reference.
+- Provider/adapter, resource, expected/observed shape boundary, native unit,
+  applicability, dependencies, companions, phase, and replay policy are
+  explicit.
+- Transform/calibration references contain identity and data-only parameters,
+  never executable expressions.
+- Failure dispositions and irrelevant fields fail closed.
+
+### C2.4 — Binding catalog and pure cross-catalog validation
+
+- Binding catalog identity, ordering, uniqueness, schema, and hashes pass.
+- Missing or mismatched measurement references fail.
+- Direct bindings enforce unit/representation/shape/applicability parity.
+- Transformed bindings validate declarations without executing or claiming
+  algorithm conformance.
+
+### C3.1 — Raw-observation record and schema
+
+- Provider/adapter/resource, generations, type/shape, timing, status, and value
+  evidence round-trip exactly.
+- Inline value, payload reference, and absent value are mutually exclusive.
+- Status/value combinations enforce the approved matrix.
+- Receiver timing is never relabeled as source timing.
+
+### C3.2 — Measurement-sample record and schema
+
+- Sample/session/stream/epoch/sequence and exact definition references pass.
+- Normalized value/unit, applied transforms, validity, quality, and freshness
+  obey local invariants.
+- Absent or failed normalization cannot contain a fabricated value.
+- Version-1 sample schema matches runtime shape and canonical hash.
+
+### C3.3 — Raw/sample lineage and cross-contract validation
+
+- Every sample reaches one complete observation or immutable record reference.
+- Ordered derivation-parent references remain intact and cycle-free within the
+  supplied validation closure.
+- Catalog-resolved sample representation, unit, range, binding, status, and
+  quality validation passes.
+- Missing, mismatched, or stale lineage fails with exact context.
+
+### C3.4 — Measurement-frame record and schema
+
+- Frame identity, acquisition instant, samples, observations, producer, and
+  limitations round-trip.
+- Complete raw observations preserve arrival order.
+- Samples preserve canonical semantic order and use frame-local observation
+  references.
+- Version-1 frame schema matches runtime shape and canonical hash.
+
+### C3.5 — Frame closure, canonical ordering, and validation
+
+- Sample and observation identities are unique and reference closure is
+  complete.
+- Noncanonical sample order fails rather than being silently rewritten.
+- Frame/session/stream/epoch/timing conflicts fail with exact context.
+- Multiple corroborating bindings for one measurement are accepted.
+
+### C4.1 — Schema resource parity and version inventory
+
+- All five version-1 schema resources have exact IDs and family mappings.
+- Packaged and documentation schema copies are byte-identical.
+- Schema inventory rejects missing, duplicate, or unrecognized families.
+- Installed resources contain no provider or standards implementation.
+
+### C4.2 — Accepted, rejected, and canonical conformance corpus
+
+- Manifest covers accepted, rejected, and canonical cases for every family.
+- Rejected cases pin expected error class and JSON property path.
+- Accepted cases pin canonical bytes and SHA-256.
+- Boundary corpus covers numeric, Unicode, timing, ordering, lineage, and
+  reference semantics.
+
+### C4.3 — Public API and contract documentation closure
+
+- Root package remains version-only; semantic packages expose exact owned
+  names.
+- Documentation distinguishes measurement/binding, observation/sample,
+  FDAU/ARINC frames, and acquisition/operational quality.
+- Native FDR APIs and documentation remain unchanged and green.
+- Runtime import-boundary tests reject providers, hosts, networks, and
+  third-party imports.
+
+### C4.4 — Built/installed artifact matrix and independent review
+
+- Complete `unittest` and repository quality gates pass.
+- Fresh wheel/sdist contain exact schemas, fixtures/resources, and no runtime
+  dependency or provider content.
+- Installed-wheel smoke passes on Python 3.12, 3.13, and 3.14 outside the
+  checkout.
+- Independent review has no unresolved load-bearing finding.
+- Version `0.1.0` remains unreleased and no push/tag/publication occurs.
 
 ## Required following increments
 

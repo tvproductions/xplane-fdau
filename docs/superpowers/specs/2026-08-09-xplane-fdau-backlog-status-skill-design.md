@@ -662,7 +662,7 @@ responsibility before more evidence families are added.
 
 ## Acceptance criteria
 
-### T1.1 — Authority and inventory
+### T1.1 — Markdown authority contract and explicit inventory normalization
 
 - Roadmap milestones, epics, local children, release gates, and external
   boundaries have exact nonoverlapping contracts.
@@ -672,7 +672,7 @@ responsibility before more evidence families are added.
 - Existing specs and plans have valid governance metadata or an explicit
   historical disposition.
 
-### T1.2 — Parser and reports
+### T1.2 — Typed parser, status report, and versioned JSON
 
 - Frozen typed models and the strict Markdown parser pass valid and malformed
   fixture cases.
@@ -682,7 +682,7 @@ responsibility before more evidence families are added.
 - The migrated current repository parses and reports without a structural
   finding.
 
-### T1.3 — Audit and adherence
+### T1.3 — Structural audit and spec/plan adherence
 
 - Identity, kind, dependency, cycle, lifecycle, gate-count, and link rules fail
   closed with stable finding codes.
@@ -693,7 +693,7 @@ responsibility before more evidence families are added.
 - Audit reports all independent findings with file, line, node, and exact
   context and returns a blocking result when required.
 
-### T1.4 — Next action
+### T1.4 — Deterministic next-action selection
 
 - A selected local child resumes at its exact Superpowers lifecycle stage.
 - With no selection, the first dependency-ready local child is recommended in
@@ -703,7 +703,7 @@ responsibility before more evidence families are added.
 - Milestones, epics, release gates, and external boundaries are never
   recommended as implementation children.
 
-### T1.5 — Mutations
+### T1.5 — Guarded child-state and gate-evidence mutations
 
 - Every mutation is dry-run-first and requires explicit apply authority.
 - Expected selection/state/gate values and target hashes reject stale changes.
@@ -713,7 +713,7 @@ responsibility before more evidence families are added.
 - Candidate validation, atomic publication, failure cleanup, and unrelated
   Markdown preservation pass.
 
-### T1.6 — Workflow closure
+### T1.6 — Skill, session-entry, hygiene, and artifact closure
 
 - Project-local skill triggers for status, resume, adherence, next action, and
   controlled state requests.

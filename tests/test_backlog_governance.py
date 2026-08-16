@@ -249,13 +249,37 @@ class BacklogAuthorityTests(unittest.TestCase):
                 child,
             )
             self.assertRegex(gates, r"^(?:—|[0-9]+/[0-9]+)$")
-            self.assertEqual("—", review)
+            if status in {"`reviewed`", "`verified`"}:
+                self.assertRegex(review, r"^\[review\]\(\.superpowers/sdd/.+/review\.md\)$", child)
+            else:
+                self.assertEqual("—", review)
             if status == "`blocked`":
                 self.assertEqual("`queued`", resume)
                 self.assertNotEqual("—", reason)
             else:
                 self.assertEqual("—", resume)
                 self.assertEqual("—", reason)
+
+    def test_t1_1_review_evidence_is_accepted(self) -> None:
+        inventory = table_rows(read_text(BACKLOG), INVENTORY_HEADER)
+        row = next(row for row in inventory if identity(row[0]) == "T1.1")
+        review_link = "[review](.superpowers/sdd/2026-08-15-t1-1-backlog-authority-normalization/review.md)"
+        self.assertEqual("`reviewed`", row[2])
+        self.assertEqual(review_link, row[7])
+
+        evidence_path = ROOT / ".superpowers/sdd/2026-08-15-t1-1-backlog-authority-normalization/review.md"
+        self.assertTrue(evidence_path.is_file())
+        self.assertEqual(
+            {
+                "Child": "`T1.1`",
+                "Gate": "—",
+                "Kind": "review",
+                "Result": "accepted",
+                "Date": "2026-08-16",
+                "Subject": "Independent T1.1 implementation review",
+            },
+            metadata(evidence_path),
+        )
 
     def test_no_second_child_status_dashboard_remains(self) -> None:
         backlog = read_text(BACKLOG)

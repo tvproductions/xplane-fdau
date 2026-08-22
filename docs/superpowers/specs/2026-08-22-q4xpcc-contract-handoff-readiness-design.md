@@ -116,10 +116,12 @@ planning surface of A1, R1, and P1. It freezes:
   subset.
 
 The design preserves the approved boundary: XPPython3/XPLM, xpwebapi,
-aircraft-specific, replay-host, and application adapters remain consumer
-owned. q4xpcc retains cards, sessions, missions, BIT policy, procedures,
-guidance, action authorization, and q4xpcc operational findings. Native `.fdr`
-remains a deliberately lossy format and sink rather than the canonical model.
+aircraft-specific, concrete replay-host integration, and application adapters
+remain consumer owned. Deterministic replay contracts, source behavior, and
+core semantics remain FDAU owned. q4xpcc retains cards, missions, their
+application-orchestration sessions, BIT policy, procedures, guidance, action
+authorization, and q4xpcc operational findings. Native `.fdr` remains a
+deliberately lossy format and sink rather than the canonical model.
 
 The child explicitly excludes engine implementation, simulator integration,
 schema or fixture delivery, built artifacts, tags, releases, PyPI publication,

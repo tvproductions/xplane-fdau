@@ -85,12 +85,13 @@ Its acceptance gates are:
 3. ownership and dependency direction remain consistent with the approved
    scope amendment and distinguish FDAU acquisition quality from q4xpcc
    operational policy and findings; and
-4. the review records that C1–C4 implementation, schemas, fixtures, built
-   artifacts, and release claims remain incomplete, leaving all C1–C4 child
-   delivery statuses unchanged.
+4. the approved design is linked from `C1.1` through `C4.4`, and those children
+   advance only to `specified`, with zero delivery gates satisfied and no
+   implementation-plan, review, artifact, or release evidence.
 
 Approval of the design makes it implementation authority. It does not satisfy
-any C1–C4 acceptance gate by intent or document presence alone.
+any C1–C4 acceptance gate by intent or document presence alone. The move to
+`specified` records design maturity, not implementation progress.
 
 ## D1.2 — Acquisition, recording, projection, and pinning contract design
 
@@ -138,8 +139,11 @@ Its acceptance gates are:
 3. deployment, revision pinning, release-artifact hashes, delivered-file
    hashes, conformance, and no-divergent-subset proof are explicit without
    requiring a current release artifact; and
-4. independent review finds no unresolved load-bearing ambiguity and confirms
-   that no A1, R1, P1, C4.4, G1, or release gate was claimed complete.
+4. independent review finds no unresolved load-bearing ambiguity, the approved
+   contract-only design is recorded as binding architecture input for future
+   A1, R1, and P1 specifications, and those implementation children remain
+   `queued` with zero delivery gates satisfied and no implementation, artifact,
+   or release claim.
 
 ## D1.3 — Reviewed q4xpcc Phase 24A handoff
 
@@ -166,8 +170,8 @@ Its acceptance gates are:
    and distinguish design readiness from implementation and adoption;
 3. the brief is emitted from a clean committed state and identifies its exact
    local HEAD revision; and
-4. `I1.0` becomes satisfied without changing `I1.1`, `I1.2`, G1, release,
-   push, tag, or publication authorization.
+4. the statusless `I1.0` handoff condition is met and reported without changing
+   `I1.1`, `I1.2`, G1, release, push, tag, or publication authorization.
 
 The user coordinates the brief with the q4xpcc agent or project. The repository
 does not require a push merely to establish D1 readiness.
@@ -210,7 +214,8 @@ Verification must prove:
 - every D1 outcome, dependency, status, spec link, gate count, and acceptance
   heading is exact;
 - `I1.0` is report-only and does not appear as a local child;
-- `I1.1`, `I1.2`, G1, C1–C4, A1, R1, P1, and release status are unchanged;
+- during initial D1 authority registration, `I1.1`, `I1.2`, G1, C1–C4, A1,
+  R1, P1, and release status are unchanged;
 - the human and JSON status reports distinguish D1 readiness from delivery;
   and
 - no runtime or distribution file changes.

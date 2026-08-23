@@ -19,7 +19,7 @@
 
 ## Global Constraints
 
-- Read `HANDOFF.md`, `ROADMAP.md`, `BACKLOG.md`, both governing architecture documents, the completed identity/native-FDR migration specification and plan, the canonical-contract specification and plan, and the source specification before editing.
+- Read `HANDOFF.md`, `ROADMAP.md`, `BACKLOG.md`, both governing architecture documents, the completed identity/native-FDR migration specification and plan, the draft canonical-contract specification (no canonical-contract implementation plan existed at execution time), and the source specification before editing.
 - Use Python's `unittest` framework only. Do not add, invoke, or suggest pytest.
 - Change governance documents, their focused tests, and review evidence only; do not change runtime modules, package metadata, schemas, fixtures, adapters, or release artifacts.
 - Keep `T1.2` selected and `implemented` pending its independent review. Do not claim D1.1, D1.2, or D1.3 is implemented, reviewed, or verified.
@@ -170,7 +170,7 @@
   uv run python -m unittest tests.test_backlog_governance tests.test_backlog_status_parse tests.test_backlog_status_report tests.test_backlog_status_cli -v
   ```
 
-  Expected: all focused tests pass. If an existing parser/report fixture encodes the old 61-child inventory or four-boundary list, update only that exact expectation and rerun this command; do not change production semantics to hide D1 or `I1.0`.
+  Expected: all focused tests pass. When D1 changed the current repository inventory from 61 to 64, `tests/test_backlog_status_cli.py` was the exact fixture update required; update only that expectation and rerun this command. Do not change production semantics to hide D1 or `I1.0`.
 
 - [x] **Step 7: Inspect the human and JSON status surfaces**
 
@@ -238,7 +238,7 @@
   git diff --check
   ```
 
-  Expected: every command exits 0. Confirm the test count is at least the 268-test baseline plus the new focused boundary test. Confirm `git diff --name-only 2064b8c --` contains only `ROADMAP.md`, `BACKLOG.md`, `HANDOFF.md`, `tests/test_backlog_governance.py`, the approved D1 specification, and this plan before review evidence is added.
+  Expected: every command exits 0. Confirm the test count is at least the 268-test baseline plus the new focused boundary test. Confirm the actual `2064b8c..39ba4a8` range contains exactly `ROADMAP.md`, `BACKLOG.md`, `HANDOFF.md`, `docs/superpowers/specs/2026-08-22-q4xpcc-contract-handoff-readiness-design.md`, `tests/test_backlog_governance.py`, and `tests/test_backlog_status_cli.py`. This plan was deliberately staged outside the governed plans directory during Tasks 1–3 under the bootstrap ruling; it entered the tracked range only in Task 4, after truthful historical/completed metadata existed.
 
 - [x] **Step 4: Commit the handoff alignment**
 

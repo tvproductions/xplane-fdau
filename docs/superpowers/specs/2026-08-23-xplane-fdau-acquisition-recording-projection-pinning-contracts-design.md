@@ -1,12 +1,12 @@
 # xplane-fdau Acquisition, Recording, Projection, and Pinning Contract Design
 
 - **Governance:** active
-- **Status:** draft
+- **Status:** approved
 - **Date:** 2026-08-23
 - **Decision owner:** Jeff / tvproductions
 - **Roadmap epic:** `D1`
 - **Roadmap children:** `D1.2`
-- **Approval:** —
+- **Approval:** 2026-08-23 — Jeff / tvproductions
 
 ## Authority and purpose
 

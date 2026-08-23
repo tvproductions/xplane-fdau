@@ -85,8 +85,8 @@ class BacklogStatusCliTests(unittest.TestCase):
         self.assertEqual(0, human.code, human.stderr)
         self.assertIn("64 local children", human.stdout)
         for line in (
-            "D1.1  specified  dependency-ready=yes  gates=0/4",
-            "D1.2  specified  dependency-ready=no  gates=0/4",
+            "D1.1  verified  dependency-ready=yes  gates=4/4",
+            "D1.2  specified  dependency-ready=yes  gates=0/4",
             "D1.3  specified  dependency-ready=no  gates=0/4",
             "statement=successful D1.3 verification makes the statusless `I1.0` "
             "handoff condition eligible to be reported as the next action without "
@@ -106,7 +106,7 @@ class BacklogStatusCliTests(unittest.TestCase):
         d1_children = {child["id"]: child for child in payload["backlog"]["children"] if child["id"].startswith("D1.")}
         self.assertEqual(["D1.1", "D1.2", "D1.3"], list(d1_children))
         expected_dependencies = {"D1.1": ["T1.2"], "D1.2": ["D1.1"], "D1.3": ["D1.2"]}
-        expected_dependency_readiness = {"D1.1": True, "D1.2": False, "D1.3": False}
+        expected_dependency_readiness = {"D1.1": True, "D1.2": True, "D1.3": False}
         expected_statements = {
             "D1.1": [
                 "the canonical design has approved governance metadata and no unresolved "
@@ -145,19 +145,38 @@ class BacklogStatusCliTests(unittest.TestCase):
             ],
         }
         for child_id, child in d1_children.items():
-            self.assertEqual("specified", child["status"])
+            self.assertEqual("verified" if child_id == "D1.1" else "specified", child["status"])
             self.assertEqual(expected_dependencies[child_id], child["dependencies"])
             self.assertEqual(
                 "docs/superpowers/specs/2026-08-22-q4xpcc-contract-handoff-readiness-design.md",
                 child["specification"],
             )
-            self.assertIsNone(child["plan"])
-            self.assertEqual(0, child["gates"]["satisfied"])
+            expected_plan = (
+                "docs/superpowers/plans/2026-08-23-d1-1-canonical-design-approval.md"
+                if child_id == "D1.1"
+                else None
+            )
+            self.assertEqual(expected_plan, child["plan"])
+            self.assertEqual(4 if child_id == "D1.1" else 0, child["gates"]["satisfied"])
             self.assertEqual(4, child["gates"]["total"])
             self.assertEqual(expected_statements[child_id], [gate["statement"] for gate in child["gates"]["items"]])
-            self.assertEqual([False, False, False, False], [gate["satisfied"] for gate in child["gates"]["items"]])
-            self.assertTrue(all(gate["evidence"] == [] for gate in child["gates"]["items"]))
-            self.assertIsNone(child["review_evidence"])
+            expected_satisfied = child_id == "D1.1"
+            self.assertEqual([expected_satisfied] * 4, [gate["satisfied"] for gate in child["gates"]["items"]])
+            if child_id == "D1.1":
+                self.assertEqual(
+                    [
+                        [f".superpowers/sdd/2026-08-23-d1-1-canonical-design-approval/gate-{ordinal}.md"]
+                        for ordinal in range(1, 5)
+                    ],
+                    [gate["evidence"] for gate in child["gates"]["items"]],
+                )
+                self.assertEqual(
+                    ".superpowers/sdd/2026-08-23-d1-1-canonical-design-approval/review.md",
+                    child["review_evidence"],
+                )
+            else:
+                self.assertTrue(all(gate["evidence"] == [] for gate in child["gates"]["items"]))
+                self.assertIsNone(child["review_evidence"])
             self.assertIsNone(child["resume_state"])
             self.assertIsNone(child["reason"])
             self.assertEqual(expected_dependency_readiness[child_id], child["dependency_ready"])

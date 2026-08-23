@@ -1,7 +1,7 @@
 # xplane-fdau Backlog
 
 - **Status:** Active delivery ledger and Superpowers entry point
-- **Updated:** 2026-08-22
+- **Updated:** 2026-08-23
 
 Read `ROADMAP.md` for architecture order and dependencies. Then use this file to
 select one primary child slice whose prerequisites are verified. Each child
@@ -14,12 +14,13 @@ slice receives one focused plan and one independently reviewable outcome.
   FDAU, native FDR, ARINC, and FDM/FOQA-support behavior while external clients
   own all simulator I/O.
 - Active design: q4xpcc contract-handoff readiness.
-- Active child: `D1.1`.
-- `T1.2` is verified; `D1.1` is now the readiness priority before `T1.3`.
+- Active child: `D1.2`.
+- `D1.1` is verified; `D1.2` is now the readiness priority before `D1.3` and `T1.3`.
 - D1 is design-handoff readiness, not implementation or release readiness.
 - `B1.1` source-layout migration: `specified` with a draft plan; resumes after
   peer prerequisites `T2.2` and `T3.1` are verified.
-- Canonical contract design: written review remains pending for `C1.1`.
+- Canonical contract design: approved with accepted independent review; `C1.1`
+  through `C4.4` are specified with zero delivery gates satisfied.
 - Release: prohibited.
 - Push/tag/publication: prohibited.
 
@@ -40,24 +41,24 @@ The child slices below refine this sequence without weakening or reordering it.
 | Child | Outcome | Status | Depends on | Spec | Plan | Gates | Review | Resume | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `B1.1` | Source-layout migration and installed-import isolation | `specified` | `T2.2`, `T3.1` | [design](docs/superpowers/specs/2026-08-09-src-layout-migration-design.md) | [draft plan](docs/superpowers/plans/2026-08-09-src-layout-migration.md) | 0/5 | — | — | — |
-| `C1.1` | Canonical JSON and binary64/integer encoding | `designing` | `B1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
-| `C1.2` | Identity, hashing, references, authority, and provenance | `queued` | `C1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
-| `C1.3` | Typed values and content-addressed payload references | `queued` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
-| `C1.4` | Clock domains, UTC instants, anchors, and simulator timing | `queued` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
-| `C1.5` | Validity states and acquisition-quality vocabulary | `queued` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
-| `C2.1` | Measurement-definition model and semantic invariants | `queued` | `C1.3`, `C1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
-| `C2.2` | Measurement catalog, schema, ordering, and references | `queued` | `C2.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
-| `C2.3` | Source-binding definition and transform references | `queued` | `C2.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
-| `C2.4` | Binding catalog and pure cross-catalog validation | `queued` | `C2.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
-| `C3.1` | Raw-observation record and schema | `queued` | `C1.3`, `C1.4`, `C1.5`, `C2.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
-| `C3.2` | Measurement-sample record and schema | `queued` | `C3.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
-| `C3.3` | Raw/sample lineage and cross-contract validation | `queued` | `C3.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
-| `C3.4` | Measurement-frame record and schema | `queued` | `C3.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
-| `C3.5` | Frame closure, canonical ordering, and validation | `queued` | `C3.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
-| `C4.1` | Schema resource parity and version inventory | `queued` | `C3.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
-| `C4.2` | Accepted, rejected, and canonical conformance corpus | `queued` | `C4.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
-| `C4.3` | Public API and contract documentation closure | `queued` | `C4.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
-| `C4.4` | Built/installed artifact matrix and independent review | `queued` | `C4.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/5 | — | — | — |
+| `C1.1` | Canonical JSON and binary64/integer encoding | `specified` | `B1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C1.2` | Identity, hashing, references, authority, and provenance | `specified` | `C1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C1.3` | Typed values and content-addressed payload references | `specified` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C1.4` | Clock domains, UTC instants, anchors, and simulator timing | `specified` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C1.5` | Validity states and acquisition-quality vocabulary | `specified` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C2.1` | Measurement-definition model and semantic invariants | `specified` | `C1.3`, `C1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C2.2` | Measurement catalog, schema, ordering, and references | `specified` | `C2.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C2.3` | Source-binding definition and transform references | `specified` | `C2.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C2.4` | Binding catalog and pure cross-catalog validation | `specified` | `C2.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C3.1` | Raw-observation record and schema | `specified` | `C1.3`, `C1.4`, `C1.5`, `C2.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C3.2` | Measurement-sample record and schema | `specified` | `C3.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C3.3` | Raw/sample lineage and cross-contract validation | `specified` | `C3.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C3.4` | Measurement-frame record and schema | `specified` | `C3.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C3.5` | Frame closure, canonical ordering, and validation | `specified` | `C3.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C4.1` | Schema resource parity and version inventory | `specified` | `C3.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C4.2` | Accepted, rejected, and canonical conformance corpus | `specified` | `C4.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C4.3` | Public API and contract documentation closure | `specified` | `C4.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C4.4` | Built/installed artifact matrix and independent review | `specified` | `C4.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/5 | — | — | — |
 | `A1.1` | Acquisition-profile contracts | `queued` | `C4.4` | — | — | — | — | — | — |
 | `A1.2` | Consumer demand contracts and lifecycle | `queued` | `A1.1` | — | — | — | — | — | — |
 | `A1.3` | Demand compatibility, merge, and generation resolution | `queued` | `A1.2` | — | — | — | — | — | — |
@@ -80,7 +81,7 @@ The child slices below refine this sequence without weakening or reordering it.
 | `P1.4` | Projection timing and resampling behavior | `queued` | `P1.1`, `A1.6` | — | — | — | — | — | — |
 | `P1.5` | Omission, default, conversion, and precision-loss report | `queued` | `P1.2`, `P1.3`, `P1.4` | — | — | — | — | — | — |
 | `P1.6` | End-to-end canonical-to-native-sink verification | `queued` | `P1.5` | — | — | — | — | — | — |
-| `D1.1` | Canonical C1–C4 design approval | `specified` | `T1.2` | [design](docs/superpowers/specs/2026-08-22-q4xpcc-contract-handoff-readiness-design.md) | — | 0/4 | — | — | — |
+| `D1.1` | Canonical C1–C4 design approval | `verified` | `T1.2` | [design](docs/superpowers/specs/2026-08-22-q4xpcc-contract-handoff-readiness-design.md) | [plan](docs/superpowers/plans/2026-08-23-d1-1-canonical-design-approval.md) | 4/4 | [review](.superpowers/sdd/2026-08-23-d1-1-canonical-design-approval/review.md) | — | — |
 | `D1.2` | Acquisition, recording, projection, and pinning contract design | `specified` | `D1.1` | [design](docs/superpowers/specs/2026-08-22-q4xpcc-contract-handoff-readiness-design.md) | — | 0/4 | — | — | — |
 | `D1.3` | Reviewed q4xpcc Phase 24A handoff | `specified` | `D1.2` | [design](docs/superpowers/specs/2026-08-22-q4xpcc-contract-handoff-readiness-design.md) | — | 0/4 | — | — | — |
 | `S1.1` | Edition-pinned standards baseline and traceability contract | `queued` | `C4.4` | — | — | — | — | — | — |
@@ -277,17 +278,21 @@ The child slices below refine this sequence without weakening or reordering it.
 
 ### D1.1 — Canonical C1–C4 design approval
 
-- [ ] the canonical design has approved governance metadata and no unresolved
-      placeholder, contradiction, ambiguity, or load-bearing review finding;
-- [ ] canonical JSON, hashing, identity, provenance, measurement, binding, raw
+- [x] the canonical design has approved governance metadata and no unresolved
+      placeholder, contradiction, ambiguity, or load-bearing review finding; —
+      Evidence: [verification](.superpowers/sdd/2026-08-23-d1-1-canonical-design-approval/gate-1.md)
+- [x] canonical JSON, hashing, identity, provenance, measurement, binding, raw
       observation, sample, frame, clock/timing, validity, quality, schema, fixture,
-      and Python/native conformance decisions are exact and versioned;
-- [ ] ownership and dependency direction remain consistent with the approved
+      and Python/native conformance decisions are exact and versioned; — Evidence:
+      [verification](.superpowers/sdd/2026-08-23-d1-1-canonical-design-approval/gate-2.md)
+- [x] ownership and dependency direction remain consistent with the approved
       scope amendment and distinguish FDAU acquisition quality from q4xpcc
-      operational policy and findings; and
-- [ ] the approved design is linked from `C1.1` through `C4.4`, and those children
+      operational policy and findings; and — Evidence:
+      [verification](.superpowers/sdd/2026-08-23-d1-1-canonical-design-approval/gate-3.md)
+- [x] the approved design is linked from `C1.1` through `C4.4`, and those children
       advance only to `specified`, with zero delivery gates satisfied and no
-      implementation-plan, review, artifact, or release evidence.
+      implementation-plan, review, artifact, or release evidence. — Evidence:
+      [verification](.superpowers/sdd/2026-08-23-d1-1-canonical-design-approval/gate-4.md)
 
 ### D1.2 — Acquisition, recording, projection, and pinning contract design
 

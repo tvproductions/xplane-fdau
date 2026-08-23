@@ -60,12 +60,12 @@ D1_INVENTORY_ROWS = (
     (
         "`D1.1`",
         "Canonical C1–C4 design approval",
-        "`specified`",
+        "`verified`",
         "`T1.2`",
         D1_SPECIFICATION,
-        "—",
-        "0/4",
-        "—",
+        "[plan](docs/superpowers/plans/2026-08-23-d1-1-canonical-design-approval.md)",
+        "4/4",
+        "[review](.superpowers/sdd/2026-08-23-d1-1-canonical-design-approval/review.md)",
         "—",
         "—",
     ),
@@ -366,7 +366,7 @@ class BacklogAuthorityTests(unittest.TestCase):
     def test_current_position_has_one_exact_selection_line(self) -> None:
         backlog = read_text(BACKLOG)
         selection_lines = [line for line in backlog.splitlines() if line.startswith("- Active child:")]
-        self.assertEqual(["- Active child: `D1.1`."], selection_lines)
+        self.assertEqual(["- Active child: `D1.2`."], selection_lines)
         self.assertNotIn("Active child slice:", backlog)
 
     def test_inventory_matches_every_roadmap_child_once_in_order(self) -> None:
@@ -378,7 +378,7 @@ class BacklogAuthorityTests(unittest.TestCase):
             [(identity(row[0]), row[1], row[3]) for row in inventory],
         )
 
-    def test_d1_inventory_rows_lock_complete_initial_lifecycle(self) -> None:
+    def test_d1_inventory_rows_lock_post_d1_1_lifecycle(self) -> None:
         inventory = table_rows(read_text(BACKLOG), INVENTORY_HEADER)
 
         self.assertEqual(
@@ -392,8 +392,65 @@ class BacklogAuthorityTests(unittest.TestCase):
                 heading = f"{child} — {D1_OUTCOMES[child]}"
                 backlog_body = section_body(BACKLOG, heading, level=3)
                 design_body = section_body(D1_DESIGN, heading, level=2)
-                self.assertEqual(expected, normalized_list_items(backlog_body, "- [ ] "))
+                marker = "- [x] " if child == "D1.1" else "- [ ] "
+                backlog_items = tuple(
+                    re.sub(r" — Evidence: \[verification\]\([^)]+\)$", "", item)
+                    for item in normalized_list_items(backlog_body, marker)
+                )
+                self.assertEqual(expected, backlog_items)
                 self.assertEqual(expected, normalized_numbered_items(design_body))
+
+    def test_d1_1_is_verified_with_exact_review_and_gate_evidence(self) -> None:
+        evidence_root = ROOT / ".superpowers/sdd/2026-08-23-d1-1-canonical-design-approval"
+        review_path = evidence_root / "review.md"
+        self.assertEqual(
+            {
+                "Child": "`D1.1`",
+                "Gate": "—",
+                "Kind": "review",
+                "Result": "accepted",
+                "Date": "2026-08-23",
+                "Subject": "Independent canonical C1-C4 design review",
+            },
+            metadata(review_path),
+        )
+        subjects = (
+            "Approved canonical design with accepted independent review",
+            "Exact and versioned canonical contract decisions",
+            "Scope-amendment ownership and dependency direction",
+            "Specified-only C1-C4 inventory transition",
+        )
+        for ordinal, subject in enumerate(subjects, start=1):
+            with self.subTest(gate=ordinal):
+                self.assertEqual(
+                    {
+                        "Child": "`D1.1`",
+                        "Gate": f"`{ordinal}`",
+                        "Kind": "verification",
+                        "Result": "passed",
+                        "Date": "2026-08-23",
+                        "Subject": subject,
+                    },
+                    metadata(evidence_root / f"gate-{ordinal}.md"),
+                )
+
+    def test_c1_through_c4_are_specified_without_delivery_evidence(self) -> None:
+        inventory = table_rows(read_text(BACKLOG), INVENTORY_HEADER)
+        c_rows = [row for row in inventory if re.fullmatch(r"C[1-4]\.\d+", identity(row[0]))]
+        self.assertEqual(18, len(c_rows))
+        for row in c_rows:
+            child, _outcome, status, _dependencies, spec, plan, gates, review, resume, reason = row
+            with self.subTest(child=child):
+                self.assertEqual("`specified`", status)
+                self.assertEqual(
+                    "[design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md)",
+                    spec,
+                )
+                self.assertEqual("—", plan)
+                self.assertIn(gates, {"0/4", "0/5"})
+                self.assertEqual(("—", "—", "—"), (review, resume, reason))
+                body = section_body(BACKLOG, f"{identity(row[0])} — {row[1]}", level=3)
+                self.assertEqual([], re.findall(r"^- \[x\] ", body, re.MULTILINE))
 
     def test_handoff_orders_d1_verification_before_external_thresholds(self) -> None:
         handoff = re.sub(r"\s+", " ", read_text(HANDOFF))

@@ -633,6 +633,10 @@ class GovernanceArtifactTests(unittest.TestCase):
                 "`D1`",
                 EXPECTED_EPIC_MEMBERS["D1"],
             ),
+            "2026-08-23-xplane-fdau-acquisition-recording-projection-pinning-contracts-design.md": (
+                "`D1`",
+                ("D1.2",),
+            ),
         }
         actual: dict[str, tuple[str, tuple[str, ...]]] = {}
         for path in sorted((ROOT / "docs/superpowers/specs").glob("*.md")):
@@ -789,6 +793,7 @@ class GovernanceArtifactTests(unittest.TestCase):
                 "2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md",
                 "2026-08-15-xplane-fdau-local-workflow-skills-design.md",
                 "2026-08-22-q4xpcc-contract-handoff-readiness-design.md",
+                "2026-08-23-xplane-fdau-acquisition-recording-projection-pinning-contracts-design.md",
             },
             set(active_specs),
         )

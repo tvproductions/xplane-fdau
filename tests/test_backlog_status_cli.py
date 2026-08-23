@@ -85,7 +85,7 @@ class BacklogStatusCliTests(unittest.TestCase):
         self.assertEqual(0, human.code, human.stderr)
         self.assertIn("64 local children", human.stdout)
         for line in (
-            "D1.1  specified  dependency-ready=no  gates=0/4",
+            "D1.1  specified  dependency-ready=yes  gates=0/4",
             "D1.2  specified  dependency-ready=no  gates=0/4",
             "D1.3  specified  dependency-ready=no  gates=0/4",
             "statement=successful D1.3 verification makes the statusless `I1.0` "
@@ -106,6 +106,7 @@ class BacklogStatusCliTests(unittest.TestCase):
         d1_children = {child["id"]: child for child in payload["backlog"]["children"] if child["id"].startswith("D1.")}
         self.assertEqual(["D1.1", "D1.2", "D1.3"], list(d1_children))
         expected_dependencies = {"D1.1": ["T1.2"], "D1.2": ["D1.1"], "D1.3": ["D1.2"]}
+        expected_dependency_readiness = {"D1.1": True, "D1.2": False, "D1.3": False}
         expected_statements = {
             "D1.1": [
                 "the canonical design has approved governance metadata and no unresolved "
@@ -159,7 +160,7 @@ class BacklogStatusCliTests(unittest.TestCase):
             self.assertIsNone(child["review_evidence"])
             self.assertIsNone(child["resume_state"])
             self.assertIsNone(child["reason"])
-            self.assertFalse(child["dependency_ready"])
+            self.assertEqual(expected_dependency_readiness[child_id], child["dependency_ready"])
 
         roadmap_ids = [child["id"] for child in payload["roadmap"]["local_children"]]
         backlog_ids = [child["id"] for child in payload["backlog"]["children"]]

@@ -48,10 +48,10 @@ implementation plan is:
 
 `docs/superpowers/plans/2026-08-15-xplane-fdau-backlog-authority-normalization.md`
 
-`T1.1` is `verified`: all four gates and the accepted independent review have
-committed evidence. `T1.2` is selected and `implemented` with four committed
-verification gates; it awaits independent review under its approved focused
-implementation plan:
+`T1.1` and `T1.2` are `verified`: each has four committed gates and accepted
+independent-review evidence. `T1.2` review correction commit `1468c98` closed
+all findings without weakening the implementation, release, or publication
+gates. Its approved focused implementation plan remains:
 
 `docs/superpowers/plans/2026-08-16-xplane-fdau-typed-backlog-status-reporting.md`
 
@@ -63,8 +63,8 @@ The approved D1 design is:
 
 `docs/superpowers/specs/2026-08-22-q4xpcc-contract-handoff-readiness-design.md`
 
-The next-agent sequence is exact: independently review `T1.2`; execute `D1.1`
-canonical-design approval; execute `D1.2` contract-only A1/R1/P1 design;
+The next-agent sequence is exact: execute the selected `D1.1` canonical-design
+approval; execute `D1.2` contract-only A1/R1/P1 design;
 execute and verify `D1.3` reviewed consumer brief; successful D1.3 verification
 makes `I1.0` eligible as the next reportable action so the user can reconcile
 q4xpcc's Phase 24A specification and plans.

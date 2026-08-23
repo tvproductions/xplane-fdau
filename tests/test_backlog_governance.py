@@ -366,7 +366,7 @@ class BacklogAuthorityTests(unittest.TestCase):
     def test_current_position_has_one_exact_selection_line(self) -> None:
         backlog = read_text(BACKLOG)
         selection_lines = [line for line in backlog.splitlines() if line.startswith("- Active child:")]
-        self.assertEqual(["- Active child: `T1.2`."], selection_lines)
+        self.assertEqual(["- Active child: `D1.1`."], selection_lines)
         self.assertNotIn("Active child slice:", backlog)
 
     def test_inventory_matches_every_roadmap_child_once_in_order(self) -> None:
@@ -398,8 +398,7 @@ class BacklogAuthorityTests(unittest.TestCase):
     def test_handoff_orders_d1_verification_before_external_thresholds(self) -> None:
         handoff = re.sub(r"\s+", " ", read_text(HANDOFF))
         sequence = (
-            "independently review `T1.2`",
-            "execute `D1.1` canonical-design approval",
+            "execute the selected `D1.1` canonical-design approval",
             "execute `D1.2` contract-only A1/R1/P1 design",
             "execute and verify `D1.3` reviewed consumer brief",
             "successful D1.3 verification makes `I1.0` eligible as the next reportable action",
@@ -487,6 +486,27 @@ class BacklogAuthorityTests(unittest.TestCase):
                 "Result": "accepted",
                 "Date": "2026-08-16",
                 "Subject": "Independent T1.1 implementation review",
+            },
+            metadata(evidence_path),
+        )
+
+    def test_t1_2_is_verified_with_accepted_review_evidence(self) -> None:
+        inventory = table_rows(read_text(BACKLOG), INVENTORY_HEADER)
+        row = next(row for row in inventory if identity(row[0]) == "T1.2")
+        review_link = "[review](.superpowers/sdd/2026-08-16-t1-2-typed-backlog-status-reporting/review.md)"
+        self.assertEqual("`verified`", row[2])
+        self.assertEqual(review_link, row[7])
+
+        evidence_path = ROOT / ".superpowers/sdd/2026-08-16-t1-2-typed-backlog-status-reporting/review.md"
+        self.assertTrue(evidence_path.is_file())
+        self.assertEqual(
+            {
+                "Child": "`T1.2`",
+                "Gate": "—",
+                "Kind": "review",
+                "Result": "accepted",
+                "Date": "2026-08-23",
+                "Subject": "Independent T1.2 implementation review",
             },
             metadata(evidence_path),
         )

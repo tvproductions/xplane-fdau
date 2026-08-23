@@ -449,8 +449,9 @@ The operation outcomes are exact tagged values:
   state without claiming commit.
 - `AbortOutcome` contains `result` (`aborted` or `failed`) and failure only
   when failed.
-- `RecoveryOutcome` contains `result` (`recovered`, `preserved_partial`,
-  `discarded`, or `failed`) and an exact recovery-result reference.
+- `RecoveryOutcome` contains `result` (`resumed`, `finalized_partial`,
+  `preserved_partial`, `discarded`, or `failed`) and an exact recovery-result
+  reference.
 - `CloseOutcome` contains `result` (`closed` or `failed`) and failure only when
   failed.
 
@@ -555,26 +556,60 @@ recording session owns one or more sink sessions.
 
 `RecordingSessionDescriptor` has `recording_session_id`,
 `acquisition_session_descriptor`, `resolution`, ordered `streams`, ordered
-`sinks`, `raw_retention_policy`, `opened_at`, `producer`, and `content_hash`.
+`sinks`, `segment_policy`, `opened_at`, `producer`, and `content_hash`.
 
 Each `SinkDeclaration` has `sink_session_id`, `sink_kind`, `artifact_role`,
-`criticality`, `backpressure`, `buffer_capacity`, `publication`, and
-`recovery_policy`.
+`criticality`, `destination`, optional `profile`, `planned_root_artifact_id`,
+`backpressure`, `buffer_capacity`, `publication`, `recovery_policy`, and
+`discontinuity_policy`, plus optional `retention_policy`.
 
 - `sink_kind` and `artifact_role` are `Identifier` values.
 - `criticality` is `required` or `optional`.
+- `destination` is a `DestinationIdentity` with exact properties
+  `destination_id: Identifier`, `kind: Identifier`, and optional
+  `locator: NfcText(2048)`. The locator is evidence, not identity, and cannot
+  contain credentials, a host handle, or an open stream object.
+- `profile` is an exact `DefinitionRef` and is present exactly when the sink's
+  declared kind requires a format or projection profile.
+- `retention_policy` is an exact `DefinitionRef`. It is required for a
+  canonical archive sink, permitted only for another sink kind that declares
+  retention capability, and prohibited otherwise. Across the required sink
+  declarations, at least one retention policy independently satisfies every
+  accepted demand item's `RetentionRequirement`; optional sinks cannot satisfy
+  required retention evidence.
+- `planned_root_artifact_id: Uuid` is allocated before sink open and identifies
+  that sink's artifact graph through publication and recovery.
 - `backpressure` is `block`, `reject`, or `drop_oldest`. Any drop produces a
   fan-out event and continuity evidence. `drop_oldest` is prohibited for a
   required canonical archive sink.
 - `buffer_capacity` is `UInt63`; zero means the sink is synchronous and
   unbuffered, not unbounded.
-- `publication` is `no_replace` or `replace_authorized`. No-replace is the
-  default policy in definitions, but a wire record never omits the field.
-- `recovery_policy` is `preserve_partial`, `discard_partial`, or
-  `recovery_required`. Discard requires explicit authorization and retained
-  cleanup outcome.
+- `publication` has `mode` exactly `no_replace`, `replace_if_match`, or
+  `not_applicable`. `no_replace` and `not_applicable` prohibit
+  `expected_prior`; `replace_if_match` requires an `expected_prior` containing
+  exactly one prior-state variant. A `byte_artifact` variant contains exact
+  byte length and SHA-256; an `artifact_graph` variant contains the prior
+  manifest `RecordRef` plus its serialized byte length and SHA-256.
+  `not_applicable` is valid only for a declared nonpublishing sink. Publication
+  fails with `publication_conflict` if the destination's observed state does
+  not match. Unconditional replacement is prohibited.
+- `recovery_policy` has `mode` exactly `preserve_partial`, `discard_partial`,
+  or `recovery_required`. `discard_partial` requires an embedded
+  `DeletionAuthorization` containing `authorization_id: Uuid`, the root
+  artifact ID, `authority: Authority`, `reason: NfcText(1024)`, and
+  `authorized_at: UtcInstant`; the authorization is prohibited for other
+  modes.
+- `discontinuity_policy` is `continue`, `stop_sink`, or `stop_recording`.
+  `stop_sink` on a required sink has the same recording-result consequence as
+  sink failure. No policy implicitly splits an artifact or resets session,
+  stream, artifact, or segment identity.
 
-`raw_retention_policy` is an exact `DefinitionRef` to a
+`segment_policy` has exact `maximum_record_count: UInt63` and
+`maximum_byte_count: UInt63`. The first reached positive boundary closes the
+segment; zero disables only that boundary, and both cannot be zero. It applies
+independently to every JSONL logical stream.
+
+Each sink `retention_policy` is an exact `DefinitionRef` to a
 `RawRetentionPolicy`. That immutable definition has `contract_family`,
 `schema_version`, `policy_id`, `policy_revision`, `authority`, `provenance`,
 `canonical_samples`, `canonical_frames`, `accepted_raw_observations`,
@@ -585,12 +620,17 @@ Each `SinkDeclaration` has `sink_session_id`, `sink_kind`, `artifact_role`,
 - `accepted_raw_observations`, `raw_payloads`, and `provider_audit` are
   `not_requested`, `retain_when_supplied`, or `required`.
 - `omission_disposition` is `normalized` or `projected`; it is required when
-  any available source representation is omitted.
+  any available source representation is omitted and prohibited when all are
+  retained.
 - The policy satisfies a resolved `RetentionRequirement` only when every
   requested axis is independently satisfied: requested canonical sample and
   frame forms are retained; `when_supplied` permits `retain_when_supplied` or
   `required`; and `required` requires the identical policy value. One retained
   axis never compensates for omission on another axis.
+- Canonical frames retain their immutable embedded samples and observations.
+  The sample and observation policy axes govern preservation of the complete
+  accepted standalone streams, including records that never entered a retained
+  frame; they never authorize rewriting an embedded frame closure.
 - If an accepted source representation is omitted intentionally, the archive
   uses the declared omission disposition and is never described as `lossless`.
 
@@ -607,44 +647,62 @@ The normative version-1 checkpoint and recovery representation is a directory
 artifact set:
 
 ```text
-<session>.fdau.partial/
-|-- session-descriptor.json
+<recording-session-id>.fdau.partial/
+|-- acquisition-session-descriptor.json
+|-- recording-session-descriptor.json
 |-- definitions/
-|   |-- measurement-catalog.json
-|   |-- source-binding-catalog.json
-|   |-- acquisition-profile.json
-|   `-- resolved-demand-plan.json
+|   `-- <family-token>/<definition-id>/<revision>-<definition-hash>.json
+|-- demands/
+|   `-- <consumer-instance-id>/<generation>-<demand-id>.json
+|-- demand-resolution.json
 |-- streams/
-|   |-- observations/<segment>.jsonl
-|   |-- samples/<segment>.jsonl
-|   |-- frames/<segment>.jsonl
-|   `-- lifecycle/<segment>.jsonl
+|   `-- <stream-id>/
+|       |-- observations/<segment>.jsonl
+|       |-- samples/<segment>.jsonl
+|       `-- frames/<segment>.jsonl
+|-- events/
+|   |-- lifecycle/<segment>.jsonl
+|   `-- fanout/<sink-session-id>/<segment>.jsonl
+|-- checkpoints/<checkpoint-sequence>.json
 |-- payloads/sha256/<first-two-hex>/<remaining-sixty-two-hex>
-|-- continuity-report.json
+|-- continuity/<continuity-report-id>.json
 `-- artifact-manifest.json
 ```
+
+The closed definition-family tokens are `measurement-catalog`,
+`source-binding-catalog`, `acquisition-profile`, `transform-registry`, and
+`raw-retention-policy`. Each path uses the definition family's identity field,
+revision rendered as twenty zero-padded decimal digits, and exact definition
+hash. Demand generation and checkpoint sequence use the same twenty-digit
+rendering. UUID path components use canonical lowercase UUID text. The archive
+contains every demand receipt referenced by its resolution and the complete
+definition closure needed to validate retained records; duplicate byte-identical
+definitions occur once.
 
 Paths are relative POSIX paths with no empty, `.`, or `..` segment. Path
 components are NFC, case-sensitive contract values even on a case-insensitive
 filesystem, and two paths that collide under Unicode case folding are rejected.
-The destination suffix changes from `.fdau.partial` to `.fdau` only at
-successful no-replace publication; the suffix is not part of archive identity.
+The destination suffix changes from `.fdau.partial` to `.fdau` only after the
+selected publication precondition succeeds. The suffix and destination path
+are not archive identity.
 
 Stream segment filenames are sixteen lowercase hexadecimal digits naming the
-zero-based segment sequence, followed by `.jsonl`. Records inside a segment
-are complete canonical JSON records concatenated in stream order. Each already
-ends in one LF; no additional separator or blank line is inserted. Segment
-sequence is contiguous, and a closed segment is immutable.
-
-The default segment closure policy is not fixed by this contract. Each
-recording descriptor must state its exact maximum record count and maximum byte
-count per stream segment; the first reached boundary closes the segment. A
-value of zero for one boundary disables only that boundary, and both cannot be
-zero.
+zero-based segment sequence, followed by `.jsonl`. Segment sequence is
+contiguous independently for each stream/family or event/sink path. Records
+inside a segment are complete canonical JSON records concatenated in append
+order. Each already ends in one LF; no additional separator or blank line is
+inserted. The descriptor's segment policy closes the segment before appending
+a record that would exceed a positive boundary, except that one record larger
+than the byte boundary occupies a segment by itself. A closed segment is
+immutable.
 
 Large, byte-valued, or provider-native raw payloads remain exact bytes in the
 content-addressed payload tree. JSON records reference them using the approved
 `PayloadReference`. Base64 is not the canonical raw-payload representation.
+Every referenced payload required by the retention policy exists at its hash
+path and exactly matches its declared length and SHA-256. An intentionally
+omitted payload remains an explicit manifest limitation rather than a dangling
+claim that the archive is self-contained or lossless.
 
 A deterministic ZIP may later package the artifact set for transport, and a
 SQLite database may later index or project it for analysis. Those artifacts
@@ -654,21 +712,50 @@ the manifest-rooted canonical evidence graph.
 ## Checkpoint, publication, and recovery
 
 `ArchiveCheckpoint` has `checkpoint_id`, `recording_session_id`,
-`checkpoint_sequence`, ordered `closed_segments`, ordered `open_streams`,
-`last_delivery_sequence_by_stream`, `created_at`, `producer`, and
-`content_hash`.
+`sink_session_id`, `root_artifact_id`, `descriptor`, `checkpoint_sequence`,
+optional `previous_checkpoint`, ordered `sealed_members`, ordered
+`open_streams`, ordered `delivery_positions`, `created_at`, `producer`,
+and `content_hash`.
 
-- Checkpoint sequence is contiguous from zero.
-- A `ClosedSegment` records relative path, role, first and last record sequence,
-  record count, byte length, and SHA-256.
-- An `OpenStream` records only stream identity, next record sequence, current
-  partial byte length, and partial SHA-256. It never claims publication.
-- A checkpoint closes completed segments and starts new ones; it never rewrites
-  a closed segment.
+- Checkpoint sequence is contiguous from zero per sink session.
+  `previous_checkpoint` is prohibited at zero and otherwise references the
+  exact sequence-minus-one checkpoint.
+- A `SealedMember` records artifact ID, relative path, role, byte length, and
+  SHA-256. A JSONL segment additionally records its logical stream key, segment
+  sequence, first and last archive record index, first and last record
+  `RecordRef`, and record count. Every sealed member named by the prior
+  checkpoint appears byte-identically in every later checkpoint.
+- An `OpenStream` records artifact ID, relative path, logical stream key,
+  segment sequence, first archive record index, next archive record index,
+  complete record count, safe byte length, and SHA-256 of exactly that safe
+  prefix. Archive record indexes are contiguous from zero per logical stream
+  and do not reset at an acquisition epoch. The safe length ends after a
+  complete canonical JSON LF and never claims bytes written later.
+- Each `delivery_positions` entry fixes one descriptor stream ID and its
+  `next_delivery_sequence: UInt63` for this sink, so zero represents no prior
+  delivery without a sentinel. Entries use descriptor stream order and are
+  unique by stream ID.
+- A checkpoint is one consistent cut across all listed streams: append is
+  quiescent for the synchronous call, every safe prefix is flushed through the
+  cut, sealed-member hashes are verified, and the checkpoint file is itself
+  published atomically with no replacement. A reported checkpoint never names
+  an unverified or partially serialized checkpoint record.
 
-Each artifact receives an `artifact_id: Uuid` before its sink opens. That UUID
-is lifecycle identity. Byte length and SHA-256 identify a particular preserved
-or published content state and are not substitutes for the artifact UUID.
+The planned root artifact receives its `artifact_id: Uuid` before sink open.
+Every dynamically created segment, payload, checkpoint, report, or manifest
+member receives its own artifact ID before its first byte is written. Those
+UUIDs are lifecycle identities and remain stable through recovery. Each
+`ArtifactState` has exact properties `artifact_id`, `state_sequence`,
+`disposition`, variant-selected `content`, and `recorded_at`.
+`state_sequence` is contiguous from zero per artifact; within a supplied state
+history, sequence *n* supersedes sequence *n - 1* without mutating it.
+`disposition` is `planned`, `open`, `sealed`, `preserved_partial`, or
+`published`. Content kind `absent` is valid exactly for a planned artifact or
+an open logical graph root. An open, sealed, preserved, or published
+byte-bearing artifact uses content kind `bytes` with byte length and SHA-256. A
+sealed, preserved, or published logical graph root instead uses content kind
+`manifest` with the manifest `RecordRef` plus serialized manifest byte length
+and SHA-256. Content state never substitutes for artifact identity.
 
 An immutable manifest entry uses `content_state` exactly `sealed`,
 `preserved_partial`, or `omitted_by_policy`.
@@ -682,77 +769,188 @@ An immutable manifest entry uses `content_state` exactly `sealed`,
   lossless claim.
 
 A terminal sink result separately uses disposition `published`,
-`preserved_partial`, `discarded`, `not_created`, or `omitted_by_policy`.
-`published` requires final byte length and SHA-256. `discarded` records explicit
-deletion authorization and cleanup outcome and contains no content hash claim.
-`not_created` records the causal policy or earlier failure.
+`preserved_partial`, `discarded`, `not_created`, `omitted_by_policy`, or
+`not_applicable`. `published` requires final byte length and SHA-256 for a byte
+root, or the final manifest record and serialized manifest state for a logical
+graph root. `discarded` records explicit deletion authorization and cleanup
+outcome and contains no content hash claim. `not_created` records the causal
+policy or earlier failure. `not_applicable` is restricted to a declared
+nonpublishing sink.
 
-Publication is atomic and no-replace unless the descriptor contains explicit
-replace authorization. Candidate paths are never exposed as completed
-artifacts. The implementation retains the first causal failure and records
-abort, close, and cleanup failures separately.
+Publication atomicity is per sink, not across the recording-session fan-out.
+For one sink, all candidate members and the manifest are sealed before the
+publication precondition is evaluated, and the root becomes visible as one
+completed artifact or remains unpublished. An implementation that cannot
+provide the declared no-replace or compare-and-replace semantics fails before
+exposing a completed root. A sink published before an independent sink fails
+remains published.
+
+Publication success is irreversible evidence. Failure to remove a candidate
+alias or other temporary state after successful publication yields a committed
+outcome plus cleanup failure; it never relabels the root as unpublished or
+invites publication retry. This preserves the existing native-FDR post-link
+cleanup rule. Abort, close, and cleanup failures remain separate from the first
+causal failure.
+
+`RecoveryRequest` is an immutable value with exact properties
+`recovery_attempt_id`, `recording_session_descriptor`, `sink_session_id`,
+`root_artifact_id`, `destination`, `action`, optional `discard_authorization`,
+`requested_at`, and `producer`. `action` is `resume`, `finalize_partial`,
+`preserve`, or `discard`. The authorization is required only for `discard`,
+must exactly equal the declaration's authorization, and is prohibited
+otherwise.
 
 `RecoveryResult` has `recovery_result_id`, `recording_session_id`,
-`recovery_attempt_id`, `checkpoint`, ordered `input_artifact_states`, ordered
-`output_artifact_states`, `outcome`, optional `primary_failure`, ordered
+`sink_session_id`, `recovery_attempt_id`, `action`, optional
+`selected_checkpoint`, optional `prior_recording_result`, ordered
+`input_artifact_states`, ordered `output_artifact_states`, ordered
+`preserved_tail_artifacts`, `outcome`, optional `primary_failure`, ordered
 `cleanup_failures`, `ended_at`, `producer`, and `content_hash`.
 
-`outcome` is `recovered`, `preserved_partial`, `discarded`, or `failed`.
-Recovery retains each original `artifact_id`; changed bytes receive a new
-byte length and SHA-256 content state. The original checkpoint and recording
-result remain immutable. Recovery never rewrites historical terminal evidence.
+`outcome` is `resumed`, `finalized_partial`, `preserved_partial`, `discarded`,
+or `failed`. Recovery validates the contiguous self-hashed checkpoint chain and
+selects its highest valid consistent cut. Every sealed member must match.
+Every open member must be at least the recorded safe length and have the exact
+safe-prefix hash. A shorter or mismatched member fails closed without mutation.
+Bytes after a valid safe prefix and members not named by the checkpoint are
+preserved under new tail-artifact UUIDs before a resumed member is truncated;
+they are never silently discarded.
+
+`selected_checkpoint` is required for `resume` and `finalize_partial`, optional
+for `preserve`, and prohibited for `discard`. Outcomes correspond exactly to
+actions: successful `resume`, `finalize_partial`, `preserve`, and `discard`
+produce `resumed`, `finalized_partial`, `preserved_partial`, and `discarded`,
+respectively; any unsuccessful action produces `failed`.
+
+`resume` continues the same root and member UUIDs from the selected cut.
+`finalize_partial` seals recoverable evidence with disposition
+`preserved_partial`; a canonical archive uses the `.fdau.incomplete` suffix,
+never `.fdau`, and another sink uses only an incomplete destination form fixed
+by its profile. It never makes a completed-acquisition or lossless claim.
+`preserve` performs no byte mutation. `discard` records the exact authorization
+and deletion cleanup outcome. A crash may precede any recording result, so
+`prior_recording_result` is optional. Existing checkpoints, results, and
+artifact states remain immutable; recovery appends new states and never
+rewrites historical terminal evidence.
 
 ## Artifact manifest and recording result
 
 `ArtifactManifest` is the root record for one artifact graph. It has
-`artifact_manifest_id`, `recording_session_descriptor`,
-`acquisition_session_descriptor`, ordered `artifacts`, ordered `relationships`,
-ordered `root_artifact_ids`, ordered `limitations`, `producer`, and
-`content_hash`.
+`artifact_manifest_id`, `recording_session_descriptor`, `sink_session_id`,
+`root_artifact_id`, `acquisition_session_descriptor`, `resolution`, ordered
+`source_contexts`, ordered `continuity_reports`, ordered `artifacts`, ordered
+`relationships`, `data_classification`, ordered `limitations`, `producer`, and
+`content_hash`. One manifest describes exactly one sink artifact graph, not the
+whole fan-out transaction.
 
-Each `ArtifactEntry` has `artifact_id`, `role`, `media_type`, `relative_path`,
-`content_state`, variant-selected byte length/SHA-256/failure/retention fields,
-`schema_version` when applicable, and `record_ref` when the artifact is one
-self-hashed contract record.
+Each `ArtifactEntry` has `artifact_id`, `role`, `media_type`, optional
+`relative_path`, `content_state`, variant-selected byte
+length/SHA-256/failure/retention fields, `schema_version` when applicable,
+`record_ref` when the artifact is one self-hashed contract record, `producer`,
+`created_at`, optional `finalized_at`, ordered `scopes`, and ordered
+`definitions`.
+`relative_path` is required for a graph member and prohibited only when the
+root artifact is itself one byte-addressable external file. Artifact entries
+are unique by ID and path. The manifest inventories every created or
+policy-omitted member of this sink graph.
 
-Each relationship has `relationship_id: Uuid`, `kind`, `from_artifact_id`, and
-`to_artifact_id`. `kind` is `parent`, `projection_of`, `derived_from`,
-`corroborates`, `replay_source`, `recovery_of`, or `related_to`. Directed
-relationships cannot self-reference. `parent`, `projection_of`, `derived_from`,
-`replay_source`, and `recovery_of` must be acyclic within the supplied manifest
-closure.
+- `schema_version` is present exactly for an artifact serialized under a
+  versioned schema and is prohibited otherwise. `record_ref` is present
+  exactly when the complete artifact is one self-hashed contract record.
+- Each `scopes` entry is a tagged value with kind `stream`, `epoch`,
+  `source_generation`, `connection_generation`, or `delivery_generation` and
+  the corresponding UUID or `UInt63` value. Scope entries are an `ArraySet` in
+  kind-then-value order. `definitions` is an `ArraySet<DefinitionRef>` in
+  canonical definition-reference order.
+- `sealed` and `preserved_partial` require `finalized_at`, byte length, and
+  SHA-256. `preserved_partial` additionally requires failure evidence and
+  recovery eligibility. `omitted_by_policy` prohibits byte state and
+  `finalized_at` and requires the exact retention-policy reference.
 
-The manifest inventories every archive member except its own serialized bytes.
-It does not inventory the later recording-session result. This avoids both a
-self-referential complete-file hash and a publication-status cycle. The
-manifest's `content_hash` uses the approved root self-hash rule.
+`data_classification` is `unspecified`, `public`, `internal`, `sensitive`, or
+`restricted`. It is an operator data-handling classification only and never a
+claim of statutory protection, privilege, or regulatory compliance.
 
-`RecordingSessionResult` is generated after archive-root publication succeeds
-or fails. It is returned to the caller and may be persisted as a separate
-related contract artifact; it is never inserted retroactively into the
-immutable archive. It has `recording_result_id`, `recording_session_id`,
-`descriptor`, `manifest`, `manifest_file`, `archive_publication`, `outcome`,
-`termination_reason`, optional `primary_failure`, ordered `cleanup_failures`,
-ordered `sink_results`, ordered `continuity_reports`, `ended_at`, `producer`,
-and `content_hash`.
+Each relationship has `relationship_id: Uuid`, `kind`, `from`, and `to`.
+Endpoints are `ArtifactLocator` values: a local locator contains
+`scope: "local"` and this manifest's root or member artifact ID, while an
+external locator contains `scope: "external"`, another manifest `RecordRef`,
+and its root or member artifact ID. `kind` is `parent`, `projection_of`,
+`derived_from`, `corroborates`, `replay_source`, `recovery_of`, or
+`related_to`. `from` is the
+subject and `to` is its object: a child points to its parent, a projection or
+derivation to its source, a corroborating artifact to what it corroborates, a
+replay artifact to its source, and a recovery-created artifact to its source.
+`related_to` is symmetric and stores the lexically smaller canonical locator
+first. Directed relationships cannot self-reference. `parent`,
+`projection_of`, `derived_from`, `replay_source`, and `recovery_of` must be
+acyclic within the supplied local closure.
 
-- `manifest` is the manifest `RecordRef`; `manifest_file` records the complete
-  serialized manifest byte length and SHA-256.
-- `archive_publication` records `published`, `preserved_partial`, `discarded`,
-  or `failed`, the destination identity, and variant-selected failure and
-  cleanup evidence.
+An embedded manifest inventories every archive member except its own serialized
+bytes. `root_artifact_id` may also identify a byte-addressable entry, but a
+logical directory root has no invented directory-byte hash. The manifest does
+not inventory the later sink or recording result. This avoids self-referential
+file hashes and publication-status cycles. The manifest's `content_hash` uses
+the approved root self-hash rule; its serialized byte length and SHA-256 are
+reported later by the owning sink result.
+
+The descriptor, resolution, source contexts, continuity-report references,
+artifact scopes, and limitations carry the parent architecture's requested and
+observed sampling, source, generation, gap, drop, and discontinuity inventory.
+Termination, publication, and recovery status occur later and therefore live
+in immutable `SinkResult`, `RecordingSessionResult`, and `RecoveryResult`
+records. They are joined by exact record and artifact identities rather than
+copied backward into the prepublication manifest.
+
+`RecordingSessionResult` is generated after every sink reaches a terminal
+state. It is returned to the caller and may be persisted as a separate related
+contract artifact; it is never inserted retroactively into an immutable sink
+graph. It has `recording_result_id`, `recording_session_id`, `descriptor`,
+`outcome`, `termination_reason`, optional `primary_failure`, ordered
+`cleanup_failures`, ordered `sink_results`, ordered `continuity_reports`,
+`ended_at`, `producer`, and `content_hash`. It contains no singular manifest or
+archive-publication field.
+
+Each `SinkResult` has `sink_session_id`, `criticality`, `outcome`, optional
+`manifest`, optional `manifest_file`, `publication`, `delivery_summary`,
+ordered `phase_attempts`, optional `primary_failure`, and ordered
+`cleanup_failures`.
 
 - `outcome` is `successful`, `partial`, or `failed`.
-- A successful result requires every required sink to commit and contains no
-  primary failure.
-- An optional sink failure produces `partial`; a required sink failure produces
-  `failed` even when other artifacts were published successfully.
+- `criticality` must exactly match the declaration. `primary_failure` is
+  prohibited for success and required for failure; it is optional for partial
+  only when declared loss rather than a runtime failure caused the partial
+  result.
+- `manifest` is present exactly when a manifest was completed.
+  `manifest_file` then records the serialized manifest byte length and SHA-256
+  and is otherwise prohibited.
+- `publication` has disposition `published`, `preserved_partial`, `discarded`,
+  `not_created`, `omitted_by_policy`, or `not_applicable`, the declared
+  destination identity, and disposition-selected artifact states, failure,
+  authorization, and cleanup evidence. `not_applicable` is valid only for a
+  declared nonpublishing sink. Published-with-cleanup-failure remains
+  `published`.
+- `delivery_summary` records first and last delivery event references and
+  delivered, dropped, detached, and failed counts. It summarizes append calls;
+  it never embeds an unbounded list of per-append outcomes.
+- `phase_attempts` contains at most one ordered summary for each attempted
+  `open`, `checkpoint`, `commit`, `abort`, `recover`, and `close` phase.
+  Unattempted phases are omitted, not reported as successful.
+- A successful sink has published or explicitly nonpublishing committed output,
+  no loss disposition, and no primary failure. A published graph with declared
+  loss, or a preserved-partial graph, is partial. Failure, discard after work
+  began, or declared output never created because of failure is failed.
+
+- `RecordingSessionResult.outcome` is `successful`, `partial`, or `failed`.
+- A successful recording result requires every sink result to be successful
+  and contains no primary failure. An optional partial or failed sink produces
+  a partial recording result. A required partial or failed sink produces a
+  failed recording result even when other artifacts were published
+  successfully.
 - `termination_reason` is `consumer_complete`, `consumer_stop`,
-  `required_sink_failed`, `publication_conflict`, `explicit_abort`,
-  `recovery_pending`, or `internal_failure`.
-- Every sink result records open, append, checkpoint, commit, abort, recover,
-  and close outcomes that were attempted. Unattempted phases are omitted, not
-  reported as successful.
+  `required_sink_failed`, `explicit_abort`, `recovery_pending`, or
+  `internal_failure`. An optional publication conflict is retained in its sink
+  result without replacing the session's actual termination reason.
 
 ## Failure evidence and precedence
 

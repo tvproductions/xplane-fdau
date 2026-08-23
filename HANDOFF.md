@@ -65,13 +65,14 @@ The approved D1 design is:
 
 The next-agent sequence is exact: independently review `T1.2`; execute `D1.1`
 canonical-design approval; execute `D1.2` contract-only A1/R1/P1 design;
-execute `D1.3` reviewed consumer brief; then report the met `I1.0` condition
-so the user can reconcile q4xpcc's Phase 24A specification and plans.
+execute and verify `D1.3` reviewed consumer brief; successful D1.3 verification
+makes `I1.0` eligible as the next reportable action so the user can reconcile
+q4xpcc's Phase 24A specification and plans.
 
 The external q4xpcc thresholds remain distinct:
 
 - `I1.0` permits Phase 24A specification and plan reconciliation only after
-  `D1.3`.
+  successful `D1.3` verification.
 - `I1.1` permits delivered contract-model, schema, fixture, and runtime
   adoption only after `C4.4`.
 - `I1.2` permits live XPLM acquisition adoption only after `A1.9`.

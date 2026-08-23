@@ -82,6 +82,15 @@ class BacklogStatusCliTests(unittest.TestCase):
 
         self.assertEqual(0, human.code, human.stderr)
         self.assertIn("64 local children", human.stdout)
+        for line in (
+            "D1.1  specified  dependency-ready=no  gates=0/4",
+            "D1.2  specified  dependency-ready=no  gates=0/4",
+            "D1.3  specified  dependency-ready=no  gates=0/4",
+            "statement=successful D1.3 verification makes the statusless `I1.0` "
+            "handoff condition eligible to be reported as the next action without "
+            "changing `I1.1`, `I1.2`, G1, release, push, tag, or publication authorization.",
+        ):
+            self.assertIn(line, human.stdout)
 
         machine = self.run_cli(["status", "--json"], root=ROOT)
 
@@ -92,6 +101,79 @@ class BacklogStatusCliTests(unittest.TestCase):
         self.assertIsNone(payload["recommendation"])
         self.assertEqual(64, len(payload["roadmap"]["local_children"]))
         self.assertEqual(64, len(payload["backlog"]["children"]))
+        d1_children = {child["id"]: child for child in payload["backlog"]["children"] if child["id"].startswith("D1.")}
+        self.assertEqual(["D1.1", "D1.2", "D1.3"], list(d1_children))
+        expected_dependencies = {"D1.1": ["T1.2"], "D1.2": ["D1.1"], "D1.3": ["D1.2"]}
+        expected_statements = {
+            "D1.1": [
+                "the canonical design has approved governance metadata and no unresolved "
+                "placeholder, contradiction, ambiguity, or load-bearing review finding;",
+                "canonical JSON, hashing, identity, provenance, measurement, binding, raw "
+                "observation, sample, frame, clock/timing, validity, quality, schema, fixture, "
+                "and Python/native conformance decisions are exact and versioned;",
+                "ownership and dependency direction remain consistent with the approved "
+                "scope amendment and distinguish FDAU acquisition quality from q4xpcc "
+                "operational policy and findings; and",
+                "the approved design is linked from `C1.1` through `C4.4`, and those "
+                "children advance only to `specified`, with zero delivery gates satisfied "
+                "and no implementation-plan, review, artifact, or release evidence.",
+            ],
+            "D1.2": [
+                "one approved design fixes every A1/R1/P1 contract shape and policy needed by the four q4xpcc Phase 24A Slice 2 plans;",
+                "every family has an exact identity/version boundary, owned fields, "
+                "invariants, references, error outcomes, and intended future schema/fixture "
+                "path;",
+                "deployment, revision pinning, release-artifact hashes, delivered-file "
+                "hashes, conformance, and no-divergent-subset proof are explicit without "
+                "requiring a current release artifact; and",
+                "independent review finds no unresolved load-bearing ambiguity, the "
+                "approved contract-only design is recorded as binding architecture input "
+                "for future A1, R1, and P1 specifications, and those implementation "
+                "children remain `queued` with zero delivery gates satisfied and no "
+                "implementation, artifact, or release claim.",
+            ],
+            "D1.3": [
+                "D1.1 and D1.2 are verified with committed review evidence and no unresolved load-bearing finding;",
+                "`HANDOFF.md` and the concise q4xpcc brief agree with the approved designs and distinguish design readiness from implementation and adoption;",
+                "the brief is emitted from a clean committed state and identifies its exact local HEAD revision; and",
+                "successful D1.3 verification makes the statusless `I1.0` handoff "
+                "condition eligible to be reported as the next action without changing "
+                "`I1.1`, `I1.2`, G1, release, push, tag, or publication authorization.",
+            ],
+        }
+        for child_id, child in d1_children.items():
+            self.assertEqual("specified", child["status"])
+            self.assertEqual(expected_dependencies[child_id], child["dependencies"])
+            self.assertEqual(
+                "docs/superpowers/specs/2026-08-22-q4xpcc-contract-handoff-readiness-design.md",
+                child["specification"],
+            )
+            self.assertIsNone(child["plan"])
+            self.assertEqual(0, child["gates"]["satisfied"])
+            self.assertEqual(4, child["gates"]["total"])
+            self.assertEqual(expected_statements[child_id], [gate["statement"] for gate in child["gates"]["items"]])
+            self.assertEqual([False, False, False, False], [gate["satisfied"] for gate in child["gates"]["items"]])
+            self.assertTrue(all(gate["evidence"] == [] for gate in child["gates"]["items"]))
+            self.assertIsNone(child["review_evidence"])
+            self.assertIsNone(child["resume_state"])
+            self.assertIsNone(child["reason"])
+            self.assertFalse(child["dependency_ready"])
+
+        roadmap_ids = [child["id"] for child in payload["roadmap"]["local_children"]]
+        backlog_ids = [child["id"] for child in payload["backlog"]["children"]]
+        boundaries = {boundary["id"]: boundary for boundary in payload["roadmap"]["external_boundaries"]}
+        self.assertNotIn("I1.0", roadmap_ids)
+        self.assertNotIn("I1.0", backlog_ids)
+        self.assertEqual(
+            {
+                "id": "I1.0",
+                "kind": "external_boundary",
+                "title": "q4xpcc Phase 24A specification and plan reconciliation",
+                "owner": "q4xpcc",
+                "handoff_condition": "Phase 24A specification and plan reconciliation may begin after `D1.3`.",
+            },
+            boundaries["I1.0"],
+        )
 
     def test_unknown_command_is_invalid_usage(self) -> None:
         invalid = self.run_cli(["audit"], root=FIXTURE)

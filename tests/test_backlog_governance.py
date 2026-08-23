@@ -12,6 +12,8 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 ROADMAP = ROOT / "ROADMAP.md"
 BACKLOG = ROOT / "BACKLOG.md"
+HANDOFF = ROOT / "HANDOFF.md"
+D1_DESIGN = ROOT / "docs/superpowers/specs/2026-08-22-q4xpcc-contract-handoff-readiness-design.md"
 
 MILESTONE_HEADER = ("Milestone", "Outcome")
 CHILD_HEADER = ("Child", "Outcome", "Depends on")
@@ -47,6 +49,84 @@ EXPECTED_EPIC_MEMBERS = {
     "T1": ("T1.1", "T1.2", "T1.3", "T1.4", "T1.5", "T1.6"),
     "T2": ("T2.1", "T2.2"),
     "T3": ("T3.1",),
+}
+D1_SPECIFICATION = "[design](docs/superpowers/specs/2026-08-22-q4xpcc-contract-handoff-readiness-design.md)"
+D1_OUTCOMES = {
+    "D1.1": "Canonical C1–C4 design approval",
+    "D1.2": "Acquisition, recording, projection, and pinning contract design",
+    "D1.3": "Reviewed q4xpcc Phase 24A handoff",
+}
+D1_INVENTORY_ROWS = (
+    (
+        "`D1.1`",
+        "Canonical C1–C4 design approval",
+        "`specified`",
+        "`T1.2`",
+        D1_SPECIFICATION,
+        "—",
+        "0/4",
+        "—",
+        "—",
+        "—",
+    ),
+    (
+        "`D1.2`",
+        "Acquisition, recording, projection, and pinning contract design",
+        "`specified`",
+        "`D1.1`",
+        D1_SPECIFICATION,
+        "—",
+        "0/4",
+        "—",
+        "—",
+        "—",
+    ),
+    (
+        "`D1.3`",
+        "Reviewed q4xpcc Phase 24A handoff",
+        "`specified`",
+        "`D1.2`",
+        D1_SPECIFICATION,
+        "—",
+        "0/4",
+        "—",
+        "—",
+        "—",
+    ),
+)
+D1_GATE_STATEMENTS = {
+    "D1.1": (
+        "the canonical design has approved governance metadata and no unresolved placeholder, contradiction, ambiguity, or load-bearing review finding;",
+        "canonical JSON, hashing, identity, provenance, measurement, binding, raw "
+        "observation, sample, frame, clock/timing, validity, quality, schema, fixture, "
+        "and Python/native conformance decisions are exact and versioned;",
+        "ownership and dependency direction remain consistent with the approved scope "
+        "amendment and distinguish FDAU acquisition quality from q4xpcc operational "
+        "policy and findings; and",
+        "the approved design is linked from `C1.1` through `C4.4`, and those children "
+        "advance only to `specified`, with zero delivery gates satisfied and no "
+        "implementation-plan, review, artifact, or release evidence.",
+    ),
+    "D1.2": (
+        "one approved design fixes every A1/R1/P1 contract shape and policy needed by the four q4xpcc Phase 24A Slice 2 plans;",
+        "every family has an exact identity/version boundary, owned fields, invariants, references, error outcomes, and intended future schema/fixture path;",
+        "deployment, revision pinning, release-artifact hashes, delivered-file hashes, "
+        "conformance, and no-divergent-subset proof are explicit without requiring a "
+        "current release artifact; and",
+        "independent review finds no unresolved load-bearing ambiguity, the approved "
+        "contract-only design is recorded as binding architecture input for future A1, "
+        "R1, and P1 specifications, and those implementation children remain `queued` "
+        "with zero delivery gates satisfied and no implementation, artifact, or release "
+        "claim.",
+    ),
+    "D1.3": (
+        "D1.1 and D1.2 are verified with committed review evidence and no unresolved load-bearing finding;",
+        "`HANDOFF.md` and the concise q4xpcc brief agree with the approved designs and distinguish design readiness from implementation and adoption;",
+        "the brief is emitted from a clean committed state and identifies its exact local HEAD revision; and",
+        "successful D1.3 verification makes the statusless `I1.0` handoff condition "
+        "eligible to be reported as the next action without changing `I1.1`, `I1.2`, "
+        "G1, release, push, tag, or publication authorization.",
+    ),
 }
 
 
@@ -153,6 +233,36 @@ def acceptance_headings(path: Path) -> list[str]:
         if line.startswith("### "):
             headings.append(line.removeprefix("### "))
     return headings
+
+
+def section_body(path: Path, heading: str, *, level: int) -> str:
+    text = read_text(path)
+    prefix = "#" * level
+    heading_line = f"{prefix} {heading}\n"
+    start = text.index(heading_line)
+    body_start = start + len(heading_line)
+    match = re.search(rf"^#{{1,{level}}} ", text[body_start:], re.MULTILINE)
+    if match is None:
+        return text[start:]
+    return text[start : body_start + match.start()]
+
+
+def normalized_list_items(body: str, marker: str) -> tuple[str, ...]:
+    pattern = rf"^{re.escape(marker)}(.*?)(?=^{re.escape(marker)}|\Z)"
+    return tuple(re.sub(r"\s+", " ", match).strip() for match in re.findall(pattern, body, re.MULTILINE | re.DOTALL))
+
+
+def normalized_numbered_items(body: str) -> tuple[str, ...]:
+    lead_in = "Its acceptance gates are:\n\n"
+    numbered_block = body[body.index(lead_in) + len(lead_in) :].split("\n\n", 1)[0]
+    return tuple(
+        re.sub(r"\s+", " ", match).strip()
+        for match in re.findall(
+            r"^[0-9]+\. (.*?)(?=^[0-9]+\. |\Z)",
+            numbered_block,
+            re.MULTILINE | re.DOTALL,
+        )
+    )
 
 
 class RoadmapAuthorityTests(unittest.TestCase):
@@ -266,6 +376,49 @@ class BacklogAuthorityTests(unittest.TestCase):
         self.assertEqual(
             [(identity(row[0]), row[1], row[2]) for row in roadmap],
             [(identity(row[0]), row[1], row[3]) for row in inventory],
+        )
+
+    def test_d1_inventory_rows_lock_complete_initial_lifecycle(self) -> None:
+        inventory = table_rows(read_text(BACKLOG), INVENTORY_HEADER)
+
+        self.assertEqual(
+            D1_INVENTORY_ROWS,
+            tuple(row for row in inventory if identity(row[0]).startswith("D1.")),
+        )
+
+    def test_d1_backlog_and_design_lock_all_four_acceptance_gates(self) -> None:
+        for child, expected in D1_GATE_STATEMENTS.items():
+            with self.subTest(child=child):
+                heading = f"{child} — {D1_OUTCOMES[child]}"
+                backlog_body = section_body(BACKLOG, heading, level=3)
+                design_body = section_body(D1_DESIGN, heading, level=2)
+                self.assertEqual(expected, normalized_list_items(backlog_body, "- [ ] "))
+                self.assertEqual(expected, normalized_numbered_items(design_body))
+
+    def test_handoff_orders_d1_verification_before_external_thresholds(self) -> None:
+        handoff = re.sub(r"\s+", " ", read_text(HANDOFF))
+        sequence = (
+            "independently review `T1.2`",
+            "execute `D1.1` canonical-design approval",
+            "execute `D1.2` contract-only A1/R1/P1 design",
+            "execute and verify `D1.3` reviewed consumer brief",
+            "successful D1.3 verification makes `I1.0` eligible as the next reportable action",
+        )
+        for statement in sequence:
+            self.assertIn(statement, handoff)
+        positions = tuple(handoff.index(statement) for statement in sequence)
+        self.assertEqual(tuple(sorted(positions)), positions)
+        self.assertIn(
+            "`I1.0` permits Phase 24A specification and plan reconciliation only after successful `D1.3` verification.",
+            handoff,
+        )
+        self.assertIn(
+            "`I1.1` permits delivered contract-model, schema, fixture, and runtime adoption only after `C4.4`.",
+            handoff,
+        )
+        self.assertIn(
+            "`I1.2` permits live XPLM acquisition adoption only after `A1.9`.",
+            handoff,
         )
 
     def test_inventory_excludes_nonchildren_and_range_rows(self) -> None:

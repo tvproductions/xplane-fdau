@@ -170,8 +170,9 @@ Its acceptance gates are:
    and distinguish design readiness from implementation and adoption;
 3. the brief is emitted from a clean committed state and identifies its exact
    local HEAD revision; and
-4. the statusless `I1.0` handoff condition is met and reported without changing
-   `I1.1`, `I1.2`, G1, release, push, tag, or publication authorization.
+4. successful D1.3 verification makes the statusless `I1.0` handoff condition
+   eligible to be reported as the next action without changing `I1.1`, `I1.2`,
+   G1, release, push, tag, or publication authorization.
 
 The user coordinates the brief with the q4xpcc agent or project. The repository
 does not require a push merely to establish D1 readiness.

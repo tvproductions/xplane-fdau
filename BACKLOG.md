@@ -313,8 +313,9 @@ The child slices below refine this sequence without weakening or reordering it.
       and distinguish design readiness from implementation and adoption;
 - [ ] the brief is emitted from a clean committed state and identifies its exact
       local HEAD revision; and
-- [ ] the statusless `I1.0` handoff condition is met and reported without changing
-      `I1.1`, `I1.2`, G1, release, push, tag, or publication authorization.
+- [ ] successful D1.3 verification makes the statusless `I1.0` handoff condition
+      eligible to be reported as the next action without changing `I1.1`, `I1.2`,
+      G1, release, push, tag, or publication authorization.
 
 ### F1.1 — AC 120-82 terminology, analysis ports, profiles, evidence, and finding contracts
 

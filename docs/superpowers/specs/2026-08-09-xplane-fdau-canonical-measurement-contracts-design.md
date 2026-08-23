@@ -712,24 +712,27 @@ Whenever the state machine produces a sample, every derived condition requires
 its equal-named quality flag, including `stale` on a dependency or companion.
 No quality assertion exists when no sample exists.
 
-The first condition whose disposition is not `accept_flagged` determines the
-outcome: `reject` prohibits a sample; `accept_raw_only` permits only an absent
-normalization with reason `normalization_not_attempted` naming that input and
-condition; and `accept_without_value` permits only an absent normalization
-with reason `input_unusable` naming that input and condition. `accept_flagged`
-permits evaluation to continue only when the input carries usable inline or
-payload evidence and the condition's equal-named quality flag is present; it
-never manufactures a missing input. A sample is prohibited when
-`accept_flagged` selects an input without usable evidence; this and `reject`
-are the two no-sample outcomes. A binding definition is invalid when
+Disposition selection is exact. First, any derived condition whose disposition
+is `reject` globally prohibits a sample, regardless of its input position; no
+later or earlier disposition can override it. When no `reject` exists, the
+first condition in the established order whose disposition is
+`accept_raw_only` or `accept_without_value` determines the absent-normalization
+outcome: raw-only selects `normalization_not_attempted`, while without-value
+selects `input_unusable`, and each names that input and condition. When no such
+condition exists, every disposition is `accept_flagged` and normalization may
+proceed only if every affected input carries usable inline or payload evidence
+and every condition's equal-named quality flag is present. `accept_flagged`
+never manufactures a missing input; a missing usable value prohibits the
+sample. These are the two no-sample paths: any global `reject`, or an
+all-flagged evaluation lacking usable evidence. A binding definition is invalid when
 `accept_flagged` is assigned to `unavailable`, `orphaned`, or `read_error`,
 because the raw status matrix never supplies usable evidence for those
 conditions. The `stale`
 condition for each consumed input uses its receipt reading, the sample
 evaluation reading, and the resolved measurement freshness thresholds; it can
 arise only from an exact same-domain age. Only the primary input's age is
-persisted as `freshness_age_ns`. When all conditions are `accept_flagged`,
-normalization may succeed or may independently fail in a declared transform.
+persisted as `freshness_age_ns`. An otherwise permitted normalization may
+succeed or may independently fail in a declared transform.
 This state machine is declarative validation only; the kernel does not acquire
 or normalize data. Replay policy is `preserve`, `rederive`, or `prohibit`.
 
@@ -1693,6 +1696,7 @@ Pure validators are tested for:
 
 - missing and mismatched measurement references;
 - binding representation, shape, unit, payload, and applicability conflicts;
+- binding failure-policy versus measurement quality/validity authorization conflicts;
 - sample representation, unit, payload, range, status, quality, and lineage conflicts;
 - frame identity, epoch, order, closure, and timing conflicts; and
 - acceptance of multiple corroborating bindings for one measurement.
@@ -1866,6 +1870,8 @@ satisfies its exact acceptance subsection below.
 - Binding catalog identity, ordering, uniqueness, schema, and hashes pass.
 - Missing or mismatched measurement references fail.
 - Direct bindings enforce unit/representation/shape/payload/applicability parity.
+- Failure dispositions incompatible with measurement quality or validity
+  authorization fail during cross-catalog validation.
 - Transformed bindings validate declarations without executing or claiming
   algorithm conformance.
 

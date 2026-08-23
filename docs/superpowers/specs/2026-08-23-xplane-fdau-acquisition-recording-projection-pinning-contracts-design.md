@@ -168,12 +168,25 @@ live acquisition adoption earlier than `I1.2`.
 | `content_hash` | `Sha256` | computed definition hash |
 
 `AcquisitionProfileItem` has exact properties `item_id`, `measurement`,
-optional `binding`, `cadence`, `continuity`, `acquisition_phase`,
+`binding_candidates`, `binding_selection`, optional
+`minimum_successful_bindings`, `cadence`, `continuity`, `acquisition_phase`,
 `allowed_resampling`, `allowed_interpolation`, `required_validity`,
-`prohibited_quality`, `stream_role`, and `degradation_priority`.
+`prohibited_quality`, `stream_role`, `degradation_priority`, and
+`overload_disposition`.
 
-- `measurement` and optional `binding` are exact `DefinitionRef` values. When
-  a binding is present, it must resolve to that measurement revision and hash.
+- `measurement` is an exact `DefinitionRef`. `binding_candidates` is a
+  nonempty ordered array of unique exact `DefinitionRef` values, each of
+  which resolves to that measurement revision and hash.
+- `binding_selection` is `exact`, `preferred_with_fallback`,
+  `any_compatible`, or `corroborated`. `exact` requires exactly one candidate.
+  `preferred_with_fallback` selects the first compatible available candidate
+  in semantic candidate order. `any_compatible` selects the first compatible
+  available candidate in canonical `(definition_id, definition_revision,
+  definition_hash)` order. Those three modes select exactly one source.
+  `corroborated` requires at least two candidates, selects every compatible
+  available candidate in canonical order, and requires
+  `minimum_successful_bindings` from two through the candidate count. That
+  field is prohibited for the other modes.
 - `cadence` contains `requested_period` and `maximum_period`, each a reduced
   positive rational duration with exact properties `numerator_ns: UInt63`
   greater than zero and `denominator: Revision`. Requested period must not be
@@ -181,17 +194,26 @@ optional `binding`, `cadence`, `continuity`, `acquisition_phase`,
 - `continuity` contains `minimum_observation_count: UInt63`,
   `minimum_elapsed_ns: UInt63`, `maximum_staleness_ns: UInt63`,
   `maximum_gap_ns: UInt63`, `early_tolerance_ns: UInt63`, and
-  `late_tolerance_ns: UInt63`. Maximum gap must be at least maximum staleness.
+  `late_tolerance_ns: UInt63`. Gap and staleness are independent constraints;
+  neither implies an ordering between their values.
 - `acquisition_phase` uses the canonical binding acquisition-phase vocabulary.
 - `allowed_resampling` is an `ArraySet` drawn from `none`, `hold`, `nearest`,
-  `linear`, and `aggregate`. `none` may appear alone only.
+  `linear`, and `aggregate`. `none` is mutually exclusive with every other
+  member.
 - `allowed_interpolation` is an `ArraySet` of the measurement definition's
   allowed interpolation policies and cannot broaden that definition.
 - `required_validity` is a nonempty `ArraySet<ValidityState>`.
 - `prohibited_quality` is an `ArraySet<QualityFlag>`.
 - `stream_role` is `bounded` or `continuous`.
-- `degradation_priority` is an integer from 0 through 255; lower values are
-  shed first only under a separately declared overload policy.
+- `degradation_priority` is an integer from 0 through 255; a lower value is
+  acted on first, with canonical `item_id` order breaking ties.
+- `overload_disposition` is `reject_item`,
+  `relax_to_maximum_period`, or `suspend_optional`. A required item cannot use
+  `suspend_optional` during resolution. Relaxation never exceeds
+  `maximum_period`; suspension or relaxation is explicit in a replacement
+  demand resolution and `overload_changed` lifecycle event. That event records
+  affected item identifiers plus prior and current status and cadence. No
+  overload path silently sheds an item or changes its cadence.
 
 Changing cadence, continuity, resampling, interpolation, quality, phase, or
 binding meaning requires a new profile revision and hash.
@@ -211,11 +233,18 @@ Each `TransformDefinition` has `algorithm_id`, `algorithm_revision`,
   `resampling`.
 - Each input and output fixes representation, shape, payload allowance, and
   unit requirements using the approved canonical value types.
-- Each parameter definition has `parameter_id`, representation, required
-  status, and exact range or closed vocabulary. Parameters are data only.
+- Each parameter definition has `parameter_id`, `required`, `kind`, and the
+  variant selected by `kind`. `kind` is `integer`, `real`, `boolean`,
+  `string`, or `enum`. Integer and real variants require inclusive `minimum`
+  and `maximum` canonical scalar values of the same representation. Boolean
+  has no variant properties. String requires `maximum_code_points: UInt63`.
+  Enum requires a nonempty `ArraySet<NfcText>` of `allowed_values`.
+  Parameters are data only, and undeclared parameters are rejected.
 - `determinism` is the literal `deterministic` in version 1.
 - `loss_dispositions` is an `ArraySet` drawn from `exact`, `rounded`,
   `clamped`, `precision_lost`, `out_of_range`, and `conversion_failed`.
+  When `exact` is present it is the sole member; otherwise `exact` is
+  prohibited and at least one loss disposition is required.
 - Arbitrary expressions, import paths, callbacks, source text, bytecode, and
   caller-supplied executable code are prohibited.
 - An `AlgorithmRef` resolves only when identifier, revision, hash, parameter
@@ -237,41 +266,67 @@ delivers its implementation and fixtures.
 | `demand_id` | `Uuid` | record identity |
 | `consumer_id` | `Identifier` | consumer contract identity, not a display name |
 | `consumer_instance_id` | `Uuid` | one running consumer instance |
-| `generation` | `UInt63` | strictly increases for that consumer instance |
-| `replaces` | optional `RecordRef` | previous demand from the same consumer instance and lower generation |
+| `generation` | `UInt63` | contiguous from zero for that consumer instance |
+| `replaces` | optional `RecordRef` | prohibited at generation zero; otherwise the exact generation-minus-one demand |
 | `profile` | `DefinitionRef` | exact acquisition profile |
 | `items` | nonempty array of `DemandItem` | profile order; unique profile item reference |
 | `requested_at` | `UtcInstant` | evidence timestamp |
 | `producer` | `ProducerIdentity` | required |
 | `content_hash` | `Sha256` | computed |
 
-Each `DemandItem` has `profile_item_id`, `requirement`, and
-`retention_requirement`. `requirement` is `required` or `optional`.
-`retention_requirement` is one of `frames_only`, `normalized`,
-`accepted_raw`, or `complete_provider_audit`; later values are strictly
-stronger in that order. `complete_provider_audit` is valid only when the
-source adapter explicitly declares that capability; it is never inferred.
+Each `DemandItem` has `profile_item_id`, `requirement`, and `retention`.
+`requirement` is `required` or `optional`. `retention` is an exact
+`RetentionRequirement` with these orthogonal properties:
+
+- `canonical_records` is `samples`, `frames`, or `samples_and_frames`;
+- `accepted_raw_observations` is `not_requested`, `when_supplied`, or
+  `required`;
+- `raw_payloads` is `not_requested`, `when_supplied`, or `required`; and
+- `provider_audit` is `not_requested`, `when_supplied`, or `required`.
+
+No total ordering exists among those axes. A resolution can satisfy
+`raw_payloads: required` only with selected payload-represented sources, and it
+can satisfy `provider_audit: required` only when every selected binding
+declares that capability. Otherwise the item receives `retention_conflict`;
+those capabilities are never inferred.
 
 Updating any item creates a new demand record and generation. Active demand
-records are never mutated. A consumer cannot reuse a generation with different
-content, skip backward, or replace another consumer's demand.
+records are never mutated. A consumer cannot reuse or skip a generation,
+replace a non-immediate predecessor, or replace another consumer's demand.
 
-`DemandResolution` is a generated record with `resolution_id`, `generation`,
-nonempty ordered `demands`, ordered `item_outcomes`, ordered
-`source_acquisitions`, `outcome`, `producer`, and `content_hash`.
+`DemandResolution` is a generated record with `resolution_id`,
+`resolver_instance_id`, `generation`, optional `replaces`,
+`receipt_clock_domain`, nonempty ordered `demands`, ordered `item_outcomes`,
+ordered `source_acquisitions`, `outcome`, `producer`, and `content_hash`.
 
-- `demands` contains exact `RecordRef` values in `(consumer_id,
-  consumer_instance_id, generation)` order.
+- Resolution generation is contiguous from zero within one resolver instance.
+  `replaces` is prohibited at generation zero and otherwise references the
+  exact generation-minus-one resolution.
+- `demands` contains the currently active `DemandReceipt` values in strictly
+  increasing `receipt_sequence` order. Each receipt has the exact demand
+  `RecordRef`, `receipt_sequence`,
+  `receipt_clock`, and optional `receipt_utc`. Receipt sequence, not a
+  consumer-supplied timestamp, determines replacement and conflict order.
+  Receipt sequence is globally contiguous from zero for the resolver instance;
+  the active subset may contain gaps after replacement. `receipt_clock` uses
+  one declared monotonic resolver clock domain; `receipt_utc` is correlation
+  evidence only. Every receipt reading identifies the resolution's
+  `receipt_clock_domain`.
 - Every demand item appears exactly once in `item_outcomes`.
 - An item outcome contains its demand reference, `profile_item_id`,
-  `result`, optional `reason`, and optional `source_acquisition_id`.
+  `result`, optional `reason`, and optional ordered
+  `selected_source_acquisition_ids`.
 - `result` is `accepted` or `rejected`.
 - `reason` is required only for rejection and is one of
   `unknown_measurement`, `unknown_binding`, `binding_mismatch`,
   `provider_unavailable`, `source_unavailable`, `phase_conflict`,
   `cadence_conflict`, `resampling_conflict`, `interpolation_conflict`,
   `validity_conflict`, `quality_conflict`, `retention_conflict`,
-  `capacity_exceeded`, or `incompatible_generation`.
+  `insufficient_corroboration`, `capacity_exceeded`, or
+  `incompatible_generation`.
+- `selected_source_acquisition_ids` is nonempty only for acceptance, contains
+  every selected binding source, and satisfies the profile item's binding
+  selection and minimum-success rules. It is absent for rejection.
 - A `SourceAcquisition` fixes one `source_acquisition_id: Uuid`, exact binding
   reference, read period, phase, accepted demand items, and per-consumer
   delivery period/resampling decision.
@@ -288,16 +343,20 @@ nonempty ordered `demands`, ordered `item_outcomes`, ordered
 `AcquisitionSessionDescriptor` freezes one accepted resolution. Its exact
 properties are `contract_family`, `schema_version`, `acquisition_session_id`,
 `resolution`, `opened_at`, `receipt_clock_domain`, ordered `streams`,
-`initial_epoch_id`, `source_context`, `producer`, and `content_hash`.
+`initial_epoch_id`, ordered `source_contexts`, `producer`, and `content_hash`.
 
 - `resolution` references an accepted `DemandResolution`.
 - Each `StreamDeclaration` contains `stream_id`, `source_acquisition_id`,
   `binding`, `clock_domain_id`, `initial_sequence: UInt63`, and
   `initial_generation: UInt63`.
-- `source_context` contains provider and adapter identities plus optional
-  simulator, aircraft, plugin, and replay context as bounded NFC text. It
-  contains no connection object, host handle, callback, credential, or SDK
-  value.
+- Exactly one `source_contexts` entry exists for each source acquisition, in
+  stream declaration order. It has exact properties `source_acquisition_id`,
+  `provider`, `adapter`, `source_generation`, `connection_generation`,
+  `sources`, and `limitations`. Provider and adapter use `ProviderIdentity`
+  and `AdapterIdentity`; both generations are `UInt63`; `sources` is an
+  ordered nonempty array of `ProvenanceSource`; and `limitations` is a bounded
+  NFC-text array. It contains no connection object, host handle, callback,
+  credential, SDK value, or untyped simulator/plugin/replay label.
 - A session owns identities and evidence, not simulator lifecycle.
 
 `AcquisitionLifecycleEvent` has `event_id`, `acquisition_session_id`,
@@ -306,23 +365,31 @@ properties are `contract_family`, `schema_version`, `acquisition_session_id`,
 the acquisition session.
 
 The closed version-1 `kind` vocabulary is `opened`, `demand_replaced`,
-`epoch_started`, `source_degraded`, `source_restored`, `pause_changed`,
-`replay_state_changed`, `time_speed_changed`, `clock_discontinuity`,
-`stopping`, and `terminal`.
+`overload_changed`, `epoch_started`, `source_degraded`, `source_restored`,
+`pause_changed`, `replay_state_changed`, `time_speed_changed`,
+`clock_discontinuity`, `stopping`, and `terminal`.
 
 - `demand_replaced` references the prior and replacement demand resolutions.
+- `overload_changed` records affected item identifiers and each item's prior
+  and current activation status and cadence.
 - `epoch_started` records the cause from `session_open`, `source_restart`,
   `connection_replacement`, `aircraft_reload`, `plugin_reload`, `replay_seek`,
   `clock_regression`, or `explicit_boundary`.
 - State-change variants record old and new values without relabeling receiver
   evidence as source evidence.
-- `terminal` references the acquisition-session result.
+- `terminal` records the termination reason and optional primary failure after
+  all frame delivery has stopped. It does not reference the later session
+  result.
 
 `AcquisitionSessionResult` has `result_id`, `acquisition_session_id`,
-`opened_descriptor`, `terminal_event_sequence`, `outcome`, `termination_reason`,
+`opened_descriptor`, `terminal_event`, `outcome`, `termination_reason`,
 optional `primary_failure`, ordered `cleanup_failures`, ordered
 `continuity_reports`, ordered `recording_results`, `ended_at`, `producer`, and
 `content_hash`.
+
+- `terminal_event` is the exact `RecordRef` of the already-created terminal
+  lifecycle event. Its termination reason and primary failure must match the
+  result.
 
 - `outcome` is `completed`, `stopped`, `aborted`, or `failed`.
 - `termination_reason` is `consumer_complete`, `consumer_stop`, `source_end`,
@@ -343,15 +410,25 @@ exact Python module placement belongs to the owning child plan:
 ObservationIngress.submit(observation: RawObservation) -> IngressOutcome
 FrameSubscriber.open(descriptor: AcquisitionSessionDescriptor) -> OpenOutcome
 FrameSubscriber.accept(frame: MeasurementFrame) -> DeliveryOutcome
-FrameSubscriber.close(result: AcquisitionSessionResult) -> CloseOutcome
+FrameSubscriber.close(notice: SessionCloseNotice) -> CloseOutcome
 RecordingSink.open(descriptor: RecordingSessionDescriptor) -> OpenOutcome
 RecordingSink.append(frame: MeasurementFrame) -> DeliveryOutcome
 RecordingSink.checkpoint() -> CheckpointOutcome
-RecordingSink.commit(result: RecordingSessionResult) -> CommitOutcome
+RecordingSink.commit(request: CommitRequest) -> CommitOutcome
 RecordingSink.abort(failure: FailureEvidence) -> AbortOutcome
 RecordingSink.recover(request: RecoveryRequest) -> RecoveryOutcome
 RecordingSink.close() -> CloseOutcome
 ```
+
+`SessionCloseNotice` has the acquisition-session descriptor reference,
+terminal lifecycle-event reference, termination reason, final delivery
+sequence by stream, and optional primary failure. `CommitRequest` has the
+recording-session descriptor reference, terminal lifecycle-event reference,
+termination reason, final delivery sequence by stream, final checkpoint when
+one exists, and optional primary failure. Both are immutable inputs created
+before close or commit outcomes; aggregate acquisition and recording results
+are created afterward and therefore cannot participate in their own outcome
+hashes.
 
 The operation outcomes are exact tagged values:
 
@@ -359,13 +436,17 @@ The operation outcomes are exact tagged values:
   observation reference, and `failure` only when rejected.
 - `OpenOutcome` contains `result` (`opened`, `rejected`, or `failed`), endpoint
   identity, and `failure` only when not opened.
-- `DeliveryOutcome` contains `result` (`delivered`, `blocked`, `dropped`,
-  `detached`, or `failed`) and the resulting fan-out delivery-event reference.
+- `DeliveryOutcome` contains `result` (`delivered`, `dropped`, `detached`, or
+  `failed`) for the submitted frame and ordered nonempty
+  `delivery_event_refs`. The final reference describes the submitted frame;
+  any preceding reference describes an older frame evicted by the same call.
 - `CheckpointOutcome` contains `result` (`checkpointed`, `not_due`, or
   `failed`), a checkpoint reference only when checkpointed, and failure only
   when failed.
 - `CommitOutcome` contains `result` (`committed`, `conflict`, or `failed`),
-  artifact states only when committed, and failure only otherwise.
+  every artifact state reached by the attempt, and failure only for conflict
+  or `failed`. A conflict or failure may therefore retain preserved-partial
+  state without claiming commit.
 - `AbortOutcome` contains `result` (`aborted` or `failed`) and failure only
   when failed.
 - `RecoveryOutcome` contains `result` (`recovered`, `preserved_partial`,
@@ -383,13 +464,26 @@ records, but F1's analysis-specific ports remain owned by `F1.1`.
 
 `FanoutDeliveryEvent` records `delivery_event_id`, `acquisition_session_id`,
 `recording_session_id` when applicable, `endpoint_id`, `frame`,
-`delivery_sequence`, `outcome`, optional `failure`, `queue_depth_before`,
-`queue_depth_after`, `timing`, `producer`, and `content_hash`.
+`delivery_sequence`, `disposition`, `backpressure`, optional `failure`,
+optional `policy`, `timing`, `producer`, and `content_hash`.
 
-`outcome` is `delivered`, `blocked`, `dropped`, `detached`, or `failed`.
-`blocked`, `dropped`, `detached`, and `failed` require explicit failure or
-policy evidence and contribute to continuity. The core never silently drops a
-frame. One endpoint failure does not mutate another endpoint's result.
+`disposition` is the final value `delivered`, `dropped`, `detached`, or
+`failed`. `backpressure` is a `BackpressureEvidence` value with `kind`
+(`none`, `waited`, or `overflow`), `queue_depth_before`, `queue_depth_after`,
+`wait_duration_ns`, and `overflow_action`. Wait duration is positive exactly
+when kind is `waited` and is zero otherwise. Queue depths are `UInt63`.
+`overflow_action` is `none`, `rejected_new`, or `dropped_oldest`; it is
+`none` exactly when kind is not `overflow`.
+
+Blocking therefore ends in a delivered or failed disposition and records
+`waited`; it is not itself a disposition or failure. Rejecting an incoming
+frame records that frame as dropped with `rejected_new`. Dropping the oldest
+records a dropped event for the evicted frame and a separate event for the
+incoming frame. Dropped, detached, and failed dispositions require explicit
+policy or failure evidence and contribute to continuity. `policy`, when
+present, is the exact descriptor or profile `RecordRef` authorizing the
+decision. The core never silently drops a frame. One endpoint failure does not
+mutate another endpoint's result.
 
 ## Continuity reports
 
@@ -399,12 +493,47 @@ frame. One endpoint failure does not mutate another endpoint's result.
 
 - `scope` fixes inclusive first and last event, frame, and epoch references.
 - Every accepted required and optional demand item appears once in
-  `item_results`.
-- An item result records requested cadence and continuity policy, observed and
-  delivered counts, elapsed span, first-value readiness, minimum/maximum
-  interval, gap count and maximum gap, drop/duplicate/reorder counts,
-  staleness count, validity distribution, quality distribution, epoch count,
-  provider-generation count, sink failures, `classification`, and `reasons`.
+  `item_results`; each result is scoped to that demand item's consumer
+  endpoint rather than aggregated across unrelated fan-out endpoints.
+- An item result has exact properties `demand`, `profile_item_id`,
+  `endpoint_id`, `effective_delivery_period`, `continuity_policy`,
+  `observed_count`, `eligible_count`, `delivered_count`,
+  `eligible_delivered_count`, `elapsed_span_ns`, `first_slot_ready`, optional
+  `minimum_interval_ns`, optional `maximum_interval_ns`, `gap_count`,
+  `maximum_gap_ns`, `drop_count`, `duplicate_count`, `reorder_count`,
+  `staleness_count`, `validity_distribution`, `quality_distribution`,
+  `epoch_count`, `source_generation_count`, `sink_failures`,
+  `classification`, and `reasons`. Counts and durations are `UInt63`; the two
+  interval properties are present exactly when at least one within-epoch
+  interval exists.
+- A sample is eligible only when its validity is allowed by
+  `required_validity`, it contains none of `prohibited_quality`, its age at the
+  containing frame's acquisition time is represented by `freshness_age_ns`
+  and is no greater than `maximum_staleness_ns`, and its timing is comparable
+  within the same clock domain and epoch. Continuity count, readiness, span,
+  cadence, and gap tests
+  use samples whose delivery disposition to that consumer endpoint is
+  `delivered`; excluded observations remain visible in the validity, quality,
+  staleness, and delivery distributions.
+- Within each epoch, expected slots start at the epoch-start lifecycle
+  event's monotonic reading, or the report scope's first included monotonic
+  reading when the scope begins inside an epoch, and advance by the exact
+  rational `effective_delivery_period` through the inclusive scope end.
+  `first_slot_ready` is true exactly when the first expected slot is matched.
+  A delivered eligible sample satisfies at most one slot when its acquisition
+  reading lies within the closed interval from slot minus
+  `early_tolerance_ns` through slot plus `late_tolerance_ns`. Slots and samples
+  are matched in increasing exact rational time, then canonical sample order;
+  unmatched slots produce `cadence_shortfall`. No binary-float rounding is
+  used in slot construction or comparison.
+- Intervals and gaps are evaluated independently within each epoch. No
+  interval crosses an epoch boundary, and an epoch transition is reported as
+  `epoch_boundary`, never as an ordinary gap. `elapsed_span_ns` is the sum of
+  the last-minus-first eligible-delivered span in each epoch. Gap count is the
+  number of within-epoch eligible-delivered intervals greater than
+  `maximum_gap_ns`; `maximum_gap_ns` is zero when none exists. `no_observation`
+  makes the item insufficient. `clock_incomparable` makes it indeterminate
+  unless an independently provable shortfall already makes it insufficient.
 - `classification` is `sufficient`, `insufficient`, or `indeterminate`.
 - `reasons` is an `ArraySet` drawn from `no_observation`, `count_shortfall`,
   `span_shortfall`, `cadence_shortfall`, `gap_exceeded`, `stale_evidence`,
@@ -448,14 +577,20 @@ Each `SinkDeclaration` has `sink_session_id`, `sink_kind`, `artifact_role`,
 `raw_retention_policy` is an exact `DefinitionRef` to a
 `RawRetentionPolicy`. That immutable definition has `contract_family`,
 `schema_version`, `policy_id`, `policy_revision`, `authority`, `provenance`,
-`accepted_inline`, `accepted_payloads`, `provider_audit`,
+`canonical_samples`, `canonical_frames`, `accepted_raw_observations`,
+`raw_payloads`, `provider_audit`,
 `omission_disposition`, `limitations`, and `content_hash`.
 
-- `accepted_inline` and `accepted_payloads` are `retain` or `omit`.
-- `provider_audit` is `not_requested`, `retain_when_supplied`, or `required`.
+- `canonical_samples` and `canonical_frames` are `retain` or `omit`.
+- `accepted_raw_observations`, `raw_payloads`, and `provider_audit` are
+  `not_requested`, `retain_when_supplied`, or `required`.
 - `omission_disposition` is `normalized` or `projected`; it is required when
-  either accepted representation is omitted.
-- The policy cannot weaken a resolved demand's retention requirement.
+  any available source representation is omitted.
+- The policy satisfies a resolved `RetentionRequirement` only when every
+  requested axis is independently satisfied: requested canonical sample and
+  frame forms are retained; `when_supplied` permits `retain_when_supplied` or
+  `required`; and `required` requires the identical policy value. One retained
+  axis never compensates for omission on another axis.
 - If an accepted source representation is omitted intentionally, the archive
   uses the declared omission disposition and is never described as `lossless`.
 

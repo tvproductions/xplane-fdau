@@ -1,7 +1,7 @@
 # xplane-fdau Backlog
 
 - **Status:** Active delivery ledger and Superpowers entry point
-- **Updated:** 2026-08-16
+- **Updated:** 2026-08-22
 
 Read `ROADMAP.md` for architecture order and dependencies. Then use this file to
 select one primary child slice whose prerequisites are verified. Each child
@@ -15,6 +15,8 @@ slice receives one focused plan and one independently reviewable outcome.
   own all simulator I/O.
 - Active design: Repository backlog-governance tooling.
 - Active child: `T1.2`.
+- After `T1.2` review, the next readiness priority is `D1.1` before `T1.3`.
+- D1 is design-handoff readiness, not implementation or release readiness.
 - `B1.1` source-layout migration: `specified` with a draft plan; resumes after
   peer prerequisites `T2.2` and `T3.1` are verified.
 - Canonical contract design: written review remains pending for `C1.1`.
@@ -78,6 +80,9 @@ The child slices below refine this sequence without weakening or reordering it.
 | `P1.4` | Projection timing and resampling behavior | `queued` | `P1.1`, `A1.6` | — | — | — | — | — | — |
 | `P1.5` | Omission, default, conversion, and precision-loss report | `queued` | `P1.2`, `P1.3`, `P1.4` | — | — | — | — | — | — |
 | `P1.6` | End-to-end canonical-to-native-sink verification | `queued` | `P1.5` | — | — | — | — | — | — |
+| `D1.1` | Canonical C1–C4 design approval | `specified` | `T1.2` | [design](docs/superpowers/specs/2026-08-22-q4xpcc-contract-handoff-readiness-design.md) | — | 0/4 | — | — | — |
+| `D1.2` | Acquisition, recording, projection, and pinning contract design | `specified` | `D1.1` | [design](docs/superpowers/specs/2026-08-22-q4xpcc-contract-handoff-readiness-design.md) | — | 0/4 | — | — | — |
+| `D1.3` | Reviewed q4xpcc Phase 24A handoff | `specified` | `D1.2` | [design](docs/superpowers/specs/2026-08-22-q4xpcc-contract-handoff-readiness-design.md) | — | 0/4 | — | — | — |
 | `S1.1` | Edition-pinned standards baseline and traceability contract | `queued` | `C4.4` | — | — | — | — | — | — |
 | `S2.1` | ARINC 717 profile specification | `blocked` | `S1.1`, `R1.7` | — | — | — | — | `queued` | Licensed edition-pinned source is unavailable. |
 | `S2.2` | ARINC 717 codec and conformance corpus | `blocked` | `S2.1` | — | — | — | — | `queued` | Licensed edition-pinned source is unavailable. |
@@ -269,6 +274,47 @@ The child slices below refine this sequence without weakening or reordering it.
       checkout.
 - [ ] Independent review has no unresolved load-bearing finding.
 - [ ] Version `0.1.0` remains unreleased and no push/tag/publication occurs.
+
+### D1.1 — Canonical C1–C4 design approval
+
+- [ ] the canonical design has approved governance metadata and no unresolved
+      placeholder, contradiction, ambiguity, or load-bearing review finding;
+- [ ] canonical JSON, hashing, identity, provenance, measurement, binding, raw
+      observation, sample, frame, clock/timing, validity, quality, schema, fixture,
+      and Python/native conformance decisions are exact and versioned;
+- [ ] ownership and dependency direction remain consistent with the approved
+      scope amendment and distinguish FDAU acquisition quality from q4xpcc
+      operational policy and findings; and
+- [ ] the approved design is linked from `C1.1` through `C4.4`, and those children
+      advance only to `specified`, with zero delivery gates satisfied and no
+      implementation-plan, review, artifact, or release evidence.
+
+### D1.2 — Acquisition, recording, projection, and pinning contract design
+
+- [ ] one approved design fixes every A1/R1/P1 contract shape and policy needed
+      by the four q4xpcc Phase 24A Slice 2 plans;
+- [ ] every family has an exact identity/version boundary, owned fields,
+      invariants, references, error outcomes, and intended future schema/fixture
+      path;
+- [ ] deployment, revision pinning, release-artifact hashes, delivered-file
+      hashes, conformance, and no-divergent-subset proof are explicit without
+      requiring a current release artifact; and
+- [ ] independent review finds no unresolved load-bearing ambiguity, the approved
+      contract-only design is recorded as binding architecture input for future
+      A1, R1, and P1 specifications, and those implementation children remain
+      `queued` with zero delivery gates satisfied and no implementation, artifact,
+      or release claim.
+
+### D1.3 — Reviewed q4xpcc Phase 24A handoff
+
+- [ ] D1.1 and D1.2 are verified with committed review evidence and no unresolved
+      load-bearing finding;
+- [ ] `HANDOFF.md` and the concise q4xpcc brief agree with the approved designs
+      and distinguish design readiness from implementation and adoption;
+- [ ] the brief is emitted from a clean committed state and identifies its exact
+      local HEAD revision; and
+- [ ] the statusless `I1.0` handoff condition is met and reported without changing
+      `I1.1`, `I1.2`, G1, release, push, tag, or publication authorization.
 
 ### F1.1 — AC 120-82 terminology, analysis ports, profiles, evidence, and finding contracts
 
@@ -468,6 +514,7 @@ be selected or mutated by xplane-fdau tooling.
 
 | Boundary | Owner | xplane-fdau handoff condition |
 | --- | --- | --- |
+| `I1.0` | q4xpcc | Phase 24A specification and plan reconciliation may begin after `D1.3`. |
 | `I1.1` | q4xpcc | Contract/fixture adoption may begin after `C4.4`. |
 | `I1.2` | q4xpcc | Live XPLM acquisition adoption may begin after `A1.9`. |
 | `I2.1` | xpwebapi adapter owner | Corroboration-adapter work may begin after `C4.4`. |

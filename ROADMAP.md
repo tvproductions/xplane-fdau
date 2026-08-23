@@ -1,7 +1,7 @@
 # xplane-fdau Roadmap
 
 - **Status:** Active planning authority
-- **Updated:** 2026-08-16
+- **Updated:** 2026-08-22
 - **Decision owner:** Jeff / tvproductions
 
 ## Purpose
@@ -71,6 +71,10 @@ M0 Identity and native FDR kernel                                      verified
       |                           |
       |                           +-> T2.2 Dependency refresh --+
       |                           +-> T3.1 Guarded Git sync -----+-> B1 Source-layout isolation
+      |
+      +-> T1.2 review -> D1 q4xpcc contract-handoff readiness
+      |                    |
+      |                    +-> I1.0 planning reconciliation
       |
       +-> C1 Foundation -> C2 Catalogs -> C3 Evidence records -> C4 Closure
       |
@@ -185,6 +189,19 @@ spanning `C1`, `C2`, `C3`, and `C4`; its governance metadata is anchored by
 | `P1.5` | Omission, default, conversion, and precision-loss report | `P1.2`, `P1.3`, `P1.4` |
 | `P1.6` | End-to-end canonical-to-native-sink verification | `P1.5` |
 
+## D1 — q4xpcc contract-handoff readiness epic
+
+D1 freezes consumer planning contracts without delivering runtime artifacts.
+
+| Child | Outcome | Depends on |
+| --- | --- | --- |
+| `D1.1` | Canonical C1–C4 design approval | `T1.2` |
+| `D1.2` | Acquisition, recording, projection, and pinning contract design | `D1.1` |
+| `D1.3` | Reviewed q4xpcc Phase 24A handoff | `D1.2` |
+
+D1 changes readiness priority only: it does not change T1.3's dependency,
+C/A/R/P delivery order, G1, adoption boundaries, or release gates.
+
 ## Release gates
 
 | Gate | Outcome | Depends on |
@@ -243,6 +260,7 @@ governance and claims remain external.
 
 | Boundary | Outcome | Owner | xplane-fdau handoff condition |
 | --- | --- | --- | --- |
+| `I1.0` | q4xpcc Phase 24A specification and plan reconciliation | q4xpcc | Phase 24A specification and plan reconciliation may begin after `D1.3`. |
 | `I1.1` | q4xpcc contract-model and fixture adoption | q4xpcc | Contract-model and fixture adoption may begin after `C4.4`. |
 | `I1.2` | q4xpcc live XPLM acquisition adoption | q4xpcc | Live XPLM acquisition adoption may begin after `A1.9`. |
 | `I2.1` | Development/corroboration adapter adoption | xpwebapi adapter owner | Development/corroboration adapter work may begin after `C4.4`. |

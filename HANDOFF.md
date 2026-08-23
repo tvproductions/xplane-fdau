@@ -17,6 +17,29 @@ Completed implementation plan:
 
 Identity and native-FDR-kernel migration: implemented and verified, but unreleased.
 
+## Latest verified maintenance progress
+
+Local `main` includes the reviewed GeoJSON no-overwrite collision correction:
+
+- `4623275` (`fix: stabilize GeoJSON destination conflicts`) translates a
+  `FileExistsError` raised by the atomic no-replace publication step into the
+  stable consumer-facing error `<destination>: GeoJSON output already exists`.
+  It retains `os.link()` as the race-safe commit point, preserves an existing
+  or raced destination, removes the unpublished partial, and keeps the original
+  `FileExistsError` as the domain error's cause.
+- `a1b32ee` (`test: strengthen GeoJSON collision cause assertion`) applies the
+  independent review's only minor suggestion by proving the exact collision
+  exception remains chained. The review reported no Critical or Important
+  findings.
+
+Merged-result verification on 2026-08-23 passed 276 standard-library
+`unittest` tests with 94% statement coverage, all repository quality gates,
+`git diff --check`, and the strict MkDocs build. The clean integration
+checkpoint was `a1b32eedc736f0dd87276255f14ec52b64300119` on local `main`, 17
+commits ahead of `origin/main`; no push, tag, publication, or release occurred.
+This maintenance correction does not satisfy a D1 acceptance gate or change
+the next selected work: `D1.1` canonical C1-C4 design approval.
+
 ## Current roadmap and design review
 
 `ROADMAP.md` is the capability-order and release-gate authority. `BACKLOG.md`

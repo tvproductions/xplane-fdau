@@ -708,10 +708,9 @@ order, and conditions within an input use that order. A provider-degraded
 absent observation therefore exposes both its underlying absent condition and
 `provider_degraded`.
 
-Whenever a disposition permits a sample, every derived condition requires its
-equal-named quality flag, including `stale` on a dependency or companion.
-`reject` is the only disposition that produces no sample and therefore no
-quality assertion.
+Whenever the state machine produces a sample, every derived condition requires
+its equal-named quality flag, including `stale` on a dependency or companion.
+No quality assertion exists when no sample exists.
 
 The first condition whose disposition is not `accept_flagged` determines the
 outcome: `reject` prohibits a sample; `accept_raw_only` permits only an absent
@@ -721,7 +720,11 @@ with reason `input_unusable` naming that input and condition. `accept_flagged`
 permits evaluation to continue only when the input carries usable inline or
 payload evidence and the condition's equal-named quality flag is present; it
 never manufactures a missing input. A sample is prohibited when
-`accept_flagged` selects an input without usable evidence. The `stale`
+`accept_flagged` selects an input without usable evidence; this and `reject`
+are the two no-sample outcomes. A binding definition is invalid when
+`accept_flagged` is assigned to `unavailable`, `orphaned`, or `read_error`,
+because the raw status matrix never supplies usable evidence for those
+conditions. The `stale`
 condition for each consumed input uses its receipt reading, the sample
 evaluation reading, and the resolved measurement freshness thresholds; it can
 arise only from an exact same-domain age. Only the primary input's age is
@@ -750,6 +753,15 @@ selector; a binding may add narrower applicability selectors but may not
 contradict an equal `class_id`. Transformed bindings perform those same checks
 against the declared final transform output. No validator imports, discovers,
 or executes an algorithm.
+
+Failure policies are also cross-validated against the resolved measurement.
+For every condition whose disposition is not `reject`, the equal-named flag
+must occur in `allowed_quality`, and `allowed_validity` must intersect that
+flag's compatibility row. `accept_raw_only` and `accept_without_value`
+additionally require at least one of `invalid` or `unknown` because they force
+absent normalization. Thus a disposition never overrides measurement
+authorization and a binding that declares an outcome for which no conforming
+sample can exist is rejected at its `failure_policy` entry.
 
 No actual DataRef path, XPLM handle, Web API resource, plugin owner, or aircraft
 binding ships in this increment.
@@ -1137,17 +1149,25 @@ apply. Byte length, SHA-256, and retention status remain exact evidence but are
 not allow-list selectors. An inline or payload value of another representation
 is rejected before these membership checks.
 
-Freshness is evaluated only against entry zero, the primary observation. When
-its receipt reading shares `evaluation_clock`, `freshness_age_ns` is required
-and equals the exact non-negative checked difference converted to integer
+Only entry zero's age is persisted as `freshness_age_ns`. When the primary
+receipt reading shares `evaluation_clock`, that property is required and
+equals the exact non-negative checked difference converted to integer
 nanoseconds; fractional-tick conversion, overflow, or a negative difference
 fails. When domains differ, `freshness_age_ns` is prohibited because an anchor
-does not supply an exact drift model. An age less than or equal to
-`fresh_for_ns` is in the fresh interval. When `fresh_for_ns` exists, `valid`
-requires a known age in that interval and is prohibited above that boundary or
-when the primary age is unavailable. `stale` is required exactly when
-`stale_after_ns` exists and age is greater than that boundary, and is
-prohibited otherwise. The interval above `fresh_for_ns` through
+does not supply an exact drift model.
+
+Staleness classification nevertheless evaluates every consumed lineage input
+whose receipt reading shares `evaluation_clock`, using the same exact
+difference and the measurement `stale_after_ns`. The sample has a `stale`
+condition, and therefore requires the `stale` quality flag when produced, if
+at least one such age is greater than that boundary. The flag is prohibited
+when no consumed input has such an exact over-threshold age; a cross-domain
+input alone neither proves nor disproves staleness.
+
+For primary freshness, an age less than or equal to `fresh_for_ns` is in the
+fresh interval. When `fresh_for_ns` exists, `valid` requires a known primary
+age in that interval and is prohibited above that boundary or when the primary
+age is unavailable. The primary interval above `fresh_for_ns` through
 `stale_after_ns`, when both exist, is neither asserted fresh nor stale and
 cannot be `valid`.
 
@@ -1482,7 +1502,7 @@ The manifest records for every case:
 - input resource;
 - accepted, canonical, or rejected disposition;
 - expected error class and JSON property path for rejected cases;
-- expected canonical resource and SHA-256 for accepted cases; and
+- expected canonical resource and SHA-256 for accepted and canonical cases; and
 - a concise requirement identifier.
 
 `manifest.json` is canonical project JSON with exactly
@@ -1556,9 +1576,9 @@ Runner process status is 0 when every manifest case passed, 1 when the corpus
 was valid but at least one case failed, and 2 for invocation, unreadable-corpus,
 or invalid-manifest failure. Status 2 produces no conformance-result document.
 Python/native parity requires byte-identical canonical resources and SHA-256,
-equal accepted/rejected classification, and equal rejected error class and
-JSON Pointer. Implementation IDs, versions, and diagnostics are deliberately
-not equal across implementations.
+equal accepted/canonical/rejected classification, and equal rejected error
+class and JSON Pointer. Implementation IDs, versions, and diagnostics are
+deliberately not equal across implementations.
 
 ## ARINC extension boundary
 
@@ -1672,8 +1692,8 @@ Tests prove:
 Pure validators are tested for:
 
 - missing and mismatched measurement references;
-- binding representation, shape, unit, and applicability conflicts;
-- sample representation, unit, range, status, quality, and lineage conflicts;
+- binding representation, shape, unit, payload, and applicability conflicts;
+- sample representation, unit, payload, range, status, quality, and lineage conflicts;
 - frame identity, epoch, order, closure, and timing conflicts; and
 - acceptance of multiple corroborating bindings for one measurement.
 
@@ -1845,7 +1865,7 @@ satisfies its exact acceptance subsection below.
 
 - Binding catalog identity, ordering, uniqueness, schema, and hashes pass.
 - Missing or mismatched measurement references fail.
-- Direct bindings enforce unit/representation/shape/applicability parity.
+- Direct bindings enforce unit/representation/shape/payload/applicability parity.
 - Transformed bindings validate declarations without executing or claiming
   algorithm conformance.
 
@@ -1871,7 +1891,7 @@ satisfies its exact acceptance subsection below.
   immutable record reference.
 - Ordered derivation algorithm inputs remain intact and cycle-free within the
   supplied validation closure.
-- Catalog-resolved sample representation, unit, range, binding, status, and
+- Catalog-resolved sample representation, unit, payload, range, binding, status, and
   quality validation passes.
 - Missing, mismatched, or stale lineage fails with exact context.
 

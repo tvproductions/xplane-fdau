@@ -389,13 +389,14 @@ class FDRCliAtomicOutputTests(unittest.TestCase):
     def test_a_no_overwrite_race_preserves_the_raced_destination(self) -> None:
         output = self.root / "flight.geojson"
         partial = self.root / ".flight.geojson.injected.partial"
+        collision = FileExistsError("injected link race")
 
         def create_partial(_destination: Path) -> tuple[Path, FailingAtomicStream]:
             return partial, FailingAtomicStream(partial)
 
         def race_destination(_source: Path, destination: Path) -> None:
             destination.write_text("raced\n", encoding="utf-8")
-            raise FileExistsError("injected link race")
+            raise collision
 
         with (
             mock.patch("xplane_fdau.cli._create_partial", side_effect=create_partial),
@@ -405,7 +406,8 @@ class FDRCliAtomicOutputTests(unittest.TestCase):
             _write_atomic_json({"type": "FeatureCollection"}, output, overwrite=False)
 
         self.assertEqual(output, caught.exception.artifact_path)
-        self.assertEqual("injected link race", str(caught.exception.__cause__))
+        self.assertIsInstance(caught.exception.__cause__, FileExistsError)
+        self.assertIs(collision, caught.exception.__cause__)
         self.assertEqual("raced\n", output.read_text(encoding="utf-8"))
         self.assertFalse(partial.exists())
 

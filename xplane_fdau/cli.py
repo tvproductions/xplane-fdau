@@ -181,6 +181,13 @@ def _output_error(error: OSError, artifact_path: Path) -> FDROutputError:
         return wrapped
 
 
+def _existing_destination_error(error: FileExistsError, destination: Path) -> FDROutputError:
+    try:
+        raise FDROutputError("GeoJSON output already exists", artifact_path=destination) from error
+    except FDROutputError as wrapped:
+        return wrapped
+
+
 def _published_cleanup_error(error: OSError, partial: Path) -> FDROutputError:
     try:
         raise FDROutputError(
@@ -243,6 +250,12 @@ def _write_atomic_json(document: object, destination: Path, *, overwrite: bool) 
         return
     try:
         os.link(partial, destination)
+    except FileExistsError as primary:
+        _raise_after_unpublished_cleanup(
+            _existing_destination_error(primary, destination),
+            partial=partial,
+            stream=stream,
+        )
     except BaseException as primary:
         _raise_after_unpublished_cleanup(primary, partial=partial, stream=stream)
     try:

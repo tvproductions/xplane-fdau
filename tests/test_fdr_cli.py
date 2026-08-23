@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from contextlib import redirect_stderr, redirect_stdout
+import errno
 import io
 import json
 import os
@@ -281,6 +282,20 @@ class FDRCliTests(unittest.TestCase):
         self.assertEqual((0, "", ""), (status, stdout, stderr))
         self.assertEqual("FeatureCollection", json.loads(output.read_text(encoding="utf-8"))["type"])
 
+    def test_to_geojson_translates_posix_destination_collision(self) -> None:
+        output = self.root / "flight.geojson"
+        output.write_text("existing\n", encoding="utf-8")
+        collision = FileExistsError(errno.EEXIST, "File exists", str(output))
+
+        with mock.patch("xplane_fdau.cli.os.link", side_effect=collision):
+            status, stdout, stderr = self.capture_main(["fdr", "to-geojson", str(self.input), str(output)])
+
+        self.assertEqual((1, ""), (status, stdout))
+        self.assertIn(f"{output}: GeoJSON output already exists", stderr)
+        self.assertNotIn("[Errno 17]", stderr)
+        self.assertEqual("existing\n", output.read_text(encoding="utf-8"))
+        self.assertEqual([], list(self.root.glob(f".{output.name}.*.partial")))
+
     def test_to_geojson_serializes_before_creating_any_partial(self) -> None:
         output = self.root / "flight.geojson"
 
@@ -385,10 +400,12 @@ class FDRCliAtomicOutputTests(unittest.TestCase):
         with (
             mock.patch("xplane_fdau.cli._create_partial", side_effect=create_partial),
             mock.patch("xplane_fdau.cli.os.link", side_effect=race_destination),
-            self.assertRaisesRegex(ValueError, "injected link race"),
+            self.assertRaisesRegex(FDROutputError, "GeoJSON output already exists") as caught,
         ):
             _write_atomic_json({"type": "FeatureCollection"}, output, overwrite=False)
 
+        self.assertEqual(output, caught.exception.artifact_path)
+        self.assertEqual("injected link race", str(caught.exception.__cause__))
         self.assertEqual("raced\n", output.read_text(encoding="utf-8"))
         self.assertFalse(partial.exists())
 

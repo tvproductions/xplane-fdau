@@ -393,10 +393,7 @@ class BacklogAuthorityTests(unittest.TestCase):
                 backlog_body = section_body(BACKLOG, heading, level=3)
                 design_body = section_body(D1_DESIGN, heading, level=2)
                 marker = "- [x] " if child == "D1.1" else "- [ ] "
-                backlog_items = tuple(
-                    re.sub(r" — Evidence: \[verification\]\([^)]+\)$", "", item)
-                    for item in normalized_list_items(backlog_body, marker)
-                )
+                backlog_items = tuple(re.sub(r" — Evidence: \[verification\]\([^)]+\)$", "", item) for item in normalized_list_items(backlog_body, marker))
                 self.assertEqual(expected, backlog_items)
                 self.assertEqual(expected, normalized_numbered_items(design_body))
 
@@ -455,8 +452,8 @@ class BacklogAuthorityTests(unittest.TestCase):
     def test_handoff_orders_d1_verification_before_external_thresholds(self) -> None:
         handoff = re.sub(r"\s+", " ", read_text(HANDOFF))
         sequence = (
-            "execute the selected `D1.1` canonical-design approval",
-            "execute `D1.2` contract-only A1/R1/P1 design",
+            "`D1.1` canonical C1-C4 design approval is verified",
+            "execute the selected `D1.2` contract-only A1/R1/P1 design",
             "execute and verify `D1.3` reviewed consumer brief",
             "successful D1.3 verification makes `I1.0` eligible as the next reportable action",
         )

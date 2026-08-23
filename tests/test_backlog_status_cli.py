@@ -151,11 +151,7 @@ class BacklogStatusCliTests(unittest.TestCase):
                 "docs/superpowers/specs/2026-08-22-q4xpcc-contract-handoff-readiness-design.md",
                 child["specification"],
             )
-            expected_plan = (
-                "docs/superpowers/plans/2026-08-23-d1-1-canonical-design-approval.md"
-                if child_id == "D1.1"
-                else None
-            )
+            expected_plan = "docs/superpowers/plans/2026-08-23-d1-1-canonical-design-approval.md" if child_id == "D1.1" else None
             self.assertEqual(expected_plan, child["plan"])
             self.assertEqual(4 if child_id == "D1.1" else 0, child["gates"]["satisfied"])
             self.assertEqual(4, child["gates"]["total"])
@@ -164,10 +160,7 @@ class BacklogStatusCliTests(unittest.TestCase):
             self.assertEqual([expected_satisfied] * 4, [gate["satisfied"] for gate in child["gates"]["items"]])
             if child_id == "D1.1":
                 self.assertEqual(
-                    [
-                        [f".superpowers/sdd/2026-08-23-d1-1-canonical-design-approval/gate-{ordinal}.md"]
-                        for ordinal in range(1, 5)
-                    ],
+                    [[f".superpowers/sdd/2026-08-23-d1-1-canonical-design-approval/gate-{ordinal}.md"] for ordinal in range(1, 5)],
                     [gate["evidence"] for gate in child["gates"]["items"]],
                 )
                 self.assertEqual(

@@ -37,8 +37,9 @@ Merged-result verification on 2026-08-23 passed 276 standard-library
 `git diff --check`, and the strict MkDocs build. The clean integration
 checkpoint was `a1b32eedc736f0dd87276255f14ec52b64300119` on local `main`, 17
 commits ahead of `origin/main`; no push, tag, publication, or release occurred.
-This maintenance correction does not satisfy a D1 acceptance gate or change
-the next selected work: `D1.1` canonical C1-C4 design approval.
+This maintenance correction did not itself satisfy a D1 acceptance gate. The
+later D1.1 design-only batch is now verified, and the next selected work is
+`D1.2`.
 
 ## Current roadmap and design review
 
@@ -86,11 +87,24 @@ The approved D1 design is:
 
 `docs/superpowers/specs/2026-08-22-q4xpcc-contract-handoff-readiness-design.md`
 
-The next-agent sequence is exact: execute the selected `D1.1` canonical-design
-approval; execute `D1.2` contract-only A1/R1/P1 design;
-execute and verify `D1.3` reviewed consumer brief; successful D1.3 verification
-makes `I1.0` eligible as the next reportable action so the user can reconcile
-q4xpcc's Phase 24A specification and plans.
+`D1.1` canonical C1-C4 design approval is verified. Its focused execution plan,
+accepted independent review, and four gate records are:
+
+- `docs/superpowers/plans/2026-08-23-d1-1-canonical-design-approval.md`;
+- `.superpowers/sdd/2026-08-23-d1-1-canonical-design-approval/review.md`; and
+- `.superpowers/sdd/2026-08-23-d1-1-canonical-design-approval/gate-1.md`
+  through `gate-4.md`.
+
+Final local verification passed 70 focused governance/status tests, 278 full
+standard-library `unittest` tests, 94% statement coverage, the complete
+repository quality gate, 15 public-API/documentation tests, strict MkDocs, the
+documentation quality gate, human/JSON status with no finding, and Git
+whitespace/scope checks.
+
+The next-agent sequence is exact: execute the selected `D1.2` contract-only
+A1/R1/P1 design; execute and verify `D1.3` reviewed consumer brief; successful
+D1.3 verification makes `I1.0` eligible as the next reportable action so the
+user can reconcile q4xpcc's Phase 24A specification and plans.
 
 The external q4xpcc thresholds remain distinct:
 
@@ -100,8 +114,9 @@ The external q4xpcc thresholds remain distinct:
   adoption only after `C4.4`.
 - `I1.2` permits live XPLM acquisition adoption only after `A1.9`.
 
-`D1.1` through `D1.3` are specified, not complete. Do not emit the D1.3
-consumer brief or invent a revision pin before its gates are satisfied.
+`D1.2` and `D1.3` remain `specified` at `0/4` with no plan, review, or gate
+evidence. Do not emit the D1.3 consumer brief or invent a revision pin before
+their gates are satisfied.
 
 The approved translation of q4xpcc's remaining project-local workflows is:
 
@@ -121,15 +136,19 @@ feature worktrees merge back to `main`, pass merged-result verification, and
 are removed with their temporary branches. q4xpcc is read-only design input
 and is not a runtime, tooling, or checkout dependency.
 
-The canonical-contract design remains:
+The approved canonical-contract design is:
 
 `docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md`
 
-Its written review is still pending. `C1` through `C4` are architectural epics,
-decomposed in `BACKLOG.md` into child slices `C1.1` through `C4.4`. The first
-canonical slice remains `C1.1`, canonical JSON and number encoding. Do not
-create a separate handoff workflow or collapse an epic into one implementation
-plan.
+Its five-pass independent whole-design review ended `ACCEPTED` with no
+Critical, Important, or Minor finding. `C1` through `C4` are architectural
+epics, decomposed in `BACKLOG.md` into 18 child slices `C1.1` through `C4.4`.
+All 18 are now `specified`; `C1.1` through `C4.3` remain at `0/4`, `C4.4`
+remains at `0/5`, every C Plan/Review/Resume/Reason field remains `—`, and no C
+acceptance checkbox is satisfied. No runtime code, schema, fixture,
+conformance corpus, artifact, C implementation plan, release, push, tag, or
+publication was created by D1.1. Do not create a separate handoff workflow or
+collapse an epic into one implementation plan.
 
 The project is the unreleased `xplane-fdau` virtual FDAU/FDIU distribution:
 

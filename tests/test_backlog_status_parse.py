@@ -72,6 +72,42 @@ class ManagedMarkdownParseTests(unittest.TestCase):
         with self.assertRaisesRegex(MarkdownParseError, r"BACKLOG.md:[0-9]+: active child"):
             parse_backlog(path)
 
+    def test_local_child_contexts_reject_undotted_epic_identities(self) -> None:
+        cases = (
+            (
+                "roadmap child row",
+                self.copy_roadmap,
+                ("| `T1.1` | Markdown authority", "| `T1` | Markdown authority"),
+                parse_roadmap,
+            ),
+            (
+                "active child selection",
+                self.copy_backlog,
+                ("- Active child: —.", "- Active child: `T1`."),
+                parse_backlog,
+            ),
+            (
+                "backlog inventory row",
+                self.copy_backlog,
+                ("| `T1.1` | Markdown authority", "| `T1` | Markdown authority"),
+                parse_backlog,
+            ),
+            (
+                "acceptance heading",
+                self.copy_backlog,
+                (
+                    "### T1.1 — Markdown authority contract and explicit inventory normalization",
+                    "### T1 — Markdown authority contract and explicit inventory normalization",
+                ),
+                parse_backlog,
+            ),
+        )
+        for label, copy, replace, parse in cases:
+            with self.subTest(context=label):
+                path = copy(replace=replace)
+                with self.assertRaisesRegex(MarkdownParseError, "local-child identity"):
+                    parse(path)
+
     def test_malformed_inventory_cell_count_fails_closed(self) -> None:
         path = self.copy_backlog(
             replace=(
@@ -401,6 +437,22 @@ class ManagedMarkdownParseTests(unittest.TestCase):
         self.assertIsNone(artifacts.specifications[0].approval)
         self.assertIsNone(artifacts.plans[0].approval)
         self.assertIsNone(artifacts.plans[0].completion_evidence)
+
+    def test_completion_evidence_accepts_docs_link_and_rejects_external_link_form(self) -> None:
+        root = self.copy_fixture_root()
+        plan = root / "docs/superpowers/plans/t1-1.md"
+        inline = "- **Completion evidence:** `.superpowers/sdd/t1-1/completion.md`"
+        docs_link = "- **Completion evidence:** [completion](docs/evidence/completion.md)"
+        plan.write_text(plan.read_text(encoding="utf-8").replace(inline, docs_link, 1), encoding="utf-8")
+
+        parsed = parse_artifacts(root)
+
+        self.assertEqual("docs/evidence/completion.md", parsed.plans[0].completion_evidence)
+
+        external_link = "- **Completion evidence:** [completion](.superpowers/sdd/t1-1/completion.md)"
+        plan.write_text(plan.read_text(encoding="utf-8").replace(docs_link, external_link, 1), encoding="utf-8")
+        with self.assertRaisesRegex(MarkdownParseError, "docs tree"):
+            parse_artifacts(root)
 
     def test_governance_artifact_accepts_one_blank_line_between_title_and_metadata(self) -> None:
         artifacts = parse_artifacts(FIXTURE)

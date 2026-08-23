@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import nullcontext
 from dataclasses import dataclass
 import importlib.util
 from io import StringIO
@@ -46,11 +47,12 @@ class BacklogStatusCliTests(unittest.TestCase):
         backlog.write_text(backlog.read_text(encoding="utf-8").replace("0/1", "0/x", 1), encoding="utf-8")
         return temporary
 
-    def run_cli(self, argv: list[str], *, root: Path) -> CliResult:
+    def run_cli(self, argv: list[str], *, root: Path, mock_git: bool = True) -> CliResult:
         module = load_cli()
         output = StringIO()
         errors = StringIO()
-        with patch.object(module, "observe_git", return_value=GitState("main", False, ())):
+        git_context = patch.object(module, "observe_git", return_value=GitState("main", False, ())) if mock_git else nullcontext()
+        with git_context:
             code = module.main(  # ty: ignore[unresolved-attribute]
                 argv, root=root, stdout=output, stderr=errors
             )
@@ -78,7 +80,7 @@ class BacklogStatusCliTests(unittest.TestCase):
         self.assertEqual(["T1.1", "T1.2"], [child["id"] for child in payload["backlog"]["children"]])
 
     def test_current_repository_status_reports_human_and_json(self) -> None:
-        human = self.run_cli(["status"], root=ROOT)
+        human = self.run_cli(["status"], root=ROOT, mock_git=False)
 
         self.assertEqual(0, human.code, human.stderr)
         self.assertIn("64 local children", human.stdout)
@@ -92,7 +94,7 @@ class BacklogStatusCliTests(unittest.TestCase):
         ):
             self.assertIn(line, human.stdout)
 
-        machine = self.run_cli(["status", "--json"], root=ROOT)
+        machine = self.run_cli(["status", "--json"], root=ROOT, mock_git=False)
 
         self.assertEqual(0, machine.code, machine.stderr)
         payload = json.loads(machine.stdout)

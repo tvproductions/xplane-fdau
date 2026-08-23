@@ -4,7 +4,7 @@
 - **Gate:** —
 - **Kind:** verification
 - **Result:** passed
-- **Date:** 2026-08-16
+- **Date:** 2026-08-23
 - **Subject:** T1.2 implementation-plan completion
 
 The approved T1.2 implementation-plan tasks and accepted whole-branch review
@@ -25,3 +25,13 @@ unchanged Git state, the complete 267-test quality gate at 94% product
 coverage, 15 documentation/public-API tests, strict MkDocs, the documentation
 quality gate, and diff checks. Gate 1, Gate 4, and this completion evidence were
 regenerated because parser and integration coverage changed.
+
+The 2026-08-23 independent-review remediation corrected completion-evidence
+link parsing, enforced dotted identities in every local-child syntax context,
+and exercised real Git observation through current-repository CLI integration.
+Fresh verification passed 69 focused tests, scoped Ruff/format/ty, both direct
+status commands with unchanged Git state, the complete 274-test quality gate
+at 94% product coverage, strict MkDocs, and diff checks. Gate 1, Gate 4, and
+this completion evidence were regenerated; Gates 2 and 3 remain unchanged.
+This remains implementation evidence only until the independent re-review is
+accepted and committed as separate child-level review evidence.

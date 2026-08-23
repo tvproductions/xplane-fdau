@@ -133,6 +133,13 @@ def _identity(path: Path, line: int, value: str) -> str:
     return match.group(1)
 
 
+def _local_child_identity(path: Path, line: int, value: str) -> str:
+    match = _LOCAL_CHILD_IDENTITY.fullmatch(value)
+    if match is None:
+        raise MarkdownParseError(path, line, f"invalid local-child identity cell: {value!r}")
+    return match.group(1)
+
+
 def _find_heading(path: Path, lines: tuple[_Line, ...], heading: str) -> int:
     indexes = [index for index, line in enumerate(lines) if line.text == heading]
     if len(indexes) != 1:
@@ -316,12 +323,9 @@ def _artifact_children(path: Path, line: int, value: str) -> tuple[str, ...]:
 
 def _artifact_child(path: Path, line: int, value: str) -> str:
     try:
-        child = _identity(path, line, value)
+        return _local_child_identity(path, line, value)
     except MarkdownParseError as error:
         raise MarkdownParseError(path, line, "Roadmap child requires one identity") from error
-    if "." not in child:
-        raise MarkdownParseError(path, line, "Roadmap child requires one identity")
-    return child
 
 
 def _artifact_relative_value(path: Path, line: int, value: str, label: str) -> str:
@@ -334,6 +338,17 @@ def _artifact_relative_value(path: Path, line: int, value: str, label: str) -> s
 
 def _optional_artifact_value(value: str) -> str | None:
     return None if value == "—" else value
+
+
+def _completion_evidence(path: Path, line: int, value: str) -> str | None:
+    if value == "—":
+        return None
+    if value.startswith("`"):
+        return _artifact_relative_value(path, line, value, "Completion evidence")
+    target = _repository_link(path, line, value)
+    if not target.startswith("docs/"):
+        raise MarkdownParseError(path, line, "Completion evidence Markdown link must target the docs tree")
+    return target
 
 
 def _parse_artifact(root: Path, path: Path, family: str) -> SpecificationArtifact | PlanArtifact | HistoricalArtifact:
@@ -375,9 +390,7 @@ def _parse_artifact(root: Path, path: Path, family: str) -> SpecificationArtifac
         _artifact_child(path, metadata[3][0].number, values["Roadmap child"]),
         _artifact_relative_value(path, metadata[4][0].number, values["Source specification"], "Source specification"),
         _optional_artifact_value(values["Approval"]),
-        None
-        if values["Completion evidence"] == "—"
-        else _artifact_relative_value(path, metadata[6][0].number, values["Completion evidence"], "Completion evidence"),
+        _completion_evidence(path, metadata[6][0].number, values["Completion evidence"]),
         SourceLocation(relative_path, title.number),
     )
 
@@ -471,7 +484,7 @@ def parse_roadmap(path: Path) -> Roadmap:
         rows = _table(path, lines, index + 1, end, header, "standards" if epic_id == "S" else "child")
         epic_children: list[str] = []
         for line, values in rows:
-            child_id = _identity(path, line.number, values[0])
+            child_id = _local_child_identity(path, line.number, values[0])
             external_prerequisite = None
             if len(values) == 4:
                 if not values[3]:
@@ -547,7 +560,7 @@ def _active_child(path: Path, lines: tuple[_Line, ...]) -> str | None:
     match = re.fullmatch(r"- Active child: (`[A-Z][0-9]+(?:\.[0-9]+)?`)\.", line.text)
     if match is None:
         raise MarkdownParseError(path, line.number, "active child selection is invalid")
-    return _identity(path, line.number, match.group(1))
+    return _local_child_identity(path, line.number, match.group(1))
 
 
 def _gate_heading(
@@ -561,8 +574,10 @@ def _gate_heading(
     for index in range(start, end):
         line = lines[index]
         match = _GATE_HEADING.fullmatch(line.text)
-        if match is not None and match.group(1) == child_id:
-            found.append((index, _section_end(lines, index, 3)))
+        if match is not None:
+            heading_child = _local_child_identity(path, line.number, f"`{match.group(1)}`")
+            if heading_child == child_id:
+                found.append((index, _section_end(lines, index, 3)))
     if len(found) > 1:
         raise MarkdownParseError(path, lines[found[1][0]].number, f"duplicate acceptance-gate heading for {child_id}")
     return found[0] if found else None
@@ -598,7 +613,7 @@ def parse_backlog(path: Path) -> Backlog:
     acceptance_end = _section_end(lines, acceptance_heading, 2)
     children: list[BacklogChild] = []
     for line, values in inventory_rows:
-        child_id = _identity(path, line.number, values[0])
+        child_id = _local_child_identity(path, line.number, values[0])
         displayed_satisfied, displayed_total = _gate_count(path, line.number, values[6])
         gate_items: tuple[GateItem, ...] = ()
         if values[6] != "—":

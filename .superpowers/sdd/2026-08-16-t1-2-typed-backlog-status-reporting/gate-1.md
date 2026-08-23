@@ -4,7 +4,7 @@
 - **Gate:** `1`
 - **Kind:** verification
 - **Result:** passed
-- **Date:** 2026-08-16
+- **Date:** 2026-08-23
 - **Subject:** Frozen typed model and strict Markdown parser fixtures
 
 Fresh accepted-review remediation verification passed 62 focused model,
@@ -22,3 +22,13 @@ families. RED accepted all 21 malformed rows because `_cells` stripped every
 edge delimiter. GREEN rejects all 21 after removing exactly one required outer
 delimiter. The focused suite now passes 63 tests, and the complete quality gate
 passes 267 tests with 94% product coverage.
+
+The 2026-08-23 independent-review remediation added test-first coverage for
+the remaining managed-syntax boundaries. RED proved that a contract-valid
+docs-tree Markdown completion-evidence link was rejected and that undotted
+epic-shaped identities entered roadmap-child, active-child, backlog-child, and
+acceptance-heading contexts. GREEN accepts only docs-tree Markdown links while
+retaining inline repository-relative completion paths, and uses a dedicated
+dotted local-child parser in every local-child context. The complete focused
+suite passes 69 tests; scoped Ruff, format, and ty checks pass; and the full
+quality gate passes 274 tests with 94% product coverage.

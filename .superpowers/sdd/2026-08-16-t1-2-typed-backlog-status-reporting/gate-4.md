@@ -4,7 +4,7 @@
 - **Gate:** `4`
 - **Kind:** verification
 - **Result:** passed
-- **Date:** 2026-08-16
+- **Date:** 2026-08-23
 - **Subject:** Current-repository parse and report integration
 
 `uv run python -m unittest
@@ -22,3 +22,10 @@ commands again exited zero and left repository state unchanged. Human output
 contained 601 lines; JSON remained schema version 1 with `valid: true`, zero
 findings, `T1.2` at `implemented`, `4/4`, and null review evidence. The full
 quality gate passed 267 tests.
+
+The 2026-08-23 remediation changed the current-repository CLI integration
+test to exercise the real `observe_git` boundary for both human and JSON
+forms. Both direct status commands exited zero, JSON remained schema version
+1 with `valid: true`, zero findings, null recommendation, and `T1.2` selected,
+and the before/after Git state was identical. The full quality gate passed 274
+tests.

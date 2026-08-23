@@ -225,17 +225,19 @@ The type notation in this specification is normative:
 
 Unless a tighter bound is stated, a version-1 array or object contains at most
 65535 elements/properties. Provenance, limitations, applicability,
-dependencies, companions, transforms, and derivation-parent arrays contain at
+dependencies, companions, transforms, and derivation-input arrays contain at
 most 256 entries; coordinate axes contain at most 32; frame samples and
 observations contain at most 65535. Contract JSON nesting depth is at most 64,
 counting the root container as one. These are shape limits, not acquisition or
 recording capacity claims.
 
-Each family schema lists properties in the semantic validation order used by
-loaders and errors, but that listing does not make wire-property order
-semantic. The exact family property inventories are the tables in this
-specification; schemas may factor repeated shapes into `$defs` but may not add
-an undocumented property or default.
+The property inventories and exact-property sentences in this specification
+list properties in semantic validation order. Schema-resource object members,
+including each `properties` object, instead use canonical lexical key order;
+schema member order never determines error precedence. The exact family
+property inventories are the tables in this specification; schemas may factor
+repeated shapes into `$defs` but may not add an undocumented property or
+default.
 
 Schema version describes wire shape. Definition revision describes semantic
 meaning. A unit, sign convention, transform reference, validity rule,
@@ -440,7 +442,8 @@ Successful serialization always emits canonical bytes.
 the exact properties `media_type: NfcText(127)`, `byte_length: UInt63`,
 `sha256: Sha256`, `storage_role: Identifier`, and `retention_status`. Media type
 is lowercase RFC 6838 type/subtype text without parameters and must match
-`[a-z0-9!#$&^_.+-]+/[a-z0-9!#$&^_.+-]+`. `retention_status` is one of
+`[a-z0-9][a-z0-9!#$&^_.+-]{0,126}/[a-z0-9][a-z0-9!#$&^_.+-]{0,126}`.
+`retention_status` is one of
 `retained`, `intentionally_omitted`, `missing`, or `unverified`. Length and hash
 describe the claimed original byte sequence even when it was omitted, is now
 missing, or has not been verified. The contract validates the claim but does
@@ -522,7 +525,7 @@ The bullets above map to these exact version-1 properties:
 | `unit` | `UnitSpec` | exact unit or explicit unitless declaration |
 | `coordinates` | `CoordinateSpec` | explicitly declares coordinate semantics or their absence |
 | `numeric` | optional `NumericSpec` | required for integer, real, vector, and numeric arrays; prohibited otherwise |
-| `enumeration` | optional `EnumerationSpec` | required only for enumeration; prohibited otherwise |
+| `enumeration` | optional `EnumerationSpec` | required for scalar enumeration and for fixed/variable arrays whose element representation is enumeration; prohibited otherwise |
 | `freshness` | `FreshnessSpec` | freshness and stale classification semantics |
 | `interpolation_policy` | closed string | `prohibited`, `hold`, or `linear`; `linear` requires real/vector/numeric-array representation |
 | `discontinuity_policy` | closed string | `preserve`, `start_new_epoch`, or `reject` |
@@ -566,19 +569,26 @@ optional `minimum` and `maximum`; precision is 1 through 64, resolution is
 greater than zero, and minimum is not greater than maximum. For integer
 definitions those three numeric properties are `Int64`. For real, vector, and
 real-array definitions they are `Binary64`. Numeric arrays whose element
-representation is integer use the integer domain. Mixed numeric element types
-are prohibited.
+representation is integer use the integer domain. For vectors and numeric
+arrays the single resolution/minimum/maximum triple applies independently and
+identically to every element; version 1 has no per-axis numeric bounds. Mixed
+numeric element types are prohibited.
 `EnumerationSpec` contains a nonempty array of members ordered by member code.
 Each member contains `code: Identifier`, `label: NfcText(256)`, and `kind`
 (`known`, `unknown`, or `reserved`); codes are unique and at most one member is
 `unknown`. `FreshnessSpec` contains optional `fresh_for_ns: UInt63` and
 optional `stale_after_ns: UInt63`; at least one is present and, when both are
 present, `fresh_for_ns` is not greater than `stale_after_ns`.
+Every scalar enumeration value and every enumeration-array element must name a
+non-reserved member in the resolved `EnumerationSpec`; a reserved code is
+definition metadata and is never a sample value.
 
 `ApplicabilitySelector` contains `class_id: Identifier` and
-`value: NfcText(256)`. Its canonical lexical key is the pair `(class_id,
-value)`; duplicate or noncanonical selector order fails. These selectors state
-semantic applicability only and never authorize simulator access.
+`value: NfcText(256)`. Within any applicability or context array, `class_id` is
+unique and is the canonical lexical sort key; duplicate classes or
+noncanonical selector order fail. A context therefore supplies at most one
+value for a class. These selectors state semantic applicability only and never
+authorize simulator access.
 
 Unit, quantity, frame, and datum fields are authority-qualified identities.
 This increment does not invent a universal unit registry or execute conversion.
@@ -649,40 +659,68 @@ may declare a unit or be unitless.
 The primary source has the reserved input identity `binding.primary`.
 `dependencies` is an ordered array of `BindingInputRef`; each contains
 `input_id: Identifier`, `source: SourceSpec`, and `required: Boolean`. Input IDs
-are unique and cannot equal `binding.primary`. `companions` is an ordered array
-containing `role` (`status`, `validity`, or `status_and_validity`) plus a
-`source: SourceSpec`; the source tuple `(provider family, adapter family,
-resource kind, resource ID, resource selection)` is unique. Dependency order is algorithm input order;
+are unique and cannot equal `binding.primary`. `companions` is an ordered
+array; each contains `input_id: Identifier`, `role` (`status`, `validity`, or
+`status_and_validity`), and `source: SourceSpec`. Dependency and companion
+input IDs are jointly unique and cannot equal `binding.primary`; the source
+tuple `(provider family, adapter family, resource kind, resource ID, resource
+selection)` is unique. Dependency order is algorithm input order;
 companion order is evidence interpretation order. Neither is sorted by a
 loader.
 
 `transforms` is an ordered acyclic array of `TransformStep`. Each step contains
 `step_id: Identifier`, `algorithm: AlgorithmRef`, a nonempty ordered `inputs`
 array, `output_representation: ValueRepresentation`, optional
-`output_element_representation`, `output_shape: ShapeSpec`, and `output_unit:
-UnitSpec`. Step IDs are unique and cannot equal any source input ID. Each
+`output_element_representation`, optional `output_payload: PayloadSpec`,
+`output_shape: ShapeSpec`, and `output_unit: UnitSpec`. Step IDs are unique and
+cannot equal any source input ID. Each
 `TransformInput` contains `input_id`, `representation`, optional
-`element_representation`, `shape`, and `unit`. Its input ID resolves to
+`element_representation`, optional `payload: PayloadSpec`, `shape`, and `unit`.
+Its input ID resolves to
 `binding.primary`, one dependency input, or a preceding step; forward and self
 references are prohibited. Its declared representation/element/shape/unit must
-equal the resolved source or step output. Element-representation presence
-follows the array rules. The last step output matches the referenced
+equal the resolved source or step output. Payload is present exactly when the
+corresponding input or output representation is `referenced_bytes` and must
+equal the resolved source/step `PayloadSpec`; it is prohibited otherwise.
+Element-representation presence follows the array rules. The last step output,
+including payload constraints when applicable, matches the referenced
 measurement. Dependencies require at least one transform; a direct binding has
 no dependency and no transform. Repeated algorithm references are allowed
 because step identity, order, inputs, and parameters distinguish them.
 
-`failure_policy` contains exactly `absent`, `orphaned`, `stale`, and
-`read_error`; each value is one of `reject`, `accept_raw_only`,
-`accept_flagged`, or `accept_without_value`. `acquisition_phase` is one of
+`failure_policy` contains exactly `unavailable`, `orphaned`, `stale`,
+`read_error`, `type_mismatch`, and `provider_degraded`; each value is one of
+`reject`, `accept_raw_only`, `accept_flagged`, or `accept_without_value`.
+`acquisition_phase` is one of
 `before_flight_model`, `after_flight_model`, `either`, or `unknown`.
 `replay_policy` is `preserve`, `rederive`, or `prohibit`. Applicability uses the
 same canonical array-set as measurements. Limitations use the same ordered,
 unique text array as measurement definitions.
 
-Failure disposition is a closed declaration: `reject`, `accept_raw_only`,
-`accept_flagged`, or `accept_without_value`. Replay policy is `preserve`,
-`rederive`, or `prohibit`. These values describe future behavior; this increment
-does not execute it.
+Failure disposition is a closed declaration. For each consumed primary,
+dependency, or companion input, the sample validator derives zero or more
+conditions in this precedence order: `unavailable`, `orphaned`, `read_error`,
+`type_mismatch`, `provider_degraded`, `stale`. Inputs are evaluated in lineage
+order, and conditions within an input use that order. A provider-degraded
+absent observation therefore exposes both its underlying absent condition and
+`provider_degraded`.
+
+The first condition whose disposition is not `accept_flagged` determines the
+outcome: `reject` prohibits a sample; `accept_raw_only` permits only an absent
+normalization with reason `normalization_not_attempted` naming that input and
+condition; and `accept_without_value` permits only an absent normalization
+with reason `input_unusable` naming that input and condition. `accept_flagged`
+permits evaluation to continue only when the input carries usable inline or
+payload evidence and the condition's equal-named quality flag is present; it
+never manufactures a missing input. A sample is prohibited when
+`accept_flagged` selects an input without usable evidence. The `stale`
+condition for each consumed input uses its receipt reading, the sample
+evaluation reading, and the resolved measurement freshness thresholds; it can
+arise only from an exact same-domain age. Only the primary input's age is
+persisted as `freshness_age_ns`. When all conditions are `accept_flagged`,
+normalization may succeed or may independently fail in a declared transform.
+This state machine is declarative validation only; the kernel does not acquire
+or normalize data. Replay policy is `preserve`, `rederive`, or `prohibit`.
 
 `validate_binding_catalog(binding_catalog, measurement_catalog)` is a pure
 operation that resolves every measurement reference. For a binding without a
@@ -751,8 +789,10 @@ part of the public contract.
 `ClockAnchor` contains `monotonic_reading: ClockReading`, `utc: UtcInstant`,
 and `uncertainty_ns: UInt63`. When a domain object is supplied for validation,
 the reading must resolve to a `host_monotonic` domain. Cross-process or
-restarted-process correlation requires anchors; the contract never subtracts
-unrelated monotonic clocks or pretends the mapping is exact.
+restarted-process correlation requires anchors; an anchor is a correlation at
+its exact reading, not a rate or drift model. The contract never subtracts
+unrelated monotonic clocks, extrapolates an anchor to another reading, or
+pretends the mapping is exact.
 
 `ObservationTiming` contains:
 
@@ -779,7 +819,8 @@ instance must match the receipt reading and record producer. `source_timing`
 contains `clock: ClockDomain`, `reading: ClockReading`, and optional
 `source_sequence: UInt63`; its IDs must match, and its clock kind is `source`
 or `simulator`. Receipt anchor, when present, must reference the receipt domain
-and its UTC must equal `receipt_utc`.
+and its monotonic reading and UTC must equal `receipt_reading` and
+`receipt_utc`, respectively.
 
 `acquisition_phase` is `before_flight_model`, `after_flight_model`, or
 `unknown`. `replay_state` is `live`, `replay`, `seeking`, or `unknown`.
@@ -905,7 +946,7 @@ precision; `provider_degraded` means the provider reported degraded service;
 `read_error` means acquisition failed while reading; `reordered` means source
 sequence/arrival evidence is out of declared order; `rounded` means a declared
 rounding rule changed the value; `saturated` means a value was replaced by a
-declared boundary; `stale` means age exceeded the definition's stale threshold;
+declared boundary; `stale` means age is greater than the definition's stale threshold;
 `type_mismatch` means observed representation/shape differs from the binding;
 and `unavailable` means no source value was available. These flags describe
 acquisition evidence only; no tolerance, flight-performance, event-severity,
@@ -916,16 +957,31 @@ ascending lexical order. Loaders and programmatic constructors reject duplicate
 or noncanonical order rather than silently sorting. An empty tuple means no
 known acquisition degradation; it does not assert validity.
 
-For every raw-observation lineage entry, status implies these minimum
-quality flags: `unavailable`, `orphaned`, `read_error`, `type_mismatch`, and
+For every raw-observation lineage entry, status implies these minimum quality
+flags: `unavailable`, `orphaned`, `read_error`, `type_mismatch`, and
 `provider_degraded` each require the equal-named flag; absent
 provider-degraded evidence additionally requires the flag matching its absent
-reason. `ok` implies no flag. Other flags arise only from declared validation,
-transform, timing, or acquisition evidence. `valid` is prohibited with
-`conversion_failed`, `unavailable`, `orphaned`, `read_error`, or
-`type_mismatch`; other quality flags may coexist with any validity state when
-the measurement definition authorizes them. No quality flag is invented from
-an empty array.
+reason. Status `ok` contributes no status-derived flag; it does not prohibit a
+flag justified by transform, range, timing, sequence, or other acquisition
+evidence. No quality flag is invented from an empty array.
+
+The complete validity compatibility matrix is:
+
+| Quality flag | Allowed validity states | Additional invariant |
+| --- | --- | --- |
+| `conversion_failed` | `invalid`, `unknown` | normalization is absent with reason `normalization_failed` |
+| `dropped`, `orphaned`, `read_error`, `unavailable` | `invalid`, `unknown` | normalization is absent; the flag is supported by lineage evidence |
+| `out_of_declared_range` | `invalid`, `unknown` | preserved normalized value violates an inclusive declared bound |
+| `stale` | `invalid`, `unknown` | an exact same-domain consumed-input age is greater than `stale_after_ns` |
+| `type_mismatch` | `invalid`, `unknown` | lineage contains the mismatched observed representation or shape |
+| `discontinuous`, `duplicate`, `precision_lost`, `provider_degraded`, `reordered`, `rounded`, `saturated` | `valid`, `invalid`, `unknown` | the flag must be independently supported by the stated acquisition evidence |
+
+Validity `not_applicable` requires an empty quality array and the
+`not_applicable` absent-normalization reason; every quality flag is therefore
+prohibited with it. A quality flag must also occur in the resolved measurement
+definition's `allowed_quality`, and the chosen validity must occur in
+`allowed_validity`. These table rows are the only validity/quality
+combinations; there is no catch-all coexistence rule.
 
 Operational evaluation—within tolerance, outside tolerance, indeterminate, or
 a later FOQA-oriented finding—is not a validity or quality flag and remains
@@ -944,38 +1000,45 @@ outside this project increment.
 - normalized value or explicit absent-normalized-value state;
 - ordered applied transform/calibration references;
 - `ValidityState` and canonically ordered `QualityFlag` values;
-- freshness age in non-negative integer nanoseconds at evaluation, when known;
+- exact host-monotonic evaluation clock and reading;
+- freshness age in non-negative integer nanoseconds when the primary receipt
+  and evaluation readings share that clock domain;
 - ordered raw-observation lineage containing complete observations or immutable
   observation references;
-- ordered derivation-parent sample references; and
+- an explicit direct or algorithm-derived parent declaration; and
 - producer identity.
 
 Its exact version-1 properties are `contract_family`, `schema_version`,
 `sample_id: Uuid`, `producer: ProducerIdentity`, `session_id: Uuid`,
 `stream_id: Uuid`, `epoch_id: Uuid`, `sequence: UInt63`, `measurement_ref:
-DefinitionRef`, `binding_ref: DefinitionRef`, `normalization`, ordered
+DefinitionRef`, `binding_ref: DefinitionRef`, `evaluation_clock: ClockDomain`,
+`evaluation_reading: ClockReading`, `normalization`, ordered
 `applied_transforms`, `validity`, `quality`, optional `freshness_age_ns:
-UInt63`, nonempty ordered `observation_lineage`, ordered `derivation_parents`, and
-`content_hash`.
+UInt63`, nonempty ordered `observation_lineage`, `derivation`, and
+`content_hash`. The evaluation clock is `host_monotonic` and its ID equals the
+evaluation reading's domain ID.
 
 `normalization` is exactly one tagged variant:
 
 - `{"kind":"succeeded","value":InlineValue,"unit":UnitSpec}` or, for a
   referenced-byte measurement,
   `{"kind":"succeeded","payload":PayloadReference,"unit":{"kind":"unitless"}}`;
-- `{"kind":"absent","reason":NormalizedAbsentReason}`; the
-  `normalization_failed` reason additionally requires `failed_step_id:
-  Identifier`, which is prohibited for every other reason.
+- `{"kind":"absent","reason":NormalizedAbsentReason,...}` with the
+  reason-selected properties below.
 
-`NormalizedAbsentReason` is `source_absent`, `normalization_not_attempted`,
-`normalization_failed`, or `not_applicable`. Successful representation and
-unit must equal the resolved measurement definition. `source_absent` requires
-an absent primary raw observation; `normalization_not_attempted` requires the binding
-disposition `accept_raw_only`; `normalization_failed` requires
-`conversion_failed` and a failed step present in the resolved binding; and
-`not_applicable` requires validity
-`not_applicable`. Any absent normalization prohibits validity `valid` and
-requires at least one quality flag.
+`NormalizedAbsentReason` is `input_unusable`,
+`normalization_not_attempted`, `normalization_failed`, or `not_applicable`.
+The first two reasons require `input_id: Identifier` and `condition`, where
+condition is one of the six `failure_policy` keys; these fields are prohibited
+for the other reasons. `input_unusable` requires the first blocking condition's
+disposition `accept_without_value`; `normalization_not_attempted` requires
+`accept_raw_only`. `normalization_failed` instead requires `failed_step_id:
+Identifier`, the `conversion_failed` quality flag, and a failed step present in
+the resolved binding. `not_applicable` has no extra property and requires
+validity `not_applicable`. Successful representation and unit must equal the
+resolved measurement definition. Any absent normalization prohibits validity
+`valid`; it requires at least one quality flag except for `not_applicable`,
+which requires none.
 
 `applied_transforms` is an ordered array of `AppliedTransform`; each contains
 `step_id: Identifier` and `algorithm: AlgorithmRef`. The entries must exactly
@@ -997,19 +1060,36 @@ primary source. It is followed by one entry for every required dependency in
 binding order, then any present optional dependencies in binding order, then
 any present companions in companion order. Every entry's provider, adapter,
 resource identity, and resource selection must match its binding declaration.
-An optional input that is absent has no fabricated lineage entry.
-`derivation_parents` is an ordered array of unique `RecordRef` values naming
-measurement-sample version 1 and cannot contain the sample's own identity.
-Order is algorithm input order, not lexical order.
+The primary and every required dependency always have a lineage entry, even
+when its `RawValueEvidence` is absent; a missing required record invalidates
+the sample. An optional dependency or companion that was not observed has no
+fabricated lineage entry.
+
+`derivation` is exactly one tagged variant:
+
+- `{"kind":"direct"}` when no measurement sample influenced this sample; or
+- `{"kind":"algorithm","algorithm":AlgorithmRef,"inputs":[...]}`.
+
+The algorithm variant has a nonempty ordered `inputs` array. Each input
+contains `input_id: Identifier` and `sample_ref: RecordRef`; input IDs and
+record references are each unique, every reference names measurement-sample
+version 1, and none names the current sample. Input order is algorithm input
+order, not lexical order. The derivation algorithm declares that its ordered
+parent sample values influenced the final normalized value after the binding's
+declared raw-input transforms; the contract validates that declaration and
+closure but never executes it. Algorithm derivation requires succeeded
+normalization, a complete binding transform list, and succeeded normalization
+for every resolved parent. A direct derivation has no parent edge.
 
 `RecordRef` pins a runtime UUID, family URI, schema version, and content hash.
 Every sample reaches all raw observations it consumed through complete records
 or immutable references. A provider-specific exhaustive audit stream is not a
 substitute for this lineage.
 
-A normalized value is prohibited when conversion failed or any required raw
-lineage entry is unavailable, orphaned, or a read error. An absent normalized value requires
-non-valid validity and at least one explanatory quality flag. Values outside a
+A normalized value is prohibited when conversion failed or the binding failure
+state machine selects `accept_raw_only` or `accept_without_value`. An absent
+normalized value requires non-valid validity and at least one explanatory
+quality flag, except for the exact not-applicable case. Values outside a
 declared range may be preserved with `out_of_declared_range` and non-valid
 validity; a value changed to the boundary requires `saturated`. Rounding and
 binary/storage precision loss require `rounded` and `precision_lost`
@@ -1021,10 +1101,24 @@ arguments are finite sequences indexed by validated record identity; duplicate
 identities fail. It resolves pinned references and checks representation,
 shape, unit, range, binding provider/adapter/resource identity and selection,
 observed-versus-declared type/shape compatibility, applicability,
-status-to-quality mapping, and lineage. An inline lineage entry is validated
-directly; a reference must resolve in `observations`; every derivation parent
+status-to-quality mapping, evaluation timing, freshness, and lineage. An inline lineage entry is validated
+directly; a reference must resolve in `observations`; every derivation input
 must resolve in `parent_samples`. It does not normalize the observation or
 execute transforms.
+
+Freshness is evaluated only against entry zero, the primary observation. When
+its receipt reading shares `evaluation_clock`, `freshness_age_ns` is required
+and equals the exact non-negative checked difference converted to integer
+nanoseconds; fractional-tick conversion, overflow, or a negative difference
+fails. When domains differ, `freshness_age_ns` is prohibited because an anchor
+does not supply an exact drift model. An age less than or equal to
+`fresh_for_ns` is in the fresh interval. When `fresh_for_ns` exists, `valid`
+requires a known age in that interval and is prohibited above that boundary or
+when the primary age is unavailable. `stale` is required exactly when
+`stale_after_ns` exists and age is greater than that boundary, and is
+prohibited otherwise. The interval above `fresh_for_ns` through
+`stale_after_ns`, when both exist, is neither asserted fresh nor stale and
+cannot be `valid`.
 
 Applicability validation uses the primary raw observation's
 `applicability_context`. Unless validity is `not_applicable`, every measurement
@@ -1040,7 +1134,7 @@ support `not_applicable`.
 `validate_sample_closure(samples, observations, measurement_catalog,
 binding_catalog)` validates each sample as above, rejects a missing or
 hash-mismatched target, and performs depth-first cycle detection over
-derivation parents. It does not consult a global registry or storage. A
+derivation algorithm inputs. It does not consult a global registry or storage. A
 reference outside the supplied closure is a missing-lineage error, not an
 implicitly trusted external edge.
 
@@ -1068,6 +1162,8 @@ arrival-ordered `observations`, ordered unique `limitations`, and
 reading and anchor, and its producer instance matches the frame producer.
 `acquisition_utc` and `acquisition_anchor` are either both
 absent or both present, and the anchor UTC equals the acquisition UTC.
+When present, the anchor monotonic reading also equals
+`acquisition_reading`; no frame anchor may describe a different instant.
 
 Samples are unique by sample UUID and by the tuple of measurement reference,
 binding reference, and sample sequence. They appear in ascending order by
@@ -1094,22 +1190,28 @@ and epoch IDs. Producer identities remain those of the component that created
 each record and need not equal the frame producer. Sample, observation, and
 frame sequences are each scoped by record family as well as session, stream,
 and epoch; no ordering or contiguity is inferred across record families. Each
+sample's evaluation clock and reading must equal the frame acquisition clock
+and reading. Each
 observation reference resolves by record ID, family, version,
-and hash to exactly one frame observation. Every derivation-parent reference
+and hash to exactly one frame observation. Every derivation input reference
 resolves to a frame sample, so the frame is a complete validation closure.
 Unreferenced observations are allowed because they preserve accepted arrival
 evidence; their order remains significant.
 
 When a receipt reading shares the acquisition clock domain, it must not be
-later than the acquisition reading. When domains differ, both timing values
-must have anchors; validation converts each reading to an exact rational UTC
-nanosecond estimate from its unit/tick period and accepts it only when the
-observation's lower uncertainty bound is not later than the frame's upper
-uncertainty bound. The validator never claims exact cross-domain ordering. A
-sample freshness age is permitted only for a same-domain primary observation and
-must equal the non-negative checked difference converted exactly to integer
-nanoseconds; a fractional-tick result, overflow, negative result, or
-cross-domain age is rejected.
+later than the acquisition reading. When domains differ, both associated
+anchors are required and each anchor must equal its associated reading and UTC
+instant as specified above. Validation compares the two UTC uncertainty
+intervals directly: the observation interval is
+`[receipt_utc - uncertainty_ns, receipt_utc + uncertainty_ns]` and the frame
+interval is the analogous acquisition interval. It accepts only when the
+observation's lower bound is not later than the frame's upper bound. It never
+extrapolates an anchor, estimates drift, or claims exact cross-domain ordering.
+Interval endpoints are checked signed integer nanoseconds from
+`0001-01-01T00:00:00.000000000Z`; underflow, overflow past year 9999, or
+arithmetic overflow fails validation rather than saturating.
+Sample freshness age follows the sample rule above and remains prohibited for
+cross-domain primary observations even when anchors exist.
 
 ## Lifecycle and epoch boundary
 
@@ -1148,6 +1250,83 @@ their owning semantic packages.
 Definition and record objects compute their own content hashes. `DefinitionRef`
 and `RecordRef` factories accept validated objects and copy exact identities and
 hashes.
+
+The version-1 module ownership and public exports are exact:
+
+| Module | Exact `__all__` exports |
+| --- | --- |
+| `xplane_fdau.contracts.errors` | `FDAUContractError`, `ContractParseError`, `ContractShapeError`, `ContractValidationError`, `CanonicalJSONError`, `UnsupportedContractVersionError`, `ContractHashError` |
+| `xplane_fdau.contracts.identity` | `DefinitionRef`, `RecordRef`, `AlgorithmRef`, `definition_ref`, `record_ref` |
+| `xplane_fdau.contracts.provenance` | `Authority`, `ProvenanceSource`, `ProducerIdentity`, `ProviderIdentity`, `AdapterIdentity` |
+| `xplane_fdau.contracts.values` | `ValueRepresentation`, `ScalarRepresentation`, `RetentionStatus`, `InlineValue`, `PayloadReference`, `PayloadSpec`, `RepresentationSpec`, `ShapeSpec`, `UnitSpec` |
+| `xplane_fdau.contracts.timing` | `ClockKind`, `ClockUnit`, `ReplayState`, `ClockDomain`, `ClockReading`, `ClockAnchor`, `UtcInstant`, `ObservationTiming`, `SourceTiming`, `compare_clock_readings`, `difference_clock_readings_ns` |
+| `xplane_fdau.contracts.canonical_json` | `canonical_bytes`, `compute_content_hash` |
+| `xplane_fdau.measurements.models` | `ValidityState`, `QualityFlag`, `EnumerationMemberKind`, `InterpolationPolicy`, `DiscontinuityPolicy`, `Sensitivity`, `AxisSpec`, `CoordinateSpec`, `NumericSpec`, `EnumerationMember`, `EnumerationSpec`, `FreshnessSpec`, `ApplicabilitySelector`, `MeasurementDefinition`, `MeasurementCatalog` |
+| `xplane_fdau.measurements.io` | `load_measurement_catalog_v1`, `loads_measurement_catalog_v1`, `dump_measurement_catalog_v1`, `dumps_measurement_catalog_v1` |
+| `xplane_fdau.bindings.models` | `CompanionRole`, `FailureCondition`, `FailureDisposition`, `AcquisitionPhase`, `BindingReplayPolicy`, `BindingInputRef`, `CompanionSource`, `TransformInput`, `TransformStep`, `FailurePolicy`, `SourceSpec`, `SourceBindingDefinition`, `SourceBindingCatalog` |
+| `xplane_fdau.bindings.io` | `load_source_binding_catalog_v1`, `loads_source_binding_catalog_v1`, `dump_source_binding_catalog_v1`, `dumps_source_binding_catalog_v1` |
+| `xplane_fdau.bindings.validation` | `validate_binding_catalog` |
+| `xplane_fdau.acquisition.models` | `RawAbsentReason`, `ObservationStatus`, `NormalizedAbsentReason`, `RawValueEvidence`, `RawObservation`, `AppliedTransform`, `ObservationLineage`, `Normalization`, `DerivationInput`, `Derivation`, `MeasurementSample`, `MeasurementFrame` |
+| `xplane_fdau.acquisition.io` | `load_raw_observation_v1`, `loads_raw_observation_v1`, `dump_raw_observation_v1`, `dumps_raw_observation_v1`, `load_measurement_sample_v1`, `loads_measurement_sample_v1`, `dump_measurement_sample_v1`, `dumps_measurement_sample_v1`, `load_measurement_frame_v1`, `loads_measurement_frame_v1`, `dump_measurement_frame_v1`, `dumps_measurement_frame_v1` |
+| `xplane_fdau.acquisition.validation` | `validate_sample`, `validate_sample_closure`, `validate_frame` |
+
+Package `__init__` modules re-export the union of their owned
+submodules' `__all__` values in the table's row order; they export no additional
+name. `xplane_fdau.__all__` remains the repository-approved root namespace and
+does not re-export these contracts.
+
+Every public structural model class above is a frozen, slotted, keyword-only
+dataclass. Named closed vocabularies are `enum.StrEnum` classes and are
+not dataclasses.
+Its constructor parameters are its required then optional properties in the
+semantic order stated by this specification, except computed `content_hash`,
+which is never accepted. Tagged-union class names accept only the fields of
+the selected variant. This rule, together with the exact property inventories,
+is the complete constructor signature; there are no `**kwargs`, positional
+fields, aliases, defaults that create semantic values, or unlisted public model
+classes.
+
+The non-constructor call signatures are exact:
+
+```python
+definition_ref(value: MeasurementDefinition | SourceBindingDefinition) -> DefinitionRef
+record_ref(value: RawObservation | MeasurementSample | MeasurementFrame) -> RecordRef
+canonical_bytes(value: object) -> bytes
+compute_content_hash(value: (MeasurementCatalog | SourceBindingCatalog |
+                             MeasurementDefinition | SourceBindingDefinition |
+                             RawObservation | MeasurementSample |
+                             MeasurementFrame)) -> str
+compare_clock_readings(left: ClockReading, right: ClockReading) -> int
+difference_clock_readings_ns(later: ClockReading, earlier: ClockReading,
+                             domain: ClockDomain) -> int
+validate_binding_catalog(binding_catalog: SourceBindingCatalog,
+                         measurement_catalog: MeasurementCatalog) -> None
+validate_sample(sample: MeasurementSample,
+                measurement_catalog: MeasurementCatalog,
+                binding_catalog: SourceBindingCatalog, *,
+                observations: tuple[RawObservation, ...] = (),
+                parent_samples: tuple[MeasurementSample, ...] = ()) -> None
+validate_sample_closure(samples: tuple[MeasurementSample, ...],
+                        observations: tuple[RawObservation, ...],
+                        measurement_catalog: MeasurementCatalog,
+                        binding_catalog: SourceBindingCatalog) -> None
+validate_frame(frame: MeasurementFrame,
+               measurement_catalog: MeasurementCatalog,
+               binding_catalog: SourceBindingCatalog) -> None
+```
+
+`canonical_bytes` accepts only one of the public immutable contract models or
+the canonical data-only parameter domain; other objects raise
+`CanonicalJSONError`. `compute_content_hash` accepts only a listed self-hashed
+model and uses its prescribed preimage. Comparison returns `-1`, `0`, or `1`.
+The difference helper returns `later - earlier` in exact integer nanoseconds
+and rejects unrelated domains, fractional nanoseconds, and `Int64` overflow.
+For each literal stem and its owned `Model`, loader/dumper signatures are
+exactly `load_{stem}_v1(binary_file: BinaryIO, *, source: str = "<memory>") ->
+Model`, `loads_{stem}_v1(data: str | bytes, *, source: str = "<memory>") ->
+Model`, `dump_{stem}_v1(value: Model, binary_file: BinaryIO) -> None`, and
+`dumps_{stem}_v1(value: Model) -> bytes`. No loader accepts a text stream; no
+dumper accepts a path or closes the binary stream.
 
 Contract errors derive from one `FDAUContractError` and distinguish:
 
@@ -1193,6 +1372,32 @@ uses the identical JSON Pointer. Diagnostics quote at most 160 Unicode code
 points of a non-payload scalar; raw inline values, algorithm parameter values,
 and payload content are never echoed.
 
+For nested types, the semantic property order is the following explicit list;
+optional fields retain their listed position when present, and `kind` or
+`representation` is always validated before variant-selected fields:
+
+| Types | Semantic property order |
+| --- | --- |
+| `DefinitionRef`; `RecordRef`; `AlgorithmRef` | `definition_id`, `definition_revision`, `definition_hash`; `record_id`, `contract_family`, `schema_version`, `content_hash`; the `DefinitionRef` order then `parameters` |
+| `Authority`; `ProvenanceSource` | `authority_id`, `authority_revision`; `source_id`, `scope`, `source_revision`/`source_version`, `locator`, `sha256` |
+| `ProducerIdentity`; `ProviderIdentity`; `AdapterIdentity` | `implementation_id`, `implementation_version`, `producer_instance_id`, `source_revision`; `provider_family_id`, `provider_version`; `adapter_family_id`, `adapter_version` |
+| `InlineValue`; `PayloadReference`; `PayloadSpec` | `representation`, `element_representation`, `value`; `media_type`, `byte_length`, `sha256`, `storage_role`, `retention_status`; `allowed_media_types`, `allowed_storage_roles` |
+| `RepresentationSpec`; `ShapeSpec`; `UnitSpec` | `kind`, `element_representation`, `length`, `minimum_length`, `maximum_length`, `payload`; `kind`, `length`, `minimum_length`, `maximum_length`; `kind`, `quantity_id`, `unit_id` |
+| `CoordinateSpec`; `AxisSpec`; `NumericSpec` | `kind`, `reference_frame_id`, `datum_id`, `handedness`, `axes`; `axis_id`, `direction`, `sign_convention`; `storage_precision_bits`, `resolution`, `minimum`, `maximum` |
+| `EnumerationSpec`; `EnumerationMember`; `FreshnessSpec`; `ApplicabilitySelector` | `members`; `code`, `label`, `kind`; `fresh_for_ns`, `stale_after_ns`; `class_id`, `value` |
+| resource selection; `SourceSpec` | `kind`, `index` or `start`, `length`; `provider`, `adapter`, `resource_kind`, `resource_id`, `owner_signature`, `resource_selection`, `declared_representation`, `declared_element_representation`, `declared_payload`, `declared_shape`, `native_unit` |
+| `BindingInputRef`; `CompanionSource`; `TransformInput`; `TransformStep` | `input_id`, `source`, `required`; `input_id`, `role`, `source`; `input_id`, `representation`, `element_representation`, `payload`, `shape`, `unit`; `step_id`, `algorithm`, `inputs`, `output_representation`, `output_element_representation`, `output_payload`, `output_shape`, `output_unit` |
+| `FailurePolicy`; `ClockDomain`; tick period | `unavailable`, `orphaned`, `stale`, `read_error`, `type_mismatch`, `provider_degraded`; `clock_domain_id`, `kind`, `unit`, `resolution`, `origin`, `scope`, `producer_instance_id`, `tick_period`; `numerator_ns`, `denominator` |
+| `ClockReading`; `ClockAnchor`; `SourceTiming`; `ObservationTiming` | `clock_domain_id`, `value`; `monotonic_reading`, `utc`, `uncertainty_ns`; `clock`, `reading`, `source_sequence`; `receipt_clock`, `receipt_reading`, `receipt_utc`, `source_timing`, `receipt_anchor`, `xplane_cycle`, `simulator_flight_time_ns`, `acquisition_phase`, `paused`, `replay_state`, `time_speed` |
+| `RawValueEvidence`; `Normalization`; `AppliedTransform` | `kind`, then `value`/`payload`/`reason`; `kind`, then `value`/`payload`, `unit`, or `reason`, `input_id`, `condition`, `failed_step_id`; `step_id`, `algorithm` |
+| `ObservationLineage`; `DerivationInput`; `Derivation` | `kind`, then `observation`/`observation_ref`; `input_id`, `sample_ref`; `kind`, `algorithm`, `inputs` |
+
+For a data-only parameter object, properties validate in canonical lexical key
+order after the containing `parameters` property; nested arrays validate by
+increasing index. Family-document and definition-entry orders remain the exact
+inventories stated in their owning sections. This table controls error
+precedence only and never wire-property order or canonical object ordering.
+
 Unknown properties, unknown enum values, incompatible references, and future
 schema versions fail closed. There is no implicit migration or best-effort
 coercion.
@@ -1205,8 +1410,9 @@ runtime schema-validator dependency. Packaged resources under
 `xplane_fdau.schemas` and published documentation copies under `docs/schemas`
 are byte-identical.
 
-Every schema contains exactly `$schema`, `$id`, `title`, `type`, `$defs`,
-`properties`, `required`, and `unevaluatedProperties` at its root. Conditional
+Every schema contains exactly the root property set `$schema`, `$id`, `title`,
+`type`, `$defs`, `properties`, `required`, and `unevaluatedProperties`.
+Canonical serialization places those keys in lexical order. Conditional
 and union rules live inside `properties` references and `$defs`; no other root
 keyword is permitted. `$schema` and `$id` use
 the exact URIs fixed above, root type is `object`, and
@@ -1246,7 +1452,7 @@ The manifest records for every case:
 - a concise requirement identifier.
 
 `manifest.json` is canonical project JSON with exactly
-`corpus_schema_version: 1` and `cases`. Cases are sorted by `case_id`, which is
+`corpus_schema_version: 1` and nonempty `cases`. Cases are sorted by `case_id`, which is
 an `Identifier` beginning `test.`. Each case contains `case_id`,
 `requirement_id: Identifier`, `contract_family`, `schema_version: 1`,
 `disposition`, and repository-relative POSIX `input_resource`. Paths contain no
@@ -1291,17 +1497,26 @@ implementation-owned; input corpus bytes and output document shape are shared.
 
 The result document has exact properties `protocol_version: 1`,
 `implementation_id: Identifier`, `implementation_version: VersionText`, and
-`results`. Results preserve manifest case order and each contains `case_id`,
-`result` (`passed` or `failed`), and optional failure-only `actual_error_class`,
-`actual_path`, `actual_sha256`, and `diagnostic`. A passed result has no optional
-failure property. A failed result contains only the properties relevant to the
-case expectation: either both `actual_error_class` and `actual_path`, or
-`actual_sha256`, but never both alternatives. `diagnostic` is independently
-optional bounded `NfcText(1024)` and is not compared for parity. An unexpected
-successful load reports the emitted canonical hash; an unexpected rejection or
-wrong rejection reports its error class/path; a canonical-byte mismatch reports
-the actual hash. The result protocol is not a contract family and has no
-`content_hash`. The document uses the canonical JSON profile and one final LF.
+`results`, a nonempty array with exactly one entry per manifest case. Results
+preserve manifest case order and each contains `case_id: Identifier`, `result`
+(`passed` or `failed`), and the variant-selected properties below. Result case
+IDs must equal the corresponding manifest case IDs.
+
+| Result variant | Required additional properties | Optional properties | Prohibited properties |
+| --- | --- | --- | --- |
+| passed | — | — | all `actual_*` fields and `diagnostic` |
+| failed because an error was observed | `actual_error_class`, `actual_path` | `diagnostic: NfcText(1024)` | `actual_sha256` |
+| failed because canonical bytes/hash were observed | `actual_sha256: Sha256` | `diagnostic: NfcText(1024)` | `actual_error_class`, `actual_path` |
+
+`actual_error_class` is exactly one of the six public leaf contract-error class
+names allowed by the manifest, and `actual_path` is a syntactically valid RFC
+6901 pointer. An unexpected successful load of a rejected case uses the hash
+variant; an unexpected rejection or wrong rejection uses the error variant; a
+canonical-byte/hash mismatch uses the hash variant. Diagnostics are not
+compared for parity. Unknown properties and empty, missing, duplicate,
+out-of-order, or extra results fail the result protocol. The result protocol is
+not a contract family and has no `content_hash`. The document uses the
+canonical JSON profile and one final LF.
 
 Runner process status is 0 when every manifest case passed, 1 when the corpus
 was valid but at least one case failed, and 2 for invocation, unreadable-corpus,
@@ -1414,7 +1629,7 @@ Tests prove:
 - raw status and value presence remain consistent;
 - every sample has complete or referenced raw lineage;
 - failed normalization cannot carry a normalized value;
-- derivation parents preserve order;
+- derivation algorithm inputs preserve order and pin their algorithm;
 - frame samples are unique and canonically ordered; and
 - observation arrival order is preserved.
 
@@ -1620,7 +1835,7 @@ satisfies its exact acceptance subsection below.
 
 - Every sample reaches every consumed observation through a complete record or
   immutable record reference.
-- Ordered derivation-parent references remain intact and cycle-free within the
+- Ordered derivation algorithm inputs remain intact and cycle-free within the
   supplied validation closure.
 - Catalog-resolved sample representation, unit, range, binding, status, and
   quality validation passes.

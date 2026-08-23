@@ -19,6 +19,7 @@ STANDARDS_HEADER = ("Child", "Outcome", "Depends on", "External prerequisite")
 GATE_HEADER = ("Gate", "Outcome", "Depends on")
 BACKLOG_GATE_HEADER = ("Gate", "Outcome", "Gate state", "Prerequisites", "Evidence")
 BOUNDARY_HEADER = ("Boundary", "Outcome", "Owner", "xplane-fdau handoff condition")
+BACKLOG_BOUNDARY_HEADER = ("Boundary", "Owner", "xplane-fdau handoff condition")
 INVENTORY_HEADER = (
     "Child",
     "Outcome",
@@ -33,6 +34,7 @@ INVENTORY_HEADER = (
 )
 EXPECTED_EPIC_MEMBERS = {
     "B1": ("B1.1",),
+    "D1": ("D1.1", "D1.2", "D1.3"),
     "C1": ("C1.1", "C1.2", "C1.3", "C1.4", "C1.5"),
     "C2": ("C2.1", "C2.2", "C2.3", "C2.4"),
     "C3": ("C3.1", "C3.2", "C3.3", "C3.4", "C3.5"),
@@ -166,9 +168,10 @@ class RoadmapAuthorityTests(unittest.TestCase):
 
         self.assertEqual(["M0"], milestones)
         self.assertEqual(["G1"], gates)
-        self.assertEqual(["I1.1", "I1.2", "I2.1", "F2.1"], boundaries)
+        self.assertEqual(["I1.0", "I1.1", "I1.2", "I2.1", "F2.1"], boundaries)
         self.assertEqual(
             [
+                "q4xpcc Phase 24A specification and plan reconciliation",
                 "q4xpcc contract-model and fixture adoption",
                 "q4xpcc live XPLM acquisition adoption",
                 "Development/corroboration adapter adoption",
@@ -176,8 +179,8 @@ class RoadmapAuthorityTests(unittest.TestCase):
             ],
             [row[1] for row in roadmap_rows(BOUNDARY_HEADER)],
         )
-        self.assertEqual(61, len(children))
-        self.assertEqual(61, len(set(children)))
+        self.assertEqual(64, len(children))
+        self.assertEqual(64, len(set(children)))
         kinds = [set(milestones), set(epics), set(children), set(gates), set(boundaries)]
         for index, current in enumerate(kinds):
             for other in kinds[index + 1 :]:
@@ -198,6 +201,42 @@ class RoadmapAuthorityTests(unittest.TestCase):
         self.assertEqual("`C4.4`, `R1.7`", by_child["F1.1"])
         self.assertEqual("`T2.1`", by_child["T2.2"])
         self.assertEqual("`T2.2`, `T3.1`", by_child["B1.1"])
+        self.assertEqual("`T1.2`", by_child.get("D1.1"))
+        self.assertEqual("`D1.1`", by_child.get("D1.2"))
+        self.assertEqual("`D1.2`", by_child.get("D1.3"))
+
+    def test_q4xpcc_readiness_boundaries_are_exact_and_distinct(self) -> None:
+        roadmap_boundaries = {identity(row[0]): (row[2], row[3]) for row in roadmap_rows(BOUNDARY_HEADER)}
+        self.assertEqual(
+            {
+                "I1.0": (
+                    "q4xpcc",
+                    "Phase 24A specification and plan reconciliation may begin after `D1.3`.",
+                ),
+                "I1.1": (
+                    "q4xpcc",
+                    "Contract-model and fixture adoption may begin after `C4.4`.",
+                ),
+                "I1.2": (
+                    "q4xpcc",
+                    "Live XPLM acquisition adoption may begin after `A1.9`.",
+                ),
+            },
+            {boundary: roadmap_boundaries.get(boundary) for boundary in ("I1.0", "I1.1", "I1.2")},
+        )
+
+        backlog_boundaries = {identity(row[0]): (row[1], row[2]) for row in table_rows(read_text(BACKLOG), BACKLOG_BOUNDARY_HEADER)}
+        self.assertEqual(
+            {
+                "I1.0": (
+                    "q4xpcc",
+                    "Phase 24A specification and plan reconciliation may begin after `D1.3`.",
+                ),
+                "I1.1": ("q4xpcc", "Contract/fixture adoption may begin after `C4.4`."),
+                "I1.2": ("q4xpcc", "Live XPLM acquisition adoption may begin after `A1.9`."),
+            },
+            {boundary: backlog_boundaries.get(boundary) for boundary in ("I1.0", "I1.1", "I1.2")},
+        )
 
     def test_roadmap_has_no_mutable_child_status_column(self) -> None:
         roadmap = read_text(ROADMAP)
@@ -223,7 +262,7 @@ class BacklogAuthorityTests(unittest.TestCase):
     def test_inventory_matches_every_roadmap_child_once_in_order(self) -> None:
         roadmap = roadmap_child_rows()
         inventory = table_rows(read_text(BACKLOG), INVENTORY_HEADER)
-        self.assertEqual(61, len(inventory))
+        self.assertEqual(64, len(inventory))
         self.assertEqual(
             [(identity(row[0]), row[1], row[2]) for row in roadmap],
             [(identity(row[0]), row[1], row[3]) for row in inventory],
@@ -232,7 +271,7 @@ class BacklogAuthorityTests(unittest.TestCase):
     def test_inventory_excludes_nonchildren_and_range_rows(self) -> None:
         inventory = table_rows(read_text(BACKLOG), INVENTORY_HEADER)
         inventory_ids = [identity(row[0]) for row in inventory]
-        excluded = {"M0", "G1", "I1.1", "I1.2", "I2.1", "F2.1"}
+        excluded = {"M0", "G1", "I1.0", "I1.1", "I1.2", "I2.1", "F2.1"}
         self.assertFalse(set(inventory_ids) & excluded)
         self.assertEqual(len(inventory_ids), len(set(inventory_ids)))
         self.assertNotRegex("\n".join(row[0] for row in inventory), r"[–—]")
@@ -338,6 +377,10 @@ class GovernanceArtifactTests(unittest.TestCase):
             if values.get("Governance") != "active":
                 continue
             children = re.findall(r"`([A-Z][0-9]+\.[0-9]+)`", values["Roadmap children"])
+            self.assertTrue(
+                all(child in outcomes for child in children),
+                f"{path}: roadmap is missing an active design child",
+            )
             self.assertEqual(
                 [f"{child} — {outcomes[child]}" for child in children],
                 acceptance_headings(path),
@@ -358,6 +401,10 @@ class GovernanceArtifactTests(unittest.TestCase):
             "2026-08-15-xplane-fdau-local-workflow-skills-design.md": (
                 "`T2`",
                 EXPECTED_EPIC_MEMBERS["T2"] + EXPECTED_EPIC_MEMBERS["T3"],
+            ),
+            "2026-08-22-q4xpcc-contract-handoff-readiness-design.md": (
+                "`D1`",
+                EXPECTED_EPIC_MEMBERS["D1"],
             ),
         }
         actual: dict[str, tuple[str, tuple[str, ...]]] = {}
@@ -514,6 +561,7 @@ class GovernanceArtifactTests(unittest.TestCase):
                 "2026-08-09-xplane-fdau-backlog-status-skill-design.md",
                 "2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md",
                 "2026-08-15-xplane-fdau-local-workflow-skills-design.md",
+                "2026-08-22-q4xpcc-contract-handoff-readiness-design.md",
             },
             set(active_specs),
         )

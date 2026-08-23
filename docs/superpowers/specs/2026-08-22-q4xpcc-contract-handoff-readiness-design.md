@@ -222,6 +222,20 @@ Verification must prove:
 
 ## Acceptance criteria
 
+### D1.1 — Canonical C1–C4 design approval
+
+`D1.1` is complete only when its four earlier acceptance gates pass.
+
+### D1.2 — Acquisition, recording, projection, and pinning contract design
+
+`D1.2` is complete only when its four earlier acceptance gates pass.
+
+### D1.3 — Reviewed q4xpcc Phase 24A handoff
+
+`D1.3` is complete only when its four earlier acceptance gates pass.
+
+## Authority-registration acceptance criteria
+
 This backlog-prioritization design is implemented when:
 
 1. D1.1–D1.3 are exact local children with the approved dependencies and

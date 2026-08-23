@@ -1618,7 +1618,8 @@ satisfies its exact acceptance subsection below.
 
 ### C3.3 — Raw/sample lineage and cross-contract validation
 
-- Every sample reaches one complete observation or immutable record reference.
+- Every sample reaches every consumed observation through a complete record or
+  immutable record reference.
 - Ordered derivation-parent references remain intact and cycle-free within the
   supplied validation closure.
 - Catalog-resolved sample representation, unit, range, binding, status, and

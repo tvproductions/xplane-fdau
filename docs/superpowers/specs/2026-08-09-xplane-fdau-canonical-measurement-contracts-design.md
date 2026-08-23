@@ -114,17 +114,16 @@ xplane_fdau/
 |-- measurements/
 |   |-- __init__.py
 |   |-- models.py
-|   |-- quality.py
-|   `-- catalog.py
+|   `-- io.py
 |-- bindings/
 |   |-- __init__.py
 |   |-- models.py
-|   `-- catalog.py
+|   |-- io.py
+|   `-- validation.py
 |-- acquisition/
 |   |-- __init__.py
-|   |-- observations.py
-|   |-- samples.py
-|   |-- frames.py
+|   |-- models.py
+|   |-- io.py
 |   `-- validation.py
 |-- schemas/
 |   |-- __init__.py
@@ -579,9 +578,12 @@ Each member contains `code: Identifier`, `label: NfcText(256)`, and `kind`
 `unknown`. `FreshnessSpec` contains optional `fresh_for_ns: UInt63` and
 optional `stale_after_ns: UInt63`; at least one is present and, when both are
 present, `fresh_for_ns` is not greater than `stale_after_ns`.
-Every scalar enumeration value and every enumeration-array element must name a
-non-reserved member in the resolved `EnumerationSpec`; a reserved code is
-definition metadata and is never a sample value.
+Every normalized scalar enumeration value and every normalized
+enumeration-array element must name a non-reserved member in the resolved
+measurement `EnumerationSpec`; a reserved code is definition metadata and is
+never a normalized sample value. A raw `InlineValue` preserves any
+syntactically valid enumeration `Identifier`, including a source-native code
+that is unknown or reserved to the later-resolved measurement definition.
 
 `ApplicabilitySelector` contains `class_id: Identifier` and
 `value: NfcText(256)`. Within any applicability or context array, `class_id` is
@@ -623,7 +625,8 @@ Each binding contains:
 - an ordered tuple of source dependencies for multi-source or derived values;
 - optional ordered status/validity companion sources;
 - an ordered tuple of named `AlgorithmRef` transform/calibration steps;
-- policies for absent, orphaned, stale, and read-error input;
+- policies for unavailable, orphaned, stale, read-error, type-mismatch, and
+  provider-degraded input;
 - expected acquisition phase relative to the flight model;
 - replay policy; and
 - provenance and limitations.
@@ -705,6 +708,11 @@ order, and conditions within an input use that order. A provider-degraded
 absent observation therefore exposes both its underlying absent condition and
 `provider_degraded`.
 
+Whenever a disposition permits a sample, every derived condition requires its
+equal-named quality flag, including `stale` on a dependency or companion.
+`reject` is the only disposition that produces no sample and therefore no
+quality assertion.
+
 The first condition whose disposition is not `accept_flagged` determines the
 outcome: `reject` prohibits a sample; `accept_raw_only` permits only an absent
 normalization with reason `normalization_not_attempted` naming that input and
@@ -724,7 +732,7 @@ or normalize data. Replay policy is `preserve`, `rederive`, or `prohibit`.
 
 `validate_binding_catalog(binding_catalog, measurement_catalog)` is a pure
 operation that resolves every measurement reference. For a binding without a
-transform it checks direct unit, representation, shape, and applicability
+transform it checks direct unit, representation, shape, payload, and applicability
 compatibility. For a binding with transforms it checks reference structure,
 ordering, and declared input/output compatibility but does not claim that the
 referenced algorithm produces the declared result. It neither registers
@@ -736,7 +744,8 @@ Resolution uses the exact `(definition_id, definition_revision)` pair and then
 compares `definition_hash`; missing identity raises a validation error at the
 reference pointer and a mismatched hash raises a validation error at its
 `definition_hash` pointer. Direct bindings require exact representation,
-element representation, shape, unit, and every measurement applicability
+element representation, shape, unit, payload specification when
+`referenced_bytes`, and every measurement applicability
 selector; a binding may add narrower applicability selectors but may not
 contradict an equal `class_id`. Transformed bindings perform those same checks
 against the declared final transform output. No validator imports, discovers,
@@ -965,16 +974,29 @@ reason. Status `ok` contributes no status-derived flag; it does not prohibit a
 flag justified by transform, range, timing, sequence, or other acquisition
 evidence. No quality flag is invented from an empty array.
 
+Version-1 sample validation derives and corroborates `unavailable`,
+`orphaned`, `read_error`, `type_mismatch`, `provider_degraded`, `stale`, and
+`out_of_declared_range` from the supplied closure. It structurally checks, but
+does not independently prove, producer assertions `conversion_failed`,
+`discontinuous`, `dropped`, `duplicate`, `precision_lost`, `reordered`,
+`rounded`, and `saturated`. For those assertions it checks the local
+consequences stated here—for example, a failed step, absent value, or boundary
+value—but the future reviewed algorithm registry must corroborate transform
+assertions and the A1 acquisition/continuity contracts must corroborate
+stream-history assertions. No C3 validator claims evidence outside its finite
+arguments.
+
 The complete validity compatibility matrix is:
 
 | Quality flag | Allowed validity states | Additional invariant |
 | --- | --- | --- |
 | `conversion_failed` | `invalid`, `unknown` | normalization is absent with reason `normalization_failed` |
-| `dropped`, `orphaned`, `read_error`, `unavailable` | `invalid`, `unknown` | normalization is absent; the flag is supported by lineage evidence |
+| `dropped` | `invalid`, `unknown` | normalization is absent for another valid absent reason; later continuity evidence must corroborate the producer assertion |
+| `orphaned`, `read_error`, `unavailable` | `invalid`, `unknown` | normalization is absent; the flag is supported by lineage evidence |
 | `out_of_declared_range` | `invalid`, `unknown` | preserved normalized value violates an inclusive declared bound |
 | `stale` | `invalid`, `unknown` | an exact same-domain consumed-input age is greater than `stale_after_ns` |
 | `type_mismatch` | `invalid`, `unknown` | lineage contains the mismatched observed representation or shape |
-| `discontinuous`, `duplicate`, `precision_lost`, `provider_degraded`, `reordered`, `rounded`, `saturated` | `valid`, `invalid`, `unknown` | the flag must be independently supported by the stated acquisition evidence |
+| `discontinuous`, `duplicate`, `precision_lost`, `provider_degraded`, `reordered`, `rounded`, `saturated` | `valid`, `invalid`, `unknown` | closure-derived flags are corroborated; producer assertions satisfy their stated local structural consequences |
 
 Validity `not_applicable` requires an empty quality array and the
 `not_applicable` absent-normalization reason; every quality flag is therefore
@@ -1099,12 +1121,21 @@ respectively.
 observations=(), parent_samples=())` is a pure operation. The two closure
 arguments are finite sequences indexed by validated record identity; duplicate
 identities fail. It resolves pinned references and checks representation,
-shape, unit, range, binding provider/adapter/resource identity and selection,
+shape, unit, payload, range, binding provider/adapter/resource identity and selection,
 observed-versus-declared type/shape compatibility, applicability,
 status-to-quality mapping, evaluation timing, freshness, and lineage. An inline lineage entry is validated
 directly; a reference must resolve in `observations`; every derivation input
 must resolve in `parent_samples`. It does not normalize the observation or
 execute transforms.
+
+For every raw payload lineage entry, `media_type` and `storage_role` must occur
+in that input's resolved `SourceSpec.declared_payload` sets. A succeeded
+normalized payload must occur in the measurement `PayloadSpec` sets and, for a
+transformed binding, the final transform output `PayloadSpec` sets; for a
+direct binding the already-equal source and measurement payload specifications
+apply. Byte length, SHA-256, and retention status remain exact evidence but are
+not allow-list selectors. An inline or payload value of another representation
+is rejected before these membership checks.
 
 Freshness is evaluated only against entry zero, the primary observation. When
 its receipt reading shares `evaluation_clock`, `freshness_age_ns` is required
@@ -1207,9 +1238,12 @@ intervals directly: the observation interval is
 interval is the analogous acquisition interval. It accepts only when the
 observation's lower bound is not later than the frame's upper bound. It never
 extrapolates an anchor, estimates drift, or claims exact cross-domain ordering.
-Interval endpoints are checked signed integer nanoseconds from
-`0001-01-01T00:00:00.000000000Z`; underflow, overflow past year 9999, or
-arithmetic overflow fails validation rather than saturating.
+Interval endpoints are mathematical signed integer nanoseconds from
+`0001-01-01T00:00:00.000000000Z`. Implementations use arbitrary-precision
+integer arithmetic or an exactly equivalent signed type at least 128 bits
+wide; signed 64-bit arithmetic is nonconforming. An endpoint before year 0001
+or after year 9999 fails validation rather than saturating. No other
+implementation-width overflow is permitted.
 Sample freshness age follows the sample rule above and remains prohibited for
 cross-domain primary observations even when anchors exist.
 
@@ -1446,7 +1480,7 @@ The manifest records for every case:
 
 - contract family and schema version;
 - input resource;
-- accepted or rejected disposition;
+- accepted, canonical, or rejected disposition;
 - expected error class and JSON property path for rejected cases;
 - expected canonical resource and SHA-256 for accepted cases; and
 - a concise requirement identifier.

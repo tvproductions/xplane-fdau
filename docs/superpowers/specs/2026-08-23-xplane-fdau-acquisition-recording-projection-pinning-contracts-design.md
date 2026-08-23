@@ -98,36 +98,73 @@ The existing `RecordRef` version-1 family allow-list expands only when the
 corresponding future implementation child delivers a family below. D1.2 does
 not change the implemented allow-list.
 
+This design uses the following additional exact notation:
+
+- `PositiveRational` has exactly `numerator: UInt63` and
+  `denominator: UInt63`; both are greater than zero and their greatest common
+  divisor is one. `PositiveRationalDuration` instead has
+  `numerator_ns: UInt63` and `denominator: UInt63` under the same constraints
+  and represents `numerator_ns / denominator` nanoseconds. Both are compared
+  with arbitrary-precision cross multiplication, never binary64.
+- `CountDistribution<K>` is an object with exactly one `UInt63` property for
+  every member of the stated closed vocabulary `K`, including zero-valued
+  members. Its containing section states whether members are exclusive and
+  therefore whether the values must sum to a named population.
+- `RecordRange` has exactly `first_index: UInt63` and `last_index: UInt63`,
+  with first not greater than last. Both ends are inclusive.
+- `RecordRef` values introduced by this design use the canonical reference
+  shape. Their family allow-list expands transactionally with the owning
+  schema/model child; a reference to a family not yet delivered remains
+  invalid in the current runtime.
+- A property described as variant-selected is a tagged object with required
+  `kind` followed by exactly the properties listed for that kind. Properties
+  from another variant are prohibited.
+- When a family inventory below begins with its family-specific fields, the
+  exact top-level order is always `contract_family`, `schema_version`, those
+  fields in the stated order, then `producer` for a generated record and
+  finally `content_hash`. Definition families instead contain their stated
+  identity, authority, provenance, body, limitations, and `content_hash`.
+
+Unless a tighter limit is stated here, the canonical design's collection,
+text, nesting, and property-count limits apply. Validation first performs
+canonical parse, family/version dispatch, exact shape, primitive value checks,
+and root hash verification. It then follows the semantic property order stated
+here, array index order, referenced-record argument order, and finally recorded
+event order for causal precedence. Runtime inability is represented only by a
+valid outcome or `FailureEvidence`; malformed contract data never becomes a
+runtime outcome.
+
 ### New family inventory and future resources
 
 Each row fixes the future family URI and schema resource. The packaged schema
 path will be `xplane_fdau/schemas/<stem>-v1.schema.json`; the byte-identical
 documentation copy will be `docs/schemas/<stem>-v1.schema.json`.
 
-| Family | Stem and family-URI suffix | Owning future child |
-| --- | --- | --- |
-| Acquisition profile | `acquisition-profile` | `A1.1` |
-| Consumer demand | `consumer-demand` | `A1.2` |
-| Demand resolution | `demand-resolution` | `A1.3` |
-| Transform registry | `transform-registry` | `A1.4` |
-| Acquisition-session descriptor | `acquisition-session-descriptor` | `A1.5` |
-| Acquisition lifecycle event | `acquisition-lifecycle-event` | `A1.5` |
-| Acquisition-session result | `acquisition-session-result` | `A1.9` |
-| Continuity report | `continuity-report` | `A1.7` |
-| Fan-out delivery event | `fanout-delivery-event` | `A1.8` |
-| Recording-session descriptor | `recording-session-descriptor` | `R1.1` |
-| Raw-retention policy | `raw-retention-policy` | `R1.2` |
-| Archive checkpoint | `archive-checkpoint` | `R1.3` |
-| Artifact manifest | `artifact-manifest` | `R1.4` |
-| Recording-session result | `recording-session-result` | `R1.5` |
-| Recovery result | `recovery-result` | `R1.5` |
-| Replay-session descriptor | `replay-session-descriptor` | `R1.6` |
-| Replay lifecycle event | `replay-lifecycle-event` | `R1.6` |
-| Replay-session result | `replay-session-result` | `R1.6` |
-| Native-FDR projection profile | `xplane-fdr-projection-profile` | `P1.1` |
-| Native-FDR projection report | `xplane-fdr-projection-report` | `P1.5` |
-| Deployment policy | `deployment-policy` | delivery child not assigned by D1.2 |
-| Consumer deployment receipt | `consumer-deployment-receipt` | delivery child not assigned by D1.2 |
+| Family | Stem and family-URI suffix | Kind and identity property | Owning future child |
+| --- | --- | --- | --- |
+| Acquisition profile | `acquisition-profile` | definition; `profile_id` | `A1.1` |
+| Consumer demand | `consumer-demand` | record; `demand_id` | `A1.2` |
+| Demand resolution | `demand-resolution` | record; `resolution_id` | `A1.3` |
+| Transform registry | `transform-registry` | definition; `registry_id` | `A1.4` |
+| Acquisition-session descriptor | `acquisition-session-descriptor` | record; `acquisition_session_id` | `A1.5` |
+| Acquisition lifecycle event | `acquisition-lifecycle-event` | record; `event_id` | `A1.5` |
+| Acquisition-session result | `acquisition-session-result` | record; `result_id` | `A1.9` |
+| Continuity report | `continuity-report` | record; `continuity_report_id` | `A1.7` |
+| Fan-out delivery event | `fanout-delivery-event` | record; `delivery_event_id` | `A1.8` |
+| Recording-session descriptor | `recording-session-descriptor` | record; `recording_session_id` | `R1.1` |
+| Raw-retention policy | `raw-retention-policy` | definition; `policy_id` | `R1.2` |
+| Archive order entry | `archive-order-entry` | record; `order_entry_id` | `R1.2` |
+| Archive checkpoint | `archive-checkpoint` | record; `checkpoint_id` | `R1.3` |
+| Artifact manifest | `artifact-manifest` | record; `artifact_manifest_id` | `R1.4` |
+| Recording-session result | `recording-session-result` | record; `recording_result_id` | `R1.5` |
+| Recovery result | `recovery-result` | record; `recovery_result_id` | `R1.5` |
+| Replay-session descriptor | `replay-session-descriptor` | record; `replay_session_id` | `R1.6` |
+| Replay lifecycle event | `replay-lifecycle-event` | record; `replay_event_id` | `R1.6` |
+| Replay-session result | `replay-session-result` | record; `replay_result_id` | `R1.6` |
+| Native-FDR projection profile | `xplane-fdr-projection-profile` | definition; `projection_profile_id` | `P1.1` |
+| Native-FDR projection report | `xplane-fdr-projection-report` | record; `projection_report_id` | `P1.5` |
+| Deployment policy | `deployment-policy` | definition; `deployment_policy_id` | delivery ownership must be assigned before implementation |
+| Consumer deployment receipt | `consumer-deployment-receipt` | record; `deployment_receipt_id` | delivery ownership must be assigned before implementation |
 
 The full family URI is
 `https://tvproductions.github.io/xplane-fdau/contracts/<stem>`. The schema
@@ -162,7 +199,7 @@ live acquisition adoption earlier than `I1.2`.
 | `profile_id` | `Identifier` | definition identity |
 | `profile_revision` | `Revision` | semantic revision |
 | `authority` | `Authority` | required |
-| `provenance` | nonempty array of `ProvenanceSource` | canonical authority order |
+| `provenance` | nonempty array of `ProvenanceSource` | declared authority order |
 | `items` | nonempty array of `AcquisitionProfileItem` | unique `item_id`; declared order is semantic |
 | `limitations` | array of `NfcText(1024)` | at most 256; empty permitted |
 | `content_hash` | `Sha256` | computed definition hash |
@@ -187,9 +224,8 @@ live acquisition adoption earlier than `I1.2`.
   available candidate in canonical order, and requires
   `minimum_successful_bindings` from two through the candidate count. That
   field is prohibited for the other modes.
-- `cadence` contains `requested_period` and `maximum_period`, each a reduced
-  positive rational duration with exact properties `numerator_ns: UInt63`
-  greater than zero and `denominator: Revision`. Requested period must not be
+- `cadence` has exactly `requested_period: PositiveRationalDuration` and
+  `maximum_period: PositiveRationalDuration`. Requested period must not be
   greater than maximum period.
 - `continuity` contains `minimum_observation_count: UInt63`,
   `minimum_elapsed_ns: UInt63`, `maximum_staleness_ns: UInt63`,
@@ -299,6 +335,9 @@ replace a non-immediate predecessor, or replace another consumer's demand.
 `receipt_clock_domain`, nonempty ordered `demands`, ordered `item_outcomes`,
 ordered `source_acquisitions`, `outcome`, `producer`, and `content_hash`.
 
+- `resolution_id` and `resolver_instance_id` are `Uuid`; `generation` is
+  `UInt63`; `receipt_clock_domain` is one canonical `host_monotonic`
+  `ClockDomain` whose producer instance equals the resolver instance.
 - Resolution generation is contiguous from zero within one resolver instance.
   `replaces` is prohibited at generation zero and otherwise references the
   exact generation-minus-one resolution.
@@ -328,8 +367,15 @@ ordered `source_acquisitions`, `outcome`, `producer`, and `content_hash`.
   every selected binding source, and satisfies the profile item's binding
   selection and minimum-success rules. It is absent for rejection.
 - A `SourceAcquisition` fixes one `source_acquisition_id: Uuid`, exact binding
-  reference, read period, phase, accepted demand items, and per-consumer
-  delivery period/resampling decision.
+  reference, `read_period: PositiveRationalDuration`, acquisition phase,
+  accepted demand items, and per-consumer delivery period/resampling decision.
+  Accepted items are unique pairs of demand `RecordRef` and profile item ID in
+  demand-receipt then profile order. Each `DeliveryDecision` has exact
+  properties `demand: RecordRef`, `profile_item_id: Identifier`,
+  `endpoint_id: Uuid`, `delivery_period: PositiveRationalDuration`, and
+  `resampling`. `endpoint_id` equals the demand's consumer-instance ID;
+  resampling is `none`, `hold`, `nearest`, `linear`, or `aggregate` and must be
+  allowed by that profile item. Delivery decisions use accepted-item order.
 - Source acquisition uses the fastest authorized accepted demand. Slower
   delivery is permitted only by a demand's profile.
 - `outcome` is `accepted` only when every required item is accepted. Optional
@@ -337,6 +383,16 @@ ordered `source_acquisitions`, `outcome`, `producer`, and `content_hash`.
   `rejected`, and no source acquisition may begin from that resolution.
 - Resolution never changes units, bindings, validity, retention, cadence, or
   quality requirements silently.
+
+Compatibility is evaluated in demand receipt order and profile item order,
+but selection does not depend on host mapping order. Bindings merge only when
+their exact reference, phase, source resource, native representation/shape,
+and transform closure agree. The selected read period is the minimum requested
+period among merged accepted items, bounded independently by every item's
+maximum period. Any authorized overload relaxation is applied by degradation
+priority then profile item ID and is recorded in item outcomes and the next
+lifecycle event. If required-item rejection makes the resolution rejected,
+`source_acquisitions` is empty; no partially computed acquisition is activated.
 
 ## Acquisition sessions, lifecycle, and terminal results
 
@@ -346,9 +402,14 @@ properties are `contract_family`, `schema_version`, `acquisition_session_id`,
 `initial_epoch_id`, ordered `source_contexts`, `producer`, and `content_hash`.
 
 - `resolution` references an accepted `DemandResolution`.
-- Each `StreamDeclaration` contains `stream_id`, `source_acquisition_id`,
-  `binding`, `clock_domain_id`, `initial_sequence: UInt63`, and
-  `initial_generation: UInt63`.
+- `opened_at` is canonical `ObservationTiming`; `receipt_clock_domain` equals
+  its receipt clock; `initial_epoch_id` is `Uuid`.
+- Each `StreamDeclaration` contains `stream_id: Uuid`,
+  `source_acquisition_id: Uuid`, `binding: DefinitionRef`,
+  `clock_domain_id: Uuid`, `initial_sequence: UInt63`, and
+  `initial_generation: UInt63`. It resolves exactly one source acquisition and
+  its binding; stream IDs, source-acquisition IDs, and binding references are
+  unique in descriptor order.
 - Exactly one `source_contexts` entry exists for each source acquisition, in
   stream declaration order. It has exact properties `source_acquisition_id`,
   `provider`, `adapter`, `source_generation`, `connection_generation`,
@@ -369,23 +430,41 @@ The closed version-1 `kind` vocabulary is `opened`, `demand_replaced`,
 `pause_changed`, `replay_state_changed`, `time_speed_changed`,
 `clock_discontinuity`, `stopping`, and `terminal`.
 
-- `demand_replaced` references the prior and replacement demand resolutions.
-- `overload_changed` records affected item identifiers and each item's prior
-  and current activation status and cadence.
-- `epoch_started` records the cause from `session_open`, `source_restart`,
-  `connection_replacement`, `aircraft_reload`, `plugin_reload`, `replay_seek`,
-  `clock_regression`, or `explicit_boundary`.
-- State-change variants record old and new values without relabeling receiver
-  evidence as source evidence.
-- `terminal` records the termination reason and optional primary failure after
-  all frame delivery has stopped. It does not reference the later session
-  result.
+`timing` is canonical `ObservationTiming`; its required receipt clock, reading,
+and UTC instant record when the core accepted the event. Optional source timing
+is present only when the source supplied it. The exact `detail` variants are:
+
+| `kind` | Required detail properties in semantic order | Optional detail properties | Invariants |
+| --- | --- | --- | --- |
+| `opened` | `descriptor: RecordRef` | — | descriptor names this acquisition-session descriptor |
+| `demand_replaced` | `prior_resolution: RecordRef`, `replacement_resolution: RecordRef` | — | same resolver instance; replacement generation is prior plus one |
+| `overload_changed` | nonempty ordered `items` | — | each item is `demand: RecordRef`, `profile_item_id: Identifier`, prior/current `activation`, and prior/current `delivery_period`; activation is `active`, `relaxed`, or `suspended`, and periods are `PositiveRationalDuration` when the corresponding activation is active or relaxed and otherwise omitted |
+| `epoch_started` | `epoch_id: Uuid`, `cause` | `prior_epoch_id: Uuid` | cause is `session_open`, `source_restart`, `connection_replacement`, `aircraft_reload`, `plugin_reload`, `replay_seek`, `clock_regression`, or `explicit_boundary`; prior epoch is prohibited for session open and required otherwise |
+| `source_degraded` | `source_acquisition_id: Uuid`, `failure: FailureEvidence` | — | source is declared by the descriptor and was not already degraded |
+| `source_restored` | `source_acquisition_id: Uuid`, `degraded_event: RecordRef` | — | reference names the unmatched degradation event for the source |
+| `pause_changed` | `prior: Boolean`, `current: Boolean` | — | values differ |
+| `replay_state_changed` | prior and current canonical replay-state values | — | values differ |
+| `time_speed_changed` | `prior: Binary64`, `current: Binary64` | — | bit patterns differ after canonical negative-zero normalization |
+| `clock_discontinuity` | `cause`, `prior_clock_domain_id: Uuid`, `current_clock_domain_id: Uuid`, `prior_reading: ClockReading`, `current_reading: ClockReading` | — | cause is `regression`, `jump`, or `domain_replaced`; reading IDs match their respective domain IDs; regression/jump requires equal domains and domain replacement requires unequal domains |
+| `stopping` | `termination_reason` | `primary_failure: FailureEvidence` | reason uses the acquisition-result vocabulary; failure presence obeys that result's reason/outcome rules |
+| `terminal` | `termination_reason` | `primary_failure: FailureEvidence` | emitted after delivery stops; it never references the later session result |
+
+Overload items preserve profile order within demand receipt order. State-change
+variants never infer a prior value or relabel receipt evidence as source
+evidence. A degradation/restoration pair does not create a new epoch by
+itself; a separately recorded `epoch_started` event does so when the selected
+session policy requires it.
 
 `AcquisitionSessionResult` has `result_id`, `acquisition_session_id`,
 `opened_descriptor`, `terminal_event`, `outcome`, `termination_reason`,
 optional `primary_failure`, ordered `cleanup_failures`, ordered
 `continuity_reports`, ordered `recording_results`, `ended_at`, `producer`, and
 `content_hash`.
+
+`result_id` and `acquisition_session_id` are `Uuid`; `opened_descriptor` and
+`terminal_event` are exact equal-session `RecordRef` values; `ended_at` is
+canonical `ObservationTiming` not earlier than the terminal event in a
+comparable receipt domain.
 
 - `terminal_event` is the exact `RecordRef` of the already-created terminal
   lifecycle event. Its termination reason and primary failure must match the
@@ -396,9 +475,18 @@ optional `primary_failure`, ordered `cleanup_failures`, ordered
   `required_evidence_unsatisfied`, `required_sink_failed`,
   `discontinuity_policy`, `explicit_abort`, or `internal_failure`.
 - `completed` requires `consumer_complete` and no primary failure.
-- `failed` requires a primary failure. `aborted` requires `explicit_abort`.
+- `stopped` requires `consumer_stop` or `source_end` and no primary failure.
+  `aborted` requires `explicit_abort` and no primary failure. `failed` requires
+  one of `required_evidence_unsatisfied`, `required_sink_failed`,
+  `discontinuity_policy`, or `internal_failure` plus a primary failure whose
+  domain/code supports that reason.
 - The first causal failure in lifecycle-event order is primary. Cleanup
   failures preserve their own phase and never replace it.
+
+The result's `continuity_reports` and `recording_results` are `ArraySet<RecordRef>`
+values restricted to their equal-named families. Every reference belongs to
+this acquisition session. `cleanup_failures` preserves attempt order rather
+than using array-set ordering.
 
 ## Generic synchronous ports and fan-out
 
@@ -464,9 +552,16 @@ analysis component may implement a subscriber or consume replay/archive
 records, but F1's analysis-specific ports remain owned by `F1.1`.
 
 `FanoutDeliveryEvent` records `delivery_event_id`, `acquisition_session_id`,
-`recording_session_id` when applicable, `endpoint_id`, `frame`,
+optional `recording_session_id`, `endpoint_id`, `frame`,
 `delivery_sequence`, `disposition`, `backpressure`, optional `failure`,
 optional `policy`, `timing`, `producer`, and `content_hash`.
+
+`endpoint_id: Uuid` equals the consumer instance ID for a frame subscriber and
+the sink-session ID for a recording sink. `recording_session_id` is required
+for a recording sink and prohibited for a frame subscriber. `frame` is the
+exact measurement-frame `RecordRef`; `delivery_sequence: UInt63` is contiguous
+from zero independently per endpoint. `timing` is canonical
+`ObservationTiming` used as receipt evidence for the delivery decision.
 
 `disposition` is the final value `delivered`, `dropped`, `detached`, or
 `failed`. `backpressure` is a `BackpressureEvidence` value with `kind`
@@ -492,7 +587,16 @@ mutate another endpoint's result.
 `resolution`, `scope`, ordered `item_results`, ordered `stream_summaries`,
 `overall_result`, `evaluated_at`, `producer`, and `content_hash`.
 
-- `scope` fixes inclusive first and last event, frame, and epoch references.
+- `resolution` is the accepted demand-resolution `RecordRef` under evaluation.
+  `evaluated_at` is canonical `ObservationTiming`.
+- `scope` has exactly `first_event: RecordRef`, `last_event: RecordRef`,
+  optional `first_frame: RecordRef`, optional `last_frame: RecordRef`, and
+  nonempty ordered `epoch_ids: Uuid[]`. Event references are acquisition
+  lifecycle events and bound an inclusive event-sequence interval. Frame
+  references are both present or both absent, are measurement-frame
+  references, and bound the inclusive delivered-frame interval. Epoch IDs
+  occur in first-appearance order and exactly cover the selected events and
+  frames.
 - Every accepted required and optional demand item appears once in
   `item_results`; each result is scoped to that demand item's consumer
   endpoint rather than aggregated across unrelated fan-out endpoints.
@@ -507,6 +611,12 @@ mutate another endpoint's result.
   `classification`, and `reasons`. Counts and durations are `UInt63`; the two
   interval properties are present exactly when at least one within-epoch
   interval exists.
+- `validity_distribution` is `CountDistribution<ValidityState>` and
+  `quality_distribution` is `CountDistribution<QualityFlag>`. A sample with
+  multiple quality flags contributes once to every matching quality bucket,
+  so quality counts do not sum to observed count; `eligible_count` and the
+  validity distribution do. `sink_failures: UInt63` counts failed delivery
+  events for this endpoint and scope.
 - A sample is eligible only when its validity is allowed by
   `required_validity`, it contains none of `prohibited_quality`, its age at the
   containing frame's acquisition time is represented by `freshness_age_ns`
@@ -545,6 +655,16 @@ mutate another endpoint's result.
   an indeterminate required item makes it indeterminate unless another required
   item is insufficient. Optional items never improve the overall result.
 
+Each `StreamSummary` has exact properties `stream_id: Uuid`,
+`source_acquisition_id: Uuid`, `first_epoch_id: Uuid`, `last_epoch_id: Uuid`,
+`epoch_count: UInt63`, `observed_count: UInt63`, `sample_count: UInt63`,
+`frame_count: UInt63`, `delivered_frame_count: UInt63`, `drop_count: UInt63`,
+`duplicate_count: UInt63`, `reorder_count: UInt63`,
+`source_generation_count: UInt63`, and `connection_generation_count: UInt63`.
+Summaries appear in descriptor stream order, cover only the report scope, and
+reconcile with the item results and referenced delivery events. Counts include
+records excluded from eligibility; they never imply continuity sufficiency.
+
 Continuity reports acquisition sufficiency only. They do not contain q4xpcc
 performance findings or FDM/FOQA operational findings.
 
@@ -558,22 +678,52 @@ recording session owns one or more sink sessions.
 `acquisition_session_descriptor`, `resolution`, ordered `streams`, ordered
 `sinks`, `segment_policy`, `opened_at`, `producer`, and `content_hash`.
 
-Each `SinkDeclaration` has `sink_session_id`, `sink_kind`, `artifact_role`,
-`criticality`, `destination`, optional `profile`, `planned_root_artifact_id`,
-`backpressure`, `buffer_capacity`, `publication`, `recovery_policy`, and
-`discontinuity_policy`, plus optional `retention_policy`.
+`recording_session_id` is `Uuid`; the acquisition descriptor and accepted
+resolution are exact `RecordRef` values and agree with one another. `streams`
+is a nonempty ordered subset of the acquisition descriptor's complete
+`StreamDeclaration` values, preserving descriptor order. `sinks` is nonempty
+and unique by sink-session, endpoint, destination, and planned-root identity.
+`opened_at` is canonical `ObservationTiming` and is not earlier than the
+acquisition descriptor opening in a comparable receipt domain.
 
-- `sink_kind` and `artifact_role` are `Identifier` values.
+Each `SinkDeclaration` has `sink_session_id`, `sink_kind`, `artifact_role`,
+`criticality`, `capabilities`, `destination`, optional `profile`,
+`planned_root_artifact_id`, `backpressure`, `buffer_capacity`, `publication`,
+`recovery_policy`, and `discontinuity_policy`, plus optional
+`retention_policy`.
+
+- `sink_session_id` and `planned_root_artifact_id` are `Uuid`; `sink_kind` and
+  `artifact_role` are `Identifier` values. The reserved package kinds are
+  `xplane_fdau.sink.canonical_archive`,
+  `xplane_fdau.sink.xplane_fdr_projection`, and
+  `xplane_fdau.sink.canonical_jsonl_audit`. Another kind is permitted only
+  when its capabilities are fully declared and it introduces no host object or
+  new contract family.
 - `criticality` is `required` or `optional`.
+- `capabilities` has exact properties `publishes_artifact: Boolean`,
+  `supports_checkpoint: Boolean`, `supports_recovery: Boolean`,
+  `supports_retention: Boolean`, and optional `required_profile_family` equal
+  to one family URI known by the descriptor validator. Profile is required
+  exactly when that family is present and must reference it. Retention policy
+  is permitted exactly when retention support is true. Checkpoint or recovery
+  calls against a false capability are rejected before the sink is opened.
+  Reserved-kind capabilities are exact: canonical archive is
+  `(publishes_artifact=true, supports_checkpoint=true,
+  supports_recovery=true, supports_retention=true)` with no required profile;
+  native-FDR projection is `(true, false, true, false)` and requires the
+  native-FDR projection-profile family; canonical JSONL audit is
+  `(true, true, true, true)` with no required profile. Capability declarations
+  are validated by the sink at `open`; a mismatch yields a rejected outcome
+  rather than silent degradation.
 - `destination` is a `DestinationIdentity` with exact properties
   `destination_id: Identifier`, `kind: Identifier`, and optional
   `locator: NfcText(2048)`. The locator is evidence, not identity, and cannot
   contain credentials, a host handle, or an open stream object.
-- `profile` is an exact `DefinitionRef` and is present exactly when the sink's
-  declared kind requires a format or projection profile.
-- `retention_policy` is an exact `DefinitionRef`. It is required for a
-  canonical archive sink, permitted only for another sink kind that declares
-  retention capability, and prohibited otherwise. Across the required sink
+- `profile` is an exact `DefinitionRef` and is present exactly when
+  `required_profile_family` is present.
+- `retention_policy` is an exact `DefinitionRef`. It is required for the
+  canonical archive kind, permitted only when `supports_retention` is true,
+  and prohibited otherwise. Across the required sink
   declarations, at least one retention policy independently satisfies every
   accepted demand item's `RetentionRequirement`; optional sinks cannot satisfy
   required retention evidence.
@@ -590,7 +740,7 @@ Each `SinkDeclaration` has `sink_session_id`, `sink_kind`, `artifact_role`,
   exactly one prior-state variant. A `byte_artifact` variant contains exact
   byte length and SHA-256; an `artifact_graph` variant contains the prior
   manifest `RecordRef` plus its serialized byte length and SHA-256.
-  `not_applicable` is valid only for a declared nonpublishing sink. Publication
+  `not_applicable` is valid only when `publishes_artifact` is false. Publication
   fails with `publication_conflict` if the destination's observed state does
   not match. Unconditional replacement is prohibited.
 - `recovery_policy` has `mode` exactly `preserve_partial`, `discard_partial`,
@@ -663,6 +813,7 @@ artifact set:
 |-- events/
 |   |-- lifecycle/<segment>.jsonl
 |   `-- fanout/<sink-session-id>/<segment>.jsonl
+|-- order/global/<segment>.jsonl
 |-- checkpoints/<checkpoint-sequence>.json
 |-- payloads/sha256/<first-two-hex>/<remaining-sixty-two-hex>
 |-- continuity/<continuity-report-id>.json
@@ -678,6 +829,22 @@ rendering. UUID path components use canonical lowercase UUID text. The archive
 contains every demand receipt referenced by its resolution and the complete
 definition closure needed to validate retained records; duplicate byte-identical
 definitions occur once.
+
+The global-order stream contains one `ArchiveOrderEntry` for every retained
+raw observation, measurement sample, measurement frame, acquisition lifecycle
+event, and fan-out delivery event. It does not duplicate the target record.
+Its exact properties are `contract_family`, `schema_version`,
+`order_entry_id: Uuid`, `recording_session_id: Uuid`,
+`global_sequence: UInt63`, `logical_stream_key: NfcText(512)`,
+`record_index: UInt63`, `record: RecordRef`, `producer`, and `content_hash`.
+Global sequence is contiguous from zero for the recording session. The logical
+stream key is the target's archive-relative logical stream path without the
+segment filename; record index is the target stream's contiguous archive
+record index. The referenced target must exist at that key and index with an
+equal hash. Order-entry segmenting follows the descriptor's segment policy.
+This stream is the sole authority for `recorded_global_order` replay; directory
+enumeration, path sorting, timestamps, and manifest member order are not replay
+ordering evidence.
 
 Paths are relative POSIX paths with no empty, `.`, or `..` segment. Path
 components are NFC, case-sensitive contract values even on a case-insensitive
@@ -716,6 +883,10 @@ the manifest-rooted canonical evidence graph.
 optional `previous_checkpoint`, ordered `sealed_members`, ordered
 `open_streams`, ordered `delivery_positions`, `created_at`, `producer`,
 and `content_hash`.
+
+The four identity properties are `Uuid`; `descriptor` is the exact
+recording-session-descriptor `RecordRef`; `created_at` is canonical
+`ObservationTiming`.
 
 - Checkpoint sequence is contiguous from zero per sink session.
   `previous_checkpoint` is prohibited at zero and otherwise references the
@@ -756,6 +927,8 @@ byte-bearing artifact uses content kind `bytes` with byte length and SHA-256. A
 sealed, preserved, or published logical graph root instead uses content kind
 `manifest` with the manifest `RecordRef` plus serialized manifest byte length
 and SHA-256. Content state never substitutes for artifact identity.
+`recorded_at` is canonical `ObservationTiming`; consecutive states for one
+artifact are nondecreasing when receipt clocks are comparable.
 
 An immutable manifest entry uses `content_state` exactly `sealed`,
 `preserved_partial`, or `omitted_by_policy`.
@@ -800,12 +973,20 @@ causal failure.
 must exactly equal the declaration's authorization, and is prohibited
 otherwise.
 
+Its three operation/artifact identities are `Uuid`; the descriptor is a
+recording-session-descriptor `RecordRef`; destination exactly equals the sink
+declaration; `requested_at` is canonical `ObservationTiming`.
+
 `RecoveryResult` has `recovery_result_id`, `recording_session_id`,
 `sink_session_id`, `recovery_attempt_id`, `action`, optional
 `selected_checkpoint`, optional `prior_recording_result`, ordered
 `input_artifact_states`, ordered `output_artifact_states`, ordered
 `preserved_tail_artifacts`, `outcome`, optional `primary_failure`, ordered
 `cleanup_failures`, `ended_at`, `producer`, and `content_hash`.
+
+Result, recording-session, sink-session, and recovery-attempt identities are
+`Uuid`; `ended_at` is canonical `ObservationTiming` not earlier than the
+request in a comparable receipt domain.
 
 `outcome` is `resumed`, `finalized_partial`, `preserved_partial`, `discarded`,
 or `failed`. Recovery validates the contiguous self-hashed checkpoint chain and
@@ -815,6 +996,11 @@ safe-prefix hash. A shorter or mismatched member fails closed without mutation.
 Bytes after a valid safe prefix and members not named by the checkpoint are
 preserved under new tail-artifact UUIDs before a resumed member is truncated;
 they are never silently discarded.
+
+Every successful action outcome prohibits `primary_failure`; `failed` requires
+one recovery-domain primary failure. Cleanup failures are permitted for any
+outcome and never rewrite a successful primary action into `failed` after its
+irreversible state change.
 
 `selected_checkpoint` is required for `resume` and `finalize_partial`, optional
 for `preserve`, and prohibited for `discard`. Outcomes correspond exactly to
@@ -845,14 +1031,17 @@ whole fan-out transaction.
 
 Each `ArtifactEntry` has `artifact_id`, `role`, `media_type`, optional
 `relative_path`, `content_state`, variant-selected byte
-length/SHA-256/failure/retention fields, `schema_version` when applicable,
-`record_ref` when the artifact is one self-hashed contract record, `producer`,
-`created_at`, optional `finalized_at`, ordered `scopes`, and ordered
-`definitions`.
+length/SHA-256/failure/retention fields, optional `schema_version`, optional
+`record_ref`, `producer`, `created_at`, optional `finalized_at`, ordered
+`scopes`, and ordered `definitions`.
 `relative_path` is required for a graph member and prohibited only when the
 root artifact is itself one byte-addressable external file. Artifact entries
 are unique by ID and path. The manifest inventories every created or
 policy-omitted member of this sink graph.
+
+`created_at` and `finalized_at` are `UtcInstant` artifact metadata. They do not
+establish runtime causal order; lifecycle events, checkpoints, and phase
+attempts carry that evidence.
 
 - `schema_version` is present exactly for an artifact serialized under a
   versioned schema and is prohibited otherwise. `record_ref` is present
@@ -911,6 +1100,11 @@ graph. It has `recording_result_id`, `recording_session_id`, `descriptor`,
 `ended_at`, `producer`, and `content_hash`. It contains no singular manifest or
 archive-publication field.
 
+`recording_result_id` and `recording_session_id` are `Uuid`; `descriptor` is
+the equal-session recording descriptor `RecordRef`; `ended_at` is canonical
+`ObservationTiming` not earlier than every sink's terminal phase in a
+comparable receipt domain.
+
 Each `SinkResult` has `sink_session_id`, `criticality`, `outcome`, optional
 `manifest`, optional `manifest_file`, `publication`, `delivery_summary`,
 ordered `phase_attempts`, optional `primary_failure`, and ordered
@@ -952,16 +1146,56 @@ ordered `phase_attempts`, optional `primary_failure`, and ordered
   `internal_failure`. An optional publication conflict is retained in its sink
   result without replacing the session's actual termination reason.
 
+A `PhaseAttempt` has exact properties `phase`, `attempt_sequence: UInt63`,
+`started_at: ObservationTiming`, `ended_at: ObservationTiming`, `result`, and
+optional `failure: FailureEvidence`. Phase order is `open`, zero or more
+checkpoint calls summarized as one aggregate checkpoint attempt, then exactly
+one of commit or abort when either was attempted, optional recover, and close.
+Attempt sequence is contiguous from zero for the sink session. `result` is
+`succeeded`, `not_due`, `conflict`, or `failed`; `not_due` is valid only for
+checkpoint, `conflict` only for commit, failure is required for conflict or
+failed and prohibited otherwise. A checkpoint summary additionally has
+`call_count: UInt63`, `checkpointed_count: UInt63`, and
+`not_due_count: UInt63`, whose successful counts sum to call count when result
+is not failed. Phase timing must be same-domain comparable and nondecreasing.
+
 ## Failure evidence and precedence
 
 Runtime failure evidence is data, not a serialized Python exception name.
-`FailureEvidence` has `failure_id: Uuid`, `domain`, `phase`, `code`,
-`record_ref` when available, `artifact_id` when available, `path` when the
-failure concerns contract data, optional bounded `diagnostic`, and `timing`.
+`FailureEvidence` has exact required properties `failure_id: Uuid`, `domain`,
+`phase`, `code`, and `timing: ObservationTiming`; optional properties are
+`record_ref: RecordRef`, `artifact_id: Uuid`, `path`, and
+`diagnostic: NfcText(1024)`. `path` is an RFC 6901 pointer and is present only
+when failure concerns a contract property. Record and artifact references are
+present whenever the failed operation had already bound those identities and
+are otherwise omitted. `phase` is one of `resolve`, `open`, `observe`,
+`normalize`, `deliver`, `evaluate`, `append`, `checkpoint`, `commit`, `abort`,
+`recover`, `close`, `replay`, `project`, `verify`, or `cleanup`; each domain
+permits only phases meaningful to its operations.
 
 `domain` is `acquisition`, `continuity`, `fanout`, `recording`, `publication`,
 `recovery`, `replay`, `projection`, or `deployment`. Each domain owns a closed
-version-1 code vocabulary in its section. Unknown codes fail closed.
+version-1 code vocabulary:
+
+| Domain | Closed `code` vocabulary |
+| --- | --- |
+| `acquisition` | `provider_unavailable`, `source_unavailable`, `binding_mismatch`, `generation_conflict`, `source_failed`, `session_state_invalid`, `required_evidence_unsatisfied`, `internal_failure` |
+| `continuity` | `scope_invalid`, `clock_incomparable`, `cadence_shortfall`, `gap_exceeded`, `stale_evidence`, `invalid_evidence`, `drop_observed`, `sink_failure`, `internal_failure` |
+| `fanout` | `endpoint_rejected`, `endpoint_failed`, `backpressure_overflow`, `endpoint_detached`, `delivery_sequence_conflict`, `internal_failure` |
+| `recording` | `sink_open_failed`, `append_failed`, `checkpoint_failed`, `commit_failed`, `abort_failed`, `close_failed`, `required_sink_failed`, `recovery_pending`, `internal_failure` |
+| `publication` | `destination_unsupported`, `publication_conflict`, `atomicity_unavailable`, `verification_failed`, `cleanup_failed`, `internal_failure` |
+| `recovery` | `descriptor_mismatch`, `root_identity_mismatch`, `checkpoint_chain_invalid`, `member_missing`, `member_shorter_than_checkpoint`, `prefix_hash_mismatch`, `tail_preservation_failed`, `discard_unauthorized`, `cleanup_failed`, `internal_failure` |
+| `replay` | `source_manifest_invalid`, `selection_invalid`, `ordering_unavailable`, `pacing_clock_incomparable`, `source_record_invalid`, `delivery_failed`, `internal_failure` |
+| `projection` | `profile_mismatch`, `required_measurement_missing`, `required_field_unavailable`, `conversion_failed`, `out_of_range`, `timing_incomparable`, `native_write_failed`, `publication_failed`, `internal_failure` |
+| `deployment` | `release_hash_mismatch`, `distribution_identity_mismatch`, `version_mismatch`, `source_revision_mismatch`, `runtime_dependency_present`, `file_missing`, `file_changed`, `file_added`, `import_origin_mismatch`, `conformance_manifest_mismatch`, `conformance_failed`, `unsupported_interpreter`, `internal_failure` |
+
+Demand-resolution rejection reasons and continuity classifications are not
+failure codes: they remain valid domain outcomes. Deployment finding codes are
+the equal-named deployment failure codes except `internal_failure`; a receipt
+uses findings for deterministic verification rejection and reserves
+`FailureEvidence` for an attempted verification operation that could not
+produce that deterministic comparison. Unknown domains, phases, or codes fail
+closed.
 
 The first causal failure in recorded event order is primary. Cleanup, abort,
 close, recovery, and independent sink failures retain their own evidence and
@@ -978,13 +1212,36 @@ Version 1 defines one replay mode: `faithful_canonical`.
 `source_artifacts`, `selection`, `ordering`, `pacing`, `opened_at`, `producer`,
 and `content_hash`.
 
+`replay_session_id` is `Uuid`; `opened_at` is canonical
+`ObservationTiming`.
+
 - Stored observations, samples, frames, sequence numbers, epochs, timestamps,
   and hashes are emitted unchanged.
-- `selection` fixes inclusive stream, epoch, and record-sequence ranges.
-- `ordering` is `recorded_global_order` or `per_stream_order`; the source
-  manifest must supply the selected order.
-- `pacing` is `unpaced`, `recorded_monotonic`, or `scaled`. `scaled` carries a
-  positive reduced rational multiplier. Pacing affects delivery timing only.
+- `source_manifest` is an artifact-manifest `RecordRef` whose graph validates
+  completely. `source_artifacts` is a nonempty `ArraySet<Uuid>` containing the
+  exact retained artifacts selected from that manifest; every record and
+  payload needed by the selection is included.
+- `selection` has exactly nonempty ordered `ranges` and
+  `include_record_kinds: ArraySet`. Each `ReplayRange` has
+  `logical_stream_key: NfcText(512)`, `records: RecordRange`, and optional
+  `epoch_ids: ArraySet<Uuid>`. Ranges are unique and sorted by stream key then
+  first index, cannot overlap for one stream, and resolve within the manifest.
+  Record kinds are drawn from `raw_observation`, `measurement_sample`,
+  `measurement_frame`, `acquisition_lifecycle_event`, and
+  `fanout_delivery_event`.
+- `ordering` is `recorded_global_order` or `per_stream_order`.
+  `recorded_global_order` requires the selected archive-order entries and emits
+  their targets by contiguous global sequence. `per_stream_order` emits ranges
+  in selection order and records within each range by archive record index.
+  Missing or inconsistent order evidence fails with `ordering_unavailable`;
+  path or manifest enumeration never substitutes for it.
+- `pacing` is a tagged value. `unpaced` has no other property.
+  `recorded_monotonic` has `reference: "first_emitted"`. `scaled` has
+  `reference: "first_emitted"` and `multiplier: PositiveRational`.
+  Recorded/scaled pacing requires same-domain monotonic
+  evidence for consecutive emitted items; an incomparable boundary produces a
+  replay failure rather than UTC or wall-clock approximation. Pacing affects
+  delivery timing only.
 - The replay session identity describes execution and never replaces source
   evidence identities.
 
@@ -994,10 +1251,36 @@ and `content_hash`.
 `resumed`, `seeked`, `looped`, `stopping`, or `terminal`. Backward seek and loop
 increment delivery generation. They do not rewrite source epochs or records.
 
-`ReplaySessionResult` has `replay_result_id`, `replay_session_id`, `outcome`,
-`delivered_record_counts`, `last_delivery_generation`, optional
+The two identities are `Uuid`; event sequence and delivery generation are
+`UInt63`; `timing` is canonical `ObservationTiming`.
+
+The exact replay detail variants are: `opened` carries `descriptor: RecordRef`;
+`paused` and `resumed` carry `prior_state` and `current_state` with the exact
+transition; `seeked` carries `prior_selection`, `current_selection`, and
+`direction` (`forward` or `backward`); `looped` carries `completed_selection`
+and `restart_selection`; `stopping` carries `reason` and optional
+`primary_failure`; and `terminal` carries the final reason and optional primary
+failure. Embedded selections use the descriptor selection shape. Reasons are
+`selection_complete`, `consumer_stop`, `explicit_abort`, or
+`internal_failure`; only internal failure requires failure evidence.
+
+`ReplaySessionResult` has `replay_result_id`, `replay_session_id`,
+`terminal_event`, `outcome`, `delivered_record_counts`,
+`last_delivery_generation`, optional
 `primary_failure`, ordered `cleanup_failures`, `ended_at`, `producer`, and
 `content_hash`. `outcome` is `completed`, `stopped`, or `failed`.
+
+The two identities are `Uuid`; `last_delivery_generation` is `UInt63`;
+`ended_at` is canonical `ObservationTiming` not earlier than the terminal
+event in a comparable receipt domain.
+
+`delivered_record_counts` is `CountDistribution` over the five replay record
+kinds. The members are exclusive and their sum is the number of emitted target
+records. `completed` requires terminal reason `selection_complete` and no
+primary failure; `stopped` requires `consumer_stop` or `explicit_abort` and no
+primary failure; `failed` requires a replay-domain primary failure. The result
+references the terminal replay event immediately before `outcome` using
+`terminal_event: RecordRef`; its reason and failure must match.
 
 Replay never appends emitted records to the source archive as new live facts by
 default. A future native-FDR-to-canonical adapter is not faithful replay because
@@ -1010,21 +1293,59 @@ canonical evidence with exact native-file provenance under separate authority.
 `projection_profile_id`, `projection_profile_revision`, `authority`,
 `provenance`, literal `target_version: 4`, `row_cadence`, ordered
 `trajectory_mappings`, ordered `dref_mappings`, `timing_policy`,
-`formatting_policy`, `limitations`, and `content_hash`.
+`header_policy`, `formatting_policy`, `limitations`, and `content_hash`.
 
-Each field mapping has `output_field`, `measurement`, optional `binding`,
-optional `transform`, `source_unit`, `output_unit`, `missing_policy`, and
-`precision_policy`.
+`row_cadence` is `PositiveRationalDuration`. Each `FieldMapping` has exact
+properties `mapping_id: Identifier`, `output_field`, `measurement:
+DefinitionRef`, `binding: DefinitionRef`, optional `transform: AlgorithmRef`,
+`source_unit: UnitSpec`, `output_unit: UnitSpec`, `resampling`,
+`missing_policy`, optional `placeholder: Binary64`, and `precision_policy`.
+The binding resolves to the pinned measurement; source and output units resolve
+through the measurement/binding/transform closure. A mapping therefore never
+selects an arbitrary corroborating sample at projection time.
 
-- Mandatory trajectory fields appear exactly once in native version-4 order.
-- `DREF` mappings use unique native declarations and preserve declared order.
-- `missing_policy` is `fail`, `placeholder`, or `omit`. Mandatory fields allow
-  `fail` or an explicitly typed `placeholder`; DREF fields allow `fail` or
-  `omit`. Placeholder and omission are never inferred.
-- `precision_policy` states native lexical precision and `reject`, `round`, or
-  `clamp` for out-of-representation values. Round and clamp are always loss.
-- `timing_policy` references exact acquisition/resampling behavior; it cannot
-  invent source timestamps or cross unrelated clock domains.
+- `trajectory_mappings` contains exactly six mappings in this order:
+  `longitude`, `latitude`, `altitude_msl_ft`, `heading_magnetic_deg`,
+  `pitch_deg`, and `roll_deg`. No other trajectory field exists in version 1.
+- A trajectory `output_field` is that literal field name. A DREF
+  `output_field` is a tagged value with exact properties `kind: "dref"`,
+  `dataref_path: NfcText(2048)`, `scale: Binary64`, and optional
+  `comment: NfcText(1024)`. Paths are nonempty, contain no whitespace or
+  double slash, are unique, and mappings preserve declared DREF order. Scale
+  is finite and nonzero. The declaration is native output metadata, not a
+  canonical binding identity.
+- `resampling` is `exact`, `hold`, `nearest`, or `linear`; it must be allowed
+  by the measurement definition and acquisition profile. `exact` requires a
+  sample at the row instant. Other modes use only same-epoch, same-domain
+  evidence and cannot cross a discontinuity. Tie-breaking for nearest chooses
+  the earlier sample. Linear requires numeric scalar/vector equal-shape values
+  and exact rational position before one final binary64 rounding.
+- `missing_policy` is `fail`, `placeholder`, or `omit`. Trajectory mappings
+  allow `fail` or `placeholder`; DREF mappings allow `fail` or `omit`.
+  Placeholder is required exactly for `placeholder` and otherwise prohibited.
+  Placeholder and omission are never inferred.
+- `precision_policy` has exactly `lexical_mode: "shortest_round_trip"`,
+  `inexact_conversion` (`reject` or `round`), and `range_overflow` (`reject` or
+  `clamp`). Round and clamp are always loss. Native lexical emission uses the
+  existing finite int/binary64 version-4 writer contract and LF endings.
+- `timing_policy` has exactly `clock_basis: "frame_acquisition_clock"`,
+  `utc_source: "frame_acquisition_utc"`, `alignment:
+  "first_selected_frame"`, `gap_disposition` (`fail` or `omit_row`), and
+  `midnight_disposition` (`fail` or `wrap_with_date_metadata`). Row instants
+  advance from the first selected frame by exact row cadence. Every selected
+  frame clock domain must be comparable within its epoch. UTC is mandatory for
+  every emitted row; receiver UTC or extrapolated anchors cannot replace a
+  missing frame acquisition UTC. A wrapped midnight is disclosed as native
+  date-boundary loss.
+- `header_policy` has exact properties `origin: "A"`, `date_metadata:
+  "first_row_utc_date"`, ordered unique `comments: NfcText(1024)[]`, and
+  ordered unique `metadata`. Each metadata item has the existing native
+  four-character key and single-line value restrictions; `COMM`, `DREF`, and
+  `DATE` are prohibited because comments, mappings, and date policy own them.
+- `formatting_policy` has exact properties `encoding: "utf-8"`,
+  `line_ending: "lf"`, `field_separator: "comma_space"`, and
+  `writer_profile: "xplane_fdau.native_fdr_v4.v1"`. No locale, platform
+  newline, or caller formatting callback can alter bytes.
 - The existing native reader continues accepting versions 3 and 4. New
   canonical projection emits version 4 only.
 
@@ -1034,10 +1355,37 @@ optional `transform`, `source_unit`, `output_unit`, `missing_policy`, and
 `row_count`, `outcome`, optional `primary_failure`, ordered
 `cleanup_failures`, `producer`, and `content_hash`.
 
-Each field result records mapping identity, emitted, omitted, placeholder,
-conversion-failed, out-of-range, rounded, clamped, interpolated, and resampled
-counts; first and last affected output row; and ordered limitations.
+`projection_report_id` and `recording_session_id` are `Uuid`; `row_count` is
+`UInt63`.
+
+`profile` is the exact projection-profile `DefinitionRef`; `input_manifest` is
+an artifact-manifest `RecordRef`; `input_artifacts` is a nonempty
+`ArraySet<Uuid>` resolved in that manifest; and `output_artifact` is the
+preallocated native-file artifact `Uuid`. The output sink's later manifest and
+result bind that identity to final bytes without creating a report/manifest
+self-reference. `selected_range` uses the replay-selection shape and must
+resolve to retained frames and their complete sample/observation closure.
+
+Each `FieldResult` has exact properties `mapping_id: Identifier`,
+`emitted_count: UInt63`, `omitted_count: UInt63`,
+`placeholder_count: UInt63`, `conversion_failed_count: UInt63`,
+`out_of_range_count: UInt63`, `rounded_count: UInt63`,
+`clamped_count: UInt63`, `interpolated_count: UInt63`,
+`resampled_count: UInt63`, optional `affected_rows: RecordRange`, and ordered
+unique `limitations`. Emitted plus omitted equals row count for a DREF mapping;
+emitted equals row count and omitted is zero for a trajectory mapping.
+Placeholder is included in emitted. The remaining loss counts may overlap and
+do not sum to emitted count. `affected_rows` is present exactly when any loss
+count is nonzero and spans the first through last row affected by any loss.
 `outcome` is `completed`, `completed_with_loss`, or `failed`.
+
+`completed` requires every loss count and limitations array to be empty and no
+primary failure. `completed_with_loss` requires at least one disclosed loss or
+limitation and no primary failure. `failed` requires a projection-domain
+primary failure; any safely published partial native artifact remains explicit
+artifact evidence and never becomes a completed projection. Cleanup failures
+do not replace the primary result and a successfully published output remains
+published.
 
 The report does not duplicate source-sample lineage for every native cell.
 Exact reproduction uses the immutable canonical input graph plus the pinned
@@ -1083,19 +1431,39 @@ must verify a future FDAU release. It contains `deployment_policy_id`,
 `deployment_policy_revision`, `authority`, `provenance`,
 `allowed_deployment_modes`, literal `distribution_name: "xplane-fdau"`,
 literal `import_namespace: "xplane_fdau"`, `required_artifact_kind`,
-`package_inventory_rule`, `runtime_dependency_rule`,
+`package_inventory_rule`, `build_identity_resource`, `runtime_dependency_rule`,
 `import_origin_rule`, `conformance_rule`, `generated_cache_exclusions`,
 `limitations`, and `content_hash`.
 
 - Allowed modes are `installed_wheel` and `reproducibly_bundled`.
-- Required artifact kind is one complete wheel; an sdist is not deployment
-  proof.
-- The package inventory is every regular wheel member below
+- `allowed_deployment_modes` is the nonempty `ArraySet` of
+  `installed_wheel` and/or `reproducibly_bundled`.
+- `required_artifact_kind` is literal `wheel`; an sdist is not deployment
+  proof. `package_inventory_rule` is literal `complete_namespace_inventory`.
+  The package inventory is every regular wheel member below
   `xplane_fdau/`, including schemas, conformance resources, formats, sinks, and
   data files.
-- Runtime dependencies must be empty in wheel metadata.
-- Imports must resolve exclusively below the verified installed or bundled
-  package root.
+- `build_identity_resource` is literal
+  `xplane_fdau/build-identity.json`. That canonical JSON resource has exactly
+  `distribution_name: "xplane-fdau"`, `distribution_version: VersionText`, and
+  `repository_revision: VersionText`. It has no self-hash or release-artifact
+  hash because embedding the enclosing wheel hash would be cyclic. Its bytes
+  are covered by the wheel and package-file hashes.
+- `runtime_dependency_rule` is literal `empty_requires_dist`; runtime
+  dependencies must be empty in wheel metadata.
+- `import_origin_rule` is literal `single_verified_namespace_root`; imports
+  must resolve exclusively below the verified installed or bundled package
+  root.
+- `conformance_rule` has exact properties `protocol_version: 1`,
+  `python_module: "xplane_fdau.conformance"`, `manifest_resource:
+  "xplane_fdau/conformance/v1/manifest.json"`, and `required_exit_status: 0`.
+  The Python runner accepts `--manifest PATH --output PATH`, writes the
+  canonical conformance-result shape fixed by the canonical design, and uses
+  exit status 0/1/2 with those existing meanings. Installed-wheel verification
+  resolves the packaged manifest with `importlib.resources`; a caller cannot
+  substitute a checkout mirror.
+- `generated_cache_exclusions` is exactly the `ArraySet` containing
+  `__pycache__` and `*.pyc`.
 - Only `__pycache__` directories and `.pyc` files generated by the interpreter
   are excluded. No source, schema, fixture, resource, or native extension below
   the namespace may be added, removed, or changed.
@@ -1109,12 +1477,31 @@ ordered `delivered_package_files`, `runtime_dependencies`, `import_origin`,
 `conformance_result_sha256`, ordered `findings`, `outcome`, `verified_at`,
 `producer`, and `content_hash`.
 
-- `release_artifact` contains filename, media type, byte length, and SHA-256 of
-  the exact wheel bytes.
-- Package-file entries contain relative POSIX path, byte length, and SHA-256
-  and are sorted by path.
+`deployment_receipt_id` is `Uuid`; `verified_at` is canonical
+`ObservationTiming`.
+
+- `policy` is the exact deployment-policy `DefinitionRef`; `consumer_id` is an
+  `Identifier`; `consumer_build_id` and `repository_revision` are
+  `VersionText`; `deployment_mode` is allowed by the policy;
+  `distribution_name` is literal `xplane-fdau`; and
+  `distribution_version` is `VersionText` equal to the installed metadata.
+- `release_artifact` has exact properties `filename: NfcText(255)`,
+  `media_type: "application/zip"`, `byte_length: UInt63`, and `sha256:
+  Sha256` for the exact wheel bytes.
+- Expected and delivered package-file entries have exact properties
+  `path`, `byte_length: UInt63`, and `sha256: Sha256`. `path` is a normalized
+  relative POSIX path below `xplane_fdau/` with no empty, `.`, or `..` segment.
+  Entries are unique and sorted by path.
 - Expected inventory is derived from the verified wheel, never caller input.
 - Delivered inventory is scanned from the exact import root.
+- `runtime_dependencies` is an `ArraySet<NfcText(512)>` of normalized
+  `Requires-Dist` values and must be empty for verification. `import_origin`
+  is the normalized absolute package-root path as `NfcText(2048)` evidence;
+  path spelling is not package identity. `python_version` is `VersionText` and
+  must fall in the release metadata's supported range.
+- `conformance_manifest_sha256`, `conformance_result_sha256`, and every package
+  hash are `Sha256`. The result hash covers the canonical conformance-result
+  bytes including final LF.
 - `outcome` is `verified` or `rejected`.
 - Findings use the closed codes `release_hash_mismatch`,
   `distribution_identity_mismatch`, `version_mismatch`,
@@ -1124,6 +1511,15 @@ ordered `delivered_package_files`, `runtime_dependencies`, `import_origin`,
   `unsupported_interpreter`.
 - A rejected receipt remains audit evidence but cannot establish a deployment
   pin.
+
+Each `DeploymentFinding` has required `code` and optional `path`, `expected`,
+and `actual`. `path` is the affected package-relative path and is required for
+`file_missing`, `file_changed`, and `file_added`; it is prohibited for other
+codes. `expected` and `actual` are tagged values with kind `text`, `sha256`, or
+`file_state` and the equal-named `VersionText`, `Sha256`, or package-file entry
+value. A missing side is omitted, never `null`. Findings are an `ArraySet`
+ordered by code, then path, then canonical expected/actual bytes. `verified`
+requires an empty findings array; `rejected` requires at least one finding.
 
 The consumer embeds this portable FDAU-owned receipt in, or references it from,
 its own build manifest. FDAU does not own the consumer's complete manifest,
@@ -1141,6 +1537,14 @@ Closed-world proof proceeds in this order:
 6. run the shared conformance entry point against the pinned corpus;
 7. hash the canonical conformance result; and
 8. emit a verified receipt only when every step passes.
+
+Verification is fail-collecting after the wheel itself is readable: every
+independent deterministic mismatch is retained in canonical finding order.
+An unreadable wheel or an inability to execute verification yields deployment
+`FailureEvidence` and no fabricated receipt. A conformance runner exit status
+1 yields `conformance_failed` and a rejected receipt; status 2 is an attempted
+verification failure and produces no receipt. The receipt's producer identity
+names the verifier, not the consumer package.
 
 The policy exists before a release. A concrete receipt, version, revision,
 wheel hash, file hash, or conformance-result hash is never fabricated to make a
@@ -1212,7 +1616,7 @@ this document as that child's implementation plan:
 | `A1.8` | Synchronous fan-out ports, sink/subscriber isolation, backpressure, and delivery events |
 | `A1.9` | Session orchestration inputs and immutable terminal result closure |
 | `R1.1` | Recording-session descriptor, sink declarations, criticality, and artifact UUID/content identity separation |
-| `R1.2` | Manifest-rooted logical archive, canonical JSON/JSONL, content-addressed payloads, and raw-retention definition |
+| `R1.2` | Manifest-rooted logical archive, canonical JSON/JSONL, global-order entries, content-addressed payloads, and raw-retention definition |
 | `R1.3` | Immutable segment closure, checkpoints, candidate directory, atomic/no-replace publication, and failure cleanup |
 | `R1.4` | Artifact entries, roles, hashes, record references, graph relationships, and manifest self-hash boundary |
 | `R1.5` | Recording terminal results, stable artifact identity through recovery, partial preservation, and primary/cleanup failure precedence |
@@ -1262,17 +1666,21 @@ identity, lineage, timing, quality, release, or publication rules.
 D1.2 is complete only when:
 
 1. this one approved design fixes the A1/R1/P1 contract shapes and policies
-   needed by all four q4xpcc Phase 24A Slice 2 plans;
+   needed by all four q4xpcc Phase 24A Slice 2 plans, including acquisition,
+   continuity, fan-out, recording, recovery, replay, native-FDR projection,
+   deployment, and conformance planning surfaces;
 2. every family has an exact identity/version boundary, fields, invariants,
    references, runtime outcomes, error boundary, delivery ownership boundary,
-   and future schema/conformance path;
+   and future schema/conformance path, with closed failure codes and
+   deterministic validation/causal precedence;
 3. installed-wheel and reproducibly bundled deployment, revision pinning,
    release-artifact and delivered-file hashes, conformance, and closed-world
-   no-divergent-subset proof are explicit without requiring a current release;
-4. native FDR, ARINC, FDM/FOQA, q4xpcc, and external-client boundaries remain
-   consistent with the approved scope amendment;
-5. independent review reports no unresolved load-bearing ambiguity;
-6. the approved design is linked as binding architecture input without
-   advancing any `A1`, `R1`, `P1`, `S`, or `F1` child; and
-7. every implementation, schema, fixture, artifact, adoption, release, push,
-   tag, and publication gate remains unsatisfied.
+   no-divergent-subset proof are explicit without requiring or fabricating a
+   current release; and
+4. independent review reports no unresolved load-bearing ambiguity; native
+   FDR, ARINC, FDM/FOQA, q4xpcc, and external-client boundaries remain
+   consistent with the approved scope amendment; the approved contract-only
+   design is recorded as binding input for later A1/R1/P1 specifications; and
+   every implementation, schema, fixture, artifact, adoption, release, push,
+   tag, and publication gate remains unsatisfied without advancing any A1,
+   R1, P1, S, or F1 child.

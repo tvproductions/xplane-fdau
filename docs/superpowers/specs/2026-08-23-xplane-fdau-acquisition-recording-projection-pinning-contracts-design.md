@@ -159,6 +159,7 @@ documentation copy will be `docs/schemas/<stem>-v1.schema.json`.
 | Raw-retention policy | `raw-retention-policy` | definition; `policy_id` | `R1.2` |
 | Archive order entry | `archive-order-entry` | record; `order_entry_id` | `R1.2` |
 | Archive checkpoint | `archive-checkpoint` | record; `checkpoint_id` | `R1.3` |
+| Artifact content manifest | `artifact-content-manifest` | record; `content_manifest_id` | `R1.4` |
 | Artifact manifest | `artifact-manifest` | record; `artifact_manifest_id` | `R1.4` |
 | Recording-session result | `recording-session-result` | record; `recording_result_id` | `R1.5` |
 | Recovery request | `recovery-request` | record; `recovery_request_id` | `R1.5` |
@@ -655,7 +656,7 @@ is present only when the source supplied it. The exact `detail` variants are:
 | `replay_state_changed` | prior and current canonical replay-state values | — | values differ |
 | `time_speed_changed` | `prior: Binary64`, `current: Binary64` | — | bit patterns differ after canonical negative-zero normalization |
 | `clock_discontinuity` | `cause`, `prior_clock_domain_id: Uuid`, `current_clock_domain_id: Uuid`, `prior_reading: ClockReading`, `current_reading: ClockReading` | — | cause is `regression`, `jump`, or `domain_replaced`; reading IDs match their respective domain IDs; regression/jump requires equal domains and domain replacement requires unequal domains |
-| `stopping` | `requested_termination_reason` | `initiating_failure: FailureEvidence` | reason uses the acquisition-result vocabulary except `required_sink_failed`; failure is present exactly for a requested failure reason |
+| `stopping` | `requested_termination_reason` | `initiating_failure: FailureEvidence` | reason uses the acquisition-result vocabulary; `required_sink_failed` is permitted only after a required prior-configuration close fails while reconfiguring, and failure is present exactly for a requested failure reason |
 | `terminal` | `stopping_event: RecordRef`, `termination_reason`, ordered `continuity_reports`, ordered `recording_results` | `primary_failure: FailureEvidence` | emitted only after required endpoint close, continuity evaluation, and recording commit/abort outcomes are fixed; references close those preterminal results |
 
 Overload items preserve profile order within demand receipt order. State-change
@@ -684,6 +685,7 @@ The acquisition lifecycle state machine is closed:
 | `initializing` | `stopping` | `stopping` | exactly once at sequence 1; `consumer_stop` has no initiating failure, while `required_evidence_unsatisfied` or `internal_failure` requires one; top-level epoch remains the pending initial epoch and no frame/delivery exists |
 | `running` | `demand_replaced` | `reconfiguring` | replacement configuration is generation plus one; no frame or delivery is accepted until the next row |
 | `reconfiguring` | `overload_changed` | `reconfiguring` | optional at most once and only when the replacement resolution changed overload status; items exactly equal that resolution's changes |
+| `reconfiguring` | `stopping` | `stopping` | permitted only when closing the prior configuration's required subscriber/recording/continuity boundary fails; replacement remains the final effective configuration, accepts no frame, and receives its exhaustive zero-delivery report through this stopping event |
 | `reconfiguring` | `epoch_started` with `demand_reconfiguration` | `running` | immediately follows demand replacement or its optional overload event; detail epoch equals replacement configuration effective epoch |
 | `running` | source/pause/replay/time-speed change, `clock_discontinuity`, or nonconfiguration `epoch_started` | `running` | local variant invariant applies; an epoch event always changes epoch and its top-level/detail epoch IDs agree |
 | `running` | `stopping` | `stopping` | exactly once; no later demand, source, state-change, frame, provider-audit, or delivery event is accepted |
@@ -708,14 +710,20 @@ stronger required failure: a required recording sink commit/publication failure
 selects `required_sink_failed`; required continuity, subscriber, or provider-
 audit failure selects `required_evidence_unsatisfied`. An already requested
 failure reason is never replaced by a later failure. The terminal primary
-failure is the smallest unique causal position across the initiating failure,
-endpoint outcomes, continuity reports, and recording results. Optional sink or
-subscriber failure remains disclosed in those results but does not change the
-terminal reason. The exact order is stopping intent, endpoint close and final
-delivery closure, continuity reports, sink commit/abort and publication,
-recording-session results, the terminal lifecycle event, then the aggregate
-acquisition-session result. No record in that order references a later record,
-so the serialization is acyclic.
+failure is the smallest causal sequence among the outcome-specific primary-
+eligible failures across the initiating failure, endpoint outcomes, continuity
+reports, and recording results. Optional sink or subscriber failure remains in
+the exhaustive causal closure and is disclosed in those results but is not
+terminal-primary-eligible unless the immutable declaration promoted that item
+to required before the failure occurred. At each configuration replacement,
+the order is demand-replaced boundary, prior endpoint final-delivery closure,
+prior exhaustive report, sink commit/abort and publication, prior recording-
+session result, then the replacement epoch unless required closure failure
+stops the acquisition. The final order is stopping intent, final endpoint
+closure, final-configuration report, final recording results, the terminal
+lifecycle event, final artifact manifests for every recording result/sink,
+then the aggregate acquisition-session result. No record references a later
+record, so the serialization is acyclic.
 
 If a required continuity item is insufficient and no earlier causal failure
 already explains it, the orchestrator allocates one acquisition-domain,
@@ -729,8 +737,8 @@ activity result failed.
 `AcquisitionSessionResult` has `result_id`, `acquisition_session_id`,
 `opened_descriptor`, ordered `configurations`, `terminal_event`, `outcome`, `termination_reason`,
 optional `primary_failure`, ordered `cleanup_failures`, ordered
-`continuity_reports`, ordered `recording_results`, `ended_at`, `producer`, and
-`content_hash`.
+`continuity_reports`, ordered `recording_results`, ordered
+`artifact_manifests`, `ended_at`, `producer`, and `content_hash`.
 
 `result_id` and `acquisition_session_id` are `Uuid`; `opened_descriptor` and
 `terminal_event` are exact equal-session `RecordRef` values; `ended_at` is
@@ -741,6 +749,13 @@ comparable receipt domain.
   lifecycle event. Its termination reason and primary failure must match the
   result. Its continuity and recording references exactly equal the two result
   arrays; those records predate terminal and contain no terminal reference.
+- `artifact_manifests` contains exactly one final artifact-manifest `RecordRef`
+  for each sink result, in recording-result then sink order. Every manifest
+  names this acquisition descriptor, its matching recording descriptor and
+  sink/root identities, and this terminal event. The manifests are created
+  after terminal and before this result; the terminal detail does not reference
+  them. `ended_at` is not earlier than every final manifest's `delivered_at` in
+  a comparable receipt domain. This result is the last in-session record.
 - `configurations` contains every equal-session configuration from generation
   zero through the last effective generation in contiguous order. Entry zero
   equals the descriptor's initial configuration, and every demand-replacement
@@ -758,14 +773,18 @@ comparable receipt domain.
   one of `required_evidence_unsatisfied`, `required_sink_failed`,
   `discontinuity_policy`, or `internal_failure` plus a primary failure whose
   domain/code supports that reason.
-- Primary failure is selected by the session-causal sequence fixed under
-  `FailureEvidence`, across lifecycle, delivery, and recording evidence.
-  Cleanup failures preserve their own phase and never replace it.
+- Primary failure is selected by the outcome-specific eligibility and causal
+  sequence rules fixed under `FailureEvidence`, across lifecycle, delivery,
+  continuity, audit, and recording evidence. Cleanup and optional-only
+  failures preserve their own evidence and never replace it.
 
-The result's `continuity_reports` and `recording_results` are `ArraySet<RecordRef>`
-values restricted to their equal-named families. Every reference belongs to
-this acquisition session. `cleanup_failures` preserves attempt order rather
-than using array-set ordering.
+The result's `continuity_reports` is an ordered nonempty array containing
+exactly one continuity-report reference per configuration in configuration
+order. `recording_results` is an ordered array containing every equal-session
+recording result in configuration order then recording-descriptor order; it is
+empty only when no recording descriptor was opened. Every reference belongs to
+this acquisition session.
+`cleanup_failures` preserves attempt order rather than using array-set ordering.
 
 ## Generic synchronous ports and fan-out
 
@@ -773,7 +792,8 @@ than using array-set ordering.
 subscriber. Its exact top-level properties are `contract_family`,
 `schema_version`, `subscriber_declaration_id: Uuid`,
 `acquisition_session_descriptor: RecordRef`, `configuration: RecordRef`,
-`endpoint_id: Uuid`, ordered nonempty `stream_ids`, `criticality`,
+`endpoint_id: Uuid`, ordered nonempty `stream_ids`, ordered nonempty
+`initial_delivery_positions`, `criticality`,
 `backpressure`, `buffer_capacity`, `detachment_policy`, `declared_at`,
 `producer`, and `content_hash`.
 The configuration is an equal-session acquisition-session-configuration and
@@ -786,6 +806,11 @@ configuration replacement closes this declaration's delivery ranges; a
 subscriber that continues receives a new declaration for the replacement
 configuration before accepting its frames. A retained endpoint-plus-stream
 pair continues at the prior notice's next sequence; a new pair begins at zero.
+Each `initial_delivery_positions` entry has exact `endpoint_id: Uuid`,
+`stream_id: Uuid`, and `first_delivery_sequence: UInt63`, occurs once in stream
+order, and records that value. It equals zero for a new pair and the prior
+declaration's final next sequence for a retained pair; caller memory cannot
+choose another report start.
 `criticality` is `required` or `optional`; `backpressure` is `block`, `reject`,
 or `drop_oldest`; `buffer_capacity: UInt63` uses zero for synchronous and
 unbuffered; and `detachment_policy` is `prohibited`, `on_failure`, or
@@ -818,30 +843,48 @@ RecordingSink.close() -> CloseOutcome
 ```
 
 `SessionCloseNotice` has exact properties `acquisition_session_descriptor`,
-`subscriber_declaration`, `stopping_event`, `requested_termination_reason`,
-ordered `final_delivery_positions`, and optional `initiating_failure`.
+`subscriber_declaration`, `close_boundary`, and ordered
+`final_delivery_positions`.
 `CommitRequest` has exact properties `recording_session_descriptor`,
-`stopping_event`, `requested_termination_reason`, ordered
-`final_delivery_positions`, ordered `continuity_reports`, optional
-`final_checkpoint`, and optional `initiating_failure`. Each final
+`close_boundary`, ordered `final_delivery_positions`, ordered
+`continuity_reports`, and optional `final_checkpoint`. Each final
 position has exact `endpoint_id: Uuid`, `stream_id: Uuid`, and
 `next_delivery_sequence: UInt63`, appears in declaration/configuration stream
 order, and closes one endpoint-plus-stream sequence without a sentinel.
+
+`close_boundary` is an exact tagged value. Kind `configuration_replaced` has
+`boundary_event: RecordRef`, `prior_configuration: RecordRef`,
+`replacement_configuration: RecordRef`, and literal `reason:
+"configuration_replaced"`; the event is the installing `demand_replaced`
+event and its two configuration references equal these values. Kind
+`acquisition_stopping` has `boundary_event: RecordRef`,
+`requested_termination_reason`, and optional `initiating_failure`; the event is
+the equal-session stopping event and its detail equals those values. The
+configuration-replaced variant prohibits failure evidence. A subscriber or
+recording descriptor for a replaced configuration closes exactly once against
+that replacement boundary; one for the last configuration closes exactly once
+against acquisition stopping. This is the explicit close/reopen boundary, not
+an inferred callback lifetime.
+
 The subscriber notice contains exactly its declaration's streams; the commit
 request contains exactly the sink endpoint crossed with its recording
 descriptor streams. `final_checkpoint` is present exactly when that sink
 created at least one checkpoint and then names its greatest checkpoint
 sequence. `continuity_reports` is nonempty and contains the already-created
-reports for the descriptor configuration in canonical report-ID order; every
-protected item and every descriptor sink delivery range is closed by those
-reports. A sink that publishes a manifest must retain those exact report bytes
-in its artifact graph.
-Both are immutable inputs created from the same stopping lifecycle event before
-close or commit outcomes. Continuity reports are created after final delivery
-closure but before commit, recording results are created from commit/abort and
-close outcomes, the terminal event is then created from the stopping intent
-plus those results, and the aggregate acquisition result is last; no object
-participates in its own outcome hash.
+singleton report for the descriptor configuration. Every final position equals
+that report's next sequence for the same sink endpoint/stream, and the range's
+first expected sequence is zero because sink-session IDs are never reused.
+The subscriber notice positions likewise equal the singleton report's consumer
+range ends. A sink that publishes a content manifest must retain the exact
+report bytes in its artifact graph.
+Both are immutable inputs created from the same close-boundary lifecycle event
+before close or commit outcomes. Continuity reports are created after final
+delivery closure but before commit, and recording results are created from
+commit/abort and close outcomes. A replacement boundary proceeds to its next
+epoch after that closure. At acquisition stopping, the terminal event is then
+created from stopping intent plus every report/result, final artifact manifests
+are created from terminal and sink results, and the aggregate acquisition
+result is last; no object participates in its own outcome hash.
 
 The operation outcomes are exact tagged values whose discriminant is always
 `result` (never `kind`). Their complete property inventories are:
@@ -856,7 +899,7 @@ The operation outcomes are exact tagged values whose discriminant is always
 | `CheckpointOutcome` | `checkpointed`, `not_due`, `failed` | optional `checkpoint: RecordRef`, optional `failure: FailureEvidence` | checkpoint names archive-checkpoint and is required only for checkpointed; failure is required only for failed |
 | `CommitOutcome` | `committed`, `conflict`, `failed` | ordered nonempty `artifact_states: ArtifactState[]`, optional `failure: FailureEvidence`, ordered `cleanup_failures: FailureEvidence[]` | artifact states use artifact-ID then state-sequence order and contain every state reached; failure is prohibited for committed and required otherwise; committed may retain cleanup failures without losing commitment |
 | `AbortOutcome` | `aborted`, `failed` | ordered `artifact_states: ArtifactState[]`, optional `failure: FailureEvidence`, ordered `cleanup_failures: FailureEvidence[]` | state ordering matches commit; failure is required only for failed |
-| `RecoveryOutcome` | `resumed`, `finalized_partial`, `preserved_partial`, `discarded`, `failed` | `recovery_result: RecordRef` | reference names recovery-result; its outcome equals this result |
+| `RecoveryOutcome` | `resumed`, `finalized_partial`, `preserved_partial`, `discarded`, `failed` | `recovery_result: RecordRef`, optional `artifact_manifest: RecordRef` | recovery reference names recovery-result and its outcome equals this result; resumed and pre-admission failed prohibit final manifest, finalized/preserved/discarded and admitted failed require the artifact-manifest created after that result |
 | `CloseOutcome` | `closed`, `failed` | optional `failure: FailureEvidence`, ordered `cleanup_failures: FailureEvidence[]` | failure is required only for failed; cleanup failures preserve attempt order |
 
 Every array order above is semantic. References are restricted to the stated
@@ -889,9 +932,10 @@ for a recording sink and prohibited for a frame subscriber;
 `subscriber_declaration` has the inverse presence and names the exact
 frame-subscriber declaration. `stream_id` equals the submitted frame stream
 and is declared for that endpoint. `frame` is the exact measurement-frame
-`RecordRef`; `delivery_sequence: UInt63` is contiguous from zero independently
-for each `(endpoint_id, stream_id)` pair and has no endpoint-only or stream-only
-interpretation. `timing` is canonical
+`RecordRef`; `delivery_sequence: UInt63` starts at the subscriber declaration's
+immutable initial position, or zero for a newly allocated sink session, and is
+contiguous thereafter for each `(endpoint_id, stream_id)` pair. It has no
+endpoint-only or stream-only interpretation. `timing` is canonical
 `ObservationTiming` used as receipt evidence for the delivery decision.
 
 `disposition` is the final value `delivered`, `dropped`, `detached`, or
@@ -918,23 +962,54 @@ result.
 ## Continuity reports
 
 `ContinuityReport` has `continuity_report_id`, `acquisition_session_id`,
-`configuration`, `resolution`, `scope`, ordered `item_results`, ordered
-`stream_summaries`, `overall_result`, `evaluated_at`,
+`configuration`, `resolution`, `scope`, ordered `provider_audit_closures`,
+ordered `item_results`, ordered `stream_summaries`, `overall_result`, `evaluated_at`,
 `producer`, and `content_hash`.
 
 - `configuration` is the acquisition-session-configuration `RecordRef` under
   evaluation; `resolution` exactly equals its accepted resolution.
-  `evaluated_at` is canonical `ObservationTiming`.
+  `evaluated_at` is canonical `ObservationTiming`. Exactly one continuity
+  report exists for every effective configuration, including an initializing
+  failure or accepted zero-stream configuration. Acquisition and terminal
+  closures list those reports in configuration-generation order; reports are
+  never optional partitions or caller-selected subintervals.
 - `scope` has exactly `first_event: RecordRef`, `last_event: RecordRef`,
-  optional `first_frame: RecordRef`, optional `last_frame: RecordRef`, and
-  nonempty ordered `epoch_ids: Uuid[]`, plus nonempty ordered
-  `delivery_ranges`. Event references are acquisition
-  lifecycle events and bound an inclusive event-sequence interval. Frame
-  references are both present or both absent, are measurement-frame
-  references, and bound the inclusive delivered-frame interval. Epoch IDs
-  occur in first-appearance order and exactly cover the selected events and
-  frames.
-  Each `DeliveryEvidenceRange` has common exact properties `kind`,
+  ordered nonempty `epoch_ids: Uuid[]`, ordered `canonical_record_ranges`, and
+  ordered `delivery_ranges`. For generation zero, first event is the session's
+  `opened` event. For every later generation it is the `demand_replaced` event
+  that installs this configuration. Last event is the next `demand_replaced`
+  boundary, or the equal-session `stopping` event when no replacement follows.
+  A replaced configuration owns the half-open event/evidence lifetime
+  `[first_event,last_event)`; the final configuration owns the closed lifetime
+  `[first_event,last_event]`. Adjacent reports therefore share the exact
+  replacement boundary as prior close/next open, while that lifecycle event is
+  counted only in the replacement report. These intervals form one gap-free,
+  nonoverlapping evidence partition from `opened` through `stopping` and cannot
+  omit the quiet time before a close boundary. Epoch IDs occur in first-
+  appearance order and exactly cover the owned events and records in that
+  lifetime, followed by the pending effective epoch when initialization or
+  reconfiguration fails before its `epoch_started` event.
+- Each `CanonicalRecordRange` has common exact properties `kind`,
+  `record_kind`, `stream_id: Uuid`, `epoch_id: Uuid`,
+  `first_expected_sequence: UInt63`, and `next_sequence: UInt63`.
+  `record_kind` is `raw_observation`, `measurement_sample`, or
+  `measurement_frame`. Kind `records` additionally has `first_record:
+  RecordRef` and `last_record: RecordRef`; those references match the declared
+  family/session/stream/epoch, first sequence equals the expected value, last
+  plus one equals next, and the supplied closure contains every intervening
+  family-scoped sequence. Kind `empty` has no record references and requires
+  first expected equals next. Ranges occur in configuration stream order,
+  epoch first-appearance order, then the stated record-kind order, with exactly
+  one range for every stream/kind in every epoch in which this configuration
+  could accept records, including its pending effective epoch when startup or
+  reconfiguration fails before `epoch_started`. A prior epoch that appears only
+  on the installing boundary event is not a record-acceptance epoch. The
+  configuration's effective epoch starts each family at the stream
+  declaration's `initial_sequence`; a later epoch starts at zero. No equal-
+  configuration accepted observation, sample, or frame may exist outside
+  these ranges, including evidence that never entered a frame or was never
+  delivered.
+- Each `DeliveryEvidenceRange` has common exact properties `kind`,
   `endpoint_id: Uuid`, `stream_id: Uuid`, `policy: RecordRef`,
   `first_expected_delivery_sequence: UInt63`, and
   `next_delivery_sequence: UInt63`. Kind `events` additionally has
@@ -948,8 +1023,57 @@ result.
   followed by configuration stream order, and are unique by endpoint-plus-
   stream. Exactly one range exists for each binding's consumer endpoint/stream
   and for every recording sink whose `protected_items` includes that demand
-  item and stream. No fabricated event, omitted middle event, endpoint-only
-  sequence, or manifest summary can substitute for this finite evidence.
+  item and stream. Its first expected sequence equals the subscriber
+  declaration's immutable initial position or zero for a newly allocated sink
+  session. Its next sequence is one plus the greatest matching equal-
+  configuration delivery sequence, or equals the first expected sequence when
+  none exists. For a retained endpoint/stream it also equals the replacement
+  subscriber declaration's immutable initial position. For every configuration
+  it equals the matching configuration-replaced or acquisition-stopping
+  `SessionCloseNotice` or `CommitRequest` final position.
+  These equalities close removed as well as retained pairs without caller-
+  chosen end positions. No equal-configuration delivery event may exist
+  outside the range. A zero-stream configuration has empty canonical and
+  delivery arrays; otherwise the exact combinations above are exhaustive.
+  No fabricated event, omitted middle event, endpoint-only sequence, favorable
+  suffix, or manifest summary can substitute for this finite evidence.
+- `provider_audit_closures` contains exactly one
+  `ProviderAuditSinkClosure` for every recording sink, protected
+  demand/item/binding/source tuple, and retention policy whose provider-audit
+  axis is `retain_when_supplied` or `required`. Entries use recording-
+  descriptor order, sink order, demand/item order, then selected-binding order.
+  Each has exact `recording_session_descriptor: RecordRef`,
+  `sink_session_id: Uuid`, `root_artifact_id: Uuid`, `criticality`,
+  `retention_policy: DefinitionRef`, `demand: RecordRef`,
+  `profile_item_id: Identifier`, `binding: DefinitionRef`,
+  `source_acquisition_id: Uuid`, `capability: DefinitionRef`,
+  `retention_mode`, `minimum_required_count: UInt63`, ordered `evidence`, and
+  `classification`. Criticality, root, protection, policy, capability, and
+  source/configuration closure equal the immutable descriptors and resolution.
+  Retain-when-supplied uses minimum zero; required uses the capability's exact
+  positive minimum.
+- Each `ProviderAuditClosureEntry` has exact `evidence: RecordRef`,
+  `evidence_member_artifact_id: Uuid`, `evidence_record_index: UInt63`,
+  `payload_member_artifact_id: Uuid`, `payload_byte_length: UInt63`,
+  `payload_sha256: Sha256`, and `relationship_id: Uuid`. Entries contain every
+  accepted evidence record for the source/configuration exactly once in
+  supplied-at receipt order then evidence UUID. The record member/index resolves
+  the evidence in the sink's provider-audit JSONL stream; the payload member
+  resolves its exact bytes; length/hash equal the evidence payload; and the
+  relationship ID is the sink graph's exact `provider_audit_for` relation from
+  payload artifact to that indexed evidence record. No evidence accepted for
+  the tuple may be omitted, and evidence from another tuple may not appear.
+  Closure classification is sufficient exactly when all entries and bytes are
+  already sealed under the declared root and their count meets the minimum;
+  otherwise it is insufficient.
+- On later serialization, each `ArtifactContentManifest` compares only the
+  closures bearing its sink/root identity and must contain exactly their
+  evidence members, indexed records, payload members, hashes, and relationship
+  IDs. A closure whose sink `criticality` is `required` affects protected-item
+  sufficiency; an optional-sink closure shortfall is disclosure only.
+  `retention_mode` independently selects whether the positive capability
+  minimum applies. This per-root equality, not ingress acceptance, a count
+  alone, or another sink's graph, proves retention.
 - Every accepted required and optional demand item appears once in
   `item_results`; each result is scoped to that demand item's consumer
   endpoint rather than aggregated across unrelated fan-out endpoints.
@@ -966,7 +1090,8 @@ result.
   `source_generation_count`, `connection_generation_count`,
   `provider_context_count`, `burst_max_observed_count`,
   `burst_violation_count`, ordered `transition_results`,
-  `provider_audit_shortfall_count`, `sink_failures`,
+  `provider_audit_shortfall_count`,
+  `optional_provider_audit_shortfall_count`, `sink_failures`,
   `required_sink_failure_count`, `optional_sink_failure_count`,
   `classification`, and `reasons`. Counts and durations are `UInt63`; the two
   interval properties are present exactly when at least one within-epoch
@@ -1005,8 +1130,9 @@ result.
   the report. `sink_failures` equals required plus optional sink-failure counts.
 - Consumer delivery counts are derived only from that binding's complete
   consumer endpoint-plus-stream range. `delivered_count`, `drop_count`, and
-  `detach_count` count the equal-named dispositions. A duplicate is a delivered event whose frame
-  `RecordRef` already appeared earlier in the same endpoint-plus-stream range.
+  `detach_count` count the equal-named dispositions. A duplicate is a delivered
+  event whose frame `RecordRef` already appeared earlier in the same endpoint-
+  plus-stream range.
   A reorder is a nonduplicate delivered event whose frame's canonical stream
   sequence is less than the greatest previously delivered sequence in that
   range. These tests use delivery sequence for traversal and never timestamps.
@@ -1031,9 +1157,10 @@ result.
   `delivered`; excluded observations remain visible in the validity, quality,
   staleness, and delivery distributions.
 - Within each epoch, expected slots start at the epoch-start lifecycle
-  event's monotonic reading, or the report scope's first included monotonic
-  reading when the scope begins inside an epoch, and advance by the exact
-  rational `effective_delivery_period` through the inclusive scope end.
+  event's monotonic reading, or at the configuration-opening event's monotonic
+  reading when the configuration begins in its pending initial epoch, and
+  advance by the exact rational `effective_delivery_period` strictly before a
+  replacement close boundary or through an inclusive stopping boundary.
   `first_slot_ready` is true exactly when the first expected slot is matched.
   A delivered eligible sample satisfies at most one slot when its acquisition
   reading lies within the closed interval from slot minus
@@ -1059,7 +1186,8 @@ result.
   acquisition time then canonical observation order within one segment.
 - Each `TransitionCoverageResult` has exact `event_kind`, `boundary_event:
   RecordRef`, `pre_eligible_delivered_count: UInt63`,
-  `post_eligible_delivered_count: UInt63`, `classification`, and `reasons`.
+  `post_eligible_delivered_count: UInt63`, ordered `prior_closures`,
+  `classification`, and `reasons`.
   Entries occur in profile requirement order then lifecycle event sequence and
   cover every matching boundary event in scope. Reasons are an `ArraySet` of
   `pre_transition_shortfall`, `post_transition_shortfall`, and
@@ -1069,26 +1197,76 @@ result.
   A `demand_replaced` requirement is evaluated only when the exact
   profile/item/binding authorization remains accepted in the replacement
   configuration, and it appears in that replacement configuration's report,
-  never the already-committed prior report. Its pre-window may resolve the
-  immutable immediately prior configuration's frame/sample closure through an
-  external-manifest relationship; its post-window resolves the replacement
-  closure. All other item metrics remain scoped to the report configuration.
-  A missing, noncontiguous, or differently authorized pre-closure contributes
-  zero pre observations and therefore the exact shortfall.
-- `provider_audit_shortfall_count` counts selected source/configuration pairs
-  whose accepted evidence count already sealed into the candidate manifest
-  graph is below the pinned capability minimum when the demand requires
-  provider audit; it is zero when provider audit is not required. The later
-  manifest must contain this report and cross-validate exactly that closed
-  evidence set. Evidence from another source, configuration, role, media type,
-  or byte hash never contributes.
+  never the already-committed prior report. `prior_closures` is empty for every
+  other event kind and contains exactly one `PriorTransitionClosure` per
+  selected binding for `demand_replaced`, in selected-binding order.
+- Each `PriorTransitionClosure` has exact properties
+  `prior_configuration: RecordRef`, `prior_report: RecordRef`,
+  `prior_recording_result: RecordRef`, `prior_content_manifest: RecordRef`,
+  `prior_root_artifact_id: Uuid`,
+  `current_sink_session_id: Uuid`, `current_root_artifact_id: Uuid`,
+  `relationship_id: Uuid`, `prior_demand: RecordRef`,
+  `profile_item_id: Identifier`, `binding: DefinitionRef`,
+  `source_acquisition_id: Uuid`, and ordered nonempty `member_ranges`.
+  Prior configuration is exactly generation minus one and its report is that
+  configuration's exhaustive continuity report. Prior recording result's
+  matching sink result proves that prior content manifest/root is the published
+  required canonical-archive graph, selected by lowest prior
+  recording-descriptor/sink order, that protected this item/binding and retains
+  all four member-range kinds. Current sink/root is selected by the identical
+  rule for the replacement configuration. The two reports meet at the same
+  `demand_replaced` boundary, clock domain, and adjacent configuration
+  generations. `prior_demand` is the prior configuration's active receipt; the
+  enclosing item result's demand is the replacement configuration's active
+  receipt. Their profile/item requirement, measurement, binding, phase, and
+  retention authorization are byte-identical even when demand IDs/generations
+  differ.
+- Each `TransitionMemberRange` has common exact properties `kind`,
+  `record_kind`, `logical_stream_key: NfcText(512)`, ordered
+  `member_artifact_ids: Uuid[]`, `first_archive_record_index: UInt63`, and
+  `next_archive_record_index: UInt63`. Record kind is `raw_observation`,
+  `measurement_sample`, `measurement_frame`, or `fanout_delivery_event`, and
+  exactly one range of each kind appears in that order. Kind `records` requires
+  nonempty member IDs plus `first_record: RecordRef` and `last_record:
+  RecordRef`; member IDs are exactly every segment intersecting the range in
+  segment order, and the indexes/references close every matching record in the
+  exact pre-window. Kind `empty` prohibits record references, uses equal
+  indexes, and names at most the immediately preceding member ending at that
+  boundary and immediately following member beginning there, in that order.
+  Member IDs may be empty only when the prior report's corresponding exhaustive
+  range is empty; otherwise those adjacent member identities and their sealed
+  index bounds prove the empty insertion point.
+  Record timing lies in `[boundary - pre_window, boundary)`, delivery records
+  use the demand consumer endpoint, and all records match stream, epoch,
+  binding, source acquisition, and prior authorization. The prior exhaustive
+  report plus content-manifest indexes proves both inclusion and absence.
+- The current content manifest contains exactly one
+  `transition_predecessor` relationship with the closure's ID, from the local
+  continuity-report artifact to the prior external content-manifest root.
+  Validation resolves the prior content-manifest hash, report/member identities
+  and byte hashes, relationship, configuration adjacency, authorization, four
+  ranges, then counts. A missing, unpublished,
+  failed-resolution, noncontiguous, or
+  differently authorized closure supplies no substitute records, makes the
+  pre count zero, and produces the exact shortfall. A rejected resolution
+  creates no replacement configuration or boundary result; its ordinary
+  stopping failure remains the evidence. Post-window evidence comes only from
+  the replacement report's exhaustive ranges. All other item metrics remain
+  scoped to that report configuration.
+- `provider_audit_shortfall_count` counts this item/binding's required-sink
+  provider-audit closures classified insufficient;
+  `optional_provider_audit_shortfall_count` counts the optional-sink closures.
+  Both are zero when no corresponding closure is required. Evidence from
+  another sink, root, source, configuration, role, media type, record index, or
+  byte hash never contributes.
 - `classification` is `sufficient`, `insufficient`, or `indeterminate`.
 - `reasons` is an `ArraySet` drawn from `no_observation`, `count_shortfall`,
   `span_shortfall`, `cadence_shortfall`, `gap_exceeded`, `stale_evidence`,
   `invalid_evidence`, `prohibited_quality`, `drop_observed`,
   `detachment_observed`, `duplicate_observed`, `reordering_observed`,
   `burst_exceeded`, `transition_coverage_shortfall`,
-  `provider_audit_missing`, `epoch_boundary`, `provider_change`,
+  `provider_audit_missing`, `optional_provider_audit_missing`,
+  `epoch_boundary`, `provider_change`,
   `connection_change`, `sink_failure`, `optional_sink_failure`, or
   `clock_incomparable`.
 
@@ -1112,6 +1290,7 @@ row and prohibited otherwise:
 | `burst_exceeded` | `burst_violation_count > 0` |
 | `transition_coverage_shortfall` | at least one transition result is `insufficient` |
 | `provider_audit_missing` | `provider_audit_shortfall_count > 0` |
+| `optional_provider_audit_missing` | `optional_provider_audit_shortfall_count > 0` |
 | `epoch_boundary` | `epoch_count > 1` |
 | `provider_change` | `provider_context_count > 1` or `source_generation_count > 1` |
 | `connection_change` | `connection_generation_count > 1` |
@@ -1124,12 +1303,14 @@ Classification precedence is closed. For each binding, any of
 `gap_exceeded`, `stale_evidence`, `invalid_evidence`, `prohibited_quality`,
 `drop_observed`, `detachment_observed`, `duplicate_observed`,
 `reordering_observed`, `burst_exceeded`, `transition_coverage_shortfall`,
-`provider_audit_missing`, or `sink_failure` makes it `insufficient`. With none of those reasons,
-`clock_incomparable` makes it `indeterminate`; otherwise it is `sufficient`.
+`provider_audit_missing`, or `sink_failure` makes it `insufficient`. With
+none of those reasons, `clock_incomparable` makes it `indeterminate`; otherwise
+it is `sufficient`.
 `epoch_boundary`, `provider_change`, `connection_change`, and
-`optional_sink_failure` are mandatory disclosures but do not by themselves
-change classification because all thresholds are recomputed per exact segment
-and optional sinks cannot establish required evidence.
+`optional_sink_failure` or `optional_provider_audit_missing` are mandatory
+disclosures but do not by themselves change classification because all
+thresholds are recomputed per exact segment and optional sinks cannot establish
+required evidence.
 
 For exact, preferred, or any-compatible selection, item classification equals
 its one binding classification. For corroborated selection, let `required` be
@@ -1139,9 +1320,10 @@ count, and `possible` the sufficient-plus-indeterminate count. The item is
 `possible < required`, and `indeterminate` otherwise. Item reasons are the
 canonical union of binding reasons plus any independently derived merged-slot
 or delivery reason. This proves the minimum per binding rather than from
-aggregate counts. Overall result is `sufficient` only when every required item is sufficient;
-  an indeterminate required item makes it indeterminate unless another required
-  item is insufficient. Optional items never improve the overall result.
+aggregate counts. Overall result is `sufficient` only when every required item
+is sufficient; an indeterminate required item makes it indeterminate unless
+another required item is insufficient. Optional items never improve the
+overall result.
 
 Each `StreamSummary` has exact properties `stream_id: Uuid`,
 `source_acquisition_id: Uuid`, `first_epoch_id: Uuid`, `last_epoch_id: Uuid`,
@@ -1252,7 +1434,8 @@ Each `SinkDeclaration` has `sink_session_id`, `sink_kind`, `artifact_role`,
   `expected_prior`; `replace_if_match` requires an `expected_prior` containing
   exactly one prior-state variant. A `byte_artifact` variant contains exact
   byte length and SHA-256; an `artifact_graph` variant contains the prior
-  manifest `RecordRef` plus its serialized byte length and SHA-256.
+  artifact-content-manifest `RecordRef` plus its serialized byte length and
+  SHA-256.
   `not_applicable` is valid only when `publishes_artifact` is false. Publication
   fails with `publication_conflict` if the destination's observed state does
   not match. Unconditional replacement is prohibited.
@@ -1312,8 +1495,9 @@ implicit split or identity reset occurs.
 
 ## Canonical archive logical format
 
-The canonical archive is a manifest-rooted graph of immutable artifacts, not a
-pathname, ZIP byte stream, SQLite database, or custom binary container.
+The canonical archive is an artifact-content-manifest-rooted graph of
+immutable artifacts, not a pathname, ZIP byte stream, SQLite database, or
+custom binary container.
 
 The normative version-1 checkpoint and recovery representation is a directory
 artifact set:
@@ -1345,7 +1529,7 @@ artifact set:
 |   |-- <source-acquisition-id>/evidence/<segment>.jsonl
 |   `-- payloads/sha256/<first-two-hex>/<remaining-sixty-two-hex>
 |-- continuity/<continuity-report-id>.json
-`-- artifact-manifest.json
+`-- artifact-content-manifest.json
 ```
 
 The closed definition-family tokens are `measurement-catalog`,
@@ -1414,7 +1598,7 @@ payload, but never become a canonical measurement value.
 A deterministic ZIP may later package the artifact set for transport, and a
 SQLite database may later index or project it for analysis. Those artifacts
 carry their own identities and `derived_from` relationships and never replace
-the manifest-rooted canonical evidence graph.
+the artifact-content-manifest-rooted canonical evidence graph.
 
 ## Checkpoint, publication, and recovery
 
@@ -1478,24 +1662,35 @@ recovery primary failure. Tail preservation happens only after all seven steps;
 a hash-valid prefix with any dangling content reference is ineligible.
 
 The planned root artifact receives its `artifact_id: Uuid` before sink open.
-Every dynamically created segment, payload, checkpoint, report, or manifest
-member receives its own artifact ID before its first byte is written. Those
-UUIDs are lifecycle identities and remain stable through recovery. Each
-`ArtifactState` has exact properties `artifact_id`, `state_sequence`,
-`disposition`, variant-selected `content`, and `recorded_at`.
-`state_sequence` is contiguous from zero per artifact; within a supplied state
-history, sequence *n* supersedes sequence *n - 1* without mutating it.
-`disposition` is `planned`, `open`, `sealed`, `preserved_partial`, or
-`published`. Content kind `absent` is valid exactly for a planned artifact or
-an open logical graph root. An open, sealed, preserved, or published
-byte-bearing artifact uses content kind `bytes` with byte length and SHA-256. A
-sealed, preserved, or published logical graph root instead uses content kind
-`manifest` with the manifest `RecordRef` plus serialized manifest byte length
-and SHA-256. Content state never substitutes for artifact identity.
+Every dynamically created segment, payload, checkpoint, report, or content-
+manifest member receives its own artifact ID before its first byte is written.
+Those UUIDs are lifecycle identities and remain stable through recovery. Each
+`ArtifactState` has exact properties `artifact_id`, `artifact_ordinal`,
+`state_sequence`, `disposition`, variant-selected `content`, optional
+`disposition_evidence`, and `recorded_at`.
+`artifact_ordinal: UInt63` is allocated gap-free for the sink with root zero
+when the artifact ID is preallocated and never changes. `state_sequence` is
+contiguous from zero per artifact; within a supplied state history, sequence
+*n* supersedes sequence *n - 1* without mutating it.
+`disposition` is `planned`, `open`, `sealed`, `preserved_partial`, `published`,
+or `discarded`. Content kind `absent` is valid exactly for a planned artifact,
+an open logical graph root, or a discarded artifact. An open, sealed,
+preserved, or published byte-bearing artifact uses content kind `bytes` with
+byte length and SHA-256. A sealed, preserved, or published logical graph root
+instead uses content kind `content_manifest` with the artifact-content-manifest
+`RecordRef` plus its serialized byte length and SHA-256. `discarded` requires
+content kind `absent` plus `disposition_evidence` with exact properties
+`authorization: DeletionAuthorization`, `deletion_attempt_sequence: UInt63`,
+and `deletion_completed_at: ObservationTiming`; that evidence is prohibited
+for every other disposition. Attempt sequence follows the recovery action's
+deterministic deletion order—non-root artifacts by descending ordinal, then
+root—with a contiguous sequence from zero; completion is not later than
+`recorded_at` in a comparable receipt domain. Discarded state prohibits
+byte/hash or manifest content. Content state never substitutes for artifact identity.
 `recorded_at` is canonical `ObservationTiming`; consecutive states for one
 artifact are nondecreasing when receipt clocks are comparable.
 
-An immutable manifest entry uses `content_state` exactly `sealed`,
+An immutable content-manifest entry uses `content_state` exactly `sealed`,
 `preserved_partial`, or `omitted_by_policy`.
 
 - `sealed` requires final byte length and SHA-256 and means the member cannot
@@ -1509,15 +1704,15 @@ An immutable manifest entry uses `content_state` exactly `sealed`,
 A terminal sink result separately uses disposition `published`,
 `preserved_partial`, `discarded`, `not_created`, `omitted_by_policy`, or
 `not_applicable`. `published` requires final byte length and SHA-256 for a byte
-root, or the final manifest record and serialized manifest state for a logical
-graph root. `discarded` records explicit deletion authorization and cleanup
-outcome and contains no content hash claim. `not_created` records the causal
+root, or the final content-manifest record and serialized manifest state for a
+logical graph root. `discarded` records explicit deletion authorization and
+cleanup outcome and contains no content hash claim. `not_created` records the causal
 policy or earlier failure. `not_applicable` is restricted to a declared
 nonpublishing sink.
 
 Publication atomicity is per sink, not across the recording-session fan-out.
-For one sink, all candidate members and the manifest are sealed before the
-publication precondition is evaluated, and the root becomes visible as one
+For one sink, all candidate members and the content manifest are sealed before
+the publication precondition is evaluated, and the root becomes visible as one
 completed artifact or remains unpublished. An implementation that cannot
 provide the declared no-replace or compare-and-replace semantics fails before
 exposing a completed root. A sink published before an independent sink fails
@@ -1559,18 +1754,94 @@ request identity, and any discard authorization independently of caller memory.
 `ended_at` is canonical `ObservationTiming` not earlier than the resolved
 request in a comparable receipt domain.
 
+Each member of `input_artifact_states` and `output_artifact_states` is an
+`ArtifactStateHistory` with exact properties `artifact_id: Uuid`,
+`artifact_ordinal: UInt63`, `role: Identifier`, optional
+`relative_path: NfcText(2048)`, and ordered
+nonempty `states: ArtifactState[]`. Artifact ordinal zero is the graph root;
+every root/member identity receives the next gap-free ordinal when it is first
+preallocated for that sink, before any byte write. Role and path equal the
+sink's immutable allocation record, every state repeats `artifact_id`, and the
+history's `artifact_ordinal`. The states are the exact complete sequence
+from zero through the history's final state with no gap, duplicate, omission,
+or later state. Thus a history is not a caller-selected latest-state summary.
+When present, relative path obeys the archive's canonical relative-POSIX path
+rules; it is absent exactly for a root without a member path.
+
+After request admission and before content validation or mutation, the input
+array contains every then-existing root and member artifact in artifact-
+ordinal order, including unchanged, open, checkpoint, payload, content-
+manifest, and prior recovery-created artifacts. The output array contains
+every artifact existing when the action ends, in that same order followed by
+new gap-free ordinals. For each pre-existing artifact the input history is an
+exact prefix of its output history; it is byte-identical when no state was
+appended. Every new output history starts at state sequence zero. No root or
+member reachable from the persisted sink allocation/state ledger may be
+omitted from either applicable array. When `prior_recording_result` is present,
+it is the latest matching immutable recording result and, after grouping its
+sink result's complete artifact states by artifact ID and state sequence, each
+group is an exact prefix of the matching input history. Every selected-
+checkpoint root/member identity resolves to the matching input history, and
+its recorded byte state equals a prefix endpoint of that history.
+For an admitted action, presence is biconditional: the property is required
+when any matching prior recording result exists and prohibited when recovery
+follows a crash before one was created. A pre-admission failure prohibits it
+because the descriptor/sink relation was not established.
+
+Each `PreservedTailArtifact` has exact properties
+`preservation_sequence: UInt63`, `source_artifact_id: Uuid`,
+`source_state_sequence: UInt63`, `source_start_offset: UInt63`,
+`source_end_offset_exclusive: UInt63`, `source_range_sha256: Sha256`,
+`tail_artifact_id: Uuid`, `destination: DestinationIdentity`,
+`tail_relative_path: NfcText(2048)`,
+`byte_length: UInt63`, `sha256: Sha256`, `relationship_id: Uuid`, and
+`output_state_sequence: UInt63`. It identifies the source input history's
+latest byte state. For an open member named by the selected checkpoint, start
+is its safe byte length; for an existing member absent from that checkpoint,
+start is zero. End is the input byte length, start is strictly less than end,
+and `byte_length` is their difference. The two hashes equal SHA-256 of exactly
+that source half-open byte range and the byte-identical sealed tail artifact.
+`destination` byte-identically equals the admitted recovery request's
+destination. `tail_relative_path` is exactly
+`recovery/tails/<preservation-sequence>-<tail-artifact-id>.bin`, with sequence
+rendered as twenty zero-padded decimal digits and UUID in canonical lowercase;
+it is independent of caller/path enumeration. The matching new output history
+has role `xplane_fdau.recovery.preserved_tail` and this exact path.
+`relationship_id` preallocates the
+later content-manifest `recovery_of` edge from tail to source, and
+`output_state_sequence` names the tail history's final sealed state.
+
+The preserved-tail array is the exhaustive sequence of successfully sealed
+nonempty tails, ordered by source artifact ordinal with contiguous
+`preservation_sequence` from zero. It is empty when no such range exists. Each
+entry has exactly one new output history and each sealed recovery-tail output
+history has exactly one entry. On `tail_preservation_failed`, all tails sealed
+before the failure remain listed and immutable; an incompletely created tail
+still appears in output history but not in this array, every source remains
+unmodified, and the failed result uses that failure as its recovery-domain
+eligible primary.
+
 Before reading content for mutation, changing bytes, deleting a path, or
 appending an artifact state, recovery validates in order: request canonical
 bytes and self-hash; descriptor reference; recording-, sink-, and root-session
 identities; destination equality; `supports_recovery`; action against the
 declaration's immutable recovery policy; and discard authorization. A mismatch
-returns a `failed` recovery result whose output artifact states exactly equal
-its input states and whose preserved-tail array is empty, with the first
+returns a `failed` recovery result with both artifact-state arrays and the
+preserved-tail array empty, because artifact-state admission was not reached,
+prohibits selected checkpoint and prior recording result, and carries the first
 applicable recovery failure. Request UUID reuse with
 different content is `descriptor_mismatch`. A false recovery capability is
 `recovery_unsupported`; a disallowed policy/action pair is
 `policy_action_prohibited`; and unequal or absent discard authority is
 `discard_unauthorized`.
+
+After those admission checks, recovery freezes the exhaustive input histories
+before validating content. Any checkpoint/current-content validation failure
+before tail creation or source mutation has output histories byte-identical to
+input histories and an empty preserved-tail array. A failed admitted action
+therefore has nonempty equal arrays unless tail creation began; a pre-admission
+failure has both arrays empty. These are the only conditions under which an
+artifact-state array may be empty.
 
 The policy/action matrix is closed:
 
@@ -1585,21 +1856,65 @@ Every other pair fails with `policy_action_prohibited`. `preserve` and
 the declaration by supplying an authorization.
 
 `outcome` is `resumed`, `finalized_partial`, `preserved_partial`, `discarded`,
-or `failed`. An admitted action that requires or elects a checkpoint validates
-the contiguous self-hashed checkpoint chain, member bytes, safe record
-prefixes, and complete referenced-content closure in the checkpoint validation
-order, then selects its highest valid consistent cut.
+or `failed`. An admitted `resume` or checkpoint-capable `finalize_partial`
+validates the contiguous self-hashed checkpoint chain, member bytes, safe
+record prefixes, and complete referenced-content closure in checkpoint order,
+then selects its highest valid consistent cut. `preserve` applies that order to
+each contiguous prefix and selects the highest valid prefix; a missing/invalid
+suffix is a content-manifest limitation rather than action failure because no
+cut is required.
 Every sealed member must match.
 Every open member must be at least the recorded safe length and have the exact
 safe-prefix hash. A shorter or mismatched member fails closed without mutation.
 Bytes after a valid safe prefix and members not named by the checkpoint are
-preserved under new tail-artifact UUIDs before a resumed member is truncated;
-they are never silently discarded.
+preserved under new tail-artifact UUIDs before a resume/finalize source is
+truncated; they are never silently discarded.
 
 Every successful action outcome prohibits `primary_failure`; `failed` requires
-one recovery-domain primary failure. Cleanup failures are permitted for any
-outcome and never rewrite a successful primary action into `failed` after its
-irreversible state change.
+the smallest recovery-action-eligible causal failure under the global table.
+Cleanup failures are permitted for any outcome and never rewrite a successful
+primary action into `failed` after its irreversible state change.
+
+Successful action state effects are exact. `preserve` carries every non-root
+byte-member input history byte-identically into output and has no preserved
+tails.
+It creates exactly one new sealed recovery content-manifest history that
+inventories the preserved graph without replacing any prior candidate content
+manifest, then appends one `preserved_partial` root state whose content is the
+unchanged root bytes or that new content-manifest reference. No other pre-
+existing history changes. `discard` has no tails and appends one `discarded`
+state to every input artifact after deletion succeeds; each state carries the
+request's exact authorization and absent content. A checkpoint-incapable
+`finalize_partial` has no tails and appends the exact
+sealed/preserved-partial terminal states for the validated untruncated bytes.
+For checkpoint-based `resume` and `finalize_partial`, every nonempty byte range
+after the selected cut is represented by exactly one preserved tail before any
+source change. Resume then appends the profile-selected open/sealed state at
+the cut to each affected original artifact; finalization appends terminal
+`preserved_partial` states at that cut to affected byte artifacts. Unchanged
+artifacts retain identical histories. Every successful `finalize_partial`
+additionally creates exactly one new sealed recovery content-manifest history
+after all member states are final, then appends the terminal logical-root
+`preserved_partial` state referencing that record; a byte-addressable root
+instead carries its final byte hash in its terminal state and the generic final
+manifest references the recovery content manifest separately. No successful
+action leaves an unlisted recovery-created artifact.
+
+The remaining failure frontiers are closed. Failure while creating preserve's
+recovery content manifest leaves all input histories unchanged, includes the
+new incomplete manifest history in output, and has no tail entry. Failure while
+discarding appends `discarded` only for the deletion-order prefix whose deletion
+succeeded, leaves the remaining histories unchanged, and has no tails; its
+eligible primary uses phase `recover` and code `cleanup_failed`, while later
+best-effort cleanup failures use phase `cleanup`. Validation, tail creation,
+and any recovery content-manifest candidate are completed before resume or
+finalize mutates an existing source. Once all selected source states have been
+irreversibly changed, publication of their terminal states and the staged
+recovery content manifest is one required atomic result step; a sink unable to
+guarantee it fails admission before source mutation. The action then retains
+its successful outcome and any later failure is cleanup evidence. These rules,
+plus pre-admission empty arrays, admitted no-mutation equality, and the tail-
+failure rule, exhaust every action/outcome array shape.
 
 `resume` requires `supports_checkpoint: true` and selects the highest valid
 consistent checkpoint. `finalize_partial` also selects the highest valid
@@ -1614,9 +1929,10 @@ Failure is `current_state_invalid` with no mutation.
 
 Accordingly, `selected_checkpoint` is required for `resume` and for
 checkpoint-capable `finalize_partial`, prohibited for checkpoint-incapable
-`finalize_partial` and `discard`, and optional for `preserve` only when it names
-the highest independently valid checkpoint. `preserve` never requires a valid
-checkpoint and performs no byte mutation.
+`finalize_partial` and `discard`. For `preserve`, it is present exactly when at
+least one independently valid checkpoint exists and names the highest such cut;
+it is absent exactly when none exists. `preserve` never fails solely because a
+checkpoint is absent or invalid and performs no byte mutation.
 Outcomes correspond exactly to resolved request actions: successful `resume`,
 `finalize_partial`, `preserve`, and `discard`
 produce `resumed`, `finalized_partial`, `preserved_partial`, and `discarded`,
@@ -1627,48 +1943,52 @@ respectively; any unsuccessful action produces `failed`.
 `preserved_partial`; a canonical archive uses the `.fdau.incomplete` suffix,
 never `.fdau`, and another sink uses only an incomplete destination form fixed
 by its profile. It never makes a completed-acquisition or lossless claim.
-`preserve` performs no byte mutation. `discard` records the exact authorization
-and deletion cleanup outcome. A crash may precede any recording result, so
-`prior_recording_result` is optional. Existing checkpoints, results, and
+`preserve` performs no mutation of pre-existing bytes; its new content
+manifest follows the exact rule above. `discard` records the exact authorization
+and deletion cleanup outcome. A crash may precede any recording result, so the
+prior-result presence rule above represents both cases. Existing checkpoints, results, and
 artifact states remain immutable; recovery appends new states and never
 rewrites historical terminal evidence.
 
-## Artifact manifest and recording result
+## Artifact manifests and recording result
 
-`ArtifactManifest` is the root record for one artifact graph. It has
-`artifact_manifest_id`, `recording_session_descriptor`, `sink_session_id`,
+`ArtifactContentManifest` is the prepublication content root for one artifact
+graph. It has `content_manifest_id`, `recording_session_descriptor`, `sink_session_id`,
 `root_artifact_id`, `acquisition_session_descriptor`, `resolution`, ordered
 `source_contexts`, ordered `continuity_reports`, ordered `artifacts`, ordered
-`relationships`, `termination_status`, `recovery_status`,
+`relationships`, `close_context`, `recovery_context`,
 `data_classification`, ordered `limitations`, `producer`, and `content_hash`.
-One manifest describes exactly one sink artifact graph, not the whole fan-out
-transaction.
+One content manifest describes exactly one sink candidate graph, not the whole
+fan-out transaction or its later terminal status.
 
-`termination_status` is tagged by `kind`. Kind `stopping_intent` contains
+`close_context` is tagged by `kind`. Kind `configuration_boundary` contains
+`boundary_event: RecordRef`, `prior_configuration: RecordRef`,
+`replacement_configuration: RecordRef`, and literal reason
+`configuration_replaced`; it exactly copies the commit request's
+configuration-replaced close boundary. Kind `stopping_intent` contains
 `stopping_event: RecordRef`, `requested_termination_reason`, and optional
 `initiating_failure`, all exactly copied from the acquisition stopping event.
-It is the truthful source-delivery termination status available before this
-sink's commit/publication attempt; it never predicts the later activity
-terminal result. Kind `interrupted`
-contains `request: RecordRef`, literal termination reason
+It is the truthful source-delivery close input available before this sink's
+commit/publication attempt; it never predicts the later activity terminal
+result. Kind `interrupted` contains `request: RecordRef`, literal close reason
 `interrupted_before_terminal`, and optional `primary_failure`; it is permitted
 only for a recovery-created partial manifest when no terminal event exists,
-and its request equals the recovery-status request. Thus crash recovery records
-termination status without fabricating an acquisition terminal event.
+and its request equals the recovery-context request. Thus content serialization
+records its available close input without fabricating an acquisition terminal
+event.
 
-`recovery_status` is tagged by `kind`. `not_recovered` has no other property.
+`recovery_context` is tagged by `kind`. `not_recovered` has no other property.
 `resumed` contains `request: RecordRef` and
 `selected_checkpoint: RecordRef`. `finalized_partial` contains the request and
 requires selected checkpoint exactly for a checkpoint-capable sink, while a
 checkpoint-incapable sink prohibits it. `preserved_partial` contains the
 request and optional selected checkpoint. Request and checkpoint families are restricted
-accordingly, their sink/root/session identities equal this manifest, and the
+accordingly, their sink/root/session identities equal this content manifest, and the
 resolved request action maps `resume` to `resumed`, `finalize_partial` to
 `finalized_partial`, and `preserve` to `preserved_partial`. A discarded graph
-has no manifest.
-These fields snapshot status already fixed before manifest serialization; the
-later recovery result references the same request/checkpoint and cannot alter
-the manifest.
+has no content manifest.
+These fields snapshot close/recovery input already fixed before content-manifest
+serialization; they do not claim the later recovery or activity outcome.
 
 Each `ArtifactEntry` has `artifact_id`, `role`, `media_type`, optional
 `relative_path`, `content_state`, variant-selected byte
@@ -1677,7 +1997,7 @@ length/SHA-256/failure/retention fields, optional `schema_version`, optional
 `scopes`, and ordered `definitions`.
 `relative_path` is required for a graph member and prohibited only when the
 root artifact is itself one byte-addressable external file. Artifact entries
-are unique by ID and path. The manifest inventories every created or
+are unique by ID and path. The content manifest inventories every created or
 policy-omitted member of this sink graph.
 
 `created_at` and `finalized_at` are `UtcInstant` artifact metadata. They do not
@@ -1704,72 +2024,147 @@ claim of statutory protection, privilege, or regulatory compliance.
 
 Each relationship has `relationship_id: Uuid`, `kind`, `from`, and `to`.
 Endpoints are `ArtifactLocator` values: a local locator contains
-`scope: "local"` and this manifest's root or member artifact ID, while an
-external locator contains `scope: "external"`, another manifest `RecordRef`,
+`scope: "local"` and this content manifest's root or member artifact ID, while
+an external locator contains `scope: "external"`, another
+artifact-content-manifest `RecordRef`,
 and its root or member artifact ID. `kind` is `parent`, `projection_of`,
 `derived_from`, `corroborates`, `replay_source`, `recovery_of`,
-`provider_audit_for`, or `related_to`. `from` is the
+`provider_audit_for`, `transition_predecessor`, or `related_to`. `from` is the
 subject and `to` is its object: a child points to its parent, a projection or
 derivation to its source, a corroborating artifact to what it corroborates, a
 replay artifact to its source, and a recovery-created artifact to its source.
-An audit byte artifact points by `provider_audit_for` to the local artifact
-entry whose `record_ref` is its provider-audit-evidence record; their payload
-identity and source-acquisition/evidence scopes must agree.
+An audit byte artifact points by `provider_audit_for` to the local evidence
+JSONL member. The matching provider-audit closure fixes the exact record index
+and `RecordRef`; payload identity and source-acquisition/evidence scopes agree.
+A `transition_predecessor` points from the local continuity-report artifact to
+the exact prior external content-manifest root and equals the report closure's
+preallocated relationship ID.
+For recovered content, the `recovery_of` relationships are exactly the
+matching recovery result's preserved-tail entries: each entry's preallocated
+relationship ID occurs once, from its tail artifact to its source artifact,
+with no additional or missing tail relation. Tail byte length/SHA-256 and the
+manifest entry's finalized content state equal the corresponding output
+history and preserved-tail entry.
 `related_to` is symmetric and stores the lexically smaller canonical locator
 first. Directed relationships cannot self-reference. `parent`,
-`projection_of`, `derived_from`, `replay_source`, `recovery_of`, and
-`provider_audit_for` must be acyclic within the supplied local closure.
+`projection_of`, `derived_from`, `replay_source`, `recovery_of`,
+`provider_audit_for`, and `transition_predecessor` must be acyclic within the
+supplied closure.
 
-An embedded manifest inventories every archive member except its own serialized
-bytes. `root_artifact_id` may also identify a byte-addressable entry, but a
-logical directory root has no invented directory-byte hash. The manifest does
-not inventory the later sink, recording, or recovery result. Its stopping-event
-and recovery-request/checkpoint references are already immutable and contain no
-back-reference to this manifest, avoiding self-referential file hashes and
-publication-status cycles. The manifest's `content_hash` uses the approved root
+An embedded content manifest inventories every archive member except its own
+serialized bytes. `root_artifact_id` may also identify a byte-addressable
+entry, but a logical directory root has no invented directory-byte hash. The
+content manifest does not inventory the later sink, recording, or recovery
+result. Its close-boundary and recovery-request/checkpoint references are
+already immutable and contain no back-reference to this content manifest,
+avoiding self-referential file hashes and publication-status cycles. Its
+`content_hash` uses the approved root
 self-hash rule; its serialized byte length and SHA-256 are reported later by
 the owning sink result.
 
-`continuity_reports` exactly equals the commit request's report references; each
-report is also a sealed one-record artifact entry in this graph. The descriptor,
-resolution, source contexts, those reports, artifact scopes, delivery events,
-and limitations carry the parent architecture's requested and observed
+For an ordinary commit, `continuity_reports` exactly equals the commit request's
+singleton report and that report is a sealed one-record artifact entry in this
+graph. For a recovery-created content manifest, it instead contains every
+continuity report reachable in the selected checkpoint or validated current
+referenced-content closure, in configuration order, and is empty when the crash
+preceded any such report; recovery never fabricates one. The descriptor,
+resolution, source contexts, available reports, artifact scopes, delivery
+events, and limitations carry the parent architecture's requested and observed
 sampling, source, generation, gap, drop, and discontinuity inventory available
-at sink commitment.
-The manifest itself carries the exact available source-termination intent and
-recovery status as required by the parent architecture. Final publication and
-activity-terminal status remain in immutable `SinkResult`,
-`RecordingSessionResult`, `AcquisitionLifecycleEvent`, and `RecoveryResult`
-records and join to the manifest by exact record and artifact identities.
+at content finalization.
+The content manifest carries only close/recovery input. The final
+`ArtifactManifest` below records delivered publication, recovery, and
+activity-terminal status and joins by exact record and artifact identities.
+
+`ArtifactManifest` is the delivered integrity/status root. Its exact
+properties are `artifact_manifest_id: Uuid`,
+`acquisition_session_descriptor: RecordRef`,
+`recording_session_descriptor: RecordRef`, `sink_session_id: Uuid`,
+`root_artifact_id: Uuid`, optional `content_manifest: RecordRef`, optional
+`recording_result: RecordRef`, optional `recovery_result: RecordRef`,
+`termination_status`, `recovery_status`, `publication_status`,
+`delivered_at: ObservationTiming`, `producer`, and `content_hash`.
+Descriptor, sink, root, and every supplied result/content reference agree.
+When `content_manifest` is present, its complete transitive entries,
+relationships, sampling summaries, limitations, and recovery context are the
+content portion of this generic manifest. It is present exactly when the
+matching sink result names a completed content manifest or the matching
+recovery output contains its final sealed recovery content-manifest history.
+It is prohibited for discarded, never-created, or admitted-failed recovery
+that completed no content manifest; the final publication status still carries
+that failed result's exhaustive output histories.
+
+`termination_status` is exactly one tagged variant. `terminal` has
+`terminal_event: RecordRef`, `termination_reason`, and optional
+`primary_failure`; the event is the equal-session acquisition terminal event
+and reason/failure equal it. `interrupted` has `recovery_result: RecordRef`,
+literal reason `interrupted_before_terminal`, and optional `primary_failure`;
+it is permitted only when crash recovery has no acquisition terminal event and
+the failure equals the recovery result. Terminal status requires
+`recording_result`; interrupted status requires `recovery_result` and permits a
+prior recording result only when that record exists.
+
+`recovery_status` is `not_recovered` with no other property or has exact
+`recovery_result: RecordRef`, `outcome`, and optional `selected_checkpoint`.
+Outcome and checkpoint presence equal the recovery result. `resumed` is
+prohibited with interrupted termination and produces no immediate final
+manifest; it is required in the later terminal artifact manifest after the
+resumed recording terminates. `publication_status` is the complete matching
+`SinkResult.publication` value for terminal status. For interrupted
+recovery it has exact disposition `preserved_partial`, `discarded`, or
+`recovery_failed`, matching finalized/preserved, discarded, or failed recovery;
+it additionally carries the recovery result's final root history and failure
+when failed. No field predicts an operation that has not completed.
+
+The matching `RecoveryOutcome.artifact_manifest` is byte-identically this
+manifest. It is required for finalized, preserved, discarded, and admitted-
+failed recovery, and prohibited for resumed or pre-admission failed recovery.
+An admitted failed result is terminal for that recovery invocation and records
+the unchanged or tail-creation output graph; a later retry is a new immutable
+recovery request and cannot rewrite this status record.
+
+For an ordinary session the orchestrator creates one final artifact manifest
+per recording sink, in recording-result then sink order, only after the
+recording result and terminal event exist. For terminal crash recovery it
+creates one after the recovery result, subject to the exact admitted-action
+rule above. The manifest never inventories its own
+serialized bytes and neither predecessor references it. It is delivered as a
+transport-free result record: optional later persistence is a new external
+artifact operation whose failure cannot rewrite the already fixed activity or
+manifest. This order preserves content-root no-replace publication and all
+self-hashes without a cycle.
 
 `RecordingSessionResult` is generated after every sink reaches a terminal
-state and before the acquisition terminal event. It is returned to the caller and may be persisted as a separate related
-contract artifact; it is never inserted retroactively into an immutable sink
-graph. It has `recording_result_id`, `recording_session_id`, `descriptor`,
-`stopping_event`, `outcome`, `termination_reason`, optional `primary_failure`, ordered
+state and before the acquisition terminal event. It is returned to the caller
+and may be persisted as a separate related contract artifact; it is never
+inserted retroactively into an immutable sink graph. It has
+`recording_result_id`, `recording_session_id`, `descriptor`,
+`close_boundary`, `outcome`, `termination_reason`, optional `primary_failure`, ordered
 `cleanup_failures`, ordered `sink_results`, `ended_at`, `producer`, and
-`content_hash`. It contains no continuity-report reference, singular manifest,
-or archive-publication field.
+`content_hash`. It contains no continuity-report reference, final artifact
+manifest, or aggregate archive-publication field.
 
 `recording_result_id` and `recording_session_id` are `Uuid`; `descriptor` is
-the equal-session recording descriptor `RecordRef`; `stopping_event` is the
-same acquisition stopping-event `RecordRef` supplied to every sink commit or
-abort operation; `ended_at` is canonical
+the equal-session recording descriptor `RecordRef`; `close_boundary` is
+byte-identically the configuration-replaced or acquisition-stopping boundary
+fixed before every sink's commit or abort operation; `ended_at` is canonical
 `ObservationTiming` not earlier than every sink's terminal phase in a
 comparable receipt domain.
 
 Each `SinkResult` has `sink_session_id`, `criticality`, `outcome`, optional
-`manifest`, optional `manifest_file`, `publication`, `delivery_summary`,
+`content_manifest`, optional `content_manifest_file`, `publication`, `delivery_summary`,
 ordered `phase_attempts`, optional `primary_failure`, and ordered
 `cleanup_failures`.
 
 - `outcome` is `successful`, `partial`, or `failed`.
 - `criticality` must exactly match the declaration. `primary_failure` is
-  prohibited for success and required for failure; it is optional for partial
-  only when declared loss rather than a runtime failure caused the partial
-  result.
-- `manifest` is present exactly when a manifest was completed.
-  `manifest_file` then records the serialized manifest byte length and SHA-256
+  prohibited for success and required for failure. For partial it is required
+  when runtime failure caused the partial output and prohibited when declared
+  loss/retention policy alone caused it. When present it is the smallest
+  sink-local eligible causal sequence; this local rule is unchanged when the
+  sink is optional to its enclosing recording session.
+- `content_manifest` is present exactly when a content manifest was completed.
+  `content_manifest_file` then records its serialized byte length and SHA-256
   and is otherwise prohibited.
 - `publication` has disposition `published`, `preserved_partial`, `discarded`,
   `not_created`, `omitted_by_policy`, or `not_applicable`, the declared
@@ -1798,11 +2193,17 @@ ordered `phase_attempts`, optional `primary_failure`, and ordered
   a partial recording result. A required partial or failed sink produces a
   failed recording result even when other artifacts were published
   successfully.
+- A partial recording result prohibits aggregate `primary_failure`; all
+  optional-sink failures remain in their sink results. A failed recording
+  result requires the smallest eligible required-sink or orchestrator failure
+  fixed by the table below. Thus a causally earlier optional-sink failure never
+  displaces the required failure that selected the aggregate failed outcome.
 - `termination_reason` is `consumer_complete`, `consumer_stop`, `source_end`,
+  `configuration_replaced`,
   `required_evidence_unsatisfied`, `required_sink_failed`,
   `discontinuity_policy`, `explicit_abort`, `recovery_pending`, or
-  `internal_failure`. It equals the stopping request unless a required sink
-  fails commit/publication, which selects `required_sink_failed`; an optional
+  `internal_failure`. It equals the close-boundary reason unless a required
+  sink fails commit/publication, which selects `required_sink_failed`; an optional
   publication conflict is retained in its sink result without replacing the
   requested reason. Its outcome, reason, and failure are therefore available
   for the later acquisition terminal event without backward mutation.
@@ -1878,12 +2279,33 @@ represents that identity. Different failure identities may not reuse a causal
 position. Across those unique identities, scope must agree and causal sequence
 must be a contiguous closure from zero; a missing position, gap, or collision
 invalidates the aggregate rather than invoking timestamp, endpoint order, or
-UUID tie breaks. Primary selection considers the non-cleanup members of that
-deduplicated closure and chooses the smallest causal sequence. Cleanup-phase
-failures are never primary and, when no non-cleanup member exists, remain
+UUID tie breaks. This exhaustive closure always includes required, optional,
+cleanup, and independently failing branch evidence; eligibility never removes,
+renumbers, or hides a failure.
+
+Primary eligibility is derived from the result being validated, its outcome,
+and the criticality/policy that was immutable before the failure. It is not
+derived from which failure happened first. The closed rules are:
+
+| Result whose primary is selected | Primary-eligible failure set |
+| --- | --- |
+| `SinkResult` | For `failed`, every non-cleanup failure causally responsible for that sink's failure. For `partial`, that set only when a runtime failure, rather than declared retention/loss policy alone, caused partial output. For `successful`, none. Sink-local eligibility applies even when this sink is optional to its recording session. |
+| `RecordingSessionResult` | For `failed`, non-cleanup failures of required sinks plus recording-orchestrator failures that caused the aggregate failure. For `partial` caused only by optional sink partial/failure, and for `successful`, none. |
+| acquisition terminal event and `AcquisitionSessionResult` | For `failed`, the initiating requested-failure evidence and failures of required subscribers, required continuity/provider-audit closure, required sinks, discontinuity policy, or acquisition orchestration that select the terminal reason. For `completed`, `stopped`, or `aborted`, none. An optional endpoint/sink/audit failure is ineligible unless its declaration/policy had been immutably promoted to required before it failed. |
+| `RecoveryResult` | For `failed`, non-cleanup failures causally produced by that recovery action. For every successful recovery outcome, none. |
+| `ReplaySessionResult` | For `failed`, non-cleanup replay failures causally responsible for failure. For `completed` or `stopped`, none. |
+| `XPlaneFDRProjectionReport` | For `failed`, non-cleanup projection failures causally responsible for failure. For `completed` or `completed_with_loss`, none. |
+
+Within the applicable eligible set, `primary_failure` is byte-identically the
+member with the smallest causal sequence. It is required exactly when the
+result/outcome rule requires a nonempty eligible set and prohibited when that
+set is empty. An earlier ineligible optional failure therefore cannot become
+an aggregate primary merely because it has a smaller sequence, while it
+remains present in the nested result and exhaustive causal closure. Cleanup-
+phase failures are never eligible and, when no eligible member exists, remain
 cleanup evidence on the successful irreversible action. Abort, close,
-recovery, and independent sink failures retain their own evidence and never
-replace an earlier primary failure. Diagnostics are at most 1024 NFC code
+recovery, and independent sink failures retain their own evidence and do not
+change another result's eligible set. Diagnostics are at most 1024 NFC code
 points and never include raw inline values, payload bytes, credentials, or host
 objects. Adding an outcome or failure code that version-1 consumers cannot
 interpret requires a new schema version.
@@ -1902,9 +2324,11 @@ and `content_hash`.
 - Stored observations, samples, frames, sequence numbers, epochs, timestamps,
   and hashes are emitted unchanged.
 - `source_manifest` is an artifact-manifest `RecordRef` whose graph validates
-  completely. `source_artifacts` is a nonempty `ArraySet<Uuid>` containing the
-  exact retained artifacts selected from that manifest; every record and
-  payload needed by the selection is included.
+  completely. It must contain an artifact-content-manifest reference, and
+  graph/member resolution proceeds through that immutable content root;
+  final status fields do not invent content. `source_artifacts` is a nonempty
+  `ArraySet<Uuid>` containing the exact retained artifacts selected from that
+  content graph; every record and payload needed by the selection is included.
 - `selection` has exactly nonempty ordered `ranges` and
   `include_record_kinds: ArraySet`. Each `ReplayRange` has
   `logical_stream_key: NfcText(512)`, `records: RecordRange`, and optional
@@ -2106,11 +2530,13 @@ optional `primary_failure`, ordered `cleanup_failures`, `producer`, and
 counts are `UInt63`.
 
 `profile` is the exact projection-profile `DefinitionRef`; `input_manifest` is
-an artifact-manifest `RecordRef`; `input_artifacts` is a nonempty
-`ArraySet<Uuid>` resolved in that manifest; and `output_artifact` is the
-preallocated native-file artifact `Uuid`. The output sink's later manifest and
-result bind that identity to final bytes without creating a report/manifest
-self-reference. `selected_range` uses the replay-selection shape and must
+an artifact-manifest `RecordRef` with an artifact-content-manifest whose graph
+validates completely; `input_artifacts` is a nonempty `ArraySet<Uuid>` resolved
+through that content graph; and `output_artifact` is the
+preallocated native-file artifact `Uuid`. The output sink's later content
+manifest, final artifact manifest, and result bind that identity to final bytes
+without creating a report/manifest self-reference. `selected_range` uses the
+replay-selection shape and must
 resolve to retained frames and their complete sample/observation closure.
 
 `field_results` is nonempty and contains exactly one result for every mapping,
@@ -2546,14 +2972,14 @@ this document as that child's implementation plan:
 | `A1.4` | Allow-listed transform registry, data-only parameters, deterministic execution order, and explicit loss/failure evidence |
 | `A1.5` | Acquisition-session descriptor, immutable configuration generations, phase-distinct streams, provider-audit ingress/evidence, initialization-failure exit, complete lifecycle state machine, epoch identity, and source-context change boundary |
 | `A1.6` | Profile-authorized cadence plus resolution-pinned algorithms, windows, lineage, downsampling, interpolation, aggregation, and resampling policies; no additional family is required |
-| `A1.7` | Event-or-empty continuity ranges, immutable policy identity, per-binding corroboration, burst/transition metrics, provider/connection segmentation, protected-sink attribution, deterministic classification, and closed insufficiency reasons |
+| `A1.7` | Exhaustive configuration-lifetime event/record/delivery ranges, immutable policy identity, per-binding corroboration, burst/transition metrics, per-root provider-audit closure, protected-sink attribution, deterministic classification, and closed insufficiency reasons |
 | `A1.8` | Synchronous fan-out ports, exact operation outcomes, subscriber declarations, sink/subscriber isolation, endpoint-plus-stream sequence, backpressure, and delivery events |
-| `A1.9` | Acyclic stopping/continuity/commit/recording/terminal orchestration, deduplicated causal failure closure, and immutable terminal results plus expected deployment pin, deployment policy, portable receipt, schemas, corpus, public API, and installed verification required before `I1.2` |
+| `A1.9` | Acyclic configuration-close and stopping/continuity/commit/recording/terminal/final-manifest orchestration, outcome-specific primary eligibility, and immutable terminal results plus expected deployment pin, deployment policy, portable receipt, schemas, corpus, public API, and installed verification required before `I1.2` |
 | `R1.1` | Recording-session descriptor, sink declarations, protected demand/stream relations, criticality, recovery policy, and artifact UUID/content identity separation |
-| `R1.2` | Manifest-rooted logical archive, canonical JSON/JSONL, ordered demand-resolution/configuration history, global-order entries, separate raw/provider-audit content-addressed payloads, and retention definitions |
+| `R1.2` | Artifact-content-manifest-rooted logical archive, canonical JSON/JSONL, ordered demand-resolution/configuration history, global-order entries, separate raw/provider-audit content-addressed payloads, and retention definitions |
 | `R1.3` | Immutable segment closure, reference-complete checkpoints, candidate directory, atomic/no-replace publication, and failure cleanup |
-| `R1.4` | Artifact entries, roles, hashes, record references, graph relationships, termination/recovery status, and manifest self-hash boundary |
-| `R1.5` | Self-hashed recovery request, closed policy/action/capability/checkpoint validation, recording/recovery terminal results, discard-authorization closure, stable artifact identity, partial preservation, and deduplicated session-causal primary/cleanup precedence |
+| `R1.4` | Acyclic artifact-content-manifest entries/relationships plus the delivered artifact-manifest termination, recovery, publication, and self-hash boundary |
+| `R1.5` | Self-hashed recovery request, closed action/checkpoint validation, exact before/after artifact histories and tail byte ranges, recording/recovery terminal results, discard authorization, and outcome-specific causal precedence |
 | `R1.6` | Identity-preserving faithful canonical replay, subset ordering, pacing, complete state machine, seek generations, events, and result |
 | `R1.7` | Long-session and corruption verification against the fixed checkpoint, recovery, replay, and manifest contracts; no additional family is required |
 | `P1.1` | Versioned projection profile, jointly unique mapping IDs, and exact ordered field mappings |

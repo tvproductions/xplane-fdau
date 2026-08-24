@@ -741,6 +741,16 @@ epoch or frame follows. The final order is stopping intent, final endpoint
 then the aggregate acquisition-session result. No record references a later
 record, so the serialization is acyclic.
 
+Within either recording close, the sink-closure phrase above has one exact
+native-projection dependency. After append fan-out is quiescent and the final
+delivery positions and continuity report are fixed, the current descriptor's
+preselected canonical-archive companion completes its ordinary prepublication
+content manifest. A native-FDR projection sink then cross-validates its current
+append range against that manifest before its candidate root is sealed, its
+sidecar is serialized, publication is attempted, or its projection report is
+fixed. This dependency does not wait for an acquisition terminal or any final
+`ArtifactManifest`.
+
 If a required continuity item is insufficient and no earlier causal failure
 already explains it, the orchestrator allocates one acquisition-domain,
 `evaluate`, `required_evidence_unsatisfied` `FailureEvidence` whose
@@ -909,6 +919,25 @@ RecordingSink.abort(failure: FailureEvidence) -> AbortOutcome
 RecordingSink.recover(request: RecoveryRequest) -> RecoveryOutcome
 RecordingSink.close() -> CloseOutcome
 ```
+
+For schema version 1, `RecordingSink.append(frame)` is the sole pre-close data
+operation for a native-FDR projection sink. Every frame comes from the current
+recording descriptor's ordinary fan-out tuple; no source manifest, historical
+archive, replay adapter, or caller-selected range is passed to the sink. Native
+candidate bytes may accumulate during those calls. After the close boundary,
+the orchestrator first fixes exhaustive delivery positions and the continuity
+report, then resolves the descriptor-selected canonical-archive companion's
+ordinary, non-recovery `ArtifactContentManifest` and validates the complete
+current append closure. Only then may the native sink seal its output
+candidate, serialize its output content sidecar, evaluate publication, and fix
+its `XPlaneFDRProjectionReport`. Report formation cross-validates the live
+append evidence rather than introducing a second data-input path. If no such
+current-session content manifest exists or its exact range closure fails, the
+native sink's commit fails before output seal/publication with projection-
+domain `FailureEvidence` whose `phase` is `project` and whose `code` is
+`required_measurement_missing`. No projection report with an unresolvable
+predecessor is created; ordinary sink failure, cleanup, and recovery rules
+remain in force.
 
 `SessionCloseNotice` has exact properties `acquisition_session_descriptor`,
 `subscriber_declaration`, `close_boundary`, and ordered
@@ -1567,6 +1596,15 @@ Each `SinkDeclaration` has `sink_session_id`, `sink_kind`, `artifact_role`,
   declarations, at least one retention policy independently satisfies every
   accepted demand item's `RetentionRequirement`; optional sinks cannot satisfy
   required retention evidence.
+- Every native-FDR projection sink requires at least one canonical-archive sink
+  in the same recording descriptor whose retention policy has
+  `canonical_samples: retain`, `canonical_frames: retain`, and
+  `accepted_raw_observations` equal to `retain_when_supplied` or `required`.
+  The companion is exactly the first declaration in descriptor sink order that
+  satisfies those constraints and is therefore fixed before sink open; no
+  later sink can replace it if it fails. It is the only version-1 content-
+  evidence source for projection. A prior-session archive or final artifact
+  manifest cannot satisfy this declaration invariant.
 - `planned_root_artifact_id: Uuid` is allocated before sink open and identifies
   that sink's artifact graph through publication and recovery.
 - `backpressure` is `block`, `reject`, or `drop_oldest`. Any drop produces a
@@ -2358,12 +2396,15 @@ permitted prepublication sidecar state is `sealed`.
 The sidecar also inventories every created sidecar member other than the
 content manifest's own serialized bytes. A native-FDR projection sidecar
 additionally contains exactly one `projection_of` relationship from the local
-byte-root entry to the external root resolved through the projection report's
-input artifact manifest. The relationship can be fixed from immutable
-projection inputs before publication. The later final artifact manifest, not
-this prepublication content root, references and cross-checks the already-
-created projection report, so neither record points to a later record and no
-self-reference is introduced.
+byte-root entry to the external root named by the hash-pinned current canonical
+content-manifest predecessor selected at close. That predecessor is already the
+sealed ordinary content manifest of the current recording descriptor's
+canonical-archive companion; its `RecordRef` is later copied byte-identically
+to `XPlaneFDRProjectionReport.input_content_manifest`. The relationship is
+fixed after that canonical content closure and before native-root seal or
+publication. The later projection report and final artifact manifest, not this
+prepublication content root, perform the report cross-check, so no record points
+to a later record and no self-reference is introduced.
 
 For an ordinary commit, `continuity_reports` exactly equals the commit request's
 singleton report and that report is a sealed one-record artifact entry in this
@@ -2435,13 +2476,14 @@ terminal `xplane_fdau.sink.xplane_fdr_projection` result with publication dispos
 is byte-identically this manifest's recording-session-descriptor reference,
 and its recording-session ID, output artifact, profile, and failure scope equal
 the descriptor/sink closure. Its outcome is `completed` or
-`completed_with_loss`. Resolving the report's
-`input_manifest` supplies its input content-manifest/root identity. The output
-content manifest must then contain the exact local root `ArtifactEntry` and
-exactly one `projection_of` relationship from that root to that external input
+`completed_with_loss`. Resolving the report's `input_content_manifest`
+supplies the current descriptor's canonical-archive content-manifest/root
+identity and must equal the external locator in the output sidecar. The output
+content manifest must contain the exact local root `ArtifactEntry` and exactly
+one `projection_of` relationship from that root to this same-session canonical
 root. This report reference, artifact identity, and relationship equality make
 portable validation of that final manifest close the native projection
-provenance.
+provenance without a final/historical input manifest.
 
 `termination_status` is tagged by `kind` with this complete wire table:
 
@@ -2646,13 +2688,17 @@ ordered `recovery_results`, ordered `phase_attempts`, optional `primary_failure`
   `configuration_replaced`,
   `required_evidence_unsatisfied`, `required_sink_failed`,
   `discontinuity_policy`, `explicit_abort`, `recovery_pending`, or
-  `internal_failure`. It equals the close-boundary reason unless the aggregate
-  failed row is selected by a required sink that is `failed` or runtime-
-  failure `partial`, which selects `required_sink_failed`; a required declared-
-  loss-only partial and an optional publication conflict retain their sink
-  evidence without replacing the requested reason. Its outcome, reason, and
-  failure are therefore available for the later acquisition terminal event
-  without backward mutation.
+  `internal_failure`. Its exact precedence is: a required sink that is `failed`
+  or runtime-failure `partial` selects `required_sink_failed`; otherwise a non-
+  cleanup recording-orchestrator failure that independently selects the failed
+  row selects `internal_failure`; otherwise the reason equals the close-
+  boundary reason. A required declared-loss-only partial and an optional
+  publication conflict retain their sink evidence without replacing that
+  boundary reason. The orchestrator exception changes the recording result and
+  its downstream terminal/result reason, but never rewrites an already-created
+  ordinary acquisition stopping intent. Its outcome, reason, and failure are
+  therefore available for the later acquisition terminal event without
+  backward mutation.
 
 A non-cleanup recording-orchestrator-only failure that selects the aggregate
 failed row has exactly `domain: "recording"`, `phase: "close"`, and
@@ -3040,8 +3086,8 @@ and delivery decision for this same profile/item/binding authorization.
   canonical projection emits version 4 only.
 
 `XPlaneFDRProjectionReport` has `projection_report_id`, `profile`,
-`recording_session_id`, `recording_descriptor`, `input_manifest`, ordered
-`input_artifacts`,
+`recording_session_id`, `recording_descriptor`, `input_content_manifest`,
+ordered `input_artifacts`,
 ordered `authorizing_configurations`, ordered `authorizing_resolutions`,
 `output_artifact`, `selected_range`, `failure_scope`,
 `planned_row_count`, `evaluated_row_count`, `emitted_row_count`,
@@ -3051,34 +3097,68 @@ optional `primary_failure`, ordered `cleanup_failures`,
 
 `projection_report_id` and `recording_session_id` are `Uuid`;
 `recording_descriptor` is an exact recording-session-descriptor `RecordRef`;
+`input_content_manifest` is an exact artifact-content-manifest `RecordRef`;
 all four row counts are `UInt63`.
 
-`profile` is the exact projection-profile `DefinitionRef`; `input_manifest` is
-an artifact-manifest `RecordRef` with an artifact-content-manifest whose graph
-validates completely; `input_artifacts` is a nonempty `ArraySet<Uuid>` resolved
-through that content graph; and `output_artifact` is the
-preallocated native-file artifact `Uuid`. The output sink's required
-prepublication sidecar content manifest binds that identity and its sealed
-bytes to the input root with `projection_of`; the later final artifact manifest
-references both that sidecar and this report and cross-checks their artifact
-identities. This report contains no reference to either output manifest, so the
-join is acyclic. `selected_range` uses the replay-selection shape and must
-resolve to retained frames and their complete sample/observation closure.
+`profile` is the exact projection-profile `DefinitionRef`.
+`input_content_manifest` resolves a completely valid ordinary prepublication
+content graph whose `recording_session_descriptor` is byte-identically
+`recording_descriptor`, whose `acquisition_session_descriptor` and `resolution`
+equal the like-named references resolved from `recording_descriptor`, and whose
+`recovery_context.kind` is `not_recovered`. Its
+`sink_session_id` resolves in that same descriptor to a sink declaration with
+kind `xplane_fdau.sink.canonical_archive`; its `root_artifact_id` equals that
+declaration's planned root. Its `close_context` is the ordinary content-
+manifest encoding of the same `CommitRequest.close_boundary` used by the native
+projection sink. Its sink is exactly the first descriptor-order
+canonical declaration with the required retention, as fixed before open; no
+fallback to a later sink is valid. Its completed content graph validates the
+exact current append closure. A final `ArtifactManifest`, a prior-session
+content manifest, and a content manifest from another acquisition, recording
+descriptor, configuration, or recovery operation are prohibited as projection
+input in version 1.
+
+`input_artifacts` is the nonempty `ArraySet<Uuid>` of exact current canonical-
+graph member artifact IDs needed to resolve `selected_range`. Every selected
+record and every transitively required payload and definition resolve through
+those members.
+`output_artifact` is the native projection declaration's preallocated file
+artifact `Uuid`. The output sink's required prepublication sidecar binds that
+identity and its sealed bytes to `input_content_manifest.root_artifact_id` with
+exactly one `projection_of` relationship. The later final output manifest
+references both that sidecar and this report and cross-checks their identities.
+This report contains no reference to either output manifest, so the join is
+acyclic.
+
+`selected_range` uses the replay-selection shape but is derived at close, not
+supplied by a caller. Its `include_record_kinds` is exactly
+`raw_observation`, `measurement_sample`, and `measurement_frame`; its sorted,
+nonoverlapping ranges are the smallest ranges that close every current-session
+frame named by the native sink's exhaustive fan-out delivery-event range and
+every transitively referenced current-session sample and observation. Those
+ranges reconcile exactly with the native sink's final delivery positions and
+the same current configuration's `ContinuityReport.canonical_record_ranges`.
+Every selected record resolves inside `input_content_manifest`; a record from
+another recording session or a historical/final archive is invalid. This is
+the post-append evidence cross-check, not another projection operation.
+
 `failure_scope` has exactly `kind: "in_session"` and
 `acquisition_session_descriptor: RecordRef`; no other kind is valid in version
 1. The descriptor names the acquisition whose orchestrator owns this
 projection invocation and equals
-`recording_descriptor.acquisition_session_descriptor`; it need not equal the
-historical acquisition named by the input manifest. `recording_descriptor`
+`recording_descriptor.acquisition_session_descriptor`.
+`recording_descriptor`
 resolves by family, schema version, recording-session UUID, and content hash;
 its `recording_session_id` equals the report field, its configuration and
 resolution belong to the orchestrating acquisition, and exactly one of its
 sink declarations has kind `xplane_fdau.sink.xplane_fdr_projection`, profile
 equal to this report's `profile`, and planned root equal to
 `output_artifact`. This required predecessor is traversed by standalone
-aggregate validation before the input manifest and is the sole path by which
-the report validates its attached recording session, native-FDR sink, profile,
-and output identity. The report appears
+aggregate validation before `input_content_manifest`; that next predecessor
+then pins the same-session canonical sink/root and complete selected evidence.
+Together they are the sole paths by which the report validates its attached
+recording session, native-FDR sink, profile, current canonical input, and output
+identity. The report appears
 exactly once in that sink result and in the orchestrating acquisition
 terminal/result closure. `failure_closure` uses the orchestrating acquisition-
 session ID and includes every projection primary and cleanup failure copy in
@@ -3091,27 +3171,28 @@ adapter, invocation instruction, or delivery promise. Offline canonical-
 archive projection requires a later, separately reviewed versioned contract
 that fixes its pre-operation input, range, identity, provenance, failure, and
 terminal-result boundaries. This restriction does not weaken deterministic
-in-session reproduction: the immutable input graph, authorizing configuration
-and resolution arrays, exact recording descriptor, pinned profile, report,
-sealed output sidecar, sink result, and final artifact manifest remain the
-complete P1 closure for schema version 1.
+in-session reproduction: the live `append(frame)` evidence, sealed current-
+session canonical content graph, singleton authorizing configuration and
+resolution, exact recording descriptor, pinned profile, report, sealed output
+sidecar, sink result, and final output manifest remain the complete P1 closure
+for schema version 1.
 
 `field_results` is nonempty and contains exactly one result for every mapping,
 in the profile's complete trajectory-then-DREF order. Its mapping IDs equal
 that jointly unique profile sequence without omission, insertion, or
 reordering; report validation never treats an absent result as zero loss.
 
-`authorizing_configurations` and `authorizing_resolutions` are nonempty aligned
-arrays of acquisition-session-configuration and demand-resolution `RecordRef`
-values in configuration first-use order across the selected range. Each
-configuration's resolution equals the same-index resolution. Every resolution,
-its demands, profiles, proposed source acquisitions, activated IDs, and
-delivery decisions and every configuration and stream must resolve inside the
-input manifest graph. For every mapping and every emitted source sample,
-exactly one effective configuration maps its containing stream to an activated
-source acquisition whose accepted item and delivery decision contain the same
-profile/item/binding authorization. Missing, inactive, or conflicting
-authorization is `profile_mismatch`.
+`authorizing_configurations` and `authorizing_resolutions` are exact singleton
+arrays containing `recording_descriptor.configuration` and
+`recording_descriptor.resolution`, respectively. The configuration's
+resolution equals that singleton resolution. That resolution, its demands,
+profiles, proposed source acquisitions, activated IDs, and delivery decisions,
+and the configuration and streams all resolve inside
+`input_content_manifest`. For every mapping and every emitted source sample,
+this one effective current configuration maps its containing stream to an
+activated source acquisition whose accepted item and delivery decision contain
+the same profile/item/binding authorization. Missing, inactive, historical, or
+conflicting authorization is `profile_mismatch`.
 
 Planned rows are the exact cadence instants from the first selected frame
 through the inclusive selected end. `evaluated_row_count` is the prefix that
@@ -3207,9 +3288,10 @@ do not replace the primary result and a successfully published output remains
 published.
 
 The report does not duplicate source-sample lineage for every native cell.
-Exact reproduction uses the immutable canonical input graph plus the pinned
-deterministic profile. The native FDR artifact remains a lossy projection and
-never becomes canonical evidence merely because projection succeeds.
+Exact reproduction uses the hash-pinned current-session canonical content
+manifest, the exhaustive live-append delivery closure, and the deterministic
+profile. The native FDR artifact remains a lossy projection and never becomes
+canonical evidence merely because projection succeeds.
 
 ## ARINC representation-adapter seam
 
@@ -3530,12 +3612,12 @@ this document as that child's implementation plan:
 | `A1.5` | Acquisition-session descriptor, immutable configuration generations, phase-distinct streams, provider-audit ingress/evidence, initialization-failure exit, complete lifecycle state machine, epoch identity, and source-context change boundary |
 | `A1.6` | Profile-authorized cadence plus resolution-pinned algorithms, windows, lineage, downsampling, interpolation, aggregation, and resampling policies; no additional family is required |
 | `A1.7` | Exhaustive configuration-lifetime event/record/delivery ranges, immutable policy identity, per-binding corroboration, burst/transition metrics, available/unavailable predecessor evidence, delivery/storage-separated stored/missing per-root provider-audit closure including post-store loss, protected-sink attribution, deterministic classification, and closed insufficiency reasons |
-| `A1.8` | Synchronous fan-out ports, exact operation outcomes, one declaration/event/report/close/commit endpoint-stream tuple universe, sink/subscriber isolation, endpoint-plus-stream sequence, backpressure, and delivery events |
+| `A1.8` | Synchronous fan-out ports, exact operation outcomes, one declaration/event/report/close/commit endpoint-stream tuple universe, sink/subscriber isolation, endpoint-plus-stream sequence, backpressure, delivery events, and live `append(frame)` as the sole version-1 native-projection data path |
 | `A1.9` | Acyclic configuration-close and stopping/continuity/commit/recording/terminal/final-manifest orchestration, including exact recording-orchestrator `internal_failure` propagation that blocks a replacement epoch, immutable self-hashed failure-closure snapshots, outcome-specific primary eligibility, and immutable terminal results plus expected deployment pin, deployment policy, portable receipt, schemas, corpus, public API, and installed verification required before `I1.2` |
 | `R1.1` | Recording-session descriptor, sink declarations, protected demand/stream relations, criticality, recovery policy, and artifact UUID/content identity separation |
-| `R1.2` | Artifact-content-manifest-rooted logical archive, canonical JSON/JSONL, ordered demand-resolution/configuration history, global-order entries, separate raw/provider-audit content-addressed payloads, and retention definitions |
+| `R1.2` | Artifact-content-manifest-rooted logical archive, canonical JSON/JSONL, ordered demand-resolution/configuration history, global-order entries, separate raw/provider-audit content-addressed payloads, retention definitions, and the sealed current-session canonical input predecessor for live projection |
 | `R1.3` | Immutable segment closure, reference-complete checkpoints, candidate directory, atomic/no-replace publication, and failure cleanup |
-| `R1.4` | Acyclic artifact-content-manifest entries/relationships, required immutable prepublication sealed-candidate sidecars for published or preserved-partial byte roots, exact content/publication/recovery tagged wire variants, and the classified delivered artifact-manifest termination, projection, ledger-head, publication, and self-hash boundary |
+| `R1.4` | Acyclic artifact-content-manifest entries/relationships, required immutable prepublication sealed-candidate sidecars for published or preserved-partial byte roots, same-session canonical-input `projection_of` closure, exact content/publication/recovery tagged wire variants, and the classified delivered artifact-manifest termination, projection, ledger-head, publication, and self-hash boundary |
 | `R1.5` | Self-hashed crash-safe artifact-state ledger and recovery request, closed action/checkpoint validation, exact ordinary/final-manifest historical head pins with explicit portable successor-absence trust, ledger-proven before/after artifact histories and exact tail byte ranges, recording/recovery terminal results, discard authorization, and outcome-specific causal precedence |
 | `R1.6` | Identity-preserving faithful canonical replay, subset ordering, pacing, complete state machine, seek generations, events, and result |
 | `R1.7` | Long-session and corruption verification against the fixed checkpoint, recovery, replay, and manifest contracts; no additional family is required |
@@ -3544,7 +3626,7 @@ this document as that child's implementation plan:
 | `P1.3` | Ordered version-4 DREF mappings and explicit omission policy |
 | `P1.4` | Pinned projection cadence, timing, interpolation, and resampling behavior |
 | `P1.5` | Planned/evaluated/emitted/omitted row and timing loss plus exact all-mapping field-result state, column, omission, placeholder, conversion, range, rounding, clamping, interpolation, and resampling evidence |
-| `P1.6` | End-to-end in-session canonical-input, hash-pinned recording descriptor/native sink, pinned profile, native artifact, sealed-candidate sidecar relationship, exact report reference, and deterministic reproduction closure; offline canonical-archive projection awaits a later reviewed versioned contract and no additional version-1 family is required |
+| `P1.6` | End-to-end live in-session append input, hash-pinned recording descriptor/native sink and same-session prepublication canonical content manifest, exact current frame/sample/observation-range cross-validation, pinned profile, native artifact, sealed-candidate sidecar relationship, exact report reference, and deterministic reproduction closure; offline canonical-archive projection awaits a later reviewed versioned contract and no additional version-1 family is required |
 
 ## Validation and runtime outcome separation
 

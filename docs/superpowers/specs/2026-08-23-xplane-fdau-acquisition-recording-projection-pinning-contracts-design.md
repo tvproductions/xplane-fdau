@@ -1112,10 +1112,21 @@ ordered `item_results`, ordered `stream_summaries`, `overall_result`, `evaluated
   member/index resolves the evidence in this sink's provider-audit JSONL
   stream, the payload member resolves its exact bytes, length/hash equal the
   evidence payload, and the relationship ID is the exact `provider_audit_for`
-  edge. For `missing`, its result is `rejected` or `failed`, evidence and sink
-  IDs match, and `failure` byte-identically equals the outcome's required
-  failure. Missing entries are valid failure evidence, not malformed storage
-  claims, and cannot invent coordinates.
+  edge. For `missing`, evidence and sink IDs match and the immutable delivery
+  result is `stored`, `rejected`, or `failed`. A rejected or failed delivery
+  requires `failure` to byte-identically equal the outcome's failure. A stored
+  delivery instead requires the later continuity-domain, `evaluate`,
+  `sink_failure` evidence created when close-time verification first finds its
+  accepted record, payload bytes, sealing state, or relationship unavailable,
+  truncated, hash-mismatched, or otherwise unresolvable; its `record_ref`
+  names the accepted evidence and its `artifact_id`, when the failed member had
+  already been allocated, names the first failing artifact in evidence-record,
+  payload, sealing, then relationship validation order. The immutable outcome
+  remains `stored`: this later failure records loss from the unpublished graph
+  rather than rewriting delivery history. Every missing variant prohibits
+  member IDs, record index, byte length/hash, and relationship coordinates
+  because none of those coordinates is asserted to resolve. Missing entries
+  are valid close-state failure evidence, not malformed storage claims.
   Closure classification is sufficient exactly when every exhaustive entry is
   `stored`, every stored member/byte is already sealed under the declared root,
   and the stored count meets the minimum; otherwise it is insufficient.
@@ -1840,6 +1851,28 @@ enumeration, a checkpoint cut, a prior result, or implementation-private
 memory, is the proven root/member universe. Omission of either a ledger record
 or an entry makes the ledger closure invalid.
 
+Ordinary terminal result construction performs the same live exhaustive
+reserved-namespace admission after the last publication/discard/planned-state
+ledger append and before serializing `SinkResult`. The result pins that exact
+head as `artifact_state_ledger`; a final `ArtifactManifest` pins the applicable
+ordinary or recovery head under the rules below. Flattening the pinned head's
+entries in artifact-ordinal then state-sequence order must be byte-identical to
+the terminal publication's `artifact_states`, so a planned allocation whose
+path or first byte was never created remains visible and cannot be omitted.
+
+A backward-linked ledger prefix proves its contents and deltas through a
+pinned head; by itself it cannot cryptographically prove that a presenter has
+not withheld a later successor. Version-1 portable validation therefore
+trusts the immutable result producer's recorded live exhaustive-namespace
+admission, bound by `ProducerIdentity`, the result self-hash, and the pinned
+head. It validates the complete chain through that historical head but does
+not claim successor absence from caller-supplied prefix bytes. A later valid
+recovery successor does not invalidate the earlier result. A relying party
+that will not trust that recorded live decision must obtain a separately
+authenticated complete namespace inventory or head assertion outside these
+families; no checkpoint, directory listing, backward hash link, or standalone
+validator argument may be described as supplying that additional trust.
+
 An immutable content-manifest entry uses the exact tagged `content_state` table
 below with kind `sealed`, `preserved_partial`, or `omitted_by_policy`.
 
@@ -2257,6 +2290,22 @@ avoiding self-referential file hashes and publication-status cycles. Its
 self-hash rule; its serialized byte length and SHA-256 are reported later by
 the owning sink result.
 
+For a byte-addressable root, this record is a required generic sidecar rather
+than bytes embedded in the root. Its `artifacts` array contains exactly one
+local root `ArtifactEntry` with that root UUID, the sink declaration's exact
+role, the produced media type and schema metadata, absent `relative_path`, and
+a sealed content state whose byte length/SHA-256 equal both the final sealed
+candidate state and the later published root state. It also inventories every
+created sidecar member other than the content manifest's own serialized bytes.
+Every byte root with publication disposition `published` requires this
+completed sidecar; a native-FDR projection additionally contains exactly one `projection_of`
+relationship from the local byte-root entry to the external root resolved
+through the projection report's input artifact manifest. The relationship can
+be fixed from immutable projection inputs before publication. The later final
+artifact manifest, not this prepublication content root, references and
+cross-checks the already-created projection report, so neither record points
+to a later record and no self-reference is introduced.
+
 For an ordinary commit, `continuity_reports` exactly equals the commit request's
 singleton report and that report is a sealed one-record artifact entry in this
 graph. For a recovery-created content manifest, it instead contains every
@@ -2275,12 +2324,22 @@ activity-terminal status and joins by exact record and artifact identities.
 properties are `artifact_manifest_id: Uuid`,
 `acquisition_session_descriptor: RecordRef`,
 `recording_session_descriptor: RecordRef`, `sink_session_id: Uuid`,
-`root_artifact_id: Uuid`, optional `content_manifest: RecordRef`, optional
-`recording_result: RecordRef`, optional `recovery_result: RecordRef`,
+`root_artifact_id: Uuid`, `artifact_state_ledger: RecordRef`, optional
+`content_manifest: RecordRef`, optional `recording_result: RecordRef`, optional
+`recovery_result: RecordRef`, ordered `projection_reports: RecordRef[]`,
 `data_classification`, `termination_status`, `recovery_status`, `publication_status`,
 `failure_closure: RecordRef`, `delivered_at: ObservationTiming`, `producer`, and
 `content_hash`.
 Descriptor, sink, root, and every supplied result/content reference agree.
+`artifact_state_ledger` always names an equal-descriptor/sink/root
+artifact-state-ledger record. For terminal status it byte-identically equals
+the matching `SinkResult.artifact_state_ledger`; for interrupted status it
+equals the admitted recovery result's required `output_state_ledger`. A
+terminal manifest that also names an earlier recovery result requires that
+result's output head and histories to be exact prefixes of this head. The
+ordinary publication's flattened `artifact_states`, or the interrupted
+recovery result's ordered `output_artifact_states`, is byte-identical to this
+head's complete entries under the applicable flattening/history shape.
 `data_classification` is always required, uses the five-value closed vocabulary
 above, and equals the matching sink declaration. When a content manifest is
 present it also equals that record; when content is absent it remains the
@@ -2294,6 +2353,25 @@ It is prohibited for discarded, never-created, or admitted-failed recovery
 that completed no content manifest; the final status carries the exact root
 history and its resolved recovery result carries the exhaustive ledger-backed
 output histories.
+
+`projection_reports` contains every already-fixed
+`XPlaneFDRProjectionReport` in the matching terminal or recovery closure whose
+`output_artifact` equals this root, in projection-start order, and no other
+report. For terminal status it is byte-identically the matching
+`SinkResult.projection_reports`; for interrupted status it equals the matching
+prior `SinkResult.projection_reports` equal-root subsequence when
+`recording_result` is present, and is empty when that prior result is absent.
+Recovery does not invent a link to a projection report that was not closed by a
+prior recording result. It is empty when no projection produced the root. A
+terminal `xplane_fdau.sink.xplane_fdr_projection` result with publication disposition
+`published` requires exactly one entry; that report's recording session,
+output artifact, profile, and failure scope equal the descriptor/sink closure,
+and its outcome is `completed` or `completed_with_loss`. Resolving the report's
+`input_manifest` supplies its input content-manifest/root identity. The output
+content manifest must then contain the exact local root `ArtifactEntry` and
+exactly one `projection_of` relationship from that root to that external input
+root. This report reference, artifact identity, and relationship equality make
+standalone final-manifest validation close the native projection provenance.
 
 `termination_status` is tagged by `kind` with this complete wire table:
 
@@ -2380,8 +2458,9 @@ comparable receipt domain.
 sink, recovery, phase, primary, and cleanup failures in this result were fixed;
 those copies all occur byte-identically in the closure.
 
-Each `SinkResult` has `sink_session_id`, `criticality`, `outcome`, optional
-`content_manifest`, optional `content_manifest_file`, `publication`, `delivery_summary`,
+Each `SinkResult` has `sink_session_id`, `criticality`, `outcome`,
+`artifact_state_ledger: RecordRef`, optional `content_manifest`, optional
+`content_manifest_file`, `publication`, ordered `projection_reports: RecordRef[]`, `delivery_summary`,
 ordered `recovery_results`, ordered `phase_attempts`, optional `primary_failure`, and ordered
 `cleanup_failures`.
 
@@ -2392,33 +2471,62 @@ ordered `recovery_results`, ordered `phase_attempts`, optional `primary_failure`
   loss/retention policy alone caused it. When present it is the smallest
   sink-local eligible causal sequence; this local rule is unchanged when the
   sink is optional to its enclosing recording session.
+- `artifact_state_ledger` is the exact ordinary terminal head admitted from the
+  exhaustive live reserved namespace after the final artifact-state append and
+  before this result is serialized. Its descriptor, sink, and root equal the
+  enclosing recording descriptor and sink declaration. Flattening every entry's
+  complete state history in artifact-ordinal then state-sequence order is
+  byte-identical to `publication.artifact_states`; no planned, pathless,
+  unchanged, discarded, or failed-to-create allocation may be omitted.
 - `content_manifest` is present exactly when a content manifest was completed.
   `content_manifest_file` then records its serialized byte length and SHA-256
   and is otherwise prohibited.
+- `projection_reports` contains every already-fixed
+  `XPlaneFDRProjectionReport` whose output artifact is this root, in projection-
+  start order, and is empty when none exists. A native-FDR projection sink's
+  published disposition requires exactly one completed or completed-with-loss
+  report; every other current sink kind requires an empty array.
 - `publication` is one exact `SinkPublicationDisposition` tagged by
   `disposition`. Every row begins with `disposition` and
   `destination: DestinationIdentity`; all unlisted or cross-row properties are
   prohibited:
 
-  | `disposition` | Remaining exact properties in semantic order | Exact invariants |
-  | --- | --- | --- |
-  | `published` | ordered nonempty `artifact_states: ArtifactState[]`, `completed_at: ObservationTiming`, ordered `cleanup_failures: FailureEvidence[]` | latest root state is `published`; no `failure` or `authorization` |
-  | `preserved_partial` | ordered nonempty `artifact_states: ArtifactState[]`, `failure: FailureEvidence`, `completed_at: ObservationTiming`, ordered `cleanup_failures: FailureEvidence[]` | latest root state is `preserved_partial`; failure is the sink's matching runtime cause |
-  | `discarded` | ordered nonempty `artifact_states: ArtifactState[]`, `failure: FailureEvidence`, `authorization: DeletionAuthorization`, `completed_at: ObservationTiming`, ordered `cleanup_failures: FailureEvidence[]` | latest state of every allocated artifact is `discarded`; its disposition evidence copies authorization |
-  | `not_created` | ordered nonempty `artifact_states: ArtifactState[]`, `failure: FailureEvidence`, `completed_at: ObservationTiming`, ordered `cleanup_failures: FailureEvidence[]` | only the preallocated root exists and its latest state is `planned`; no content manifest or authorization |
-  | `omitted_by_policy` | ordered nonempty `artifact_states: ArtifactState[]`, `retention_policy: DefinitionRef`, `completed_at: ObservationTiming`, ordered `cleanup_failures: FailureEvidence[]` | only policy-omitted/planned states exist; no failure or authorization |
-  | `not_applicable` | ordered nonempty `artifact_states: ArtifactState[]`, `completed_at: ObservationTiming`, ordered `cleanup_failures: FailureEvidence[]` | sink declares `publishes_artifact: false`; only the preallocated planned root exists; no failure, policy, or authorization |
+  `published_loss` is true exactly when the completed content graph contains an
+  `ArtifactEntry` with content state `omitted_by_policy`, a matching continuity
+  report contains a `missing` provider-audit closure entry or a dropped,
+  detached, or failed delivery for this sink, or a matching entry in
+  `projection_reports` has outcome `completed_with_loss`. It is false otherwise.
+
+  | `disposition` | Remaining exact properties in semantic order | Exact latest-state invariant | Content-manifest rule | Required `SinkResult.outcome` |
+  | --- | --- | --- | --- | --- |
+  | `published` | ordered nonempty `artifact_states: ArtifactState[]`, `completed_at: ObservationTiming`, ordered `cleanup_failures: FailureEvidence[]` | latest root state is `published`; no `failure` or `authorization` | required for both logical and byte roots | `partial` exactly when `published_loss`; otherwise `successful`; `failed` prohibited |
+  | `preserved_partial` | ordered nonempty `artifact_states: ArtifactState[]`, `failure: FailureEvidence`, `completed_at: ObservationTiming`, ordered `cleanup_failures: FailureEvidence[]` | latest root state is `preserved_partial`; failure is the matching runtime cause | present exactly when the partial graph completed one | `partial` |
+  | `discarded` | ordered nonempty `artifact_states: ArtifactState[]`, `failure: FailureEvidence`, `authorization: DeletionAuthorization`, `completed_at: ObservationTiming`, ordered `cleanup_failures: FailureEvidence[]` | latest state of every allocated artifact is `discarded`; each disposition evidence copies authorization | prohibited | `failed` |
+  | `not_created` | ordered nonempty `artifact_states: ArtifactState[]`, `failure: FailureEvidence`, `completed_at: ObservationTiming`, ordered `cleanup_failures: FailureEvidence[]` | every allocated history contains exactly its state-zero `planned` state; no byte-bearing state exists | prohibited | `failed` |
+  | `omitted_by_policy` | ordered nonempty `artifact_states: ArtifactState[]`, `retention_policy: DefinitionRef`, `completed_at: ObservationTiming`, ordered `cleanup_failures: FailureEvidence[]` | only root ordinal zero is allocated and it contains exactly its state-zero `planned` state; no `failure` or `authorization` | prohibited | `partial` |
+  | `not_applicable` | ordered nonempty `artifact_states: ArtifactState[]`, `completed_at: ObservationTiming`, ordered `cleanup_failures: FailureEvidence[]` | sink declares `publishes_artifact: false`; only root ordinal zero is allocated and it contains exactly its state-zero `planned` state; no failure, policy, or authorization | prohibited | `successful` |
 
   Destination byte-identically equals the declaration. Artifact states contain
   every allocated artifact's complete state history flattened in artifact-
-  ordinal then state-sequence order, with no gap or extra state. Publication
+  ordinal then state-sequence order, with no gap or extra state, and equal the
+  entries of `artifact_state_ledger` as specified above. Publication
   cleanup failures are exactly the publication/cleanup-phase subsequence of the
   enclosing sink cleanup array and are byte-identical there and in its failure
-  closure. `content_manifest` is required for a published logical root,
-  prohibited for a published byte root, and present for preserved-partial
-  exactly when that graph completed one; it is prohibited for the other four
-  dispositions. `content_manifest_file` follows the same presence rule.
-  Published-with-cleanup-failure remains `published`.
+  closure. The disposition, content-manifest presence, and sink outcome are
+  valid exactly in the table's row; no combination outside it is accepted.
+  `content_manifest_file` follows the same presence rule. Published-with-
+  cleanup-failure remains `published` and cleanup evidence does not change the
+  row's outcome.
+
+  `omitted_by_policy.retention_policy` byte-identically equals the sink
+  declaration's top-level retention-policy reference and resolves to
+  `RawRetentionPolicy`; the row is permitted only for a retention-capable sink
+  when that policy has `canonical_samples: omit`, `canonical_frames: omit`,
+  and `not_requested` for accepted raw observations, raw payloads, and provider
+  audit, with its required omission disposition. No protected item may require
+  this sink to retain an axis. If the policy retains any axis, the sink must
+  instead publish or preserve a content manifest whose exact intentionally
+  omitted members use `ArtifactContentState.omitted_by_policy`.
 - `delivery_summary` contains ordered `stream_summaries`; each has exact
   `endpoint_id`, `stream_id`, optional first/last delivery-event references,
   `next_delivery_sequence`, and delivered, dropped, detached, and failed
@@ -2434,10 +2542,10 @@ ordered `recovery_results`, ordered `phase_attempts`, optional `primary_failure`
 - `phase_attempts` contains at most one ordered summary for each attempted
   `open`, `checkpoint`, `commit`, `abort`, `recover`, and `close` phase.
   Unattempted phases are omitted, not reported as successful.
-- A successful sink has published or explicitly nonpublishing committed output,
-  no loss disposition, and no primary failure. A published graph with declared
-  loss, or a preserved-partial graph, is partial. Failure, discard after work
-  began, or declared output never created because of failure is failed.
+- Sink outcome is derived only by the closed publication table: a loss-free
+  published graph or nonpublishing `not_applicable` result is successful;
+  published loss, preserved partial, or whole-output policy omission is
+  partial; and discard or failure-driven noncreation is failed.
 
 - `RecordingSessionResult.outcome` is `successful`, `partial`, or `failed`.
 - A successful recording result requires every sink result to be successful
@@ -2536,10 +2644,15 @@ The exact standalone failure-aware validator call is
 `validate_failure_aggregate(aggregate: bytes, failure_closure: bytes, referenced_records: Sequence[bytes])` in
 that positional order. `aggregate` and `failure_closure` are their canonical
 serialized bytes. `referenced_records` is the exact complete record closure
-required by that aggregate, ordered by first `RecordRef` occurrence in semantic
-property/array order and then recursively by the same rule; duplicate
-references contribute bytes only at their first occurrence and extra records
-are prohibited. This includes lifecycle and fan-out range evidence,
+required by that aggregate **excluding the current `FailureClosure` bytes
+supplied separately as argument two**. Traversal still begins at the
+aggregate's first `RecordRef` in semantic property/array order. When it reaches
+the equal `failure_closure` reference, it binds that reference to argument two,
+does not repeat those bytes in `referenced_records`, and recursively traverses
+that closure's references; therefore every required `previous_closure` record
+is included. All other records are ordered by first occurrence and recursively
+by the same rule; duplicate references contribute bytes only at their first
+occurrence and extra records are prohibited. This includes lifecycle and fan-out range evidence,
 continuity/recording/recovery/projection results, final manifests, checkpoint
 and ledger evidence, and replay events whenever the aggregate contract requires
 them. Validation order is fixed: (1) aggregate canonical parse, family, hash,
@@ -2839,10 +2952,12 @@ counts are `UInt63`.
 an artifact-manifest `RecordRef` with an artifact-content-manifest whose graph
 validates completely; `input_artifacts` is a nonempty `ArraySet<Uuid>` resolved
 through that content graph; and `output_artifact` is the
-preallocated native-file artifact `Uuid`. The output sink's later content
-manifest, final artifact manifest, and result bind that identity to final bytes
-without creating a report/manifest self-reference. `selected_range` uses the
-replay-selection shape and must
+preallocated native-file artifact `Uuid`. The output sink's required
+prepublication sidecar content manifest binds that identity and its sealed
+bytes to the input root with `projection_of`; the later final artifact manifest
+references both that sidecar and this report and cross-checks their artifact
+identities. This report contains no reference to either output manifest, so the
+join is acyclic. `selected_range` uses the replay-selection shape and must
 resolve to retained frames and their complete sample/observation closure.
 `failure_scope` is a tagged object. Kind `in_session` has exactly
 `acquisition_session_descriptor: RecordRef`; kind `standalone` has no other
@@ -3287,14 +3402,14 @@ this document as that child's implementation plan:
 | `A1.4` | Allow-listed transform registry, data-only parameters, deterministic execution order, and explicit loss/failure evidence |
 | `A1.5` | Acquisition-session descriptor, immutable configuration generations, phase-distinct streams, provider-audit ingress/evidence, initialization-failure exit, complete lifecycle state machine, epoch identity, and source-context change boundary |
 | `A1.6` | Profile-authorized cadence plus resolution-pinned algorithms, windows, lineage, downsampling, interpolation, aggregation, and resampling policies; no additional family is required |
-| `A1.7` | Exhaustive configuration-lifetime event/record/delivery ranges, immutable policy identity, per-binding corroboration, burst/transition metrics, available/unavailable predecessor evidence, stored/missing per-root provider-audit closure, protected-sink attribution, deterministic classification, and closed insufficiency reasons |
+| `A1.7` | Exhaustive configuration-lifetime event/record/delivery ranges, immutable policy identity, per-binding corroboration, burst/transition metrics, available/unavailable predecessor evidence, delivery/storage-separated stored/missing per-root provider-audit closure including post-store loss, protected-sink attribution, deterministic classification, and closed insufficiency reasons |
 | `A1.8` | Synchronous fan-out ports, exact operation outcomes, one declaration/event/report/close/commit endpoint-stream tuple universe, sink/subscriber isolation, endpoint-plus-stream sequence, backpressure, and delivery events |
 | `A1.9` | Acyclic configuration-close and stopping/continuity/commit/recording/terminal/final-manifest orchestration, immutable self-hashed failure-closure snapshots, outcome-specific primary eligibility, and immutable terminal results plus expected deployment pin, deployment policy, portable receipt, schemas, corpus, public API, and installed verification required before `I1.2` |
 | `R1.1` | Recording-session descriptor, sink declarations, protected demand/stream relations, criticality, recovery policy, and artifact UUID/content identity separation |
 | `R1.2` | Artifact-content-manifest-rooted logical archive, canonical JSON/JSONL, ordered demand-resolution/configuration history, global-order entries, separate raw/provider-audit content-addressed payloads, and retention definitions |
 | `R1.3` | Immutable segment closure, reference-complete checkpoints, candidate directory, atomic/no-replace publication, and failure cleanup |
-| `R1.4` | Acyclic artifact-content-manifest entries/relationships, exact content/publication/recovery tagged wire variants, and the classified delivered artifact-manifest termination, publication, and self-hash boundary |
-| `R1.5` | Self-hashed crash-safe artifact-state ledger and recovery request, closed action/checkpoint validation, ledger-proven before/after artifact histories and exact tail byte ranges, recording/recovery terminal results, discard authorization, and outcome-specific causal precedence |
+| `R1.4` | Acyclic artifact-content-manifest entries/relationships, required generic sidecars for published byte roots, exact content/publication/recovery tagged wire variants, and the classified delivered artifact-manifest termination, projection, ledger-head, publication, and self-hash boundary |
+| `R1.5` | Self-hashed crash-safe artifact-state ledger and recovery request, closed action/checkpoint validation, exact ordinary/final-manifest historical head pins with explicit portable successor-absence trust, ledger-proven before/after artifact histories and exact tail byte ranges, recording/recovery terminal results, discard authorization, and outcome-specific causal precedence |
 | `R1.6` | Identity-preserving faithful canonical replay, subset ordering, pacing, complete state machine, seek generations, events, and result |
 | `R1.7` | Long-session and corruption verification against the fixed checkpoint, recovery, replay, and manifest contracts; no additional family is required |
 | `P1.1` | Versioned projection profile, jointly unique mapping IDs, and exact ordered field mappings |
@@ -3302,7 +3417,7 @@ this document as that child's implementation plan:
 | `P1.3` | Ordered version-4 DREF mappings and explicit omission policy |
 | `P1.4` | Pinned projection cadence, timing, interpolation, and resampling behavior |
 | `P1.5` | Planned/evaluated/emitted/omitted row and timing loss plus exact all-mapping field-result state, column, omission, placeholder, conversion, range, rounding, clamping, interpolation, and resampling evidence |
-| `P1.6` | End-to-end canonical-input, pinned-profile, native-artifact, report, and deterministic reproduction closure; no additional family is required |
+| `P1.6` | End-to-end canonical-input, pinned-profile, native-artifact, sidecar-content-manifest relationship, exact report reference, and deterministic reproduction closure; no additional family is required |
 
 ## Validation and runtime outcome separation
 

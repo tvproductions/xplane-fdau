@@ -707,31 +707,53 @@ from sequence zero through the referenced terminal event and rejects missing,
 duplicate, post-terminal, or detail/top-level-mismatched events.
 
 The stopping event is immutable close intent, not the final activity result.
-Its requested reason remains final unless preterminal evaluation proves a
-stronger required failure: a required recording sink result that is `failed`,
-or is `partial` because of a runtime failure and therefore carries
-`primary_failure`, selects `required_sink_failed`; required continuity,
-subscriber, or provider-audit failure selects
-`required_evidence_unsatisfied`; and a non-cleanup recording-orchestrator-only
-failure selects `internal_failure`. That orchestrator failure is exactly
-recording-domain, `close`, `internal_failure` evidence and is not relabeled as
-a sink failure. A required sink result that is `partial`
-solely because of declared retention/loss policy has no sink primary, allocates
-no orchestrator failure, and does not change the requested termination reason.
-An already requested failure reason is never replaced by a later failure. The
-terminal primary failure is the smallest causal sequence among the outcome-
-specific primary-eligible failures across the initiating failure, endpoint
-outcomes, continuity reports, and recording results. Optional sink or
-subscriber failure remains in the exhaustive causal closure and is disclosed
-in those results but is not terminal-primary-eligible unless the immutable
-declaration promoted that item to required before the failure occurred. At
+Terminal reason selection and primary eligibility are one closed, ordered
+matrix:
+
+| First applicable terminal condition | Terminal/result reason | Exact primary-eligible set |
+| --- | --- | --- |
+| The stopping event already requests `required_evidence_unsatisfied`, `required_sink_failed`, `discontinuity_policy`, or `internal_failure` | that byte-identical requested reason | exactly its byte-identical `initiating_failure`; every later failure is ineligible for the terminal/result primary |
+| Otherwise, at least one required recording sink is `failed` or runtime-failure `partial` with a primary | `required_sink_failed` | exactly the reason-supporting primaries of those required sink results; recording-orchestrator failures are excluded even when causally earlier |
+| Otherwise, required continuity, subscriber, or provider-audit closure fails | `required_evidence_unsatisfied` | exactly the reason-supporting failures of those required outcomes |
+| Otherwise, a non-cleanup recording-orchestrator failure independently selects the failed recording row | `internal_failure` | exactly the reason-supporting recording-orchestrator failures |
+| Otherwise | the existing ordinary nonfailure intent | empty |
+
+Within the selected nonempty set, the smallest causal sequence is the terminal
+and acquisition-result primary. An ordinary nonfailure intent is
+`consumer_complete`, `consumer_stop`, `source_end`, or `explicit_abort`; it is
+never rewritten, although the later terminal/result may use a stronger reason
+selected by rows two through four. At a configuration-replacement close there
+is no acquisition stopping event yet, so rows two through four select the
+reason and initiating primary of the newly created stopping event. A required
+sink result that is `partial` solely because of declared retention/loss policy
+has no sink primary, allocates no orchestrator failure, and does not select a
+failure row. A recording-orchestrator failure is exactly recording-domain,
+`close`, `internal_failure` evidence and is never relabeled as a sink failure.
+“Reason-supporting” is a provenance rule, not code relabeling. For
+`required_sink_failed`, it means the byte-identical primary of a required
+failed/runtime-partial `SinkResult`, retaining that sink-local failure's
+original domain and code. For `required_evidence_unsatisfied`, it means the
+initiating acquisition failure accepted when required initialization evidence
+or activation could not be established, or the failure selected by a failed
+required continuity, subscriber, or provider-audit outcome. For
+`internal_failure`, it means an acquisition-orchestrator
+internal failure already copied into stopping intent or a non-cleanup recording-
+orchestrator `internal_failure` that selected its failed row. For
+`discontinuity_policy`, it means the initiating failure caused by that accepted
+policy. A recording-orchestrator failure therefore never supports
+`required_sink_failed`, and a sink-local primary never supports
+`internal_failure`.
+Optional sink or subscriber failure remains in the exhaustive causal closure
+and is disclosed in those results but is not terminal-primary-eligible unless
+the immutable declaration promoted that item to required before the failure
+occurred. At
 each configuration replacement,
 the order is demand-replaced boundary, prior endpoint final-delivery closure,
 prior exhaustive report, sink commit/abort and publication, prior recording-
 session failure-closure snapshot and result, then the replacement epoch unless required closure failure
-stops the acquisition. A non-cleanup recording-orchestrator-only failure at
-that boundary instead makes the recording result's reason and primary
-`internal_failure`, then creates the acquisition `stopping` event with
+stops the acquisition. When no required-sink row applies, a non-cleanup
+recording-orchestrator-only failure at that boundary instead makes the
+recording result's reason and primary `internal_failure`, then creates the acquisition `stopping` event with
 `requested_termination_reason: "internal_failure"` and an
 `initiating_failure` byte-identical to that recording primary; no replacement
 epoch or frame follows. The final order is stopping intent, final endpoint
@@ -746,10 +768,15 @@ native-projection dependency. After append fan-out is quiescent and the final
 delivery positions and continuity report are fixed, the current descriptor's
 preselected canonical-archive companion completes its ordinary prepublication
 content manifest. A native-FDR projection sink then cross-validates its current
-append range against that manifest before its candidate root is sealed, its
-sidecar is serialized, publication is attempted, or its projection report is
-fixed. This dependency does not wait for an acquisition terminal or any final
-`ArtifactManifest`.
+append range against that manifest, completes whole-range timing and field
+preflight before writing any final native-root header or row byte, renders and
+seals the candidate, fixes and validates the exact `completed` or
+`completed_with_loss` projection report, and serializes a sidecar that
+inventories that report. Only after the report and sidecar pass their complete
+cross-validation may publication be attempted. This dependency does not wait
+for an acquisition terminal or any final `ArtifactManifest`, and no
+postpublication state can contain an absent or failed report for a published
+native root.
 
 If a required continuity item is insufficient and no earlier causal failure
 already explains it, the orchestrator allocates one acquisition-domain,
@@ -803,26 +830,40 @@ comparable receipt domain.
   `aborted` requires `explicit_abort` and no primary failure. `failed` requires
   one of `required_evidence_unsatisfied`, `required_sink_failed`,
   `discontinuity_policy`, or `internal_failure` plus a primary failure whose
-  domain/code supports that reason.
+  provenance supports that reason under the closed terminal matrix; its native
+  domain/code remains unchanged.
 - A required recording sink's declared-loss-only `partial` result remains
   visible in `recording_results` but does not by itself prevent a `completed`,
   `stopped`, or `aborted` acquisition result. Only a required sink result that
   is `failed`, or is runtime-failure `partial` with a primary, can select
   `required_sink_failed` and the acquisition failed row.
-- A failed recording result selected solely by its non-cleanup recording-
-  orchestrator primary instead selects acquisition `internal_failure`. The
-  terminal event and acquisition result copy that same `FailureEvidence`
-  byte-identically as `primary_failure`. At a configuration boundary the
-  intervening acquisition stopping event also copies it byte-identically as
-  `initiating_failure`; when ordinary acquisition stopping intent necessarily
-  predates the recording close, that earlier immutable intent is not
-  retroactively rewritten. In both causal orders the failure has one identity
-  and one causal position in the one exact acquisition-scope `FailureClosure`
-  chain. The recording result pins a snapshot containing it; the terminal
+- When no already-created failure stopping intent controls the terminal
+  matrix, a failed recording result whose reason is `required_sink_failed`
+  contributes only the reason-supporting primaries of its required failed/
+  runtime-partial sink results to acquisition primary selection. Any earlier
+  recording-orchestrator failure remains in the recording result and exhaustive
+  closure but cannot become the terminal/acquisition primary for that reason.
+  When an existing failure stopping intent does control, that recording result
+  contributes no terminal-primary candidate; all of its sink and orchestrator
+  failures remain closure evidence only.
+- A failed recording result whose reason is `internal_failure` may select
+  acquisition `internal_failure` only when no already-created failure stopping
+  intent controls the terminal matrix. At a configuration boundary the newly
+  created acquisition stopping event copies that recording primary
+  byte-identically as `initiating_failure`. After an ordinary nonfailure
+  stopping intent, the unchanged stopping event remains the close input while
+  the terminal event and acquisition result copy the later recording primary
+  and use `internal_failure`. If the existing stopping intent already has a
+  failure reason, its reason-supporting `initiating_failure` instead remains
+  the terminal/acquisition primary; the later recording primary is retained
+  only in the recording result and exhaustive closure.
+- In every causal order each failure has one identity and one causal position
+  in the one exact acquisition-scope `FailureClosure` chain. The recording
+  result pins a snapshot containing all failures it observed; the terminal
   event, acquisition result, and final manifests resolve the final snapshot
-  with that earlier snapshot as a byte-identical prefix. The configuration-
-  boundary stopping event copies the same evidence; no separate closure,
-  duplicate failure identity, or renumbering is permitted.
+  with that earlier snapshot as a byte-identical prefix. Any copied initiating
+  or terminal primary is byte-identical to its one carrier member; no separate
+  closure, duplicate failure identity, or renumbering is permitted.
 - Primary failure is selected by the outcome-specific eligibility and causal
   sequence rules fixed under `FailureEvidence`, across lifecycle, delivery,
   continuity, audit, and recording evidence. Cleanup and optional-only
@@ -923,21 +964,55 @@ RecordingSink.close() -> CloseOutcome
 For schema version 1, `RecordingSink.append(frame)` is the sole pre-close data
 operation for a native-FDR projection sink. Every frame comes from the current
 recording descriptor's ordinary fan-out tuple; no source manifest, historical
-archive, replay adapter, or caller-selected range is passed to the sink. Native
-candidate bytes may accumulate during those calls. After the close boundary,
-the orchestrator first fixes exhaustive delivery positions and the continuity
-report, then resolves the descriptor-selected canonical-archive companion's
-ordinary, non-recovery `ArtifactContentManifest` and validates the complete
-current append closure. Only then may the native sink seal its output
-candidate, serialize its output content sidecar, evaluate publication, and fix
-its `XPlaneFDRProjectionReport`. Report formation cross-validates the live
-append evidence rather than introducing a second data-input path. If no such
-current-session content manifest exists or its exact range closure fails, the
-native sink's commit fails before output seal/publication with projection-
-domain `FailureEvidence` whose `phase` is `project` and whose `code` is
-`required_measurement_missing`. No projection report with an unresolvable
-predecessor is created; ordinary sink failure, cleanup, and recovery rules
-remain in force.
+archive, replay adapter, or caller-selected range is passed to the sink.
+Append-time state consists only of immutable frame/delivery evidence and
+optional intermediate buffering used to prepare later preflight; it is not the
+native root's final header or row byte sequence, does not advance a byte-
+bearing root state, and cannot be published or treated as a safely written
+native prefix.
+
+After the close boundary, the native output protocol is exactly this order:
+
+1. the orchestrator fixes exhaustive delivery positions and the continuity
+   report, resolves the descriptor-selected canonical-archive companion's
+   ordinary non-recovery `ArtifactContentManifest`, derives the exact current
+   selected range, and validates the complete append closure;
+2. using only that closed evidence and the pinned profile, the sink completes
+   whole-range timing preflight and then every field mapping over every
+   candidate-emitted row, fixing the final row dispositions, DREF column set,
+   header values, cell values, and all loss counts before the first final
+   native-root byte is written;
+3. only after successful whole-range preflight may the sink render the final
+   header and rows into the unpublished candidate, verify their exact bytes,
+   and append the root's `sealed` artifact state;
+4. the orchestrator preallocates the projection-report ID and report-member
+   artifact-ledger entry, constructs
+   canonical candidate bytes for exactly one `XPlaneFDRProjectionReport` with
+   outcome `completed` or `completed_with_loss`, seals those bytes as that
+   member, and cross-validates them against the descriptor, current input
+   manifest/range, complete preflight, sealed native root, pinned profile, and
+   current failure-closure snapshot; only after all those checks pass are the
+   same bytes fixed as the one accepted projection-report record;
+5. the sink serializes and seals its output `ArtifactContentManifest`, which
+   inventories the native root and that exact report member and carries the
+   same-session `projection_of` relationship, then validates the complete
+   root/report/sidecar closure; and
+6. only after steps 1 through 5 succeed may the declared publication
+   precondition be evaluated and the root made visible atomically.
+
+Report formation cross-validates live append evidence rather than introducing
+a second data-input path. A timing, field, native-write, root-seal, report-
+formation, report-validation, sidecar, or cross-validation failure leaves the
+root unpublished. A valid `failed` report may be fixed as failure evidence,
+but it never authorizes publication; failure before a valid report exists may
+leave the sink result's report array empty. If no current-session content
+manifest exists or its exact range closure fails, commit fails before final
+native-root byte mutation with projection-domain `FailureEvidence` whose
+`phase` is `project` and whose `code` is `required_measurement_missing`. A
+publication failure occurs only after the completed report is fixed and
+preserves that report unchanged while the ordinary sink publication,
+cleanup, and recovery rules apply. Consequently publication success has no
+frontier on which the required report can be absent, invalid, or `failed`.
 
 `SessionCloseNotice` has exact properties `acquisition_session_descriptor`,
 `subscriber_declaration`, `close_boundary`, and ordered
@@ -1978,12 +2053,22 @@ provide the declared no-replace or compare-and-replace semantics fails before
 exposing a completed root. A sink published before an independent sink fails
 remains published.
 
+For a native-FDR projection sink, “all candidate members” necessarily includes
+the one sealed `XPlaneFDRProjectionReport` member. Its internally valid outcome
+is already `completed` or `completed_with_loss`, the output content manifest
+already inventories it, and their complete relationship/identity closure is
+validated before publication admission. A missing, invalid, or `failed` report
+therefore makes the root ineligible for publication rather than creating a
+postpublication result frontier.
+
 Publication success is irreversible evidence. Failure to remove a candidate
 alias or other temporary state after successful publication yields a committed
 outcome plus cleanup failure; it never relabels the root as unpublished or
 invites publication retry. This preserves the existing native-FDR post-link
-cleanup rule. Abort, close, and cleanup failures remain separate from the first
-causal failure.
+cleanup rule. For native projection the completed report remains immutable;
+publication or postpublication cleanup failure cannot rewrite it to `failed`.
+Abort, close, and cleanup failures remain separate from the first causal
+failure.
 
 `RecoveryRequest` is a generated immutable, self-hashed record with exact
 top-level properties `contract_family`, `schema_version`,
@@ -2394,17 +2479,30 @@ failure. There is no later `published` root state. Thus, for both later
 permitted prepublication sidecar state is `sealed`.
 
 The sidecar also inventories every created sidecar member other than the
-content manifest's own serialized bytes. A native-FDR projection sidecar
-additionally contains exactly one `projection_of` relationship from the local
+content manifest's own serialized bytes. The ordinary native-FDR projection
+sidecar serialized at output-protocol step five additionally inventories
+exactly one sealed successful-report-member `ArtifactEntry`.
+The member's artifact ID, artifact-ledger ordinal, role
+`xplane_fdau.projection.report`, and relative path are preallocated before the
+report's first byte; the entry repeats the ID, role, and path from that ledger,
+uses media type `application/json` and schema version one, has `record_ref`
+equal to the exact `XPlaneFDRProjectionReport` reference, and has sealed byte
+length/SHA-256 equal to that record's fixed canonical bytes. The
+sidecar also contains exactly one `projection_of` relationship from the local
 byte-root entry to the external root named by the hash-pinned current canonical
 content-manifest predecessor selected at close. That predecessor is already the
 sealed ordinary content manifest of the current recording descriptor's
-canonical-archive companion; its `RecordRef` is later copied byte-identically
-to `XPlaneFDRProjectionReport.input_content_manifest`. The relationship is
-fixed after that canonical content closure and before native-root seal or
-publication. The later projection report and final artifact manifest, not this
-prepublication content root, perform the report cross-check, so no record points
-to a later record and no self-reference is introduced.
+canonical-archive companion, and its `RecordRef` is byte-identically
+`XPlaneFDRProjectionReport.input_content_manifest`.
+
+The relationship ID/endpoints are fixed after that canonical content closure;
+the native root is then sealed, the report's candidate bytes are sealed and
+validated as the preallocated member, those same bytes are fixed as the
+successful report, and only then is the sidecar serialized and sealed.
+Prepublication admission resolves the report member, root entry, relationship,
+input predecessor, descriptor, profile, selected range, and failure closure as
+one exact graph. The report itself references neither output manifest nor its
+own member entry, so this order introduces no record cycle or self-reference.
 
 For an ordinary commit, `continuity_reports` exactly equals the commit request's
 singleton report and that report is a sealed one-record artifact entry in this
@@ -2470,19 +2568,29 @@ report. For terminal status it is byte-identically the matching
 prior `SinkResult.projection_reports` equal-root subsequence when
 `recording_result` is present, and is empty when that prior result is absent.
 Recovery does not invent a link to a projection report that was not closed by a
-prior recording result. It is empty when no projection produced the root. A
-terminal `xplane_fdau.sink.xplane_fdr_projection` result with publication disposition
-`published` requires exactly one entry; that report's `recording_descriptor`
-is byte-identically this manifest's recording-session-descriptor reference,
-and its recording-session ID, output artifact, profile, and failure scope equal
-the descriptor/sink closure. Its outcome is `completed` or
-`completed_with_loss`. Resolving the report's `input_content_manifest`
-supplies the current descriptor's canonical-archive content-manifest/root
-identity and must equal the external locator in the output sidecar. The output
-content manifest must contain the exact local root `ArtifactEntry` and exactly
-one `projection_of` relationship from that root to this same-session canonical
-root. This report reference, artifact identity, and relationship equality make
-portable validation of that final manifest close the native projection
+prior recording result.
+
+A terminal native-FDR projection manifest permits at most one report. A
+nonpublished disposition has an empty array exactly when its causal failure
+occurred before a valid report was fixed; otherwise it contains that singleton
+report. A `failed` report prohibits `published`. A completed or
+completed-with-loss report may accompany a nonpublished disposition only when
+report fixation succeeded and a later sidecar, admission, or publication
+failure prevented visibility; that report remains successful and immutable.
+A terminal `xplane_fdau.sink.xplane_fdr_projection` result with disposition
+`published` requires exactly one report, already fixed before publication,
+whose outcome is `completed` or `completed_with_loss`. The report's
+`recording_descriptor` is byte-identically this manifest's recording-session-
+descriptor reference, and its recording-session ID, output artifact, profile,
+and failure scope equal the descriptor/sink closure. Resolving its
+`input_content_manifest` supplies the current descriptor's canonical-archive
+content-manifest/root identity and equals the external locator in the output
+sidecar. The output content manifest contains the exact local root
+`ArtifactEntry`, exactly one sealed report-member `ArtifactEntry` whose
+`record_ref` and bytes resolve this report, and exactly one `projection_of`
+relationship from that root to this same-session canonical root. This report
+reference, member identity, artifact identity, and relationship equality make
+portable validation of the final manifest close the native projection
 provenance without a final/historical input manifest.
 
 `termination_status` is tagged by `kind` with this complete wire table:
@@ -2595,10 +2703,15 @@ ordered `recovery_results`, ordered `phase_attempts`, optional `primary_failure`
   and is otherwise prohibited.
 - `projection_reports` contains every already-fixed
   `XPlaneFDRProjectionReport` whose output artifact is this root, in projection-
-  start order, and is empty when none exists. A native-FDR projection sink's
-  published disposition requires exactly one completed or completed-with-loss
-  report whose `recording_descriptor` equals the enclosing recording
-  descriptor; every other current sink kind requires an empty array.
+  start order, and is empty when none exists. A native-FDR projection sink
+  permits at most one. For a nonpublished disposition it is empty exactly when
+  failure preceded valid report fixation and otherwise contains the singleton
+  fixed report. A `failed` report prohibits `published`; a successful report
+  retained after a later sidecar, admission, or publication failure remains
+  successful. A published native disposition requires exactly one report,
+  fixed and validated before publication, with outcome `completed` or
+  `completed_with_loss` and `recording_descriptor` equal to the enclosing
+  recording descriptor. Every other current sink kind requires an empty array.
 - `publication` is one exact `SinkPublicationDisposition` tagged by
   `disposition`. Every row begins with `disposition` and
   `destination: DestinationIdentity`; all unlisted or cross-row properties are
@@ -2681,9 +2794,18 @@ ordered `recovery_results`, ordered `phase_attempts`, optional `primary_failure`
   recording-orchestrator failure evidence.
 - A partial recording result prohibits aggregate `primary_failure`; all
   optional-sink failures remain in their sink results. A failed recording
-  result requires the smallest eligible required-sink or orchestrator failure
-  fixed by the table below. Thus a causally earlier optional-sink failure never
-  displaces the required failure that selected the aggregate failed outcome.
+  result first selects its reason by the precedence below and then selects its
+  primary only from that reason's support set. For
+  `required_sink_failed`, the set is exactly the primaries of required sinks
+  that are failed or runtime-failure partial; every recording-orchestrator
+  failure is excluded even when it has a smaller causal sequence. For
+  `internal_failure`, the set is exactly the non-cleanup recording-
+  orchestrator failures that independently select the aggregate failed row;
+  this reason is unavailable when a required-sink failed-row condition exists.
+  The primary is the smallest causal sequence within the selected set. Every
+  optional-sink, nonselected required-sink, and nonselected orchestrator
+  failure remains in its nested result and the exhaustive closure without
+  becoming aggregate primary.
 - `termination_reason` is `consumer_complete`, `consumer_stop`, `source_end`,
   `configuration_replaced`,
   `required_evidence_unsatisfied`, `required_sink_failed`,
@@ -2694,14 +2816,16 @@ ordered `recovery_results`, ordered `phase_attempts`, optional `primary_failure`
   row selects `internal_failure`; otherwise the reason equals the close-
   boundary reason. A required declared-loss-only partial and an optional
   publication conflict retain their sink evidence without replacing that
-  boundary reason. The orchestrator exception changes the recording result and
-  its downstream terminal/result reason, but never rewrites an already-created
-  ordinary acquisition stopping intent. Its outcome, reason, and failure are
-  therefore available for the later acquisition terminal event without
-  backward mutation.
+  boundary reason. This precedence is compatible with primary selection only
+  when `required_sink_failed` uses the required-sink set and
+  `internal_failure` uses the recording-orchestrator set above; a failure from
+  the other set can never support the selected reason. The recording result's
+  outcome, reason, and primary are available for later acquisition closure,
+  but they never mutate an already-created acquisition stopping event.
 
 A non-cleanup recording-orchestrator-only failure that selects the aggregate
-failed row has exactly `domain: "recording"`, `phase: "close"`, and
+failed row, meaning no required-sink failed-row condition exists, has exactly
+`domain: "recording"`, `phase: "close"`, and
 `code: "internal_failure"`. It is the recording result's eligible primary,
 selects recording `termination_reason: "internal_failure"`, and maps to
 acquisition `termination_reason: "internal_failure"`, never
@@ -2709,9 +2833,13 @@ acquisition `termination_reason: "internal_failure"`, never
 the replacement epoch is blocked and the next acquisition event is `stopping`
 with that same failure copied as its initiating failure; terminal and
 acquisition result then copy it as their primary. When the close boundary is
-the already-created `acquisition_stopping` intent, the terminal and acquisition
-result copy the later recording primary while preserving the earlier immutable
-intent record. Every copy is byte-identical, has one identity and causal
+an already-created ordinary nonfailure `acquisition_stopping` intent, the
+terminal and acquisition result copy the later recording primary while
+preserving the earlier immutable intent record. When that existing intent
+instead already carries a failure reason and initiating primary, the terminal
+and acquisition result preserve that exact reason and primary; the later
+recording primary remains recording-result and closure evidence and cannot
+replace them. Every copy is byte-identical, has one identity and causal
 position in the exact acquisition-scope `FailureClosure` chain, appears in the
 recording snapshot, and remains at that position in the final snapshot; no
 separate closure or duplicate failure is permitted. Declared-loss-only partial
@@ -2828,7 +2956,7 @@ version-1 code vocabulary:
 | `publication` | `destination_unsupported`, `publication_conflict`, `atomicity_unavailable`, `verification_failed`, `cleanup_failed`, `internal_failure` |
 | `recovery` | `descriptor_mismatch`, `root_identity_mismatch`, `ledger_chain_invalid`, `recovery_unsupported`, `policy_action_prohibited`, `checkpoint_chain_invalid`, `current_state_invalid`, `member_missing`, `member_shorter_than_checkpoint`, `prefix_hash_mismatch`, `record_invalid`, `record_reference_missing`, `payload_mismatch`, `definition_missing`, `tail_preservation_failed`, `discard_unauthorized`, `cleanup_failed`, `internal_failure` |
 | `replay` | `source_manifest_invalid`, `selection_invalid`, `ordering_unavailable`, `pacing_clock_incomparable`, `source_record_invalid`, `delivery_failed`, `internal_failure` |
-| `projection` | `profile_mismatch`, `required_measurement_missing`, `required_field_unavailable`, `conversion_failed`, `out_of_range`, `timing_incomparable`, `native_write_failed`, `publication_failed`, `internal_failure` |
+| `projection` | `profile_mismatch`, `required_measurement_missing`, `required_field_unavailable`, `conversion_failed`, `out_of_range`, `timing_incomparable`, `native_write_failed`, `internal_failure` |
 | `deployment` | `release_filename_mismatch`, `release_length_mismatch`, `release_hash_mismatch`, `metadata_file_mismatch`, `distribution_identity_mismatch`, `version_mismatch`, `source_revision_mismatch`, `runtime_dependency_present`, `file_missing`, `file_changed`, `file_added`, `import_origin_mismatch`, `conformance_manifest_mismatch`, `conformance_failed`, `unsupported_interpreter`, `internal_failure` |
 
 Demand-resolution rejection reasons and continuity classifications are not
@@ -2853,14 +2981,18 @@ derived from which failure happened first. The closed rules are:
 | Result whose primary is selected | Primary-eligible failure set |
 | --- | --- |
 | `SinkResult` | For `failed`, every non-cleanup failure causally responsible for that sink's failure. For `partial`, that set only when a runtime failure, rather than declared retention/loss policy alone, caused partial output. For `successful`, none. Sink-local eligibility applies even when this sink is optional to its recording session. |
-| `RecordingSessionResult` | For `failed`, non-cleanup failures of required sinks plus recording-orchestrator failures that caused the aggregate failure. For `partial` caused by optional sink partial/failure and/or required declared-loss-only partial, and for `successful`, none. |
-| acquisition terminal event and `AcquisitionSessionResult` | For `failed`, the initiating requested-failure evidence and failures of required subscribers, required continuity/provider-audit closure, required sinks, recording orchestration, discontinuity policy, or acquisition orchestration that select the terminal reason. For `completed`, `stopped`, or `aborted`, none. An optional endpoint/sink/audit failure is ineligible unless its declaration/policy had been immutably promoted to required before it failed. |
+| `RecordingSessionResult` | For failed reason `required_sink_failed`, exactly the non-cleanup primaries of required sinks whose failed or runtime-failure-partial rows support that reason; recording-orchestrator evidence is ineligible. For failed reason `internal_failure`, exactly the non-cleanup recording-orchestrator failures that independently support that reason, which is permitted only when no required-sink failed-row condition exists. For `partial` caused by optional sink partial/failure and/or required declared-loss-only partial, and for `successful`, none. |
+| acquisition terminal event and `AcquisitionSessionResult` | For `failed` with an already-created failure stopping intent, exactly its byte-identical reason-supporting `initiating_failure`; every later endpoint, continuity, sink, recording, or acquisition-orchestrator failure is terminal-primary-ineligible. Otherwise eligibility is reason-specific: `required_sink_failed` uses exactly the supporting primaries of required failed/runtime-partial sinks; `required_evidence_unsatisfied` uses exactly the supporting required subscriber, continuity, or provider-audit failures; `internal_failure` uses exactly the supporting non-cleanup recording/acquisition-orchestrator failures; and `discontinuity_policy` uses exactly its supporting initiating policy failure. For `completed`, `stopped`, or `aborted`, none. An optional endpoint/sink/audit failure is ineligible unless its declaration/policy had been immutably promoted to required before it failed. |
 | `RecoveryResult` | For `failed`, non-cleanup failures causally produced by that recovery action. For every successful recovery outcome, none. |
 | `ReplaySessionResult` | For `failed`, non-cleanup replay failures causally responsible for failure. For `completed` or `stopped`, none. |
 | `XPlaneFDRProjectionReport` | For `failed`, non-cleanup projection failures causally responsible for failure. For `completed` or `completed_with_loss`, none. |
 
-Within the applicable eligible set, `primary_failure` is byte-identically the
-member with the smallest causal sequence. It is required exactly when the
+Reason selection precedes causal minimization and must select exactly one row
+above; a member whose provenance does not support that selected reason under
+the closed matrix is ineligible even when it is earlier, while an eligible
+member retains its native domain/code. Within the applicable eligible set,
+`primary_failure` is byte-identically the member with the smallest causal
+sequence. It is required exactly when the
 result/outcome rule requires a nonempty eligible set and prohibited when that
 set is empty. An earlier ineligible optional failure therefore cannot become
 an aggregate primary merely because it has a smaller sequence, while it
@@ -3051,8 +3183,9 @@ and delivery decision for this same profile/item/binding authorization.
   allow `fail` or `placeholder`; DREF mappings allow `fail` or `omit`.
   Placeholder is required exactly for `placeholder` and otherwise prohibited.
   Projection preflight first fixes every planned row's timing disposition, then
-  evaluates every candidate-emitted row for every field before any header byte
-  is published. For trajectory, a missing or unrepresentable value fails under
+  evaluates every candidate-emitted row for every field before any final
+  native-root header or row byte is written. For trajectory, a missing or
+  unrepresentable value fails under
   `fail` and emits the exact placeholder under `placeholder`. For DREF, the
   first such value fails under `fail`; under `omit`, any such value selects the
   complete column for omission, but preflight still evaluates and reports all
@@ -3123,11 +3256,15 @@ graph member artifact IDs needed to resolve `selected_range`. Every selected
 record and every transitively required payload and definition resolve through
 those members.
 `output_artifact` is the native projection declaration's preallocated file
-artifact `Uuid`. The output sink's required prepublication sidecar binds that
-identity and its sealed bytes to `input_content_manifest.root_artifact_id` with
-exactly one `projection_of` relationship. The later final output manifest
-references both that sidecar and this report and cross-checks their identities.
-This report contains no reference to either output manifest, so the join is
+artifact `Uuid`. After whole-range preflight and native-root seal, the output
+sink writes and seals this report's canonical candidate bytes as exactly one
+preallocated report member, validates them, and only then fixes the same bytes
+as the accepted report record. Its required prepublication sidecar inventories
+both artifacts and binds the native-root identity and sealed bytes to
+`input_content_manifest.root_artifact_id` with exactly one `projection_of`
+relationship. The later final output manifest references both that sidecar and
+this report and cross-checks their identities. This report contains no
+reference to either output manifest or to its own member entry, so the join is
 acyclic.
 
 `selected_range` uses the replay-selection shape but is derived at close, not
@@ -3195,17 +3332,27 @@ the same profile/item/binding authorization. Missing, inactive, historical, or
 conflicting authorization is `profile_mismatch`.
 
 Planned rows are the exact cadence instants from the first selected frame
-through the inclusive selected end. `evaluated_row_count` is the prefix that
-reached a final row disposition: a complete native row was written to the
-candidate artifact or the timing policy omitted the row. Semantic preflight may inspect later rows but
-does not count them as finally evaluated until that disposition is reached.
-`emitted_row_count + omitted_row_count == evaluated_row_count`. A completed
+through the inclusive selected end. Whole-range preflight fixes every planned
+row's timing disposition and every candidate-emitted cell before rendering;
+that semantic inspection alone does not increment a final row count. During
+candidate rendering, planned rows are finalized in increasing index order.
+`evaluated_row_count` is the longest prefix for which each row was either
+omitted by the fixed timing policy or written as one complete LF-terminated
+native row to the unpublished candidate. `emitted_row_count` counts those
+complete written rows and `omitted_row_count` counts those finalized omissions,
+so `emitted_row_count + omitted_row_count == evaluated_row_count`. A completed
 outcome requires evaluated equals planned; a failed outcome permits evaluated
 less than or equal to planned. When it is less, `planned_row_count -
-evaluated_row_count` is the exact failed and not-attempted suffix whose first
-row is identified by the primary failure's RFC 6901 path. Equality is valid
-only when native writing or publication fails after every planned row reached
-a final row disposition.
+evaluated_row_count` is the exact failed and not-attempted suffix beginning at
+planned-row index `evaluated_row_count`. A timing or field failure's RFC 6901
+path identifies its first failed row and, for a field, its mapping. A native
+header/row write failure instead has `artifact_id` equal to `output_artifact`;
+its path names the first affected row only when the failure concerns that row,
+and otherwise is absent under the generic failure-path rule. Equality on a
+failed report is valid only when native writing or root sealing fails after
+every planned row reached a final disposition. Sidecar, admission, publication,
+and postpublication cleanup failures do not turn the already-fixed successful
+report into a failed report.
 `timing_result` has exact properties `gap_omitted_count: UInt63`,
 `midnight_wrap_count: UInt63`, optional `affected_planned_rows: RecordRange`,
 and `limitations`. Gap omission count equals `omitted_row_count`; midnight
@@ -3234,7 +3381,7 @@ count zero, no affected range, an empty limitations array, and
 `column_disposition: undecided`. For a failed report the only permitted state
 shapes are: all `not_evaluated` for a failure before field preflight; zero or
 more `complete`, exactly one `failed`, then only `not_evaluated` for a field
-failure; or all `complete` for a later native-write or publication failure.
+failure; or all `complete` for a later native-write or root-seal failure.
 The primary failure path identifies the failed mapping and row when a failed
 field exists. A completed outcome requires every field state to be complete.
 
@@ -3247,7 +3394,8 @@ when that DREF mapping's `missing_policy` is `omit` and at least one evaluated
 candidate row lacks a representable authorized value; otherwise a complete
 DREF result is included. A complete trajectory placeholder count is nonzero
 only under its exact `placeholder` policy. `failed` uses `undecided` because
-the header is not published; every later not-evaluated mapping does likewise.
+no final native-root header was written; every later not-evaluated mapping does
+likewise.
 Thus the native header and every positional row have exactly the same DREF
 cardinality and no result can conceal a policy-disallowed omission.
 
@@ -3261,11 +3409,12 @@ mode. A nonzero count prohibited by the corresponding mapping policy invalidates
 the report. The remaining loss counts may overlap and do not sum to emitted
 count. `affected_rows` is present exactly when any loss or failure
 count is nonzero and spans the first through last affected planned-row index.
-If timing or field preflight fails, no header byte was published,
-`emitted_row_count` is zero, and every failed or not-evaluated field has zero
-emitted and omitted counts. If all fields are complete and native writing later
-fails, their evaluated counts preserve complete preflight while emitted and
-omitted counts cross-validate the safely published row prefix.
+If timing or field preflight fails, no final native-root byte was written,
+`evaluated_row_count`, `emitted_row_count`, and `omitted_row_count` are zero,
+and every field has zero emitted and omitted counts. If all fields are complete
+and native writing later fails, their evaluated counts preserve complete
+preflight while emitted and omitted counts cross-validate the complete row
+prefix in the unpublished candidate.
 `outcome` is `completed`, `completed_with_loss`, or `failed`.
 
 An inexact conversion with policy `reject`, a range overflow with policy
@@ -3281,11 +3430,15 @@ empty, and no primary failure. `completed_with_loss` also requires all field
 states complete and is required for any omitted row or DREF column,
 midnight wrap, placeholder, conversion, range/clamp, rounding/precision,
 interpolation/resampling loss, or limitation and prohibits a primary failure.
-`failed` requires a projection-domain
-primary failure; any safely published partial native artifact remains explicit
-artifact evidence and never becomes a completed projection. Cleanup failures
-do not replace the primary result and a successfully published output remains
-published.
+Both successful outcomes are fixed only after the complete native root is
+sealed; they attest prepublication projection-candidate completion and are a
+publication prerequisite, not a claim that publication occurred. `failed`
+requires a projection-domain primary failure; any partial native candidate
+remains explicit unpublished artifact evidence and never becomes a completed
+projection. A failed report is never publication-eligible. Cleanup failures do
+not replace its primary result. A later publication or postpublication cleanup
+failure is publication/aggregate evidence and leaves the already-fixed
+successful projection report byte-identically unchanged.
 
 The report does not duplicate source-sample lineage for every native cell.
 Exact reproduction uses the hash-pinned current-session canonical content
@@ -3612,12 +3765,12 @@ this document as that child's implementation plan:
 | `A1.5` | Acquisition-session descriptor, immutable configuration generations, phase-distinct streams, provider-audit ingress/evidence, initialization-failure exit, complete lifecycle state machine, epoch identity, and source-context change boundary |
 | `A1.6` | Profile-authorized cadence plus resolution-pinned algorithms, windows, lineage, downsampling, interpolation, aggregation, and resampling policies; no additional family is required |
 | `A1.7` | Exhaustive configuration-lifetime event/record/delivery ranges, immutable policy identity, per-binding corroboration, burst/transition metrics, available/unavailable predecessor evidence, delivery/storage-separated stored/missing per-root provider-audit closure including post-store loss, protected-sink attribution, deterministic classification, and closed insufficiency reasons |
-| `A1.8` | Synchronous fan-out ports, exact operation outcomes, one declaration/event/report/close/commit endpoint-stream tuple universe, sink/subscriber isolation, endpoint-plus-stream sequence, backpressure, delivery events, and live `append(frame)` as the sole version-1 native-projection data path |
-| `A1.9` | Acyclic configuration-close and stopping/continuity/commit/recording/terminal/final-manifest orchestration, including exact recording-orchestrator `internal_failure` propagation that blocks a replacement epoch, immutable self-hashed failure-closure snapshots, outcome-specific primary eligibility, and immutable terminal results plus expected deployment pin, deployment policy, portable receipt, schemas, corpus, public API, and installed verification required before `I1.2` |
+| `A1.8` | Synchronous fan-out ports, exact operation outcomes, one declaration/event/report/close/commit endpoint-stream tuple universe, sink/subscriber isolation, endpoint-plus-stream sequence, backpressure, delivery events, and live `append(frame)` as the sole version-1 native-projection data path whose append state is evidence/intermediate buffering rather than final native-root bytes |
+| `A1.9` | Acyclic configuration-close and stopping/continuity/commit/recording/terminal/final-manifest orchestration, including the closed reason-first required-sink/orchestrator/pre-existing-intent primary matrix, exact pure-orchestrator replacement blocking and ordinary-nonfailure-intent propagation, immutable self-hashed failure-closure snapshots, and immutable terminal results plus expected deployment pin, deployment policy, portable receipt, schemas, corpus, public API, and installed verification required before `I1.2` |
 | `R1.1` | Recording-session descriptor, sink declarations, protected demand/stream relations, criticality, recovery policy, and artifact UUID/content identity separation |
 | `R1.2` | Artifact-content-manifest-rooted logical archive, canonical JSON/JSONL, ordered demand-resolution/configuration history, global-order entries, separate raw/provider-audit content-addressed payloads, retention definitions, and the sealed current-session canonical input predecessor for live projection |
 | `R1.3` | Immutable segment closure, reference-complete checkpoints, candidate directory, atomic/no-replace publication, and failure cleanup |
-| `R1.4` | Acyclic artifact-content-manifest entries/relationships, required immutable prepublication sealed-candidate sidecars for published or preserved-partial byte roots, same-session canonical-input `projection_of` closure, exact content/publication/recovery tagged wire variants, and the classified delivered artifact-manifest termination, projection, ledger-head, publication, and self-hash boundary |
+| `R1.4` | Acyclic artifact-content-manifest entries/relationships, required immutable prepublication sealed-candidate sidecars for published or preserved-partial byte roots, same-session canonical-input `projection_of` closure, exact sealed successful-report member and publication-admission equality, exact content/publication/recovery tagged wire variants, and the classified delivered artifact-manifest termination, projection, ledger-head, publication, and self-hash boundary |
 | `R1.5` | Self-hashed crash-safe artifact-state ledger and recovery request, closed action/checkpoint validation, exact ordinary/final-manifest historical head pins with explicit portable successor-absence trust, ledger-proven before/after artifact histories and exact tail byte ranges, recording/recovery terminal results, discard authorization, and outcome-specific causal precedence |
 | `R1.6` | Identity-preserving faithful canonical replay, subset ordering, pacing, complete state machine, seek generations, events, and result |
 | `R1.7` | Long-session and corruption verification against the fixed checkpoint, recovery, replay, and manifest contracts; no additional family is required |
@@ -3626,7 +3779,7 @@ this document as that child's implementation plan:
 | `P1.3` | Ordered version-4 DREF mappings and explicit omission policy |
 | `P1.4` | Pinned projection cadence, timing, interpolation, and resampling behavior |
 | `P1.5` | Planned/evaluated/emitted/omitted row and timing loss plus exact all-mapping field-result state, column, omission, placeholder, conversion, range, rounding, clamping, interpolation, and resampling evidence |
-| `P1.6` | End-to-end live in-session append input, hash-pinned recording descriptor/native sink and same-session prepublication canonical content manifest, exact current frame/sample/observation-range cross-validation, pinned profile, native artifact, sealed-candidate sidecar relationship, exact report reference, and deterministic reproduction closure; offline canonical-archive projection awaits a later reviewed versioned contract and no additional version-1 family is required |
+| `P1.6` | End-to-end live in-session append input, hash-pinned recording descriptor/native sink and same-session prepublication canonical content manifest, exact current frame/sample/observation-range cross-validation, whole-range preflight before final root bytes, unpublished root seal, fixed successful report member, sidecar/admission validation, then atomic publication; deterministic reproduction is closed, offline canonical-archive projection awaits a later reviewed versioned contract, and no additional version-1 family is required |
 
 ## Validation and runtime outcome separation
 

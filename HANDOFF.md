@@ -38,8 +38,8 @@ Merged-result verification on 2026-08-23 passed 276 standard-library
 checkpoint was `a1b32eedc736f0dd87276255f14ec52b64300119` on local `main`, 17
 commits ahead of `origin/main`; no push, tag, publication, or release occurred.
 This maintenance correction did not itself satisfy a D1 acceptance gate. The
-later D1.1 design-only batch is now verified, and the next selected work is
-`D1.2`.
+later D1.1 and D1.2 contract-design batches are now verified, and the next
+selected work is `D1.3`.
 
 ## Current roadmap and design review
 
@@ -101,10 +101,40 @@ repository quality gate, 15 public-API/documentation tests, strict MkDocs, the
 documentation quality gate, human/JSON status with no finding, and Git
 whitespace/scope checks.
 
-The next-agent sequence is exact: execute the selected `D1.2` contract-only
-A1/R1/P1 design; execute and verify `D1.3` reviewed consumer brief; successful
-D1.3 verification makes `I1.0` eligible as the next reportable action so the
-user can reconcile q4xpcc's Phase 24A specification and plans.
+`D1.2` acquisition, recording, projection, and pinning contract design is
+verified. Its approved contract-only design, completed execution plan, accepted
+independent review, and four verification records are:
+
+- `docs/superpowers/specs/2026-08-23-xplane-fdau-acquisition-recording-projection-pinning-contracts-design.md`;
+- `docs/superpowers/plans/2026-08-23-d1-2-acquisition-recording-projection-pinning-contracts.md`;
+- `.superpowers/sdd/2026-08-23-d1-2-acquisition-recording-projection-pinning-contracts/review.md`; and
+- `.superpowers/sdd/2026-08-23-d1-2-acquisition-recording-projection-pinning-contracts/gate-1.md`
+  through `gate-4.md`.
+
+The eleven-pass review accepted design revision
+`7e8490f4db9fe5b97603c0e0f9d516d2a14d1cd5` with no unresolved Critical,
+Important, or Minor finding. The four gates establish complete q4xpcc Slice
+2A-2D and A1/R1/P1 contract coverage, exact versioned families and future
+resources, reproducible deployment pinning with closed-world
+no-divergent-subset proof, and preserved implementation/adoption/release
+boundaries.
+
+Final D1.2 local verification passed 72 focused governance/status tests, 280
+full standard-library `unittest` tests, 94% statement coverage, the complete
+repository quality gate, 15 public-API/documentation tests, strict MkDocs, the
+43.6% documentation quality gate, human/JSON status with no finding or
+recommendation, and Git whitespace checks.
+
+This is a contract-only outcome. It delivers no A1/R1/P1 runtime model,
+schema, fixture, conformance corpus, implementation plan, artifact, deployment
+receipt, native-FDR output, or q4xpcc adoption. All downstream delivery gates
+remain zero; the four standards children blocked by unavailable licensed
+sources retain their truthful blocked states and queued resume states.
+
+The next-agent sequence is exact: execute and verify `D1.3` reviewed consumer
+brief; successful D1.3 verification makes `I1.0` eligible as the next
+reportable action so the user can reconcile q4xpcc's Phase 24A specification
+and plans.
 
 The external q4xpcc thresholds remain distinct:
 
@@ -114,9 +144,9 @@ The external q4xpcc thresholds remain distinct:
   adoption only after `C4.4`.
 - `I1.2` permits live XPLM acquisition adoption only after `A1.9`.
 
-`D1.2` and `D1.3` remain `specified` at `0/4` with no plan, review, or gate
-evidence. Do not emit the D1.3 consumer brief or invent a revision pin before
-their gates are satisfied.
+`D1.3` remains `specified` at `0/4` with no plan, review, brief, or gate
+evidence. Do not emit the D1.3 consumer brief or invent its source-revision pin
+before its gates are satisfied.
 
 The approved translation of q4xpcc's remaining project-local workflows is:
 

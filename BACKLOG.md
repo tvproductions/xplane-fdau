@@ -13,9 +13,11 @@ slice receives one focused plan and one independently reviewable outcome.
 - Governing scope amendment: approved; `xplane-fdau` owns reusable X-Plane
   FDAU, native FDR, ARINC, and FDM/FOQA-support behavior while external clients
   own all simulator I/O.
-- Active design: q4xpcc contract-handoff readiness.
-- Active child: `D1.2`.
-- `D1.1` is verified; `D1.2` is now the readiness priority before `D1.3` and `T1.3`.
+- Active design: q4xpcc contract-handoff readiness, including the approved
+  D1.2 contract-only A1/R1/P1 design.
+- Active child: `D1.3`.
+- `D1.1` and `D1.2` are verified; `D1.3` is now the readiness priority
+  before `T1.3`.
 - D1 is design-handoff readiness, not implementation or release readiness.
 - `B1.1` source-layout migration: `specified` with a draft plan; resumes after
   peer prerequisites `T2.2` and `T3.1` are verified.
@@ -82,7 +84,7 @@ The child slices below refine this sequence without weakening or reordering it.
 | `P1.5` | Omission, default, conversion, and precision-loss report | `queued` | `P1.2`, `P1.3`, `P1.4` | — | — | — | — | — | — |
 | `P1.6` | End-to-end canonical-to-native-sink verification | `queued` | `P1.5` | — | — | — | — | — | — |
 | `D1.1` | Canonical C1–C4 design approval | `verified` | `T1.2` | [design](docs/superpowers/specs/2026-08-22-q4xpcc-contract-handoff-readiness-design.md) | [plan](docs/superpowers/plans/2026-08-23-d1-1-canonical-design-approval.md) | 4/4 | [review](.superpowers/sdd/2026-08-23-d1-1-canonical-design-approval/review.md) | — | — |
-| `D1.2` | Acquisition, recording, projection, and pinning contract design | `specified` | `D1.1` | [design](docs/superpowers/specs/2026-08-22-q4xpcc-contract-handoff-readiness-design.md) | — | 0/4 | — | — | — |
+| `D1.2` | Acquisition, recording, projection, and pinning contract design | `verified` | `D1.1` | [design](docs/superpowers/specs/2026-08-23-xplane-fdau-acquisition-recording-projection-pinning-contracts-design.md) | [plan](docs/superpowers/plans/2026-08-23-d1-2-acquisition-recording-projection-pinning-contracts.md) | 4/4 | [review](.superpowers/sdd/2026-08-23-d1-2-acquisition-recording-projection-pinning-contracts/review.md) | — | — |
 | `D1.3` | Reviewed q4xpcc Phase 24A handoff | `specified` | `D1.2` | [design](docs/superpowers/specs/2026-08-22-q4xpcc-contract-handoff-readiness-design.md) | — | 0/4 | — | — | — |
 | `S1.1` | Edition-pinned standards baseline and traceability contract | `queued` | `C4.4` | — | — | — | — | — | — |
 | `S2.1` | ARINC 717 profile specification | `blocked` | `S1.1`, `R1.7` | — | — | — | — | `queued` | Licensed edition-pinned source is unavailable. |
@@ -296,19 +298,23 @@ The child slices below refine this sequence without weakening or reordering it.
 
 ### D1.2 — Acquisition, recording, projection, and pinning contract design
 
-- [ ] one approved design fixes every A1/R1/P1 contract shape and policy needed
-      by the four q4xpcc Phase 24A Slice 2 plans;
-- [ ] every family has an exact identity/version boundary, owned fields,
+- [x] one approved design fixes every A1/R1/P1 contract shape and policy needed
+      by the four q4xpcc Phase 24A Slice 2 plans; — Evidence:
+      [verification](.superpowers/sdd/2026-08-23-d1-2-acquisition-recording-projection-pinning-contracts/gate-1.md)
+- [x] every family has an exact identity/version boundary, owned fields,
       invariants, references, error outcomes, and intended future schema/fixture
-      path;
-- [ ] deployment, revision pinning, release-artifact hashes, delivered-file
+      path; — Evidence:
+      [verification](.superpowers/sdd/2026-08-23-d1-2-acquisition-recording-projection-pinning-contracts/gate-2.md)
+- [x] deployment, revision pinning, release-artifact hashes, delivered-file
       hashes, conformance, and no-divergent-subset proof are explicit without
-      requiring a current release artifact; and
-- [ ] independent review finds no unresolved load-bearing ambiguity, the approved
+      requiring a current release artifact; and — Evidence:
+      [verification](.superpowers/sdd/2026-08-23-d1-2-acquisition-recording-projection-pinning-contracts/gate-3.md)
+- [x] independent review finds no unresolved load-bearing ambiguity, the approved
       contract-only design is recorded as binding architecture input for future
       A1, R1, and P1 specifications, and those implementation children remain
       `queued` with zero delivery gates satisfied and no implementation, artifact,
-      or release claim.
+      or release claim. — Evidence:
+      [verification](.superpowers/sdd/2026-08-23-d1-2-acquisition-recording-projection-pinning-contracts/gate-4.md)
 
 ### D1.3 — Reviewed q4xpcc Phase 24A handoff
 

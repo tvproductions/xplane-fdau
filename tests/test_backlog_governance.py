@@ -51,6 +51,9 @@ EXPECTED_EPIC_MEMBERS = {
     "T3": ("T3.1",),
 }
 D1_SPECIFICATION = "[design](docs/superpowers/specs/2026-08-22-q4xpcc-contract-handoff-readiness-design.md)"
+D1_2_SPECIFICATION = "[design](docs/superpowers/specs/2026-08-23-xplane-fdau-acquisition-recording-projection-pinning-contracts-design.md)"
+D1_2_PLAN = "[plan](docs/superpowers/plans/2026-08-23-d1-2-acquisition-recording-projection-pinning-contracts.md)"
+D1_2_REVIEW = "[review](.superpowers/sdd/2026-08-23-d1-2-acquisition-recording-projection-pinning-contracts/review.md)"
 D1_OUTCOMES = {
     "D1.1": "Canonical C1–C4 design approval",
     "D1.2": "Acquisition, recording, projection, and pinning contract design",
@@ -72,12 +75,12 @@ D1_INVENTORY_ROWS = (
     (
         "`D1.2`",
         "Acquisition, recording, projection, and pinning contract design",
-        "`specified`",
+        "`verified`",
         "`D1.1`",
-        D1_SPECIFICATION,
-        "—",
-        "0/4",
-        "—",
+        D1_2_SPECIFICATION,
+        D1_2_PLAN,
+        "4/4",
+        D1_2_REVIEW,
         "—",
         "—",
     ),
@@ -366,7 +369,7 @@ class BacklogAuthorityTests(unittest.TestCase):
     def test_current_position_has_one_exact_selection_line(self) -> None:
         backlog = read_text(BACKLOG)
         selection_lines = [line for line in backlog.splitlines() if line.startswith("- Active child:")]
-        self.assertEqual(["- Active child: `D1.2`."], selection_lines)
+        self.assertEqual(["- Active child: `D1.3`."], selection_lines)
         self.assertNotIn("Active child slice:", backlog)
 
     def test_inventory_matches_every_roadmap_child_once_in_order(self) -> None:
@@ -378,7 +381,7 @@ class BacklogAuthorityTests(unittest.TestCase):
             [(identity(row[0]), row[1], row[3]) for row in inventory],
         )
 
-    def test_d1_inventory_rows_lock_post_d1_1_lifecycle(self) -> None:
+    def test_d1_inventory_rows_lock_post_d1_2_lifecycle(self) -> None:
         inventory = table_rows(read_text(BACKLOG), INVENTORY_HEADER)
 
         self.assertEqual(
@@ -392,7 +395,7 @@ class BacklogAuthorityTests(unittest.TestCase):
                 heading = f"{child} — {D1_OUTCOMES[child]}"
                 backlog_body = section_body(BACKLOG, heading, level=3)
                 design_body = section_body(D1_DESIGN, heading, level=2)
-                marker = "- [x] " if child == "D1.1" else "- [ ] "
+                marker = "- [x] " if child in {"D1.1", "D1.2"} else "- [ ] "
                 backlog_items = tuple(re.sub(r" — Evidence: \[verification\]\([^)]+\)$", "", item) for item in normalized_list_items(backlog_body, marker))
                 self.assertEqual(expected, backlog_items)
                 self.assertEqual(expected, normalized_numbered_items(design_body))
@@ -431,6 +434,72 @@ class BacklogAuthorityTests(unittest.TestCase):
                     metadata(evidence_root / f"gate-{ordinal}.md"),
                 )
 
+    def test_d1_2_is_verified_with_exact_review_and_gate_evidence(self) -> None:
+        evidence_root = ROOT / ".superpowers/sdd/2026-08-23-d1-2-acquisition-recording-projection-pinning-contracts"
+        self.assertEqual(
+            {
+                "Child": "`D1.2`",
+                "Gate": "—",
+                "Kind": "review",
+                "Result": "accepted",
+                "Date": "2026-08-23",
+                "Subject": "Independent acquisition, recording, projection, and pinning contract design review",
+            },
+            metadata(evidence_root / "review.md"),
+        )
+        subjects = (
+            "Complete A1/R1/P1 contract and q4xpcc Slice 2 coverage",
+            "Exact versioned families, invariants, outcomes, and future resources",
+            "Reproducible deployment pinning and no-divergent-subset proof",
+            "Accepted review and preserved implementation and release boundaries",
+        )
+        for ordinal, subject in enumerate(subjects, start=1):
+            with self.subTest(gate=ordinal):
+                gate_path = evidence_root / f"gate-{ordinal}.md"
+                self.assertTrue(gate_path.is_file(), gate_path)
+                self.assertEqual(
+                    {
+                        "Child": "`D1.2`",
+                        "Gate": f"`{ordinal}`",
+                        "Kind": "verification",
+                        "Result": "passed",
+                        "Date": "2026-08-23",
+                        "Subject": subject,
+                    },
+                    metadata(gate_path),
+                )
+
+        body = section_body(BACKLOG, f"D1.2 — {D1_OUTCOMES['D1.2']}", level=3)
+        self.assertEqual(
+            [f".superpowers/sdd/2026-08-23-d1-2-acquisition-recording-projection-pinning-contracts/gate-{ordinal}.md" for ordinal in range(1, 5)],
+            re.findall(r"Evidence:\s+\[verification\]\(([^)]+)\)", body),
+        )
+
+    def test_downstream_delivery_children_retain_zero_evidence_lifecycle(self) -> None:
+        inventory = table_rows(read_text(BACKLOG), INVENTORY_HEADER)
+        downstream = [row for row in inventory if re.fullmatch(r"(?:A1|R1|P1|F1)\.\d+", identity(row[0])) or re.fullmatch(r"S[1-4]\.\d+", identity(row[0]))]
+        self.assertEqual(33, len(downstream))
+        blocked_standards = {
+            "S2.1": "Licensed edition-pinned source is unavailable.",
+            "S2.2": "Licensed edition-pinned source is unavailable.",
+            "S3.1": "Licensed edition-pinned source is unavailable.",
+            "S4.1": "A licensed source and concrete use case are unavailable.",
+        }
+        for row in downstream:
+            child, outcome, status, _dependencies, _spec, plan, gates, review, resume, reason = row
+            child_id = identity(child)
+            with self.subTest(child=child_id):
+                self.assertEqual(("—", "—"), (plan, review))
+                self.assertIn(gates, {"—", "0/4"})
+                if gates != "—":
+                    self.assertTrue(gates.startswith("0/"))
+                    body = section_body(BACKLOG, f"{child_id} — {outcome}", level=3)
+                    self.assertEqual([], re.findall(r"^- \[x\] ", body, re.MULTILINE))
+                if child_id in blocked_standards:
+                    self.assertEqual(("`blocked`", "`queued`", blocked_standards[child_id]), (status, resume, reason))
+                else:
+                    self.assertEqual(("`queued`", "—", "—"), (status, resume, reason))
+
     def test_c1_through_c4_are_specified_without_delivery_evidence(self) -> None:
         inventory = table_rows(read_text(BACKLOG), INVENTORY_HEADER)
         c_rows = [row for row in inventory if re.fullmatch(r"C[1-4]\.\d+", identity(row[0]))]
@@ -453,7 +522,7 @@ class BacklogAuthorityTests(unittest.TestCase):
         handoff = re.sub(r"\s+", " ", read_text(HANDOFF))
         sequence = (
             "`D1.1` canonical C1-C4 design approval is verified",
-            "execute the selected `D1.2` contract-only A1/R1/P1 design",
+            "`D1.2` acquisition, recording, projection, and pinning contract design is verified",
             "execute and verify `D1.3` reviewed consumer brief",
             "successful D1.3 verification makes `I1.0` eligible as the next reportable action",
         )
@@ -814,6 +883,7 @@ class GovernanceArtifactTests(unittest.TestCase):
             ROOT / "docs/superpowers/specs/2026-08-09-xplane-fdau-identity-fdr-kernel-migration-design.md",
             ROOT / "docs/superpowers/plans/2026-08-08-xplane-fdr-core.md",
             ROOT / "docs/superpowers/plans/2026-08-09-xplane-fdau-identity-fdr-kernel-migration.md",
+            ROOT / "docs/superpowers/plans/2026-08-23-d1-2-acquisition-recording-projection-pinning-contracts.md",
         )
         for path in historical_paths:
             self.assertIn(metadata(path)["Status"], {"completed", "superseded"})

@@ -81,3 +81,10 @@ inspection found zero `.agents/`, `.codex/`, or `gz-skills.lock.json` entries.
 The preserved artifacts and exact hashes are recorded in the ignored task
 report. This completion does not claim the Python 3.12-3.14 installed matrix,
 release readiness, local integration, push, tag, publication, or release.
+
+Post-commit verification exposed the generated lock to the quality tool's
+tracked-path secret scan for the first time. Its one public upstream revision
+and eleven independently verified public tree hashes are individually recorded
+in `.secrets.baseline` as `is_secret: false`. No file exclusion, detector
+change, lock edit, or other baseline entry changed; focused and full security
+verification was rerun on the tracked candidate.

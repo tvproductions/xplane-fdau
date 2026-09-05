@@ -27,6 +27,7 @@
 **Files:**
 - Create: .agents/skills/gzs-*/ complete upstream trees and gz-skills.lock.json.
 - Modify: .gitattributes; AGENTS.md; HANDOFF.md; ROADMAP.md; BACKLOG.md.
+- Modify: .secrets.baseline only for individually reviewed public revision/tree-hash false positives introduced by the generated lock.
 - Delete: .codex/skills/git-sync/SKILL.md (remove resulting empty directory only).
 - Modify: .codex/skills/code-quality/SKILL.md; .codex/skills/hygiene/SKILL.md; .codex/skills/release/SKILL.md; .codex/skills/documentation/SKILL.md only if a pointer is necessary.
 - Modify: docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md.
@@ -50,3 +51,4 @@
 - [x] Run full uv run python tools/quality.py check; uv run mkdocs build --strict; uv run python tools/quality.py pre-commit, with offline/frozen environment for project tools. Capture exit status/counts/warnings. Do not update project dependency versions.
 - [x] Build fresh wheel/sdist into a uniquely created system-temp directory via uv build --no-sources --out-dir <exact temp>; run tools/release.py check-dist <exact temp> and explicitly inspect members for .agents/, .codex/, gz-skills.lock.json exclusion. Preserve artifacts at a reported exact path for parent inspection. Do not claim release readiness/matrix.
 - [x] Mark plan/spec completed historical only after actual implementation/checks; record report commands, RED/GREEN, installer pin/hash proof, file scope, warnings, artifact path and limitations. Stage only listed paths (no ignored scratch), inspect staged whitespace/scope, commit with build: adopt canonical gz-skills workflows. Parent owns independent behavior/task/final review, local merge and worktree cleanup.
+- [x] After tracked-path enumeration exposed the generated lock to detect-secrets, record exactly its one public source revision and eleven independently verified tree hashes as `is_secret: false`; preserve all detector settings and existing entries, then rerun focused security, full quality, and pre-commit gates.

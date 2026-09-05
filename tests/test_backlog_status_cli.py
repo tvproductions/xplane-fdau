@@ -89,7 +89,7 @@ class BacklogStatusCliTests(unittest.TestCase):
             "D1.1  verified  dependency-ready=yes  gates=4/4",
             "D1.2  verified  dependency-ready=yes  gates=4/4",
             "D1.3  verified  dependency-ready=yes  gates=4/4",
-            "T1.3  planned  dependency-ready=yes  gates=0/4",
+            "T1.3  in_progress  dependency-ready=yes  gates=0/4",
             "statement=successful D1.3 verification makes the statusless `I1.0` "
             "handoff condition eligible to be reported as the next action without "
             "changing `I1.1`, `I1.2`, G1, release, push, tag, or publication authorization.",
@@ -184,7 +184,7 @@ class BacklogStatusCliTests(unittest.TestCase):
             self.assertEqual(expected_dependency_readiness[child_id], child["dependency_ready"])
 
         t1_3 = next(child for child in payload["backlog"]["children"] if child["id"] == "T1.3")
-        self.assertEqual("planned", t1_3["status"])
+        self.assertEqual("in_progress", t1_3["status"])
         self.assertEqual(0, t1_3["gates"]["satisfied"])
         self.assertEqual(4, t1_3["gates"]["total"])
         self.assertTrue(t1_3["dependency_ready"])

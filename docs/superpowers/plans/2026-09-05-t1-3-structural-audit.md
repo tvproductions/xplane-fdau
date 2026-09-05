@@ -1,7 +1,7 @@
 # T1.3 Structural Audit and Spec/Plan Adherence Implementation Plan
 
 - **Governance:** active
-- **Status:** approved
+- **Status:** in_progress
 - **Date:** 2026-09-05
 - **Roadmap child:** `T1.3`
 - **Source specification:** `docs/superpowers/specs/2026-09-05-t1-3-audit-policy-supplement-design.md`
@@ -77,6 +77,7 @@ All implementation paths in the table are relative to
 | --- | --- |
 | `backlog/model.py` | Frozen audit input and evidence types, preserving report types |
 | `backlog/parse.py` | Public strict document/evidence parsers and source facts |
+| `backlog/parse_sources.py` (new) | Source-fact extraction composed through public APIs |
 | `backlog/rules.py` (new) | Identity, inventory, dependency, lifecycle, and release checks |
 | `backlog/adherence.py` (new) | Design/plan coverage, metadata, and gate-text agreement |
 | `backlog/evidence.py` (new) | Contained regular-file and index/HEAD evidence eligibility |
@@ -96,6 +97,10 @@ parsing helpers so new modules never call another module's private functions.
 create `backlog/audit.py` and `backlog/policy.py`; modify `tests/test_backlog_status_model.py` and
 `tests/test_backlog_status_parse.py`; create `tests/test_backlog_status_audit.py`.
 Create `tests/test_backlog_status_policy.py` for the supplement's loading rules.
+Create `backlog/parse_sources.py` for newly added source extraction. This
+execution refinement separates about 230 new lines from the existing strict
+parser; audit.py consumes its public `parse_roadmap_sources`,
+`parse_backlog_sources`, and `parse_artifact_sources` APIs.
 
 **Interfaces:** Retain `parse_repository(root: Path) -> RepositorySnapshot`
 and its strict exception behavior for existing callers. Add frozen
@@ -512,8 +517,8 @@ human output only in this child, matching the specified command surface.
 | Acceptance requirement | Executable proof | Assessment |
 | --- | --- | --- |
 | Gate 1: structural and link rules fail closed | Tasks 1, 2, 4; malformed input and graph tests | Aligned |
-| Gate 2: designs, plans, historical metadata | Tasks 3-4; lifecycle-specific links and frozen historical admission | Aligned with proposed supplement; approval pending |
-| Gate 3: prerequisites and eligible evidence | Tasks 1 and 4; fixed slot matrix, isolated real Git repositories and lifecycle matrix | Aligned with proposed supplement; approval pending |
+| Gate 2: designs, plans, historical metadata | Tasks 3-4; lifecycle-specific links and frozen historical admission | Aligned with approved supplement |
+| Gate 3: prerequisites and eligible evidence | Tasks 1 and 4; fixed slot matrix, isolated real Git repositories and lifecycle matrix | Aligned with approved supplement |
 | Gate 4: all independent contextual findings and blocking result | Tasks 1 and 5; failure isolation, ordering, JSON, exit tests | Aligned |
 | Committed evidence and independent review | Task 5 staged/HEAD closure and final review | Aligned |
 
@@ -528,8 +533,10 @@ human output only in this child, matching the specified command surface.
 | Historical admission rejected allowed suspensions | Apply admission at effective verified while preserving blocked/deferred status | Supplement: Historical plan reconciliation; Task 4 |
 | Cumulative rules retained in-progress status and selection after completion | Stage-specific plan status; selection required only for actual in_progress | Task 4 lifecycle matrix and unselected/suspended controls |
 
-The earlier unconditional self-review PASS is withdrawn. The revised plan
-covers the four findings through concrete proposed policies, but is not yet
-aligned with approved authority: the supplement is draft. Approval of the
-supplement and revised plan, followed by their recorded governance updates,
-is required before execution. No T1.3 delivery gate is satisfied by these drafts.
+The earlier unconditional self-review PASS was withdrawn during draft review.
+The revised plan resolves the four original findings and the two independent
+lifecycle findings. Independent re-review found no remaining Critical,
+Important, or Minor issue. Jeff approved the supplement and revised plan on
+2026-09-05; governance approval was recorded in commit e082ebd before execution.
+The intent-to-scope and scope-to-plan audit now passes against approved
+authority. This approval and plan audit satisfy no T1.3 delivery gate.

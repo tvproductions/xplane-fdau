@@ -177,3 +177,94 @@ records, accepted review, child completion, HEAD-backed closure, and the final
 HANDOFF current pointer are owned by the later resumed Task 5 closeout. No
 accepted review or completion evidence has been fabricated. No merge, push,
 tag, publication, or release is authorized by this candidate.
+
+## Consolidated final-review correction wave
+
+Base: `b64c34caed73a00e8b03b423d10249dee5144509`. The whole-branch review
+rejected that candidate for the four Important findings in
+`whole-branch-review.md`. This section records their single bounded correction
+wave; the earlier candidate results above remain historical observations.
+Scoped final re-review and gate closure remain pending.
+
+1. Referenced acceptance-list integer conversion failure now becomes an
+   unresolved managed reference, yielding `artifact.gate-drift` at the actual
+   ordinal line with its child context. Python's integer limit is unchanged,
+   and independent malformed artifacts still appear in audit and JSON.
+2. Every discovered active plan's populated completion slot is validated once,
+   against its declared child and child-level ordinal. Index eligibility
+   applies independently of BACKLOG availability; effective verified linkage
+   strengthens it to HEAD, including blocked/deferred Resume verified.
+   Linked slots produce no duplicate findings. Historical plans are untouched.
+3. Plain bullets, numbered items, open tasks, and checked tasks normalize to
+   the same acceptance statement. The same normalization applies to referenced
+   earlier numbered gates. Source lines and punctuation remain exact; design
+   checkbox markers never satisfy a backlog gate. Changed wording still fails.
+4. Policy fixtures use the existing isolated shared Git initialization/helper,
+   including command-local signing, hooks, identity, and newline controls.
+   Inherited unavailable signing and failing-hook configurations are tested in
+   temporary environments; global config and real project commit hooks are
+   unchanged.
+
+Changed correction files: `backlog/parse_sources.py`, `backlog/lifecycle.py`
+under the existing audit scripts; `tests/test_backlog_status_cli.py`,
+`tests/test_backlog_status_adherence.py`, `tests/test_backlog_status_lifecycle.py`,
+`tests/test_backlog_status_policy.py`; and this report. No new authority,
+approval, runtime, dependency, or ledger change belongs to this correction.
+
+### Correction RED and GREEN
+
+On Python 3.12.13, this exact selector command ran RED and then GREEN:
+
+```powershell
+uv run python -m unittest tests.test_backlog_status_cli.BacklogStatusCliTests.test_oversized_referenced_gate_ordinal_keeps_independent_contextual_reports tests.test_backlog_status_cli.BacklogStatusCliTests.test_unlinked_plan_completion_is_audited_by_both_commands tests.test_backlog_status_adherence.AdherenceTests.test_design_task_markers_are_formatting_and_do_not_deliver_backlog_gates tests.test_backlog_status_lifecycle.LifecycleTests.test_unlinked_active_completion_slots_validate_declared_child_and_index_bytes tests.test_backlog_status_lifecycle.LifecycleTests.test_linked_completion_keeps_head_requirement_without_duplicate_findings tests.test_backlog_status_policy.AuditPolicyTests.test_fixture_commits_ignore_inherited_signing_and_hooks -v
+```
+
+RED: exit 1, six tests in 6.345 seconds, 11 subtest failures and three errors.
+The raw ordinal ValueError, ignored completion failures, retained task markers,
+signing exit 128, and failing-hook exit 1 all reproduced. The existing linked
+HEAD/no-duplicate control passed. No real signer or user hook was invoked.
+GREEN after the corrections: exit 0, six tests in 8.079 seconds, OK.
+
+The complete covering run then passed 67 tests in 68.472 seconds, exit 0:
+
+```powershell
+uv run python -m unittest tests.test_backlog_status_cli tests.test_backlog_status_adherence tests.test_backlog_status_lifecycle tests.test_backlog_status_policy -v
+```
+
+Final scripts Ruff check, format check (13 files), and ty all exited 0, as did
+focused test-file Ruff/ty. Public API/documentation contracts passed 15 tests
+in 0.031 seconds. Strict MkDocs built in 1.51 seconds with the same nonblocking
+vendor notice. Documentation coverage passed at 43.6%. Both real commands
+exited 0, with `Findings: none` and JSON valid=true/findings=[]/schema_version=1.
+`git diff --check` exited 0. Their commands are the exact required commands in
+the earlier final-check table, rerun for this changed candidate.
+
+Read-only comparison confirmed all 20 protected files still match working,
+index, HEAD, and this wave's reviewed base `b64c34c`; all pinned hashes match.
+The source candidate remains unchanged during the aggregate and matrix checks.
+All matrix commands propagate matching `UV_PYTHON`, with `UV_OFFLINE=1` and
+`UV_PYTHON_DOWNLOADS=never`, as established by the earlier environment finding.
+
+`uv run python tools/quality.py check` then exited 0: Ruff, format, ty,
+`uv run python -m unittest discover -v` (374 tests in 77.207 seconds, OK),
+coverage (374 tests in 78.083 seconds, OK; 94% over 1527 runtime statements,
+98 missed), Bandit, detect-secrets, Interrogate (43.6%), Vulture, and Xenon all
+passed. The unchanged security baseline retains its reviewed provenance hashes.
+Final raw output is in ignored `task-5-final-fix-quality.txt`; its actual exit
+and all component results were inspected.
+
+The correction candidate's required source matrix also passed, each exit 0
+with 374 tests and `OK`:
+
+| Command | Actual Python | Observed time |
+| --- | --- | --- |
+| `uv run --python 3.12 python -m unittest discover -v` | 3.12.13 | 74.954 seconds |
+| `uv run --python 3.13 python -m unittest discover -v` | 3.13.14 | 76.522 seconds |
+| `uv run --python 3.14 python -m unittest discover -v` | 3.14.4 | 78.257 seconds |
+
+Ignored `task-5-final-fix-python312.txt`, `task-5-final-fix-python313.txt`, and
+`task-5-final-fix-python314.txt` retain raw outputs beside this report. Each
+exit and final summary was inspected. No code changed between these checks.
+All four reviewed defects are corrected; acceptance remains subject to the
+controller's scoped final re-review. No gate, plan status, HANDOFF pointer, or
+completion/review evidence advanced in this wave.

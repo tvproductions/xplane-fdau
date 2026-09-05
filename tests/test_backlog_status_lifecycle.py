@@ -117,6 +117,62 @@ class LifecycleTests(unittest.TestCase):
             stream.write("Edited\n")
         self.assertIn("evidence.dirty", self.codes())
 
+    def test_unlinked_active_completion_slots_validate_declared_child_and_index_bytes(self) -> None:
+        plan_path = "docs/superpowers/plans/unlinked-completed.md"
+        evidence = ".superpowers/sdd/t1-2/unlinked-completion.md"
+        source = (self.root / "docs/superpowers/plans/t1-1.md").read_text(encoding="utf-8")
+        (self.root / plan_path).write_text(
+            source.replace("**Roadmap child:** `T1.1`", "**Roadmap child:** `T1.2`").replace(".superpowers/sdd/t1-1/completion.md", evidence),
+            encoding="utf-8",
+            newline="\n",
+        )
+        write_evidence(self.root, evidence, child="T1.2", gate=None)
+        run_git(self.root, "add", "--", plan_path, evidence)
+        run_git(self.root, "commit", "-qm", "Unlinked completion control")
+        original = (self.root / evidence).read_bytes()
+        loaded = self.loaded()
+        for status in ("draft", "approved", "in_progress", "completed", "superseded"):
+            artifacts = replace(
+                loaded.snapshot.artifacts,
+                plans=tuple(replace(plan, status=status) if plan.path == plan_path else plan for plan in loaded.snapshot.artifacts.plans),
+            )
+            self.assertEqual(set(), self.codes(replace(loaded, snapshot=replace(loaded.snapshot, artifacts=artifacts))))
+        for content, stage, expected in (
+            (b"Malformed evidence\n", True, "evidence.metadata"),
+            (original.replace(b"Kind:** verification", b"Kind:** review").replace(b"Result:** passed", b"Result:** accepted"), True, "evidence.kind"),
+            (original.replace(b"Child:** `T1.2`", b"Child:** `T1.1`"), True, "evidence.child-mismatch"),
+            (original.replace("Gate:** —".encode(), b"Gate:** `1`"), True, "evidence.gate-mismatch"),
+            (original + b"Unstaged bytes\n", False, "evidence.dirty"),
+        ):
+            with self.subTest(expected=expected):
+                (self.root / evidence).write_bytes(content)
+                if stage:
+                    run_git(self.root, "add", "--", evidence)
+                findings = [item for item in self.rules.lifecycle_findings(self.loaded()) if item.path == evidence]
+                self.assertEqual([expected], [item.code for item in findings])
+                self.assertEqual(("T1.2", None), (findings[0].node, findings[0].gate))
+                (self.root / evidence).write_bytes(original)
+                run_git(self.root, "add", "--", evidence)
+        (self.root / evidence).write_bytes(original + b"Staged completion update\n")
+        run_git(self.root, "add", "--", evidence)
+        self.assertEqual(set(), self.codes())  # unlinked slots require index eligibility, not HEAD.
+        (self.root / evidence).unlink()
+        self.assertIn("evidence.path", self.codes())
+        invalid = replace(self.loaded(), invalid_paths=frozenset({"BACKLOG.md"}))
+        self.assertEqual({"evidence.path"}, self.codes(invalid))
+
+    def test_linked_completion_keeps_head_requirement_without_duplicate_findings(self) -> None:
+        evidence = ".superpowers/sdd/t1-1/completion.md"
+        with (self.root / evidence).open("ab") as stream:
+            stream.write(b"Completion update\n")
+        run_git(self.root, "add", "--", evidence)
+        self.assertEqual(set(), self.codes(self.state("implemented")))
+        for status, resume in (("verified", None), ("blocked", "verified"), ("deferred", "verified")):
+            with self.subTest(status=status):
+                loaded = self.state(status, resume=resume, reason="Waiting" if resume else None)
+                findings = [item for item in self.rules.lifecycle_findings(loaded) if item.path == evidence]
+                self.assertEqual(["evidence.not-in-head"], [item.code for item in findings])
+
     def historical(self):  # type: ignore[no-untyped-def]
         plan = "docs/superpowers/plans/t1-1.md"
         (self.root / plan).write_text(

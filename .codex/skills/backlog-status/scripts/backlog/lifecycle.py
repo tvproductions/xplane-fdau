@@ -139,14 +139,26 @@ def _ordinary_plan(loaded: AuditLoad, child: BacklogChild, state: str | None) ->
         findings.append(
             _finding("lifecycle.plan", child.source, child.id, f"{state} child requires a {expected} approved single-child plan citing its governing design")
         )
-    if plan.completion_evidence is not None:
-        findings.extend(
-            evidence_findings(
-                loaded.snapshot.root, plan.completion_evidence, child.id, None, kinds=allowed_kinds("completion"), require_head=state == "verified"
-            )
-        )
-    elif state in _COMPLETED:
+    if plan.completion_evidence is None and state in _COMPLETED:
         findings.append(_finding("lifecycle.completion", plan.source, child.id, "completed plan requires eligible child-level completion evidence"))
+    return findings
+
+
+def _plan_completion_findings(loaded: AuditLoad) -> list[Finding]:
+    verified_plans = {child.plan for child in loaded.snapshot.backlog.children if "BACKLOG.md" not in loaded.invalid_paths and _state(child) == "verified"}
+    findings = []
+    for plan in loaded.snapshot.artifacts.plans:
+        if plan.completion_evidence is not None:
+            findings.extend(
+                evidence_findings(
+                    loaded.snapshot.root,
+                    plan.completion_evidence,
+                    plan.child,
+                    None,
+                    kinds=allowed_kinds("completion"),
+                    require_head=plan.path in verified_plans,
+                )
+            )
     return findings
 
 
@@ -191,9 +203,9 @@ def _release_findings(loaded: AuditLoad) -> list[Finding]:
 
 def lifecycle_findings(loaded: AuditLoad) -> tuple[Finding, ...]:
     """Validate current-state sufficiency without inferring past transitions."""
+    findings = _plan_completion_findings(loaded)
     if "BACKLOG.md" in loaded.invalid_paths:
-        return ()
-    findings = []
+        return tuple(sorted(findings, key=finding_key))
     for child in loaded.snapshot.backlog.children:
         findings.extend(_child_findings(loaded, child))
     findings.extend(_release_findings(loaded))

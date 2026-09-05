@@ -300,6 +300,56 @@ class BacklogStatusCliTests(unittest.TestCase):
                         self.assertEqual("T1.1", finding["node"])
                         self.assertGreater(finding["line"], 0)
 
+    def test_oversized_referenced_gate_ordinal_keeps_independent_contextual_reports(self) -> None:
+        root = self.fixture_root()
+        design = "docs/superpowers/specs/t1-design.md"
+        earlier = (
+            "## T1.2 — Detailed acceptance\n\nIts acceptance gates are:\n\n"
+            "1. First exact gate.\n2. Second exact gate.\n3. Third exact gate.\n4. Fourth exact gate.\n\n"
+        )
+        replace_text(root, design, "## Acceptance criteria", earlier + "## Acceptance criteria")
+        replace_text(root, design, "- Frozen parser remains open.", "`T1.2` is complete only when its four earlier acceptance gates pass.")
+        replace_text(root, "BACKLOG.md", "— | 0/1 |", "— | 0/4 |")
+        replace_text(
+            root,
+            "BACKLOG.md",
+            "- [ ] Frozen parser remains open.",
+            "- [ ] First exact gate.\n- [ ] Second exact gate.\n- [ ] Third exact gate.\n- [ ] Fourth exact gate.",
+        )
+        self.assertEqual(0, self.run_cli(["audit"], root=root, mock_git=False).code)
+        ordinal_line = next(index for index, line in enumerate((root / design).read_text(encoding="utf-8").splitlines(), 1) if line == "1. First exact gate.")
+        replace_text(root, design, "1. First exact gate.", "9" * 4301 + ". First exact gate.")
+        replace_text(root, "docs/superpowers/plans/historical-plan.md", "**Governance:** historical", "**Governance:** invalid")
+        for args in (["audit"], ["status", "--json"]):
+            result = self.run_cli(args, root=root, mock_git=False)
+            self.assertEqual(1, result.code)
+            self.assertEqual("", result.stderr)
+            self.assertIn("artifact.gate-drift", result.stdout)
+            self.assertIn("artifact.governance", result.stdout)
+            if "--json" in args:
+                payload = json.loads(result.stdout)
+                self.assertFalse(payload["valid"])
+                finding = next(item for item in payload["findings"] if item["code"] == "artifact.gate-drift")
+                self.assertEqual((design, ordinal_line, "T1.2", None), (finding["path"], finding["line"], finding["node"], finding["gate"]))
+                self.assertIn("integer conversion limit", finding["message"])
+
+    def test_unlinked_plan_completion_is_audited_by_both_commands(self) -> None:
+        root = self.fixture_root()
+        plan = "docs/superpowers/plans/unlinked-completed.md"
+        (root / plan).write_bytes((root / "docs/superpowers/plans/t1-1.md").read_bytes())
+        self.assertEqual(0, self.run_cli(["audit"], root=root, mock_git=False).code)
+        replace_text(root, plan, ".superpowers/sdd/t1-1/completion.md", ".superpowers/sdd/absent-completion.md")
+        for args in (["audit"], ["status", "--json"]):
+            result = self.run_cli(args, root=root, mock_git=False)
+            self.assertEqual(1, result.code)
+            self.assertEqual("", result.stderr)
+            self.assertIn("evidence.path", result.stdout)
+            if "--json" in args:
+                findings = json.loads(result.stdout)["findings"]
+                self.assertEqual(1, len(findings))
+                self.assertEqual("T1.1", findings[0]["node"])
+                self.assertIsNone(findings[0]["gate"])
+
     def test_unavailable_git_is_blocking_and_has_empty_observation(self) -> None:
         root = self.fixture_root()
         module = load_cli()

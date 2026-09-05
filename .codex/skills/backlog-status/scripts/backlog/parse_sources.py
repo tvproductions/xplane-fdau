@@ -256,6 +256,10 @@ def _metadata_source(
     )
 
 
+def _criterion_text(value: str) -> str:
+    return value[4:] if value.startswith(("[ ] ", "[x] ")) else value
+
+
 def _acceptance_statements(
     root: Path, path: Path, lines: tuple[_Line, ...], start: int, end: int
 ) -> tuple[tuple[StatementSource, ...], tuple[StatementSource, ...]]:
@@ -280,7 +284,7 @@ def _acceptance_statements(
             finish()
             item_line = line
             is_list = True
-            fragments = [match.group(1)]
+            fragments = [_criterion_text(match.group(1))]
             continue
         if not line.text:
             finish()
@@ -313,11 +317,17 @@ def _numbered_gate_statements(root: Path, path: Path, lines: tuple[_Line, ...], 
     for line in lines[start:end]:
         match = _NUMBERED_ITEM.fullmatch(line.text)
         if match is not None:
-            if int(match.group(1)) != expected_ordinal:
+            try:
+                ordinal = int(match.group(1))
+            except ValueError as error:
+                raise MarkdownParseError(
+                    path, line.number, "acceptance ordinal exceeds the supported integer conversion limit", code="artifact.gate-drift"
+                ) from error
+            if ordinal != expected_ordinal:
                 return ()
             finish()
             item_line = line
-            fragments = [match.group(2)]
+            fragments = [_criterion_text(match.group(2))]
             expected_ordinal += 1
         elif line.text[:1].isspace() and item_line is not None:
             fragments.append(" ".join(line.text.split()))
@@ -370,7 +380,10 @@ def _resolve_earlier_gate_reference(
         return (), SourceValue("missing acceptance-gate marker", problem_source)
     if len(markers) > 1:
         return (), SourceValue("ambiguous acceptance-gate markers", problem_source)
-    resolved = _numbered_gate_statements(root, path, lines, markers[0] + 1, section_end)
+    try:
+        resolved = _numbered_gate_statements(root, path, lines, markers[0] + 1, section_end)
+    except MarkdownParseError as error:
+        return (), SourceValue(error.message, SourceLocation(_relative_path(root, path), error.line))
     if len(resolved) != 4:
         return (), SourceValue("acceptance-gate list must contain four sequential numbered items", problem_source)
     return resolved, None

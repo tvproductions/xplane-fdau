@@ -290,6 +290,24 @@ class AdherenceTests(unittest.TestCase):
         mismatch = next(item for item in self.findings(root) if item.code == "artifact.gate-drift" and item.node == "T1.2")
         self.assertIsNone(mismatch.gate)
 
+    def test_design_task_markers_are_formatting_and_do_not_deliver_backlog_gates(self) -> None:
+        for prefix in ("- ", "- [ ] ", "- [x] ", "1. ", "1. [ ] ", "1. [x] "):
+            with self.subTest(prefix=prefix):
+                root = self.fixture_root()
+                design = "docs/superpowers/specs/t1-design.md"
+                replace_text(root, design, "- Frozen parser remains open.", prefix + "Frozen parser remains open.")
+                loaded = load_audit(root)
+                self.assertNotIn("artifact.gate-drift", {item.code for item in adherence_findings(loaded)})
+                source = next(item for item in loaded.sources.design_acceptance if item.child == "T1.2").statements[0]
+                self.assertEqual("Frozen parser remains open.", source.value)
+                self.assertIsNone(source.checked)
+                self.assertEqual(22, source.source.line)
+                child = next(item for item in loaded.snapshot.backlog.children if item.id == "T1.2")
+                self.assertEqual(0, child.gates.satisfied)
+                self.assertFalse(child.gates.items[0].satisfied)
+                replace_text(root, design, "Frozen parser remains open.", "Frozen parser remains changed.")
+                self.assertIn("artifact.gate-drift", self.codes(root))
+
     def test_unlinked_approved_design_does_not_replace_the_explicit_link(self) -> None:
         root = self.fixture_root()
         acceptance = AUDIT_VALID_DESIGN_ACCEPTANCE.replace("Frozen parser remains open.", "Different unlinked criterion.")
@@ -322,6 +340,13 @@ class AdherenceTests(unittest.TestCase):
         )
 
         self.assertNotIn("artifact.gate-drift", self.codes(root))
+
+        for marker in ("[ ] ", "[x] "):
+            for ordinal, label in enumerate(("First", "Second", "Third", "Fourth"), 1):
+                replace_text(root, "docs/superpowers/specs/t1-design.md", f"{ordinal}. {label} exact gate.", f"{ordinal}. {marker}{label} exact gate.")
+            self.assertNotIn("artifact.gate-drift", self.codes(root))
+            for ordinal, label in enumerate(("First", "Second", "Third", "Fourth"), 1):
+                replace_text(root, "docs/superpowers/specs/t1-design.md", f"{ordinal}. {marker}{label} exact gate.", f"{ordinal}. {label} exact gate.")
 
         replace_text(root, "docs/superpowers/specs/t1-design.md", "Its acceptance gates are:", "Acceptance gates:")
         self.assertIn("artifact.gate-drift", self.codes(root))

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+import os
 from pathlib import Path
-import subprocess
 import sys
 import tempfile
 import unittest
@@ -15,9 +15,28 @@ POLICY_PATH = "docs/superpowers/specs/2026-09-05-t1-3-audit-policy-supplement-de
 sys.path.insert(0, str(SCRIPTS))
 
 from backlog.policy import PolicyError, allowed_kinds, load_policy  # noqa: E402  # ty: ignore[unresolved-import]
+from tests.backlog_audit_support import initialize_git, run_git  # noqa: E402
 
 
 class AuditPolicyTests(unittest.TestCase):
+    def test_fixture_commits_ignore_inherited_signing_and_hooks(self) -> None:
+        directory = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        hook = directory / "pre-commit"
+        hook.write_text("#!/bin/sh\nexit 91\n", encoding="utf-8", newline="\n")
+        hook.chmod(0o755)
+        for settings in (
+            (("commit.gpgsign", "true"), ("gpg.program", str(directory / "unavailable-signer"))),
+            (("commit.gpgsign", "false"), ("core.hooksPath", str(directory))),
+        ):
+            with self.subTest(settings=settings):
+                environment = {"GIT_CONFIG_COUNT": str(len(settings))}
+                for index, (key, value) in enumerate(settings):
+                    environment[f"GIT_CONFIG_KEY_{index}"] = key
+                    environment[f"GIT_CONFIG_VALUE_{index}"] = value
+                with patch.dict(os.environ, environment):
+                    root = self.make_repository()
+                    self.assertEqual(3, len(load_policy(root).historical))
+
     def make_repository(self, transform: Callable[[str], str] | None = None) -> Path:
         temporary = Path(self.enterContext(tempfile.TemporaryDirectory()))
         target = temporary / POLICY_PATH
@@ -26,29 +45,8 @@ class AuditPolicyTests(unittest.TestCase):
         if transform is not None:
             text = transform(text)
         target.write_text(text, encoding="utf-8", newline="\n")
-        self.run_git(temporary, "init", "-q")
-        self.run_git(temporary, "config", "core.autocrlf", "false")
-        self.run_git(temporary, "add", POLICY_PATH)
-        self.run_git(
-            temporary,
-            "-c",
-            "user.name=Fixture Owner",
-            "-c",
-            "user.email=fixture@example.invalid",
-            "commit",
-            "-qm",
-            "fixture policy",
-        )
+        initialize_git(temporary)
         return temporary
-
-    def run_git(self, root: Path, *arguments: str) -> None:
-        subprocess.run(
-            ("git", "-C", str(root), *arguments),
-            check=True,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-        )
 
     def test_approved_committed_policy_loads_exact_historical_pins(self) -> None:
         policy = load_policy(ROOT)
@@ -109,7 +107,7 @@ class AuditPolicyTests(unittest.TestCase):
                 target = root / POLICY_PATH
                 target.write_text(target.read_text(encoding="utf-8") + "\nEdited.\n", encoding="utf-8")
                 if staged:
-                    self.run_git(root, "add", POLICY_PATH)
+                    run_git(root, "add", POLICY_PATH)
                 with self.assertRaises(PolicyError) as raised:
                     load_policy(root)
                 self.assertEqual("policy.unavailable", raised.exception.code)

@@ -44,12 +44,9 @@ def _source_for_child(loaded: AuditLoad, index: int, child: BacklogChild) -> Sou
     return child.source
 
 
-def _roadmap_findings(loaded: AuditLoad) -> list[Finding]:
-    if "ROADMAP.md" in loaded.invalid_paths:
-        return []
+def _roadmap_identities(loaded: AuditLoad) -> dict[str, list[RoadmapNode]]:
     roadmap = loaded.snapshot.roadmap
-    findings: list[Finding] = []
-    nodes = (
+    nodes: tuple[RoadmapNode, ...] = (
         *roadmap.milestones,
         *roadmap.epics,
         *roadmap.local_children,
@@ -59,20 +56,32 @@ def _roadmap_findings(loaded: AuditLoad) -> list[Finding]:
     identities: dict[str, list[RoadmapNode]] = {}
     for node in nodes:
         identities.setdefault(node.id, []).append(node)
+    return identities
+
+
+def _roadmap_findings(loaded: AuditLoad) -> list[Finding]:
+    if "ROADMAP.md" in loaded.invalid_paths:
+        return []
+    roadmap = loaded.snapshot.roadmap
+    findings: list[Finding] = []
+    identities = _roadmap_identities(loaded)
     for identity, entries in identities.items():
         ordered = sorted(entries, key=lambda entry: entry.source.line)
-        kinds = {entry.kind for entry in ordered}
-        for entry in ordered[1:]:
-            code = "roadmap.duplicate-id" if len(kinds) == 1 else "roadmap.kind-conflict"
+        prior_kinds: set[str] = set()
+        for index, entry in enumerate(ordered):
+            if index == 0:
+                prior_kinds.add(entry.kind)
+                continue
+            code = "roadmap.duplicate-id" if entry.kind in prior_kinds else "roadmap.kind-conflict"
             findings.append(_finding(code, entry.source.path, entry.source.line, identity, f"roadmap identity {identity} is not unique"))
+            prior_kinds.add(entry.kind)
 
     epics: dict[str, list[Epic]] = {}
     for epic in roadmap.epics:
         epics.setdefault(epic.id, []).append(epic)
     for child in roadmap.local_children:
-        prefix = child.id.rsplit(".", 1)[0]
         owner = epics.get(child.epic, [])
-        if prefix != child.epic or len(owner) != 1 or child.id not in owner[0].children:
+        if len(owner) != 1 or child.id not in owner[0].children:
             findings.append(
                 _finding(
                     "roadmap.epic-mismatch",
@@ -91,7 +100,6 @@ def _roadmap_findings(loaded: AuditLoad) -> list[Finding]:
     for node in dependency_nodes:
         seen: set[str] = set()
         edges: list[str] = []
-        source_valid = node.id in valid_local
         for dependency in node.dependencies:
             if dependency in seen:
                 findings.append(
@@ -103,7 +111,6 @@ def _roadmap_findings(loaded: AuditLoad) -> list[Finding]:
                         f"dependency {dependency} is repeated for {node.id}",
                     )
                 )
-                source_valid = False
                 continue
             seen.add(dependency)
             entries = identities.get(dependency, [])
@@ -118,7 +125,6 @@ def _roadmap_findings(loaded: AuditLoad) -> list[Finding]:
                             "M0 is not a valid milestone prerequisite",
                         )
                     )
-                    source_valid = False
                 continue
             if not entries:
                 findings.append(
@@ -130,9 +136,8 @@ def _roadmap_findings(loaded: AuditLoad) -> list[Finding]:
                         f"dependency {dependency} is unknown",
                     )
                 )
-                source_valid = False
             elif len(entries) != 1:
-                source_valid = False
+                continue
             elif entries[0].kind != "local_child":
                 findings.append(
                     _finding(
@@ -143,10 +148,9 @@ def _roadmap_findings(loaded: AuditLoad) -> list[Finding]:
                         f"dependency {dependency} is not a local child",
                     )
                 )
-                source_valid = False
             else:
                 edges.append(dependency)
-        if source_valid and isinstance(node, RoadmapChild):
+        if node.id in valid_local and isinstance(node, RoadmapChild):
             valid_edges[node.id] = tuple(edge for edge in edges if edge in valid_local)
 
     colors = {child_id: "white" for child_id in valid_local}
@@ -187,17 +191,29 @@ def _backlog_findings(loaded: AuditLoad) -> list[Finding]:
     for index, child in children:
         rows_by_child.setdefault(child.id, []).append((index, child))
 
-    all_nodes = {
-        node.id: node
-        for node in (
-            *roadmap.milestones,
-            *roadmap.epics,
-            *roadmap.local_children,
-            *roadmap.release_gates,
-            *roadmap.external_boundaries,
-        )
+    for index, child in children:
+        source = _source_for_child(loaded, index, child)
+        actual_satisfied = sum(item.satisfied for item in child.gates.items)
+        if (child.gates.satisfied, child.gates.total) != (actual_satisfied, len(child.gates.items)):
+            findings.append(
+                _finding(
+                    "backlog.gate-count",
+                    source.path,
+                    source.line,
+                    child.id,
+                    f"displayed gate count for {child.id} differs from its task list",
+                )
+            )
+    if "ROADMAP.md" in loaded.invalid_paths:
+        return findings
+
+    all_nodes = _roadmap_identities(loaded)
+    roadmap_children: dict[str, list[RoadmapChild]] = {}
+    for child in roadmap.local_children:
+        roadmap_children.setdefault(child.id, []).append(child)
+    expected = {
+        child_id: children_for_id[0] for child_id, children_for_id in roadmap_children.items() if len(children_for_id) == 1 and len(all_nodes[child_id]) == 1
     }
-    expected = {child.id: child for child in roadmap.local_children}
     for child_id, rows in rows_by_child.items():
         for index, child in rows[1:]:
             source = _source_for_child(loaded, index, child)
@@ -210,18 +226,19 @@ def _backlog_findings(loaded: AuditLoad) -> list[Finding]:
                     f"backlog child {child_id} appears more than once",
                 )
             )
-        if child_id in expected:
+        if child_id in roadmap_children:
             continue
         for index, child in rows:
             source = _source_for_child(loaded, index, child)
+            if child_id in all_nodes and len(all_nodes[child_id]) != 1:
+                continue
             code = "backlog.child-kind" if child_id in all_nodes else "backlog.unknown-child"
             findings.append(_finding(code, source.path, source.line, child_id, f"backlog child {child_id} is not a roadmap local child"))
     for child_id in expected:
         if child_id not in rows_by_child:
             findings.append(_finding("backlog.missing-child", backlog.source_path, None, child_id, f"backlog child {child_id} is missing"))
 
-    roadmap_valid = "ROADMAP.md" not in loaded.invalid_paths
-    local_rows_valid = roadmap_valid and all(len(rows) == 1 and child_id in expected for child_id, rows in rows_by_child.items())
+    local_rows_valid = len(expected) == len(roadmap.local_children) and all(len(rows) == 1 and child_id in expected for child_id, rows in rows_by_child.items())
     if local_rows_valid and set(rows_by_child) == set(expected):
         actual_order = tuple(child.id for _index, child in children)
         expected_order = tuple(child.id for child in roadmap.local_children)
@@ -240,35 +257,35 @@ def _backlog_findings(loaded: AuditLoad) -> list[Finding]:
                     )
                     break
 
-    if roadmap_valid:
-        for index, child in children:
-            if child.id not in expected or len(rows_by_child[child.id]) != 1:
-                continue
-            source = _source_for_child(loaded, index, child)
-            expected_child = expected[child.id]
-            outcome = loaded.sources.inventory_rows[index].outcome if index < len(loaded.sources.inventory_rows) else ""
-            if _fold(outcome) != _fold(expected_child.title):
-                findings.append(
-                    _finding(
-                        "backlog.outcome-drift",
-                        source.path,
-                        source.line,
-                        child.id,
-                        f"backlog outcome for {child.id} differs from ROADMAP.md",
-                    )
+    for index, child in children:
+        if child.id not in expected or len(rows_by_child[child.id]) != 1:
+            continue
+        source = _source_for_child(loaded, index, child)
+        expected_child = expected[child.id]
+        outcome = loaded.sources.inventory_rows[index].outcome if index < len(loaded.sources.inventory_rows) else ""
+        if _fold(outcome) != _fold(expected_child.title):
+            findings.append(
+                _finding(
+                    "backlog.outcome-drift",
+                    source.path,
+                    source.line,
+                    child.id,
+                    f"backlog outcome for {child.id} differs from ROADMAP.md",
                 )
-            if child.dependencies != expected_child.dependencies:
-                findings.append(
-                    _finding(
-                        "backlog.dependency-drift",
-                        source.path,
-                        source.line,
-                        child.id,
-                        f"backlog dependencies for {child.id} differ from ROADMAP.md",
-                    )
+            )
+        if child.dependencies != expected_child.dependencies:
+            findings.append(
+                _finding(
+                    "backlog.dependency-drift",
+                    source.path,
+                    source.line,
+                    child.id,
+                    f"backlog dependencies for {child.id} differ from ROADMAP.md",
                 )
+            )
 
-    if backlog.active_child is not None and backlog.active_child not in expected:
+    selection_entries = all_nodes.get(backlog.active_child, []) if backlog.active_child is not None else []
+    if backlog.active_child is not None and (not selection_entries or len(selection_entries) == 1 and selection_entries[0].kind != "local_child"):
         source = loaded.sources.selection.source if loaded.sources.selection is not None else None
         findings.append(
             _finding(
@@ -280,84 +297,97 @@ def _backlog_findings(loaded: AuditLoad) -> list[Finding]:
             )
         )
 
-    for index, child in children:
-        source = _source_for_child(loaded, index, child)
-        actual_satisfied = sum(item.satisfied for item in child.gates.items)
-        if (child.gates.satisfied, child.gates.total) != (actual_satisfied, len(child.gates.items)):
+    for heading in loaded.sources.gate_headings:
+        if heading.child in roadmap_children and heading.child not in expected:
+            continue
+        expected_child = expected.get(heading.child)
+        inventory = rows_by_child.get(heading.child, [])
+        if expected_child is None or len(inventory) != 1:
             findings.append(
                 _finding(
-                    "backlog.gate-count",
-                    source.path,
-                    source.line,
-                    child.id,
-                    f"displayed gate count for {child.id} differs from its task list",
+                    "backlog.orphan-gates",
+                    heading.source.path,
+                    heading.source.line,
+                    heading.child,
+                    f"acceptance-gate heading {heading.child} has no unique roadmap-backed inventory child",
                 )
             )
-
-    if roadmap_valid:
-        for heading in loaded.sources.gate_headings:
-            expected_child = expected.get(heading.child)
-            inventory = rows_by_child.get(heading.child, [])
-            if expected_child is None or len(inventory) != 1:
-                findings.append(
-                    _finding(
-                        "backlog.orphan-gates",
-                        heading.source.path,
-                        heading.source.line,
-                        heading.child,
-                        f"acceptance-gate heading {heading.child} has no unique roadmap-backed inventory child",
-                    )
+        elif _fold(heading.title) != _fold(expected_child.title):
+            findings.append(
+                _finding(
+                    "backlog.gate-title",
+                    heading.source.path,
+                    heading.source.line,
+                    heading.child,
+                    f"acceptance-gate title for {heading.child} differs from ROADMAP.md",
                 )
-            elif _fold(heading.title) != _fold(expected_child.title):
-                findings.append(
-                    _finding(
-                        "backlog.gate-title",
-                        heading.source.path,
-                        heading.source.line,
-                        heading.child,
-                        f"acceptance-gate title for {heading.child} differs from ROADMAP.md",
-                    )
-                )
+            )
     return findings
 
 
 def _release_findings(loaded: AuditLoad) -> list[Finding]:
-    if "BACKLOG.md" in loaded.invalid_paths or "ROADMAP.md" in loaded.invalid_paths:
+    if "BACKLOG.md" in loaded.invalid_paths:
         return []
-    roadmap_gates = {gate.id: gate for gate in loaded.snapshot.roadmap.release_gates}
     rows_by_gate: dict[str, list[int]] = {}
     for index, gate in enumerate(loaded.snapshot.backlog.release_gates):
         rows_by_gate.setdefault(gate.id, []).append(index)
     findings: list[Finding] = []
-    for gate_id in roadmap_gates:
+    for gate_id, indexes in rows_by_gate.items():
+        if len(indexes) == 1:
+            continue
+        for index in indexes:
+            source = loaded.sources.release_dashboard[index].source if index < len(loaded.sources.release_dashboard) else None
+            findings.append(
+                _finding(
+                    "release.inventory",
+                    "BACKLOG.md",
+                    source.line if source is not None else None,
+                    gate_id,
+                    f"release dashboard entry {gate_id} is not unique",
+                )
+            )
+    if "ROADMAP.md" in loaded.invalid_paths:
+        return findings
+
+    identities = _roadmap_identities(loaded)
+    roadmap_gates: dict[str, list[ReleaseGate]] = {}
+    for gate in loaded.snapshot.roadmap.release_gates:
+        roadmap_gates.setdefault(gate.id, []).append(gate)
+    expected = {gate_id: gates[0] for gate_id, gates in roadmap_gates.items() if len(gates) == 1 and len(identities[gate_id]) == 1}
+    for gate_id in expected:
         if gate_id not in rows_by_gate:
             findings.append(_finding("release.inventory", "BACKLOG.md", None, gate_id, f"release gate {gate_id} is missing from the dashboard"))
     for gate_id, indexes in rows_by_gate.items():
-        for index in indexes:
-            source = loaded.sources.release_dashboard[index].source if index < len(loaded.sources.release_dashboard) else None
-            if gate_id not in roadmap_gates or len(indexes) > 1:
+        if len(indexes) != 1:
+            continue
+        entries = identities.get(gate_id, [])
+        index = indexes[0]
+        source = loaded.sources.release_dashboard[index].source if index < len(loaded.sources.release_dashboard) else None
+        if not entries:
+            findings.append(
+                _finding(
+                    "release.inventory",
+                    "BACKLOG.md",
+                    source.line if source is not None else None,
+                    gate_id,
+                    f"release dashboard entry {gate_id} is not a roadmap release gate",
+                )
+            )
+        elif gate_id not in expected:
+            continue
+        elif index < len(loaded.sources.release_dashboard):
+            dashboard = loaded.sources.release_dashboard[index]
+            roadmap_gate = expected[gate_id]
+            if _fold(dashboard.outcome) != _fold(roadmap_gate.title) or dashboard.dependencies != roadmap_gate.dependencies:
                 findings.append(
                     _finding(
-                        "release.inventory",
-                        "BACKLOG.md",
-                        source.line if source is not None else None,
+                        "release.definition-drift",
+                        dashboard.source.path,
+                        dashboard.source.line,
                         gate_id,
-                        f"release dashboard entry {gate_id} is not a unique roadmap release gate",
+                        f"release dashboard definition for {gate_id} differs from ROADMAP.md",
                     )
                 )
-            elif index < len(loaded.sources.release_dashboard):
-                dashboard = loaded.sources.release_dashboard[index]
-                roadmap_gate = roadmap_gates[gate_id]
-                if _fold(dashboard.outcome) != _fold(roadmap_gate.title) or dashboard.dependencies != roadmap_gate.dependencies:
-                    findings.append(
-                        _finding(
-                            "release.definition-drift",
-                            dashboard.source.path,
-                            dashboard.source.line,
-                            gate_id,
-                            f"release dashboard definition for {gate_id} differs from ROADMAP.md",
-                        )
-                    )
     return findings
 
 

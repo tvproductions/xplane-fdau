@@ -72,14 +72,6 @@ class StructuralRulesTests(unittest.TestCase):
                 "T1.1",
             ),
             (
-                "epic mismatch",
-                "ROADMAP.md",
-                "## T1 — Repository governance tooling epic",
-                "## T2 — Repository governance tooling epic",
-                "roadmap.epic-mismatch",
-                "T1.1",
-            ),
-            (
                 "unknown dependency",
                 "ROADMAP.md",
                 T12_ROADMAP,
@@ -118,9 +110,107 @@ class StructuralRulesTests(unittest.TestCase):
                 replace_text(root, path, old, new)
                 self.assert_finding(root, code, "ROADMAP.md", node)
 
+        loaded = load_audit(self.fixture_root())
+        first_child, *remaining_children = loaded.snapshot.roadmap.local_children
+        roadmap = replace(
+            loaded.snapshot.roadmap,
+            local_children=(replace(first_child, epic="T2"), *remaining_children),
+        )
+        changed = replace(loaded, snapshot=replace(loaded.snapshot, roadmap=roadmap))
+        finding = next(item for item in structural_findings(changed) if item.code == "roadmap.epic-mismatch")
+        self.assertEqual(("ROADMAP.md", "T1.1", None), (finding.path, finding.node, finding.gate))
+        self.assertIsNotNone(finding.line)
+
         root = self.fixture_root()
         replace_text(root, "ROADMAP.md", T11 + " `M0` |", T11 + " `T1.2` |")
         self.assert_finding(root, "roadmap.dependency-cycle", "ROADMAP.md", "T1.2")
+
+    def test_standards_epic_owns_canonical_s_children(self) -> None:
+        root = self.fixture_root()
+        standards = """## S — Standards epic
+
+| Child | Outcome | Depends on | External prerequisite |
+| --- | --- | --- | --- |
+| `S1.1` | First standards outcome | `M0` | — |
+| `S2.1` | Second standards outcome | `M0` | — |
+| `S2.2` | Third standards outcome | `M0` | — |
+| `S3.1` | Fourth standards outcome | `M0` | — |
+| `S4.1` | Fifth standards outcome | `M0` | — |
+
+"""
+        replace_text(root, "ROADMAP.md", "## Release gates", standards + "## Release gates")
+
+        mismatches = [item.node for item in structural_findings(load_audit(root)) if item.code == "roadmap.epic-mismatch"]
+
+        self.assertEqual([], mismatches)
+
+    def test_cycle_retains_valid_edge_when_a_sibling_dependency_is_invalid(self) -> None:
+        root = self.fixture_root()
+        replace_text(root, "ROADMAP.md", T11 + " `M0` |", T11 + " `T1.2` |")
+        replace_text(root, "ROADMAP.md", T12_ROADMAP, T12_ROADMAP.replace("`T1.1`", "`T1.1`, `T9.9`"))
+
+        codes = {item.code for item in structural_findings(load_audit(root))}
+
+        self.assertTrue({"roadmap.dependency-cycle", "roadmap.unknown-dependency"} <= codes)
+
+    def test_combined_identity_collision_retains_same_kind_and_cross_kind_codes(self) -> None:
+        root = self.fixture_root()
+        duplicate = "| `T1.1` | Alternate same-kind outcome | `M0` |"
+        replace_text(root, "ROADMAP.md", T11 + " `M0` |", T11 + " `M0` |\n" + duplicate)
+        replace_text(
+            root,
+            "ROADMAP.md",
+            "| `I1.1` | Fixture contract adoption | Fixture consumer | Adoption begins after `T1.2`. |",
+            "| `T1.1` | Fixture contract adoption | Fixture consumer | Adoption begins after `T1.2`. |",
+        )
+
+        codes = {item.code for item in structural_findings(load_audit(root))}
+
+        self.assertTrue({"roadmap.duplicate-id", "roadmap.kind-conflict"} <= codes)
+
+    def test_invalid_or_ambiguous_roadmap_does_not_cascade_cross_file_findings(self) -> None:
+        invalid_root = self.fixture_root()
+        replace_text(
+            invalid_root,
+            "ROADMAP.md",
+            "| --- | --- |\n| `M0` | Frozen migration baseline |",
+            "| --- | invalid |\n| `M0` | Frozen migration baseline |",
+        )
+        replace_text(invalid_root, "BACKLOG.md", "- Active child: —.", "- Active child: `T1.2`.")
+        replace_text(invalid_root, "BACKLOG.md", "1/1", "0/1")
+
+        invalid_codes = {item.code for item in structural_findings(load_audit(invalid_root))}
+
+        self.assertEqual({"backlog.gate-count"}, invalid_codes)
+
+        ambiguous_root = self.fixture_root()
+        duplicate = "| `T1.1` | Alternate same-kind outcome | `M0` |"
+        replace_text(ambiguous_root, "ROADMAP.md", T11 + " `M0` |", T11 + " `M0` |\n" + duplicate)
+
+        ambiguous_codes = {item.code for item in structural_findings(load_audit(ambiguous_root))}
+
+        self.assertNotIn("backlog.outcome-drift", ambiguous_codes)
+        self.assertNotIn("backlog.dependency-drift", ambiguous_codes)
+        self.assertNotIn("backlog.child-order", ambiguous_codes)
+
+        release_root = self.fixture_root()
+        roadmap_gate = "| `G1` | Canonical vertical-slice reconciliation | `T1.2` |"
+        replace_text(
+            release_root,
+            "ROADMAP.md",
+            roadmap_gate,
+            roadmap_gate + "\n| `G1` | Alternate release outcome | `T1.2` |",
+        )
+        replace_text(
+            release_root,
+            "BACKLOG.md",
+            "Canonical vertical-slice reconciliation",
+            "Changed release definition",
+        )
+
+        release_codes = {item.code for item in structural_findings(load_audit(release_root))}
+
+        self.assertNotIn("release.definition-drift", release_codes)
 
     def test_backlog_inventory_and_selection_rules(self) -> None:
         cases = (

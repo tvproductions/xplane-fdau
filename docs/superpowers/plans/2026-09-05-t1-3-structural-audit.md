@@ -83,6 +83,7 @@ All implementation paths in the table are relative to
 | `backlog/evidence.py` (new) | Contained regular-file and index/HEAD evidence eligibility |
 | `backlog/audit.py` (new) | Independent loading, rule composition, finding sort |
 | `backlog/policy.py` (new) | Approved policy loading, historical admission data, evidence slot matrix |
+| `backlog/findings.py` (new) | Single shared deterministic finding-order key |
 | `backlog/report.py` | Findings and validity in existing human/JSON report |
 | `backlog_status.py` | `audit` command and audited status exit behavior |
 
@@ -250,6 +251,9 @@ Each test owns its temporary directory and mutations.
 
 The model and source-extraction changes retain typed cross-epic declarations
 and their source locations, using the source-fact separation introduced in Task 1.
+Create `backlog/findings.py` for the shared `finding_key` contract; use it in
+audit, adherence, and structural rules while preserving the public audit import.
+This review correction avoids duplicated ordering and later composition cycles.
 
 **Interfaces:** Add `adherence_findings(loaded: AuditLoad) -> tuple[Finding, ...]`.
 Audit source facts include recognized roadmap cross-epic declarations, tied

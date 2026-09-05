@@ -17,8 +17,10 @@ governing-artifact mismatches. Inspection showed that D1.1 and D1.3 use the
 approved generic reference form: each managed acceptance subsection refers to
 the exact four numbered acceptance gates in its unique earlier same-child
 level-two section. Resolving that form from the retained source lines removed
-those two extraction false positives. Task 3 now reports the following 10
-genuine governing-artifact mismatches. No authority document was changed.
+those two extraction false positives. The first review then required every
+independent ordinal and count mismatch to be reported. Task 3 now reports 22
+findings across the following genuine governing-artifact mismatches. No
+authority document was changed.
 
 ## Historical dispositions
 
@@ -42,9 +44,13 @@ replacement-artifact path under the approved adherence rule.
 
 ### C2.4
 
-Finding: `artifact.gate-drift` |
-`docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md:1872`
-| node `C2.4` | gate 3.
+Path: `docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md`
+
+Findings:
+
+- `artifact.gate-drift` | design line 1868 | node `C2.4` | gate none (count)
+- `artifact.gate-drift` | design line 1872 | node `C2.4` | gate 3
+- `artifact.gate-drift` | design line 1873 | node `C2.4` | gate 4
 
 Backlog:
 
@@ -63,9 +69,13 @@ Design:
 
 ### C3.3
 
-Finding: `artifact.gate-drift` |
-`docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md:1896`
-| node `C3.3` | gate 1.
+Path: `docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md`
+
+Findings:
+
+- `artifact.gate-drift` | design line 1896 | node `C3.3` | gate 1
+- `artifact.gate-drift` | design line 1898 | node `C3.3` | gate 2
+- `artifact.gate-drift` | design line 1900 | node `C3.3` | gate 3
 
 Backlog:
 
@@ -96,9 +106,14 @@ occurs.
 
 ### T2.2
 
-Finding: `artifact.gate-drift` |
-`docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md:360`
-| node `T2.2` | gate 1.
+Path: `docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md`
+
+Findings:
+
+- `artifact.gate-drift` | design line 360 | node `T2.2` | gate 1
+- `artifact.gate-drift` | design line 363 | node `T2.2` | gate 2
+- `artifact.gate-drift` | design line 367 | node `T2.2` | gate 3
+- `artifact.gate-drift` | design line 369 | node `T2.2` | gate 4
 
 Backlog:
 
@@ -116,9 +131,13 @@ Design:
 
 ### T3.1
 
-Finding: `artifact.gate-drift` |
-`docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md:376`
-| node `T3.1` | gate 2.
+Path: `docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md`
+
+Findings:
+
+- `artifact.gate-drift` | design line 376 | node `T3.1` | gate 2
+- `artifact.gate-drift` | design line 379 | node `T3.1` | gate 3
+- `artifact.gate-drift` | design line 382 | node `T3.1` | gate 4
 
 Backlog:
 
@@ -138,9 +157,14 @@ Design:
 
 ### D1.2
 
-Finding: `artifact.gate-drift` |
-`docs/superpowers/specs/2026-08-23-xplane-fdau-acquisition-recording-projection-pinning-contracts-design.md:3972`
-| node `D1.2` | gate 1.
+Path: `docs/superpowers/specs/2026-08-23-xplane-fdau-acquisition-recording-projection-pinning-contracts-design.md`
+
+Findings:
+
+- `artifact.gate-drift` | design line 3972 | node `D1.2` | gate 1
+- `artifact.gate-drift` | design line 3976 | node `D1.2` | gate 2
+- `artifact.gate-drift` | design line 3980 | node `D1.2` | gate 3
+- `artifact.gate-drift` | design line 3985 | node `D1.2` | gate 4
 
 Backlog:
 

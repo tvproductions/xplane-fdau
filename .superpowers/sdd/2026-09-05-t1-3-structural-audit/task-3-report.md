@@ -2,7 +2,10 @@
 
 Status: DONE_WITH_CONCERNS
 
-Implementation commit: `a51186d` (`feat: audit governing artifacts and acceptance criteria`)
+Implementation commits:
+
+- `a51186d` (`feat: audit governing artifacts and acceptance criteria`)
+- `4f824c9` (`fix: close task 3 adherence review findings`)
 
 ## Changes
 
@@ -130,21 +133,33 @@ uv run python -c "from pathlib import Path; import sys; sys.path.insert(0, str(P
 Result:
 
 ```text
-load 0 structural 0 adherence 10
+load 0 structural 0 adherence 22
 artifact.historical.disposition|docs/superpowers/plans/2026-08-16-xplane-fdau-architecture-propagation.md:5|None|None
 artifact.historical.disposition|docs/superpowers/plans/2026-08-22-q4xpcc-contract-handoff-readiness-authority.md:5|None|None
 artifact.historical.disposition|docs/superpowers/plans/2026-09-05-gz-skills-adoption.md:5|None|None
+artifact.gate-drift|docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md:1868|C2.4|None
 artifact.gate-drift|docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md:1872|C2.4|3
+artifact.gate-drift|docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md:1873|C2.4|4
 artifact.gate-drift|docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md:1896|C3.3|1
+artifact.gate-drift|docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md:1898|C3.3|2
+artifact.gate-drift|docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md:1900|C3.3|3
 artifact.gate-drift|docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md:1954|C4.4|5
 artifact.gate-drift|docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md:360|T2.2|1
+artifact.gate-drift|docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md:363|T2.2|2
+artifact.gate-drift|docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md:367|T2.2|3
+artifact.gate-drift|docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md:369|T2.2|4
 artifact.gate-drift|docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md:376|T3.1|2
+artifact.gate-drift|docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md:379|T3.1|3
+artifact.gate-drift|docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md:382|T3.1|4
 artifact.gate-drift|docs/superpowers/specs/2026-08-23-xplane-fdau-acquisition-recording-projection-pinning-contracts-design.md:3972|D1.2|1
+artifact.gate-drift|docs/superpowers/specs/2026-08-23-xplane-fdau-acquisition-recording-projection-pinning-contracts-design.md:3976|D1.2|2
+artifact.gate-drift|docs/superpowers/specs/2026-08-23-xplane-fdau-acquisition-recording-projection-pinning-contracts-design.md:3980|D1.2|3
+artifact.gate-drift|docs/superpowers/specs/2026-08-23-xplane-fdau-acquisition-recording-projection-pinning-contracts-design.md:3985|D1.2|4
 artifact.historical.disposition|docs/superpowers/specs/2026-09-05-gz-skills-adoption-design.md:5|None|None
 ```
 
 All exact source/backlog comparisons and the two corrected extraction findings
-are recorded in `task-3-reconciliation.md`. The ten genuine preserved-document
+are recorded in `task-3-reconciliation.md`. The 22 genuine preserved-document
 findings are routed to Task 5 reconciliation. No roadmap, backlog, design, plan,
 or other governing authority bytes were changed.
 
@@ -166,7 +181,101 @@ or other governing authority bytes were changed.
 
 ## Concerns
 
-The ten real-repository findings are genuine under the approved exact-text and
+The 22 real-repository findings are genuine under the approved exact-text and
 historical-disposition rules. They intentionally remain visible and block a
 future integrated audit until reviewed reconciliation. Task 3 did not alter the
 preserved documents to make the audit pass.
+
+## Review fix round 1
+
+Review commit baseline: `580469e`; reviewed Task 3 head: `6a9886f`.
+
+RED:
+
+```text
+uv run python -m unittest tests.test_backlog_status_adherence.AdherenceTests.test_unresolved_managed_reference_is_never_treated_as_literal_gate_text tests.test_backlog_status_adherence.AdherenceTests.test_gate_drift_reports_title_each_ordinal_and_count_independently -v
+Ran 2 tests in 0.145s
+FAILED (failures=5)
+
+uv run python -m unittest tests.test_backlog_status_audit.AuditLoadingTests.test_finding_key_is_reexported_from_neutral_module -v
+Ran 1 test in 0.000s
+FAILED (failures=1)
+```
+
+GREEN before the final full gate:
+
+```text
+uv run python -m unittest tests.test_backlog_status_adherence -v
+Ran 23 tests in 1.098s
+OK
+
+uv run python -m unittest tests.test_backlog_status_audit tests.test_backlog_status_rules tests.test_backlog_status_model tests.test_backlog_status_parse -q
+Ran 50 tests in 1.834s
+OK
+```
+
+Additional fail-closed reference RED:
+
+```text
+uv run python -m unittest tests.test_backlog_status_adherence.AdherenceTests.test_managed_reference_must_be_the_only_acceptance_statement -v
+test_managed_reference_must_be_the_only_acceptance_statement ... ERROR
+StopIteration
+Ran 1 test in 0.033s
+FAILED (errors=1)
+```
+
+The exact managed reference plus a sibling acceptance statement was incorrectly
+treated as ordinary literal text. The resolver now treats any occurrence of the
+managed form as managed and requires it to be the subsection's sole statement.
+
+Final targeted GREEN:
+
+```text
+uv run python -m unittest tests.test_backlog_status_adherence.AdherenceTests.test_managed_reference_must_be_the_only_acceptance_statement tests.test_backlog_status_adherence.AdherenceTests.test_unresolved_managed_reference_is_never_treated_as_literal_gate_text tests.test_backlog_status_adherence.AdherenceTests.test_gate_drift_reports_title_each_ordinal_and_count_independently -v
+Ran 3 tests in 0.167s
+OK
+```
+
+Final focused regression:
+
+```text
+uv run python -m unittest tests.test_backlog_status_adherence tests.test_backlog_status_audit tests.test_backlog_status_rules tests.test_backlog_status_model tests.test_backlog_status_parse -q
+Ran 74 tests in 2.375s
+OK
+```
+
+Final complete gate:
+
+```text
+uv run python tools/quality.py check
+Ran 333 tests in 6.530s
+Ran 333 tests under coverage in 7.049s
+TOTAL 1527 statements, 98 missed, 94% coverage
+Interrogate: 43.6% (minimum 40.0%)
+exit 0
+```
+
+Final hidden-source and documentation controls:
+
+```text
+uv run ruff check --no-force-exclude .codex/skills/backlog-status/scripts
+All checks passed!
+
+uv run ruff format --check --no-force-exclude .codex/skills/backlog-status/scripts
+11 files already formatted
+
+uv run ty check .codex/skills/backlog-status/scripts
+All checks passed!
+
+uv run mkdocs build --strict
+Documentation built in 1.31 seconds
+
+git diff --check
+exit 0, no output
+```
+
+The review fixes add a source-located managed-reference resolution problem,
+report title drift, every differing ordinal, and count drift independently,
+and centralize `finding_key` in neutral `backlog/findings.py`. `backlog.audit`
+continues to re-export the public import, while adherence and structural rules
+consume the same function.

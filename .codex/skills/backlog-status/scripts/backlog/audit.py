@@ -65,6 +65,8 @@ def load_audit(root: Path) -> AuditLoad:
     backlog_release_sources = ()
     roadmap_release_sources = ()
     roadmap_cross_epic_sources = ()
+    backlog_current_section = None
+    roadmap_release_section = None
     artifact_metadata_sources = []
     design_acceptance_sources: list[DesignAcceptanceSource] = []
 
@@ -74,6 +76,7 @@ def load_audit(root: Path) -> AuditLoad:
         roadmap_sources = parse_roadmap_sources(roadmap_path)
         roadmap_release_sources = roadmap_sources.release_items
         roadmap_cross_epic_sources = roadmap_sources.cross_epic_designs
+        roadmap_release_section = roadmap_sources.release_section
     except MarkdownParseError as error:
         roadmap = _empty_roadmap()
         relative = _relative_path(resolved, error.path)
@@ -89,6 +92,7 @@ def load_audit(root: Path) -> AuditLoad:
         dashboard_sources = backlog_sources.release_dashboard
         gate_heading_sources = backlog_sources.gate_headings
         backlog_release_sources = backlog_sources.release_statements
+        backlog_current_section = backlog_sources.current_section
     except MarkdownParseError as error:
         backlog = _empty_backlog()
         relative = _relative_path(resolved, error.path)
@@ -155,6 +159,8 @@ def load_audit(root: Path) -> AuditLoad:
         tuple(backlog_release_sources),
         tuple(roadmap_release_sources),
         tuple(roadmap_cross_epic_sources),
+        backlog_current_section,
+        roadmap_release_section,
     )
     return AuditLoad(
         snapshot,

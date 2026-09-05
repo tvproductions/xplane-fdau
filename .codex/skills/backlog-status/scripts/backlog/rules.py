@@ -393,3 +393,48 @@ def structural_findings(loaded: AuditLoad) -> tuple[Finding, ...]:
     """Return independent roadmap, backlog, and dashboard consistency findings."""
     findings = [*_roadmap_findings(loaded), *_backlog_findings(loaded), *_release_findings(loaded)]
     return tuple(sorted(findings, key=finding_key))
+
+
+def release_authorization_findings(loaded: AuditLoad) -> tuple[Finding, ...]:
+    """Enforce the two exact managed release-prohibition forms independently."""
+    findings = []
+    if "BACKLOG.md" not in loaded.invalid_paths:
+        statements = loaded.sources.backlog_release_statements
+        expected = "- Release, tag, and package publication: prohibited pending their separate gates and authorization."
+        if len(statements) != 1 or _fold(statements[0].value) != expected:
+            source = statements[-1].source if statements else loaded.sources.backlog_current_section
+            findings.append(
+                _finding(
+                    "release.authorization",
+                    "BACKLOG.md",
+                    source.line if source else 1,
+                    None,
+                    "Current position requires exactly one unchanged release prohibition",
+                )
+            )
+        for child in loaded.snapshot.backlog.children:
+            if child.status == "released":
+                findings.append(
+                    _finding(
+                        "release.prohibited-state",
+                        child.source.path,
+                        child.source.line,
+                        child.id,
+                        "released child state is prohibited by the current release policy",
+                    )
+                )
+    if "ROADMAP.md" not in loaded.invalid_paths:
+        expected = "A separate release review authorizes publication."
+        statements = [item for item in loaded.sources.roadmap_release_items if _fold(item.value) == expected]
+        if len(statements) != 1 or statements[0].checked is not False:
+            source = statements[-1].source if statements else loaded.sources.roadmap_release_section
+            findings.append(
+                _finding(
+                    "release.authorization",
+                    "ROADMAP.md",
+                    source.line if source else 1,
+                    None,
+                    "release gates require exactly one open separate publication authorization checkbox",
+                )
+            )
+    return tuple(sorted(findings, key=finding_key))

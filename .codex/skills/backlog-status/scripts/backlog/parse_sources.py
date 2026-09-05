@@ -133,7 +133,7 @@ def _task_statements(path: Path, lines: tuple[_Line, ...], start: int, end: int)
 
 def parse_roadmap_sources(path: Path) -> RoadmapSources:
     lines = _read(path)
-    heading = _find_heading(path, lines, "## Version 0.1.0 release gates", required=False)
+    heading = _find_heading(path, lines, "## Version 0.1.0 release gates", required=True)
     release_items = () if heading is None else _task_statements(path, lines, heading + 1, _section_end(lines, heading, 2))
     declarations: list[CrossEpicDesignSource] = []
     current_epic: str | None = None
@@ -166,7 +166,7 @@ def parse_roadmap_sources(path: Path) -> RoadmapSources:
             anchor = members[0].split(".", 1)[0]
         declarations.append(CrossEpicDesignSource(anchor, members, _source(path, start.number)))
         index = cursor
-    return RoadmapSources(release_items, tuple(declarations))
+    return RoadmapSources(release_items, tuple(declarations), _source(path, lines[heading].number) if heading is not None else None)
 
 
 def _prefixed_statements(
@@ -224,6 +224,7 @@ def parse_backlog_sources(path: Path, backlog: Backlog) -> BacklogSources:
             current_end,
             "- Release, tag, and package publication:",
         ),
+        _source(path, lines[current_heading].number),
     )
 
 

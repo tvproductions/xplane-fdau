@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 import re
 from typing import Literal, cast
@@ -14,6 +15,7 @@ from backlog.model import (
     BacklogReleaseGate,
     ChildStatus,
     Epic,
+    EvidenceArtifact,
     ExternalBoundary,
     GateItem,
     GateState,
@@ -437,6 +439,50 @@ def parse_artifact(
         _optional_artifact_value(values["Approval"]),
         _completion_evidence(path, metadata[6][0].number, values["Completion evidence"]),
         SourceLocation(relative_path, title.number),
+    )
+
+
+def parse_evidence(root: Path, path: Path) -> EvidenceArtifact:
+    """Parse the exact ordered evidence metadata family without inferring eligibility."""
+    relative = _relative_path(root, path)
+    lines = _read(path)
+    if len(lines) < 8 or not lines[0].text.startswith("# ") or lines[1].text:
+        raise MarkdownParseError(path, 1, "evidence requires a title and ordered metadata", code="evidence.metadata")
+    metadata = []
+    for line in lines[2:]:
+        match = _METADATA.fullmatch(line.text)
+        if match is None:
+            break
+        metadata.append((line, match.group(1), match.group(2)))
+    keys = ("Child", "Gate", "Kind", "Result", "Date", "Subject")
+    if tuple(key for _, key, _ in metadata) != keys:
+        raise MarkdownParseError(path, 3, "evidence metadata must be Child, Gate, Kind, Result, Date, Subject in order", code="evidence.metadata")
+    values = {key: value for _, key, value in metadata}
+    child_match = _IDENTITY.fullmatch(values["Child"])
+    if child_match is None:
+        raise MarkdownParseError(path, 3, "evidence Child requires one node identity", code="evidence.child-mismatch")
+    gate_value = values["Gate"]
+    gate_match = re.fullmatch(r"`([1-9][0-9]*)`", gate_value)
+    if gate_value != "—" and gate_match is None:
+        raise MarkdownParseError(path, 4, "evidence Gate must be a positive ordinal or absent", code="evidence.gate-mismatch")
+    date_value = values["Date"]
+    try:
+        if re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", date_value) is None:
+            raise ValueError("date format")
+        date.fromisoformat(date_value)
+    except ValueError as error:
+        raise MarkdownParseError(path, 7, "evidence Date must be a valid ISO date", code="evidence.metadata") from error
+    if not values["Subject"].strip():
+        raise MarkdownParseError(path, 8, "evidence Subject must be nonempty", code="evidence.metadata")
+    return EvidenceArtifact(
+        relative,
+        child_match.group(1),
+        int(gate_match.group(1)) if gate_match else None,
+        values["Kind"],
+        values["Result"],
+        date_value,
+        values["Subject"],
+        SourceLocation(relative, 1),
     )
 
 

@@ -125,6 +125,7 @@ class DesignAcceptanceSource:
 class RoadmapSources:
     release_items: tuple[StatementSource, ...]
     cross_epic_designs: tuple[CrossEpicDesignSource, ...]
+    release_section: SourceLocation | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -134,6 +135,7 @@ class BacklogSources:
     release_dashboard: tuple[ReleaseDashboardSource, ...]
     gate_headings: tuple[GateHeadingSource, ...]
     release_statements: tuple[StatementSource, ...]
+    current_section: SourceLocation | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -153,6 +155,8 @@ class AuditSources:
     backlog_release_statements: tuple[StatementSource, ...]
     roadmap_release_items: tuple[StatementSource, ...]
     roadmap_cross_epic_designs: tuple[CrossEpicDesignSource, ...]
+    backlog_current_section: SourceLocation | None = None
+    roadmap_release_section: SourceLocation | None = None
 
     @classmethod
     def empty(cls) -> AuditSources:
@@ -291,6 +295,18 @@ class HistoricalArtifact:
     governance: Literal["historical"]
     status: Literal["completed", "superseded"]
     disposition: str
+    source: SourceLocation
+
+
+@dataclass(frozen=True, slots=True)
+class EvidenceArtifact:
+    path: str
+    child: str
+    gate: int | None
+    kind: str
+    result: str
+    date: str
+    subject: str
     source: SourceLocation
 
 

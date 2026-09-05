@@ -1,7 +1,7 @@
 # xplane-fdau Backlog
 
 - **Status:** Active delivery ledger and Superpowers entry point
-- **Updated:** 2026-08-23
+- **Updated:** 2026-09-05
 
 Read `ROADMAP.md` for architecture order and dependencies. Then use this file to
 select one primary child slice whose prerequisites are verified. Each child
@@ -13,11 +13,11 @@ slice receives one focused plan and one independently reviewable outcome.
 - Governing scope amendment: approved; `xplane-fdau` owns reusable X-Plane
   FDAU, native FDR, ARINC, and FDM/FOQA-support behavior while external clients
   own all simulator I/O.
-- Active design: q4xpcc contract-handoff readiness, including the approved
-  D1.2 contract-only A1/R1/P1 design.
-- Active child: `D1.3`.
-- `D1.1` and `D1.2` are verified; `D1.3` is now the readiness priority
-  before `T1.3`.
+- Active design: repository-local backlog governance and status reporting.
+- Active child: `T1.3`.
+- `D1.1`, `D1.2`, and `D1.3` are verified. The statusless external `I1.0`
+  handoff condition is eligible for q4xpcc Phase 24A planning reconciliation;
+  `T1.3` remains the next selected local work at `specified` with 0/4 gates.
 - D1 is design-handoff readiness, not implementation or release readiness.
 - `B1.1` source-layout migration: `specified` with a draft plan; resumes after
   peer prerequisites `T2.2` and `T3.1` are verified.
@@ -85,7 +85,7 @@ The child slices below refine this sequence without weakening or reordering it.
 | `P1.6` | End-to-end canonical-to-native-sink verification | `queued` | `P1.5` | — | — | — | — | — | — |
 | `D1.1` | Canonical C1–C4 design approval | `verified` | `T1.2` | [design](docs/superpowers/specs/2026-08-22-q4xpcc-contract-handoff-readiness-design.md) | [plan](docs/superpowers/plans/2026-08-23-d1-1-canonical-design-approval.md) | 4/4 | [review](.superpowers/sdd/2026-08-23-d1-1-canonical-design-approval/review.md) | — | — |
 | `D1.2` | Acquisition, recording, projection, and pinning contract design | `verified` | `D1.1` | [design](docs/superpowers/specs/2026-08-23-xplane-fdau-acquisition-recording-projection-pinning-contracts-design.md) | [plan](docs/superpowers/plans/2026-08-23-d1-2-acquisition-recording-projection-pinning-contracts.md) | 4/4 | [review](.superpowers/sdd/2026-08-23-d1-2-acquisition-recording-projection-pinning-contracts/review.md) | — | — |
-| `D1.3` | Reviewed q4xpcc Phase 24A handoff | `specified` | `D1.2` | [design](docs/superpowers/specs/2026-08-22-q4xpcc-contract-handoff-readiness-design.md) | — | 0/4 | — | — | — |
+| `D1.3` | Reviewed q4xpcc Phase 24A handoff | `verified` | `D1.2` | [design](docs/superpowers/specs/2026-08-22-q4xpcc-contract-handoff-readiness-design.md) | [plan](docs/superpowers/plans/2026-09-05-d1-3-q4xpcc-handoff.md) | 4/4 | [review](.superpowers/sdd/2026-09-05-d1-3-q4xpcc-handoff/review.md) | — | — |
 | `S1.1` | Edition-pinned standards baseline and traceability contract | `queued` | `C4.4` | — | — | — | — | — | — |
 | `S2.1` | ARINC 717 profile specification | `blocked` | `S1.1`, `R1.7` | — | — | — | — | `queued` | Licensed edition-pinned source is unavailable. |
 | `S2.2` | ARINC 717 codec and conformance corpus | `blocked` | `S2.1` | — | — | — | — | `queued` | Licensed edition-pinned source is unavailable. |
@@ -318,15 +318,19 @@ The child slices below refine this sequence without weakening or reordering it.
 
 ### D1.3 — Reviewed q4xpcc Phase 24A handoff
 
-- [ ] D1.1 and D1.2 are verified with committed review evidence and no unresolved
-      load-bearing finding;
-- [ ] `HANDOFF.md` and the concise q4xpcc brief agree with the approved designs
-      and distinguish design readiness from implementation and adoption;
-- [ ] the brief is emitted from a clean committed state and identifies its exact
-      local HEAD revision; and
-- [ ] successful D1.3 verification makes the statusless `I1.0` handoff condition
+- [x] D1.1 and D1.2 are verified with committed review evidence and no unresolved
+      load-bearing finding; — Evidence:
+      [verification](.superpowers/sdd/2026-09-05-d1-3-q4xpcc-handoff/gate-1.md)
+- [x] `HANDOFF.md` and the concise q4xpcc brief agree with the approved designs
+      and distinguish design readiness from implementation and adoption; — Evidence:
+      [verification](.superpowers/sdd/2026-09-05-d1-3-q4xpcc-handoff/gate-2.md)
+- [x] the brief is emitted from a clean committed state and identifies its exact
+      local HEAD revision; and — Evidence:
+      [verification](.superpowers/sdd/2026-09-05-d1-3-q4xpcc-handoff/gate-3.md)
+- [x] successful D1.3 verification makes the statusless `I1.0` handoff condition
       eligible to be reported as the next action without changing `I1.1`, `I1.2`,
-      G1, release, push, tag, or publication authorization.
+      G1, release, push, tag, or publication authorization. — Evidence:
+      [verification](.superpowers/sdd/2026-09-05-d1-3-q4xpcc-handoff/gate-4.md)
 
 ### F1.1 — AC 120-82 terminology, analysis ports, profiles, evidence, and finding contracts
 

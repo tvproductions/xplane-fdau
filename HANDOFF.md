@@ -17,10 +17,11 @@ Completed implementation plan:
 
 Identity and native-FDR-kernel migration: implemented and verified, but unreleased.
 
-## Latest local integration
+## Historical local integration checkpoint
 
-On 2026-09-05, the user authorized local integration and removal of the completed
-D1.2 worktree. Local `main` fast-forwarded to
+This checkpoint predates the current D1.3 branch. On 2026-09-05, the user
+authorized local integration and removal of the completed D1.2 worktree. Local
+`main` fast-forwarded to
 `327bc4b91a8eee23cc425d08ac0ad0100cad9dbb`. Fresh merged-result verification
 passed 280 standard-library `unittest` tests, 94% statement coverage, the full
 repository quality gate, strict MkDocs, and Git whitespace checks. The final
@@ -31,16 +32,17 @@ The `d1-2-contract-verification` branch and its
 All reviewed deliverables are committed on `main`; the five ignored working
 notes were copied and hash-checked into the primary checkout's existing
 `.superpowers/sdd/2026-08-23-d1-2-acquisition-recording-projection-pinning-contracts/`
-directory. Only the primary `main` worktree remains at this checkpoint.
+directory. Only the primary `main` worktree remained at that checkpoint.
 
 Before reporting backlog status or selecting another increment, inspect
 `git worktree list --porcelain` and the status and commits of any linked
 worktrees. Report completed but unmerged work explicitly so it is integrated
 through the authorized workflow before being mistaken for unfinished work.
-The selected next increment remains `D1.3`, the reviewed q4xpcc consumer brief.
+The selected next increment at that checkpoint was `D1.3`, the reviewed q4xpcc
+consumer brief.
 No push, tag, publication, or release occurred.
 
-## Latest verified maintenance progress
+## Historical verified maintenance progress
 
 Local `main` includes the reviewed GeoJSON no-overwrite collision correction:
 
@@ -60,9 +62,9 @@ Merged-result verification on 2026-08-23 passed 276 standard-library
 `git diff --check`, and the strict MkDocs build. The clean integration
 checkpoint was `a1b32eedc736f0dd87276255f14ec52b64300119` on local `main`, 17
 commits ahead of `origin/main`; no push, tag, publication, or release occurred.
-This maintenance correction did not itself satisfy a D1 acceptance gate. The
-later D1.1 and D1.2 contract-design batches are now verified, and the next
-selected work is `D1.3`.
+This maintenance correction did not itself satisfy a D1 acceptance gate. At
+that historical checkpoint, the later D1.1 and D1.2 contract-design batches
+were verified and the next selected work was `D1.3`.
 
 ## Current roadmap and design review
 
@@ -154,22 +156,42 @@ receipt, native-FDR output, or q4xpcc adoption. All downstream delivery gates
 remain zero; the four standards children blocked by unavailable licensed
 sources retain their truthful blocked states and queued resume states.
 
-The next-agent sequence is exact: execute and verify `D1.3` reviewed consumer
-brief; successful D1.3 verification makes `I1.0` eligible as the next
-reportable action so the user can reconcile q4xpcc's Phase 24A specification
-and plans.
+`D1.3` reviewed q4xpcc Phase 24A consumer handoff is verified. Its planning
+brief, completed plan, accepted independent review, and four verification
+records are:
+
+- `docs/architecture/q4xpcc_phase_24a_contract_handoff.md`;
+- `docs/superpowers/plans/2026-09-05-d1-3-q4xpcc-handoff.md`;
+- `.superpowers/sdd/2026-09-05-d1-3-q4xpcc-handoff/review.md`; and
+- `.superpowers/sdd/2026-09-05-d1-3-q4xpcc-handoff/gate-1.md` through
+  `gate-4.md`.
+
+Independent review accepted corrected brief revision
+`a1d15ed243eb91fc81b775e8026261067c385250` with SHA-256
+`8c0184fd5c28da6a3fcc8ddd44466861d090eacfe718a8d07f9416ad1324083c`.
+The clean delivery envelope emitted that exact `HEAD` followed by the brief
+from that commit. The source-snapshot pin inside the brief remains the distinct
+input-document revision `f86c6f939f1fdbfd354660c432363b9aa7f8444d`.
+
+`I1.0` is eligible as the next reportable external action so the user can
+reconcile q4xpcc's Phase 24A specification and plans. `T1.3` is the sole
+selected local child and remains `specified` at 0/4. Status recommendation
+remains unavailable until T1.4; eligibility does not add an external boundary
+to the local-child inventory.
 
 The external q4xpcc thresholds remain distinct:
 
-- `I1.0` permits Phase 24A specification and plan reconciliation only after
-  successful `D1.3` verification.
+- `I1.0` now permits Phase 24A specification and plan reconciliation because
+  `D1.3` is verified.
 - `I1.1` permits delivered contract-model, schema, fixture, and runtime
   adoption only after `C4.4`.
 - `I1.2` permits live XPLM acquisition adoption only after `A1.9`.
 
-`D1.3` remains `specified` at `0/4` with no plan, review, brief, or gate
-evidence. Do not emit the D1.3 consumer brief or invent its source-revision pin
-before its gates are satisfied.
+This is a reviewed planning-only handoff. It delivers no canonical model,
+runtime API, schema, fixture, conformance corpus, implementation artifact,
+deployment receipt, native-FDR output, or q4xpcc adoption. It does not satisfy
+`I1.1`, `I1.2`, or `G1`, and does not authorize release, push, tag, or
+publication.
 
 The approved translation of q4xpcc's remaining project-local workflows is:
 

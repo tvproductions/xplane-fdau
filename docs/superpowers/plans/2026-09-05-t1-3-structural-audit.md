@@ -560,18 +560,20 @@ human output only in this child, matching the specified command surface.
   Record accepted independent review and a child-level completion record.
   The metadata format is the approved six-field evidence contract; no
   checkmark or this plan's test expectations substitute for executed evidence.
-- [ ] Stage eligible records with the completed plan and backlog changes, then
+- [x] Stage eligible records with the completed plan and backlog changes, then
   advance implemented/reviewed only when their prerequisites hold. For verified,
   first commit the eligible evidence, then set the four evidence links and
   verified state, commit, and run a fresh clean post-commit audit proving the
   linked evidence bytes are in HEAD. Use `docs: verify T1.3 structural audit`.
   If final audit fails, repair and reverify; do not claim completion.
-- [ ] Invoke finishing-a-development-branch and present local integration for
-  user selection. After local integration is authorized, merge to main, verify
-  the merged result, and remove the clean worktree and temporary branch through
-  Git-aware operations. No push or release follows implicitly.
+- [x] Invoke finishing-a-development-branch and retain the verified branch and
+  worktree for the user's local integration selection through the controller.
+- [ ] After local integration is authorized, merge to main, verify the merged
+  result, and remove the clean worktree and temporary branch through Git-aware
+  operations. This conditional integration awaits user selection; no merge
+  has been executed. No push or release follows implicitly.
 
-### Task 5 implementation checkpoint — 2026-09-05
+### Historical Task 5 implementation checkpoint — 2026-09-05
 
 The CLI now combines all rule families into one audited report, preserving
 version-1 JSON, stdout findings, usage stderr, and blocking exits. Regressions
@@ -649,6 +651,11 @@ authority. This approval and plan audit satisfy no T1.3 delivery gate.
 Source implementation and all five task reviews are complete. The final whole-branch
 re-review accepted `1211466` with no open findings. The recorded full quality and
 three-version matrix passed on that source. Completion/review/gate evidence is
-being committed before verified links; a fresh closure-tree aggregate and
-HEAD-backed audit will be recorded after publication. Conditional local integration
-remains awaiting user selection and is not an executed plan action.
+committed before verified links in `c4b2758`; `492dc03` published verified 4/4
+and cleared selection. The first audit exposed four bare Gate ordinal metadata
+values, corrected in `bb26233`. The fresh clean audit/status then passed with
+no findings, and the closure aggregate passed all 374 tests with 94% coverage.
+All six evidence slots match HEAD bytes. Exact commands and outcomes are in
+`.superpowers/sdd/2026-09-05-t1-3-structural-audit/task-5-report.md`.
+Conditional local integration remains awaiting user selection and is not an
+executed plan action.

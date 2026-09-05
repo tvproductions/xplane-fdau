@@ -268,3 +268,89 @@ exit and final summary was inspected. No code changed between these checks.
 All four reviewed defects are corrected; acceptance remains subject to the
 controller's scoped final re-review. No gate, plan status, HANDOFF pointer, or
 completion/review evidence advanced in this wave.
+
+## Operational closeout — 2026-09-05
+
+The actual [whole-branch re-review](whole-branch-rereview.md) accepted
+`1211466ce84f9129e09e680520a3c444118135a1`, all four findings addressed,
+none open or waived. The earlier rejected whole-branch receipt and all actual
+task reviews/re-reviews are retained in Git. `progress.md` retains the controller
+rulings and review sequence; its current task summary has been refreshed.
+
+Six evidence records were written with the exact ordered Child, Gate, Kind,
+Result, Date, Subject contract. `gate-1.md` through `gate-4.md` have subjects
+identical to the four BACKLOG statements. `review.md` records actual independent
+acceptance; `completion.md` records delivered implementation and executed source
+verification. They cite reviewed source `1211466` and its actual commands,
+test names/counts, and supported Python matrix. They do not claim a merge.
+
+### Evidence publication and actual correction
+
+- `c4b275846f7c1b5251ff0581a3e7885810bd6afa` committed the six evidence records,
+  actual review receipts, progress ledger, completed plan, and reviewed 0/4
+  BACKLOG state. The staged prerequisite audit exited 0 with no findings.
+- `492dc03e1932a53ba296321712f814babc8682fa` published the four checked links and
+  verified 4/4 state, cleared the local selection, and updated only HANDOFF's
+  current T1.3 pointer. T1.4 remains specified and has not started.
+  The governance test's selection assertion changed to the truthful empty
+  selection under the controller's explicit ruling. Its 32 tests passed in
+  0.055 seconds on Python 3.14.4 before publication.
+- The first clean postcommit audit and JSON status each exited 1 with four
+  `evidence.gate-mismatch` findings: my new records used bare numerals instead
+  of the contract's inline-code ordinals. The first closure aggregate also
+  exited 1: 374 tests in 69.861 seconds, two real-repository CLI failures from
+  those invalid records. These were document-record errors, not implementation
+  failures. Raw first-attempt logs remain in ignored `task-5-closure-*` files.
+- `bb26233` corrected only the four Gate metadata lines. The exact specification
+  and parser contract were reread, and all six records passed explicit
+  `evidence_findings(..., require_head=True)` checks. Both clean postcommit
+  commands then exited 0 with no findings. Four exact Subject/BACKLOG comparisons
+  passed; JSON showed verified 4/4, no active child, and T1.4 specified.
+
+### Final closure verification
+
+All final commands below exited 0. Offline cached execution used
+`UV_OFFLINE=1`, `UV_PYTHON_DOWNLOADS=never`, `UV_PYTHON=3.12` (Python 3.12.13).
+The production source has not changed since accepted `1211466`. The earlier
+374-test 3.12/3.13/3.14 matrix remains the source-matrix evidence; the controller
+explicitly approved the governance assertion-only change without repeating it.
+
+| Exact command | Observed result |
+| --- | --- |
+| `uv run python tools/quality.py check` | On corrected clean `bb26233`: all components passed; unittest discovery 374 tests in 76.371 s; coverage 374 in 78.175 s; 94% over 1527 runtime statements, 98 missed |
+| `uv run python -m unittest discover -v` | Executed by the aggregate above; 374 tests, OK |
+| `uv run ruff check --no-force-exclude .codex/skills/backlog-status/scripts` | All checks passed |
+| `uv run ruff format --check --no-force-exclude .codex/skills/backlog-status/scripts` | 13 files already formatted |
+| `uv run ty check .codex/skills/backlog-status/scripts` | All checks passed |
+| `uv run python -m unittest tests.test_public_api tests.test_documentation -v` | 15 tests in 0.030 s, OK |
+| `uv run mkdocs build --strict` | Built in 1.36 s; known nonblocking vendor notice |
+| `uv run python tools/quality.py docs` | Passed, 43.6% documentation coverage |
+| `uv run python .codex/skills/backlog-status/scripts/backlog_status.py audit` | Corrected clean committed tree: Findings: none |
+| `uv run python .codex/skills/backlog-status/scripts/backlog_status.py status --json` | schema_version=1, valid=true, findings=[], recommendation=null, git.dirty=false |
+| `git diff --check` | No whitespace errors |
+
+The script/docs checks passed on the closure publication; the four metadata
+syntax corrections do not alter their inputs. The full aggregate was rerun
+because its real-repository tests consumed the corrected evidence. Final raw
+aggregate/audit/status output remains in ignored `task-5-closure-final-*` files;
+every exit and result was inspected. The aggregate also passed Ruff, format,
+ty, Bandit, detect-secrets, Interrogate, Vulture, and Xenon.
+
+Read-only byte comparisons passed for all 20 protected files against the
+working tree, index, HEAD, and reviewed `1211466`; every pinned plan SHA-256 and
+the supplement SHA-256 matched. The four gate records and child-level review
+and completion records were independently checked against exact HEAD bytes.
+
+### Final self-review and integration disposition
+
+T1.3 implementation, accepted independent review, and four-gate operational
+verification are complete. No source behavior changed during closure. The only
+test edit is the authorized empty-selection expectation. Plan checkboxes now
+distinguish completed implementation/verification from conditional integration.
+The finishing-a-development-branch skill was invoked; Git directory/common-dir
+and worktree discovery confirmed the isolated feature worktree. Local
+integration remains awaiting user selection; the branch/worktree are retained.
+No merge, next-child implementation, push, tag, publication, or release occurred.
+
+Windows is the observed host; Linux/macOS remain unobserved locally. The known
+Material for MkDocs notice is nonblocking. No review finding remains open.

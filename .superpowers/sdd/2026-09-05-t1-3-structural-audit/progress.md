@@ -40,7 +40,7 @@ commits/worktree metadata require escalation. No remote writes authorized.
 - Task 4: complete; accepted final review at db51c61.
 - Task 5: implementation and task review complete; whole-branch re-review
   accepted 1211466 with all four findings addressed. Operational evidence and
-  HEAD-backed verified closure are in progress. Local integration awaits user selection.
+  HEAD-backed verified 4/4 closure are complete. Local integration awaits user selection.
 
 Independent draft review closed both lifecycle findings with no remaining
 Critical, Important, or Minor issue before user approval.
@@ -238,3 +238,14 @@ closure aggregate — the approved lifecycle ends active selection without
 starting T1.4; production source is unchanged, so repeating its already-green
 three-version matrix adds no new evidence — if wrong, the cost is correcting
 the selection expectation and rerunning the affected verification.
+
+Task 5 operational closeout: complete. Evidence/actual review receipts committed
+first in c4b2758; verified links and empty selection published in 492dc03. The
+first clean audit rejected bare Gate ordinal metadata; bb26233 corrected the
+four lines. Corrected clean audit/status pass with no findings and HEAD-backed
+six-slot evidence. Closure aggregate passes374 tests (76.371s), coverage374
+(78.175s),94%; required scripts/docs checks pass. Exact first-failure and final
+results are recorded in task-5-report.md. All20 protected files retain exact
+working/index/HEAD/1211466 bytes. T1.4 remains specified and not started.
+Finishing-a-development-branch invoked; local integration awaits user selection.
+No merge, remote action, or release performed; no review finding remains open.

@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 from contextlib import nullcontext
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import importlib.util
 from io import StringIO
 import json
+import os
+import subprocess
 from pathlib import Path
-import shutil
 import sys
 import tempfile
+from types import ModuleType
 import unittest
 from unittest.mock import patch
 
@@ -18,7 +20,9 @@ SCRIPTS = ROOT / ".codex/skills/backlog-status/scripts"
 FIXTURE = ROOT / "tests/fixtures/backlog_status/valid"
 sys.path.insert(0, str(SCRIPTS))
 
-from backlog.model import GitState  # noqa: E402  # ty: ignore[unresolved-import]
+from tests.backlog_audit_support import audit_fixture, replace_text, run_git, write_evidence  # noqa: E402
+from backlog.audit import load_audit  # noqa: E402  # ty: ignore[unresolved-import]
+from backlog.model import Finding, GitState  # noqa: E402  # ty: ignore[unresolved-import]
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,7 +32,7 @@ class CliResult:
     stderr: str
 
 
-def load_cli() -> object:
+def load_cli() -> ModuleType:
     path = SCRIPTS / "backlog_status.py"
     specification = importlib.util.spec_from_file_location("backlog_status_cli", path)
     if specification is None or specification.loader is None:
@@ -39,13 +43,15 @@ def load_cli() -> object:
 
 
 class BacklogStatusCliTests(unittest.TestCase):
+    def fixture_root(self) -> Path:
+        root = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        audit_fixture(root)
+        return root
+
     def malformed_fixture(self) -> Path:
-        temporary = Path(tempfile.mkdtemp())
-        self.addCleanup(shutil.rmtree, temporary)
-        shutil.copytree(FIXTURE, temporary, dirs_exist_ok=True)
-        backlog = temporary / "BACKLOG.md"
-        backlog.write_text(backlog.read_text(encoding="utf-8").replace("0/1", "0/x", 1), encoding="utf-8")
-        return temporary
+        root = self.fixture_root()
+        replace_text(root, "BACKLOG.md", "0/1", "0/x")
+        return root
 
     def run_cli(self, argv: list[str], *, root: Path, mock_git: bool = True) -> CliResult:
         module = load_cli()
@@ -53,20 +59,18 @@ class BacklogStatusCliTests(unittest.TestCase):
         errors = StringIO()
         git_context = patch.object(module, "observe_git", return_value=GitState("main", False, ())) if mock_git else nullcontext()
         with git_context:
-            code = module.main(  # ty: ignore[unresolved-attribute]
-                argv, root=root, stdout=output, stderr=errors
-            )
+            code = module.main(argv, root=root, stdout=output, stderr=errors)
         return CliResult(code, output.getvalue(), errors.getvalue())
 
     def test_status_writes_human_report_to_stdout(self) -> None:
-        status = self.run_cli(["status"], root=FIXTURE)
+        status = self.run_cli(["status"], root=self.fixture_root())
 
         self.assertEqual(0, status.code)
         self.assertIn("Repository: xplane-fdau", status.stdout)
         self.assertEqual("", status.stderr)
 
     def test_status_json_writes_schema_version_one_in_source_order(self) -> None:
-        status = self.run_cli(["status", "--json"], root=FIXTURE)
+        status = self.run_cli(["status", "--json"], root=self.fixture_root())
 
         self.assertEqual(0, status.code)
         self.assertEqual("", status.stderr)
@@ -85,11 +89,9 @@ class BacklogStatusCliTests(unittest.TestCase):
         self.assertEqual(0, human.code, human.stderr)
         self.assertIn("64 local children", human.stdout)
         for line in (
-            "Active child: T1.3",
             "D1.1  verified  dependency-ready=yes  gates=4/4",
             "D1.2  verified  dependency-ready=yes  gates=4/4",
             "D1.3  verified  dependency-ready=yes  gates=4/4",
-            "T1.3  in_progress  dependency-ready=yes  gates=0/4",
             "statement=successful D1.3 verification makes the statusless `I1.0` "
             "handoff condition eligible to be reported as the next action without "
             "changing `I1.1`, `I1.2`, G1, release, push, tag, or publication authorization.",
@@ -105,7 +107,6 @@ class BacklogStatusCliTests(unittest.TestCase):
         self.assertIsNone(payload["recommendation"])
         self.assertEqual(64, len(payload["roadmap"]["local_children"]))
         self.assertEqual(64, len(payload["backlog"]["children"]))
-        self.assertEqual("T1.3", payload["backlog"]["active_child"])
         d1_children = {child["id"]: child for child in payload["backlog"]["children"] if child["id"].startswith("D1.")}
         self.assertEqual(["D1.1", "D1.2", "D1.3"], list(d1_children))
         expected_dependencies = {"D1.1": ["T1.2"], "D1.2": ["D1.1"], "D1.3": ["D1.2"]}
@@ -125,18 +126,21 @@ class BacklogStatusCliTests(unittest.TestCase):
                 "and no implementation-plan, review, artifact, or release evidence.",
             ],
             "D1.2": [
-                "one approved design fixes every A1/R1/P1 contract shape and policy needed by the four q4xpcc Phase 24A Slice 2 plans;",
-                "every family has an exact identity/version boundary, owned fields, "
-                "invariants, references, error outcomes, and intended future schema/fixture "
-                "path;",
-                "deployment, revision pinning, release-artifact hashes, delivered-file "
-                "hashes, conformance, and no-divergent-subset proof are explicit without "
-                "requiring a current release artifact; and",
-                "independent review finds no unresolved load-bearing ambiguity, the "
-                "approved contract-only design is recorded as binding architecture input "
-                "for future A1, R1, and P1 specifications, and those implementation "
-                "children remain `queued` with zero delivery gates satisfied and no "
-                "implementation, artifact, or release claim.",
+                "this one approved design fixes the A1/R1/P1 contract shapes and policies needed by all four q4xpcc Phase 24A "
+                "Slice 2 plans, including acquisition, continuity, fan-out, recording, recovery, replay, native-FDR projection, "
+                "deployment, and conformance planning surfaces;",
+                "every family has an exact identity/version boundary, fields, invariants, references, runtime outcomes, error "
+                "boundary, delivery ownership boundary, and future schema/conformance path, with closed failure codes and "
+                "deterministic validation/causal precedence;",
+                "installed-wheel and reproducibly bundled deployment, independently trusted expected "
+                "version/revision/artifact/conformance pins, mode-specific metadata evidence, delivered-file hashes, "
+                "conformance, and closed-world no-divergent-subset proof are explicit without requiring or fabricating a "
+                "current release; and",
+                "independent review reports no unresolved load-bearing ambiguity; native FDR, ARINC, FDM/FOQA, q4xpcc, and "
+                "external-client boundaries remain consistent with the approved scope amendment; the approved contract-only "
+                "design is recorded as binding input for later A1/R1/P1 specifications; and every implementation, schema, "
+                "fixture, artifact, adoption, release, push, tag, and publication gate remains unsatisfied without advancing "
+                "any A1, R1, P1, S, or F1 child.",
             ],
             "D1.3": [
                 "D1.1 and D1.2 are verified with committed review evidence and no unresolved load-bearing finding;",
@@ -184,8 +188,8 @@ class BacklogStatusCliTests(unittest.TestCase):
             self.assertEqual(expected_dependency_readiness[child_id], child["dependency_ready"])
 
         t1_3 = next(child for child in payload["backlog"]["children"] if child["id"] == "T1.3")
-        self.assertEqual("in_progress", t1_3["status"])
-        self.assertEqual(0, t1_3["gates"]["satisfied"])
+        self.assertIn(t1_3["status"], ("in_progress", "implemented", "reviewed", "verified"))
+        self.assertEqual(sum(gate["satisfied"] for gate in t1_3["gates"]["items"]), t1_3["gates"]["satisfied"])
         self.assertEqual(4, t1_3["gates"]["total"])
         self.assertTrue(t1_3["dependency_ready"])
 
@@ -205,18 +209,165 @@ class BacklogStatusCliTests(unittest.TestCase):
             boundaries["I1.0"],
         )
 
+    def test_audit_is_the_same_human_report_as_status(self) -> None:
+        root = self.fixture_root()
+        audit = self.run_cli(["audit"], root=root, mock_git=False)
+        self.assertEqual(0, audit.code, audit.stdout)
+        self.assertEqual("", audit.stderr)
+        self.assertEqual(self.run_cli(["status"], root=root, mock_git=False), audit)
+
+    def test_executable_stdout_is_utf8_with_lf_even_under_legacy_pipe_encoding(self) -> None:
+        for args in (["status", "--json"], ["audit"]):
+            result = subprocess.run(
+                [sys.executable, str(SCRIPTS / "backlog_status.py"), *args],
+                cwd=ROOT,
+                env={**os.environ, "PYTHONIOENCODING": "cp1252"},
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(0, result.returncode, result.stderr)
+            output = result.stdout.decode("utf-8")
+            self.assertNotIn(b"\r", result.stdout)
+            self.assertTrue(output.endswith("\n"))
+            self.assertIn("—", output)
+
+    def test_semantic_findings_block_both_commands_and_keep_context(self) -> None:
+        root = self.fixture_root()
+        replace_text(root, "BACKLOG.md", "| `specified` |", "| `planned` |")
+        replace_text(root, "ROADMAP.md", "- [ ] A separate", "- [x] A separate")
+        for args in (["audit"], ["status", "--json"]):
+            with self.subTest(args=args):
+                result = self.run_cli(args, root=root, mock_git=False)
+                self.assertEqual(1, result.code)
+                self.assertEqual("", result.stderr)
+                self.assertIn("release.authorization", result.stdout)
+                self.assertIn("lifecycle.plan", result.stdout)
+                if "--json" in args:
+                    payload = json.loads(result.stdout)
+                    self.assertFalse(payload["valid"])
+                    self.assertIsNone(payload["recommendation"])
+                    self.assertTrue(all(item["line"] for item in payload["findings"]))
+
+    def test_every_managed_release_form_blocks_even_with_satisfied_prerequisites(self) -> None:
+        root = self.fixture_root()
+        # G1 depends only on the already verified fixture child in this scenario.
+        replace_text(root, "ROADMAP.md", "reconciliation | `T1.2`", "reconciliation | `T1.1`")
+        replace_text(root, "BACKLOG.md", "`waiting` | `T1.2` | —", "`satisfied` | `T1.1` | [verification](release.md)")
+        write_evidence(root, "release.md", child="G1", gate=None)
+        run_git(root, "add", "--", "ROADMAP.md", "BACKLOG.md", "release.md")
+        run_git(root, "commit", "-qm", "Satisfied fixture release prerequisite and evidence")
+        self.assertEqual(0, self.run_cli(["audit"], root=root, mock_git=False).code)
+        forms = (
+            ("BACKLOG.md", "- Release, tag, and package publication: prohibited pending their separate gates and authorization."),
+            ("ROADMAP.md", "- [ ] A separate release review authorizes publication."),
+        )
+        for path, form in forms:
+            original = (root / path).read_bytes()
+            for replacement in ("", form + "\n" + form, form.replace("prohibited", "authorized").replace("[ ]", "[x]"), form + " Changed."):
+                with self.subTest(path=path, replacement=replacement):
+                    replace_text(root, path, form, replacement)
+                    for args in (["audit"], ["status", "--json"]):
+                        result = self.run_cli(args, root=root, mock_git=False)
+                        self.assertEqual(1, result.code)
+                        self.assertEqual("", result.stderr)
+                        self.assertIn("release.authorization", result.stdout)
+                        if "--json" in args:
+                            payload = json.loads(result.stdout)
+                            self.assertFalse(payload["valid"])
+                            self.assertEqual("satisfied", payload["backlog"]["release_gates"][0]["state"])
+                            self.assertEqual({"release.authorization"}, {item["code"] for item in payload["findings"]})
+                    (root / path).write_bytes(original)
+
+    def test_independent_parse_failures_keep_valid_authorities_and_json_shape(self) -> None:
+        for count in ("0/x", "9" * 4301 + "/1"):
+            with self.subTest(count_length=len(count)):
+                root = self.fixture_root()
+                replace_text(root, "BACKLOG.md", "1/1", count)
+                replace_text(root, "docs/superpowers/plans/historical-plan.md", "**Governance:** historical", "**Governance:** invalid")
+                for args in (["status", "--json"], ["audit"]):
+                    result = self.run_cli(args, root=root, mock_git=False)
+                    self.assertEqual(1, result.code)
+                    self.assertEqual("", result.stderr)
+                    self.assertIn("backlog.gate-count", result.stdout)
+                    self.assertIn("artifact.governance", result.stdout)
+                    if "--json" in args:
+                        payload = json.loads(result.stdout)
+                        self.assertFalse(payload["valid"])
+                        self.assertEqual([], payload["backlog"]["children"])
+                        self.assertEqual(2, len(payload["roadmap"]["local_children"]))
+                        self.assertEqual(1, len(payload["artifacts"]["plans"]))
+                        finding = next(item for item in payload["findings"] if item["code"] == "backlog.gate-count")
+                        self.assertEqual("T1.1", finding["node"])
+                        self.assertGreater(finding["line"], 0)
+
+    def test_unavailable_git_is_blocking_and_has_empty_observation(self) -> None:
+        root = self.fixture_root()
+        module = load_cli()
+        for error in (FileNotFoundError("Git unavailable"), subprocess.CalledProcessError(1, "git")):
+            for args in (["audit"], ["status", "--json"]):
+                output, errors = StringIO(), StringIO()
+                with patch.object(module, "observe_git", side_effect=error):
+                    code = module.main(args, root=root, stdout=output, stderr=errors)
+                self.assertEqual(1, code)
+                self.assertEqual("", errors.getvalue())
+                self.assertIn("git.unavailable", output.getvalue())
+                if "--json" in args:
+                    payload = json.loads(output.getvalue())
+                    self.assertEqual({"branch": "", "dirty": False, "recent_commits": []}, payload["git"])
+                    self.assertFalse(payload["valid"])
+                else:
+                    self.assertIn("Git: unavailable", output.getvalue())
+
+    def test_warnings_alone_allow_success(self) -> None:
+        root = self.fixture_root()
+        module = load_cli()
+        loaded = replace(load_audit(root), findings=(Finding("fixture.warning", "warning", "BACKLOG.md", 1, None, None, "Synthetic warning."),))
+        for args in (["audit"], ["status", "--json"]):
+            output = StringIO()
+            with patch.object(module, "audit_repository", return_value=loaded, create=True):
+                code = module.main(args, root=root, stdout=output)
+            self.assertEqual(0, code)
+            self.assertIn("fixture.warning", output.getvalue())
+
+    def test_commands_preserve_sources_index_and_head_after_mtime_only_change(self) -> None:
+        root = self.fixture_root()
+
+        def source_bytes() -> dict[Path, bytes]:
+            return {path.relative_to(root): path.read_bytes() for path in root.rglob("*") if path.is_file() and ".git" not in path.relative_to(root).parts}
+
+        for args in (["status"], ["status", "--json"], ["audit"]):
+            with self.subTest(args=args):
+                target = root / "BACKLOG.md"
+                stat = target.stat()
+                os.utime(target, ns=(stat.st_atime_ns, stat.st_mtime_ns + 5_000_000_000))
+                before = source_bytes()
+                index = (root / ".git/index").read_bytes()
+                head = run_git(root, "rev-parse", "HEAD")
+                result = self.run_cli(args, root=root, mock_git=False)
+                self.assertEqual(0, result.code, result.stdout)
+                self.assertEqual(index, (root / ".git/index").read_bytes())
+                self.assertEqual(head, run_git(root, "rev-parse", "HEAD"))
+                self.assertEqual(before, source_bytes())
+
+    def test_audit_json_and_future_commands_are_invalid_usage(self) -> None:
+        for args in (["audit", "--json"], ["next"], ["status", "--apply"], []):
+            result = self.run_cli(args, root=ROOT)
+            self.assertEqual(2, result.code)
+            self.assertEqual("", result.stdout)
+            self.assertIn("usage:", result.stderr)
+
     def test_unknown_command_is_invalid_usage(self) -> None:
-        invalid = self.run_cli(["audit"], root=FIXTURE)
+        invalid = self.run_cli(["unknown"], root=self.fixture_root())
 
         self.assertEqual(2, invalid.code)
         self.assertIn("invalid choice", invalid.stderr)
 
-    def test_malformed_repository_writes_parse_context_to_stderr(self) -> None:
+    def test_malformed_repository_reports_parse_context_on_stdout(self) -> None:
         malformed = self.run_cli(["status"], root=self.malformed_fixture())
 
         self.assertEqual(1, malformed.code)
-        self.assertEqual("", malformed.stdout)
-        self.assertRegex(malformed.stderr, r"BACKLOG.md:[0-9]+:")
+        self.assertEqual("", malformed.stderr)
+        self.assertRegex(malformed.stdout, r"backlog.gate-count BACKLOG.md:[0-9]+")
 
 
 if __name__ == "__main__":

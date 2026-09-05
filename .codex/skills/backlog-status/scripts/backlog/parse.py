@@ -261,7 +261,10 @@ def _gate_count(path: Path, line: int, value: str) -> tuple[int, int]:
     match = _GATE_COUNT.fullmatch(value)
     if match is None:
         raise MarkdownParseError(path, line, f"invalid gate count: {value!r}", code="backlog.gate-count")
-    return int(match.group(1)), int(match.group(2))
+    try:
+        return int(match.group(1)), int(match.group(2))
+    except ValueError as error:
+        raise MarkdownParseError(path, line, "gate count exceeds the supported integer conversion limit", code="backlog.gate-count") from error
 
 
 def _links(path: Path, line: int, value: str) -> tuple[str, ...]:

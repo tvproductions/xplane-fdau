@@ -491,7 +491,7 @@ findings: tuple[Finding, ...] = ()) -> StatusReport`. Both `status` and `audit`
 use that same audited report; `status --json` retains version 1. `audit` is
 human output only in this child, matching the specified command surface.
 
-- [ ] Write failing CLI tests for valid audit, semantic errors, independently
+- [x] Write failing CLI tests for valid audit, semantic errors, independently
   malformed inputs, unavailable Git, warnings-only success, invalid arguments,
   and unchanged source/index/HEAD before and after commands. Upgrade CLI
   fixtures to complete audit-valid temporary repositories; keep pure syntax
@@ -508,9 +508,9 @@ human output only in this child, matching the specified command surface.
   self.assertIn("backlog.gate-count", [item["code"] for item in payload["findings"]])
   ```
 
-- [ ] Run RED with `uv run python -m unittest tests.test_backlog_status_cli
+- [x] Run RED with `uv run python -m unittest tests.test_backlog_status_cli
   tests.test_backlog_status_report -v` as one command line.
-- [ ] Wire the audit into both commands; keep findings on stdout in the report,
+- [x] Wire the audit into both commands; keep findings on stdout in the report,
   usage diagnostics on stderr, and exit 0/1/2 semantics. On Git observation
   failure add a blocking finding and retain schema shape with an empty Git
   observation; do not report a successful clean observation. Use:
@@ -520,7 +520,7 @@ human output only in this child, matching the specified command surface.
   exit_code = 0 if report.valid else 1
   ```
 
-- [ ] Run all focused tests GREEN. Run the current repository audit and resolve
+- [x] Run all focused tests GREEN. Run the current repository audit and resolve
   genuine findings through explicit reviewed corrections without rewriting
   completed specs, fabricating approval, or silently widening this child.
   Prove all existing D1 verification and F1 queued references pass through the
@@ -570,6 +570,42 @@ human output only in this child, matching the specified command surface.
   user selection. After local integration is authorized, merge to main, verify
   the merged result, and remove the clean worktree and temporary branch through
   Git-aware operations. No push or release follows implicitly.
+
+### Task 5 implementation checkpoint — 2026-09-05
+
+The CLI now combines all rule families into one audited report, preserving
+version-1 JSON, stdout findings, usage stderr, and blocking exits. Regressions
+proved and corrected Git optional index refresh, oversized BACKLOG count
+conversion, and Windows executable UTF-8/LF output. The focused CLI, report,
+and governance run passed 55 unittest tests. The exact commands and final
+candidate verification are recorded in
+`.superpowers/sdd/2026-09-05-t1-3-structural-audit/task-5-report.md`.
+
+Applied only the independently accepted `reconciliation-review.md` correction
+population: C2.4 is 0/5; C3.3, T2.2, T3.1, and D1.2 now copy their explicitly
+linked approved design statements. All previously open gates remain open.
+D1.2 retains verified 4/4 and its original evidence links, whose detailed
+coverage was independently accepted. Twenty protected files (policy, three
+D1 plans, D1.2 detailed design, and fifteen D1 review/gate records) match the
+working tree, index, HEAD, and Task 5 base `f92a88f`; all pinned hashes match.
+
+On 2026-09-05, the active canonical design's C4.4 acceptance sentence changed
+from "Version `0.1.0` remains unreleased and no push/tag/publication occurs."
+to "Version `0.1.0` remains unreleased and no release tag or package publication
+occurs; separately authorized routine Git sync does not satisfy or violate
+this release gate." Authority is the existing AGENTS.md explicit-only sync
+policy, HANDOFF.md's dated amendment, and approved
+`docs/superpowers/specs/2026-09-05-gz-skills-adoption-design.md`, as accepted in
+`reconciliation-review.md`. Original approval metadata and all other canonical
+contract bytes remain unchanged; the historical D1.1 review is not relabeled.
+The four accepted historical dispositions append only their exact existing
+current-authority paths and preserve their execution bodies.
+
+Task/whole-branch independent review, four-gate evidence, child completion,
+HEAD-backed closure, and local integration remain pending. This checkpoint
+keeps both plan and T1.3 in_progress with zero T1.3 gates satisfied. It creates
+no accepted review or completion record. HANDOFF's current pointer is owned by
+the final Task 5 closeout after verified evidence exists.
 
 ## Plan audit: intent to scope
 

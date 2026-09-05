@@ -112,3 +112,21 @@ def evidence_fixture(root: Path) -> None:
         "- Active child: —.\n- Release, tag, and package publication: prohibited pending their separate gates and authorization.",
     )
     initialize_git(root)
+
+
+def audit_fixture(root: Path) -> None:
+    """Create complete, committed audit authorities, separate from syntax fixtures."""
+    evidence_fixture(root)
+    policy = root / "docs/superpowers/specs/2026-09-05-t1-3-audit-policy-supplement-design.md"
+    policy.write_text(
+        "# Fixture policy\n\n- **Governance:** active\n- **Status:** approved\n"
+        "- **Date:** 2026-09-05\n- **Decision owner:** Fixture\n"
+        "- **Roadmap epic:** `T1`\n- **Roadmap children:** `T1.2`\n"
+        "- **Approval:** 2026-09-05 — Fixture\n\n"
+        "| Child | Historical plan | SHA-256 |\n| --- | --- | --- |\n"
+        f"| `T1.1` | `docs/superpowers/plans/historical-plan.md` | `{'0' * 64}` |\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    run_git(root, "add", "--", policy.relative_to(root).as_posix())
+    run_git(root, "commit", "-qm", "Fixture policy")

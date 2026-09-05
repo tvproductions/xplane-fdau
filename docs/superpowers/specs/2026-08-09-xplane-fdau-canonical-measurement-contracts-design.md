@@ -1951,7 +1951,7 @@ satisfies its exact acceptance subsection below.
 - Installed-wheel smoke passes on Python 3.12, 3.13, and 3.14 outside the
   checkout.
 - Independent review has no unresolved load-bearing finding.
-- Version `0.1.0` remains unreleased and no push/tag/publication occurs.
+- Version `0.1.0` remains unreleased and no release tag or package publication occurs; separately authorized routine Git sync does not satisfy or violate this release gate.
 
 ## Required following increments
 

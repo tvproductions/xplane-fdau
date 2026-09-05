@@ -55,7 +55,7 @@ The child slices below refine this sequence without weakening or reordering it.
 | `C2.1` | Measurement-definition model and semantic invariants | `specified` | `C1.3`, `C1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C2.2` | Measurement catalog, schema, ordering, and references | `specified` | `C2.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C2.3` | Source-binding definition and transform references | `specified` | `C2.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
-| `C2.4` | Binding catalog and pure cross-catalog validation | `specified` | `C2.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C2.4` | Binding catalog and pure cross-catalog validation | `specified` | `C2.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/5 | — | — | — |
 | `C3.1` | Raw-observation record and schema | `specified` | `C1.3`, `C1.4`, `C1.5`, `C2.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C3.2` | Measurement-sample record and schema | `specified` | `C3.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C3.3` | Raw/sample lineage and cross-contract validation | `specified` | `C3.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
@@ -201,9 +201,11 @@ The child slices below refine this sequence without weakening or reordering it.
 
 - [ ] Binding catalog identity, ordering, uniqueness, schema, and hashes pass.
 - [ ] Missing or mismatched measurement references fail.
-- [ ] Direct bindings enforce unit/representation/shape/applicability parity.
-- [ ] Transformed bindings validate declarations without executing or claiming
-      algorithm conformance.
+- [ ] Direct bindings enforce unit/representation/shape/payload/applicability parity.
+- [ ] Failure dispositions incompatible with measurement quality or validity
+      authorization fail during cross-catalog validation.
+- [ ] Transformed bindings validate declarations without executing or claiming algorithm
+      conformance.
 
 ### C3.1 — Raw-observation record and schema
 
@@ -223,10 +225,11 @@ The child slices below refine this sequence without weakening or reordering it.
 
 ### C3.3 — Raw/sample lineage and cross-contract validation
 
-- [ ] Every sample reaches one complete observation or immutable record reference.
-- [ ] Ordered derivation-parent references remain intact and cycle-free within
-      the supplied validation closure.
-- [ ] Catalog-resolved sample representation, unit, range, binding, status, and
+- [ ] Every sample reaches every consumed observation through a complete record or
+      immutable record reference.
+- [ ] Ordered derivation algorithm inputs remain intact and cycle-free within the
+      supplied validation closure.
+- [ ] Catalog-resolved sample representation, unit, payload, range, binding, status, and
       quality validation passes.
 - [ ] Missing, mismatched, or stale lineage fails with exact context.
 
@@ -304,22 +307,27 @@ The child slices below refine this sequence without weakening or reordering it.
 
 ### D1.2 — Acquisition, recording, projection, and pinning contract design
 
-- [x] one approved design fixes every A1/R1/P1 contract shape and policy needed
-      by the four q4xpcc Phase 24A Slice 2 plans; — Evidence:
+- [x] this one approved design fixes the A1/R1/P1 contract shapes and policies needed by
+      all four q4xpcc Phase 24A Slice 2 plans, including acquisition, continuity,
+      fan-out, recording, recovery, replay, native-FDR projection, deployment, and
+      conformance planning surfaces; — Evidence:
       [verification](.superpowers/sdd/2026-08-23-d1-2-acquisition-recording-projection-pinning-contracts/gate-1.md)
-- [x] every family has an exact identity/version boundary, owned fields,
-      invariants, references, error outcomes, and intended future schema/fixture
-      path; — Evidence:
+- [x] every family has an exact identity/version boundary, fields, invariants,
+      references, runtime outcomes, error boundary, delivery ownership boundary, and
+      future schema/conformance path, with closed failure codes and deterministic
+      validation/causal precedence; — Evidence:
       [verification](.superpowers/sdd/2026-08-23-d1-2-acquisition-recording-projection-pinning-contracts/gate-2.md)
-- [x] deployment, revision pinning, release-artifact hashes, delivered-file
-      hashes, conformance, and no-divergent-subset proof are explicit without
-      requiring a current release artifact; and — Evidence:
+- [x] installed-wheel and reproducibly bundled deployment, independently trusted
+      expected version/revision/artifact/conformance pins, mode-specific metadata
+      evidence, delivered-file hashes, conformance, and closed-world no-divergent-subset
+      proof are explicit without requiring or fabricating a current release; and — Evidence:
       [verification](.superpowers/sdd/2026-08-23-d1-2-acquisition-recording-projection-pinning-contracts/gate-3.md)
-- [x] independent review finds no unresolved load-bearing ambiguity, the approved
-      contract-only design is recorded as binding architecture input for future
-      A1, R1, and P1 specifications, and those implementation children remain
-      `queued` with zero delivery gates satisfied and no implementation, artifact,
-      or release claim. — Evidence:
+- [x] independent review reports no unresolved load-bearing ambiguity; native FDR,
+      ARINC, FDM/FOQA, q4xpcc, and external-client boundaries remain consistent with the
+      approved scope amendment; the approved contract-only design is recorded as binding
+      input for later A1/R1/P1 specifications; and every implementation, schema,
+      fixture, artifact, adoption, release, push, tag, and publication gate remains
+      unsatisfied without advancing any A1, R1, P1, S, or F1 child. — Evidence:
       [verification](.superpowers/sdd/2026-08-23-d1-2-acquisition-recording-projection-pinning-contracts/gate-4.md)
 
 ### D1.3 — Reviewed q4xpcc Phase 24A handoff
@@ -488,35 +496,33 @@ The child slices below refine this sequence without weakening or reordering it.
 
 ### T2.2 — Governed dependency and toolchain refresh
 
-- [ ] Read-only human and JSON status discover the newest stable `uv`, Python
-      3.12-3.14 policy, lock freshness, outdated releases, yanks,
-      vulnerabilities, and constraints from official sources.
+- [ ] Read-only human and JSON status discover the newest stable `uv`, supported Python
+      matrix, locked graph, outdated releases, yanks, vulnerabilities, and constraints
+      from official sources without mutation.
 - [ ] Apply pins the exact verified stable `uv`, aligns package metadata to
-      `>=3.12,<3.15`, retains compatible ordinary development constraints,
-      refreshes the complete lock, and fails closed on dirty, stale,
-      incompatible, or unexplained security state.
+      `>=3.12,<3.15`, retains compatible ordinary development constraints, refreshes the
+      complete lock, and fails closed on stale scope, incompatible resolution, or
+      unexplained security findings.
 - [ ] Targeted `unittest`, full repo hygiene, Python 3.12-3.14 source and
-      installed-wheel verification, and wheel/sdist inventory pass.
-- [ ] Superpowers comparison/update, X-Plane deployment, staging, commit, push,
-      tag, publication, and release behavior is absent.
+      installed-wheel verification, and exact wheel/sdist inventory all pass.
+- [ ] Superpowers, X-Plane deployment, staging, commit, push, tag, publication, and
+      release behavior is absent from the skill and implementation.
 
 ### T3.1 — Guarded Git synchronization adapter
 
 - [ ] Dry-run and JSON reports deterministically expose branch, remote, scope,
       ahead/behind/divergence, actions, warnings, blockers, and expected state.
 - [ ] Apply revalidates pinned state, performs reviewed auto-add, full hygiene,
-      intentional commit, fast-forward pull or rebase of unpublished commits,
-      and final verification without rewriting published or merge-head history.
+      intentional commit, fast-forward pull or rebase of unpublished commits, an
+      explicitly authorized ordinary push, and a fresh final fetch/alignment check.
 - [ ] Detached, conflicting, stale, unexpected, missing-remote, failed-fetch,
-      failed-hygiene, merge-head, ambiguous-divergence, push-failure, and
-      alignment-failure states fail closed without unsafe continuation.
-- [ ] An explicitly authorized ordinary push is followed by a fresh fetch and
-      proof that local and remote are `ahead=0`, `behind=0`; no tag,
-      publication, release, force, destructive reset, or verification-bypass
-      path exists.
-- [ ] Temporary-repository tests, current-repository dry-run, complete quality
-      gates, and independent review pass without changing release
-      authorization.
+      failed-hygiene, merge-head, published-history-rewrite, failed-push, and
+      failed-alignment states fail closed without partial unsafe continuation.
+- [ ] An explicitly authorized ordinary push finishes only after proof that local and
+      remote are `ahead=0`, `behind=0`; no tag, publication, release, force,
+      destructive-reset, or verification-bypass path exists.
+- [ ] Temporary-repository tests, current-repository dry-run, complete quality gates,
+      and independent review pass without changing release authorization.
 
 ## Release-gate dashboard
 

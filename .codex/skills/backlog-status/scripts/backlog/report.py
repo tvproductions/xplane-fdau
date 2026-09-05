@@ -5,6 +5,8 @@ import json
 from pathlib import Path
 import subprocess
 
+from backlog.findings import finding_key
+
 from backlog.model import (
     Artifacts,
     Backlog,
@@ -47,7 +49,7 @@ def with_dependency_readiness(snapshot: RepositorySnapshot) -> RepositorySnapsho
 
 def _git(root: Path, *arguments: str) -> str:
     completed = subprocess.run(
-        ("git", "-C", str(root), *arguments),
+        ("git", "--no-optional-locks", "-C", str(root), *arguments),
         check=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -65,15 +67,15 @@ def observe_git(root: Path, limit: int = 5) -> GitState:
     return GitState(branch, dirty, commits)
 
 
-def build_report(snapshot: RepositorySnapshot, git: GitState) -> StatusReport:
+def build_report(snapshot: RepositorySnapshot, git: GitState, findings: tuple[Finding, ...] = ()) -> StatusReport:
     return StatusReport(
         schema_version=1,
         repository="xplane-fdau",
-        valid=True,
+        valid=not any(finding.severity == "error" for finding in findings),
         roadmap=snapshot.roadmap,
         backlog=snapshot.backlog,
         artifacts=snapshot.artifacts,
-        findings=(),
+        findings=tuple(sorted(findings, key=finding_key)),
         recommendation=None,
         git=git,
     )
@@ -175,7 +177,10 @@ def render_human(report: StatusReport) -> str:
         lines.append(
             f"  action={recommendation.action} child={_value(recommendation.child)} reason={recommendation.reason} command={_value(recommendation.command)}"
         )
-    lines.append(f"Git: branch={report.git.branch} dirty={_yes_no(report.git.dirty)}")
+    if any(finding.code == "git.unavailable" for finding in report.findings):
+        lines.append("Git: unavailable")
+    else:
+        lines.append(f"Git: branch={report.git.branch} dirty={_yes_no(report.git.dirty)}")
     lines.append("Recent commits:")
     for commit in report.git.recent_commits:
         lines.append(f"  {commit.sha}  {commit.subject}")

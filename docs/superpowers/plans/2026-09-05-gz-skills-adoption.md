@@ -2,7 +2,7 @@
 
 - **Governance:** historical
 - **Status:** completed
-- **Disposition:** The 2026-09-05 user-approved canonical gz-skills installation and policy amendment completed without a roadmap-child completion, Git push, tag, publication, or release claim.
+- **Disposition:** The 2026-09-05 user-approved canonical gz-skills installation and policy amendment completed without a roadmap-child completion, Git push, tag, publication, or release claim. Current authority: `AGENTS.md`.
 
 > **For agentic workers:** Use superpowers:subagent-driven-development for this single integrated task and independent review.
 

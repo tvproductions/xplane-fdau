@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 from pathlib import Path
+from dataclasses import replace
 from typing import Literal
 
 from backlog.findings import finding_key
+from backlog.adherence import adherence_findings
+from backlog.lifecycle import lifecycle_findings
+from backlog.rules import release_authorization_findings, structural_findings
 from backlog.model import (
     Artifacts,
     AuditLoad,
@@ -169,3 +173,15 @@ def load_audit(root: Path) -> AuditLoad:
         sources,
         policy,
     )
+
+
+def audit_repository(root: Path) -> AuditLoad:
+    loaded = load_audit(root)
+    findings = (
+        *loaded.findings,
+        *structural_findings(loaded),
+        *adherence_findings(loaded),
+        *lifecycle_findings(loaded),
+        *release_authorization_findings(loaded),
+    )
+    return replace(loaded, findings=tuple(sorted(findings, key=finding_key)))

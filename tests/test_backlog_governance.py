@@ -113,16 +113,21 @@ D1_GATE_STATEMENTS = {
         "implementation-plan, review, artifact, or release evidence.",
     ),
     "D1.2": (
-        "one approved design fixes every A1/R1/P1 contract shape and policy needed by the four q4xpcc Phase 24A Slice 2 plans;",
-        "every family has an exact identity/version boundary, owned fields, invariants, references, error outcomes, and intended future schema/fixture path;",
-        "deployment, revision pinning, release-artifact hashes, delivered-file hashes, "
-        "conformance, and no-divergent-subset proof are explicit without requiring a "
-        "current release artifact; and",
-        "independent review finds no unresolved load-bearing ambiguity, the approved "
-        "contract-only design is recorded as binding architecture input for future A1, "
-        "R1, and P1 specifications, and those implementation children remain `queued` "
-        "with zero delivery gates satisfied and no implementation, artifact, or release "
-        "claim.",
+        "this one approved design fixes the A1/R1/P1 contract shapes and policies needed by all four q4xpcc Phase 24A "
+        "Slice 2 plans, including acquisition, continuity, fan-out, recording, recovery, replay, native-FDR projection, "
+        "deployment, and conformance planning surfaces;",
+        "every family has an exact identity/version boundary, fields, invariants, references, runtime outcomes, error "
+        "boundary, delivery ownership boundary, and future schema/conformance path, with closed failure codes and "
+        "deterministic validation/causal precedence;",
+        "installed-wheel and reproducibly bundled deployment, independently trusted expected "
+        "version/revision/artifact/conformance pins, mode-specific metadata evidence, delivered-file hashes, "
+        "conformance, and closed-world no-divergent-subset proof are explicit without requiring or fabricating a "
+        "current release; and",
+        "independent review reports no unresolved load-bearing ambiguity; native FDR, ARINC, FDM/FOQA, q4xpcc, and "
+        "external-client boundaries remain consistent with the approved scope amendment; the approved contract-only "
+        "design is recorded as binding input for later A1/R1/P1 specifications; and every implementation, schema, "
+        "fixture, artifact, adoption, release, push, tag, and publication gate remains unsatisfied without advancing "
+        "any A1, R1, P1, S, or F1 child.",
     ),
     "D1.3": (
         "D1.1 and D1.2 are verified with committed review evidence and no unresolved load-bearing finding;",
@@ -257,8 +262,7 @@ def normalized_list_items(body: str, marker: str) -> tuple[str, ...]:
     return tuple(re.sub(r"\s+", " ", match).strip() for match in re.findall(pattern, body, re.MULTILINE | re.DOTALL))
 
 
-def normalized_numbered_items(body: str) -> tuple[str, ...]:
-    lead_in = "Its acceptance gates are:\n\n"
+def normalized_numbered_items(body: str, lead_in: str = "Its acceptance gates are:\n\n") -> tuple[str, ...]:
     numbered_block = body[body.index(lead_in) + len(lead_in) :].split("\n\n", 1)[0]
     return tuple(
         re.sub(r"\s+", " ", match).strip()
@@ -396,11 +400,13 @@ class BacklogAuthorityTests(unittest.TestCase):
             with self.subTest(child=child):
                 heading = f"{child} — {D1_OUTCOMES[child]}"
                 backlog_body = section_body(BACKLOG, heading, level=3)
-                design_body = section_body(D1_DESIGN, heading, level=2)
+                design_path = ROOT / D1_2_SPECIFICATION.split("(", 1)[1][:-1] if child == "D1.2" else D1_DESIGN
+                design_body = section_body(design_path, heading, level=3 if child == "D1.2" else 2)
                 marker = "- [x] "
                 backlog_items = tuple(re.sub(r" — Evidence: \[verification\]\([^)]+\)$", "", item) for item in normalized_list_items(backlog_body, marker))
                 self.assertEqual(expected, backlog_items)
-                self.assertEqual(expected, normalized_numbered_items(design_body))
+                lead_in = "D1.2 is complete only when:\n\n" if child == "D1.2" else "Its acceptance gates are:\n\n"
+                self.assertEqual(expected, normalized_numbered_items(design_body, lead_in))
 
     def test_d1_1_is_verified_with_exact_review_and_gate_evidence(self) -> None:
         evidence_root = ROOT / ".superpowers/sdd/2026-08-23-d1-1-canonical-design-approval"

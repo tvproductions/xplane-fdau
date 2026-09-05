@@ -2,7 +2,7 @@
 
 - **Governance:** historical
 - **Status:** completed
-- **Disposition:** Jeff / tvproductions approved and completed the 2026-09-05 cross-cutting canonical gz-skills adoption without a roadmap-child completion, Git push, tag, publication, or release claim.
+- **Disposition:** Jeff / tvproductions approved and completed the 2026-09-05 cross-cutting canonical gz-skills adoption without a roadmap-child completion, Git push, tag, publication, or release claim. Current authority: `AGENTS.md`.
 
 ## Approved intent
 

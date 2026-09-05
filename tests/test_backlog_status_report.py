@@ -26,6 +26,15 @@ from backlog.report import (  # noqa: E402  # ty: ignore[unresolved-import]
 
 
 class HumanStatusReportTests(unittest.TestCase):
+    def test_build_report_orders_findings_and_errors_determine_validity(self) -> None:
+        snapshot = parse_repository(FIXTURE)
+        warning = Finding("fixture.warning", "warning", "A.md", 1, None, None, "Warning")
+        error = Finding("fixture.error", "error", "B.md", 2, "T1.2", 1, "Error")
+        report = build_report(snapshot, GitState("", False, ()), (warning, error))
+        self.assertFalse(report.valid)
+        self.assertEqual((error, warning), report.findings)
+        self.assertTrue(build_report(snapshot, report.git, (warning,)).valid)
+
     def test_dependency_readiness_uses_only_verified_dependencies(self) -> None:
         snapshot = with_dependency_readiness(parse_repository(FIXTURE))
 
@@ -84,9 +93,9 @@ class HumanStatusReportTests(unittest.TestCase):
         )
         self.assertEqual(
             [
-                (("git", "-C", str(FIXTURE), "branch", "--show-current"),),
-                (("git", "-C", str(FIXTURE), "status", "--porcelain"),),
-                (("git", "-C", str(FIXTURE), "log", "-2", "--format=%H%x00%s"),),
+                (("git", "--no-optional-locks", "-C", str(FIXTURE), "branch", "--show-current"),),
+                (("git", "--no-optional-locks", "-C", str(FIXTURE), "status", "--porcelain"),),
+                (("git", "--no-optional-locks", "-C", str(FIXTURE), "log", "-2", "--format=%H%x00%s"),),
             ],
             [call.args for call in run.call_args_list],
         )

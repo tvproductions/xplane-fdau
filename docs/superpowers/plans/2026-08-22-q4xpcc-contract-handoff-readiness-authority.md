@@ -2,7 +2,7 @@
 
 - **Governance:** historical
 - **Status:** completed
-- **Disposition:** Approved q4xpcc contract-handoff readiness authority registration completed and independently reviewed on the temporary design branch; preserved as the cross-cutting execution record and not a D1 child implementation plan.
+- **Disposition:** Approved q4xpcc contract-handoff readiness authority registration completed and independently reviewed on the temporary design branch; preserved as the cross-cutting execution record and not a D1 child implementation plan. Current authority: `docs/superpowers/specs/2026-08-22-q4xpcc-contract-handoff-readiness-design.md`.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use
 > superpowers:subagent-driven-development (recommended) or

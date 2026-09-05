@@ -2,7 +2,7 @@
 
 - **Governance:** historical
 - **Status:** completed
-- **Disposition:** Approved architecture propagation completed on the temporary design branch; preserved as the execution record for the 2026-08-16 scope amendment.
+- **Disposition:** Approved architecture propagation completed on the temporary design branch; preserved as the execution record for the 2026-08-16 scope amendment. Current authority: `docs/architecture/xplane_fdau_core_scope_amendment.md`.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

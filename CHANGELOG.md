@@ -4,6 +4,12 @@ All notable changes to this project are documented here.
 
 ## 0.1.0 (Unreleased)
 
+- Added a strict repository backlog audit to `audit`, `status`, and version-1
+  JSON, including contextual structural, artifact, lifecycle, and Git evidence
+  findings. Git observation preserves index bytes; command output uses UTF-8
+  and LF, including on Windows.
+- Bounded native FDR timestamp hour parsing so Python 3.12 through 3.14 reject
+  the same malformed hour spellings.
 - Renamed the unreleased project, distribution, import namespace, console
   command, documentation, schemas, workflows, and artifacts to `xplane-fdau`.
 - Relocated native X-Plane FDR v3/v4 beneath explicit format and sink boundaries

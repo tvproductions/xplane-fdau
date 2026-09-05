@@ -137,3 +137,63 @@ correction.
   structural, adherence, evidence, lifecycle, report-wiring, or CLI tasks.
 
 No unresolved Task 1 concern remains.
+
+## Review correction round 1
+
+Commit `79c95b3097061250c2f4d2f11d938e119961d7d1` addresses all four Important
+findings from the first Task 1 review:
+
+- inventory row failures now retain the already parsed child identity while preserving
+  the original error code, path, line, rendered message, and existing gate context;
+- source-fidelity coverage asserts every fixture gate heading and design acceptance
+  subsection with its exact child, title, statement text, and one-based lines;
+- audit and policy fixtures use context-managed `TemporaryDirectory` instances; and
+- a Git process-launch `OSError` is chained into `PolicyError` with code
+  `policy.unavailable`, while `load_audit()` continues loading independent authorities.
+
+The focused RED command was:
+
+```text
+uv run python -m unittest tests.test_backlog_status_parse.ManagedMarkdownParseTests.test_inventory_row_parse_errors_retain_the_known_child tests.test_backlog_status_audit.AuditLoadingTests.test_retains_all_audit_source_facts_with_wrapped_lf_and_crlf_statements tests.test_backlog_status_audit.AuditLoadingTests.test_git_launch_failure_is_an_independent_policy_finding tests.test_backlog_status_policy.AuditPolicyTests.test_git_launch_failure_is_chained_as_policy_unavailable -v
+exit 1: four row-local subtests received node=None, and both Git-launch tests raised
+raw OSError; the strengthened source-fidelity assertion passed.
+```
+
+After the implementation, that exact command ran 4 test methods successfully. Full
+affected-module evidence was:
+
+```text
+uv run python -m unittest tests.test_backlog_status_parse tests.test_backlog_status_audit tests.test_backlog_status_policy -v
+Ran 44 tests — OK
+
+uv run ruff check .codex/skills/backlog-status/scripts/backlog/parse.py .codex/skills/backlog-status/scripts/backlog/policy.py tests/test_backlog_status_parse.py tests/test_backlog_status_audit.py tests/test_backlog_status_policy.py
+All checks passed
+
+uv run ruff format --check .codex/skills/backlog-status/scripts/backlog/parse.py .codex/skills/backlog-status/scripts/backlog/policy.py tests/test_backlog_status_parse.py tests/test_backlog_status_audit.py tests/test_backlog_status_policy.py
+5 files already formatted
+
+uv run ty check .codex/skills/backlog-status/scripts/backlog/parse.py .codex/skills/backlog-status/scripts/backlog/policy.py tests/test_backlog_status_parse.py tests/test_backlog_status_audit.py tests/test_backlog_status_policy.py
+All checks passed
+```
+
+Fresh final verification before the fix commit was:
+
+```text
+uv run python tools/quality.py check
+exit 0; Ruff, formatting, ty, 298 unittests, 94% coverage, Bandit,
+detect-secrets, Interrogate, Vulture, and Xenon passed
+
+uv run python -m unittest discover -q
+Ran 298 tests — OK
+
+uv run mkdocs build --strict
+exit 0; documentation built successfully
+
+git diff --check
+exit 0
+
+git diff --exit-code -- docs/superpowers/specs/2026-09-05-t1-3-audit-policy-supplement-design.md
+exit 0
+```
+
+No unresolved concern remains from review correction round 1.

@@ -179,14 +179,16 @@ def _prefixed_statements(
     statements: list[StatementSource] = []
     for index in range(start, end):
         line = lines[index]
-        if not line.text.startswith(prefix):
+        if not line.text.startswith("-") or not line.text[1:2].isspace():
             continue
         fragments = [line.text]
         cursor = index + 1
         while cursor < end and lines[cursor].text[:1].isspace():
             fragments.append(" ".join(lines[cursor].text.split()))
             cursor += 1
-        statements.append(StatementSource(" ".join(fragments), _source(path, line.number)))
+        statement = " ".join(" ".join(fragments).split())
+        if statement.startswith(prefix):
+            statements.append(StatementSource(statement, _source(path, line.number)))
     return tuple(statements)
 
 

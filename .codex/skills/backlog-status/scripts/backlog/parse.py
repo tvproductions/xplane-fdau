@@ -465,6 +465,10 @@ def parse_evidence(root: Path, path: Path) -> EvidenceArtifact:
     gate_match = re.fullmatch(r"`([1-9][0-9]*)`", gate_value)
     if gate_value != "—" and gate_match is None:
         raise MarkdownParseError(path, 4, "evidence Gate must be a positive ordinal or absent", code="evidence.gate-mismatch")
+    try:
+        gate = int(gate_match.group(1)) if gate_match else None
+    except ValueError as error:
+        raise MarkdownParseError(path, 4, "evidence Gate ordinal cannot be represented", code="evidence.gate-mismatch") from error
     date_value = values["Date"]
     try:
         if re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", date_value) is None:
@@ -477,7 +481,7 @@ def parse_evidence(root: Path, path: Path) -> EvidenceArtifact:
     return EvidenceArtifact(
         relative,
         child_match.group(1),
-        int(gate_match.group(1)) if gate_match else None,
+        gate,
         values["Kind"],
         values["Result"],
         date_value,

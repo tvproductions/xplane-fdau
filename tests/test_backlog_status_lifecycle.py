@@ -287,6 +287,55 @@ class LifecycleTests(unittest.TestCase):
         satisfied = replace(satisfied, sources=fresh.sources)
         self.assertIn("release.authorization", {item.code for item in import_module("backlog.rules").release_authorization_findings(satisfied)})
 
+    def test_oversized_evidence_gate_preserves_independent_findings(self) -> None:
+        path = ".superpowers/sdd/t1-1/gate-1.md"
+        replace_text(self.root, path, "- **Gate:** `1`", "- **Gate:** `" + "9" * 4301 + "`")
+        run_git(self.root, "add", "--", path)
+        run_git(self.root, "commit", "-qm", "Oversized ordinal fixture")
+        (self.root / ".superpowers/sdd/t1-1/review.md").unlink()
+        findings = self.rules.lifecycle_findings(self.loaded())
+        mismatch = next(item for item in findings if item.code == "evidence.gate-mismatch")
+        self.assertEqual((path, 4, "T1.1", 1), (mismatch.path, mismatch.line, mismatch.node, mismatch.gate))
+        independent = next(item for item in findings if item.code == "evidence.path")
+        self.assertEqual((".superpowers/sdd/t1-1/review.md", "T1.1", None), (independent.path, independent.node, independent.gate))
+
+    def test_release_prefix_normalization_precedes_discovery(self) -> None:
+        rule = import_module("backlog.rules").release_authorization_findings
+        canonical = "- Release, tag, and package publication: prohibited pending their separate gates and authorization."
+        variants = (
+            canonical,
+            canonical.replace("Release,", "Release, "),
+            canonical.replace("package publication:", "package\n  publication:"),
+            canonical.replace("- Release,", "-  Release,\t"),
+        )
+        original = (self.root / "BACKLOG.md").read_bytes()
+        for variant in variants:
+            with self.subTest(variant=variant):
+                (self.root / "BACKLOG.md").write_bytes(original)
+                replace_text(self.root, "BACKLOG.md", canonical, variant)
+                loaded = self.loaded()
+                self.assertEqual((), rule(loaded))
+                source = loaded.sources.backlog_release_statements[0]
+                self.assertEqual((canonical, 6), (source.value, source.source.line))
+                # An equivalent statement in a later section is outside the managed surface.
+                with (self.root / "BACKLOG.md").open("a", encoding="utf-8", newline="\n") as stream:
+                    stream.write("\n" + variant + "\n")
+                self.assertEqual((), rule(self.loaded()))
+                (self.root / "BACKLOG.md").write_bytes(original)
+        for first in variants:
+            for second in variants:
+                with self.subTest(first=first, second=second):
+                    (self.root / "BACKLOG.md").write_bytes(original)
+                    replace_text(self.root, "BACKLOG.md", canonical, first + "\n" + second)
+                    loaded = self.loaded()
+                    findings = [item for item in rule(loaded) if item.code == "release.authorization"]
+                    self.assertEqual(1, len(findings))
+                    finding = findings[0]
+                    second_line = 7 + first.count("\n")
+                    self.assertEqual(("BACKLOG.md", second_line), (finding.path, finding.line))
+                    self.assertEqual((6, second_line), tuple(item.source.line for item in loaded.sources.backlog_release_statements))
+                    (self.root / "BACKLOG.md").write_bytes(original)
+
 
 if __name__ == "__main__":
     unittest.main()

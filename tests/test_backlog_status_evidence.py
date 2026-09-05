@@ -126,6 +126,16 @@ class EvidenceTests(unittest.TestCase):
                 run_git(self.root, "add", "--", self.path)
                 self.assertIn(code, self.codes(head=False))
 
+    def test_oversized_gate_is_a_contextual_domain_finding(self) -> None:
+        target = self.root / self.path
+        content = target.read_text(encoding="utf-8").replace("- **Gate:** `1`", "- **Gate:** `" + "9" * 4301 + "`")
+        target.write_text(content, encoding="utf-8", newline="\n")
+        run_git(self.root, "add", "--", self.path)
+        run_git(self.root, "commit", "-qm", "Oversized ordinal fixture")
+        findings = self.validate(self.root, self.path, "T1.1", 1, kinds=allowed_kinds("gate"), require_head=True)
+        finding = next(item for item in findings if item.code == "evidence.gate-mismatch")
+        self.assertEqual((self.path, 4, "T1.1", 1), (finding.path, finding.line, finding.node, finding.gate))
+
 
 if __name__ == "__main__":
     unittest.main()

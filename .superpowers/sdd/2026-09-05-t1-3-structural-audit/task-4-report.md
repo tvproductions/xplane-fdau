@@ -236,3 +236,114 @@ edited evidence, unlisted historical links, and gate drift without exemptions.
 - Python 3.14.4 has the two independently reproduced baseline runtime failures
   above. Python 3.12.13 aggregate and Python 3.13.15 compatibility passed. This
   task does not claim every supported-target full suite is green.
+
+## Review fix round 1
+
+Base: `6022dda`; Task 4 reviewed implementation: `676d52e`. The separate
+compatibility worker fixed the previously recorded Python 3.14 runtime failures
+in `6022dda`; this correction round did not edit runtime files or their tests.
+The independent review's two Important findings were reproduced and corrected.
+
+1. `parse_evidence` now translates a failed positive-ordinal integer conversion
+   to `MarkdownParseError` with `evidence.gate-mismatch` at metadata line 4.
+   `evidence_findings` retains the referring child/gate. The regression uses a
+   real committed 4,301-digit ordinal and confirms lifecycle aggregation also
+   retains an independent missing-review `evidence.path` finding.
+2. `_prefixed_statements` now collects a complete top-level list statement,
+   joins continuations, and folds whitespace before checking the release
+   prefix. Source locations retain the original first line. Tests cover four
+   equivalent forms, all sixteen ordered duplicate pairs, and copies outside
+   the Current-position section. Spaced and wrapped prefixes are recognized
+   equally; equivalent duplicates produce `release.authorization` at the
+   original second statement line.
+
+The initial test run also exposed an error in subtest fixture reset handling;
+restoration was moved to each subtest's beginning before recording the covering
+RED. No production fix had been applied at that point.
+
+Covering RED:
+
+```text
+uv run python -m unittest tests.test_backlog_status_evidence.EvidenceTests.test_oversized_gate_is_a_contextual_domain_finding tests.test_backlog_status_lifecycle.LifecycleTests.test_oversized_evidence_gate_preserves_independent_findings tests.test_backlog_status_lifecycle.LifecycleTests.test_release_prefix_normalization_precedes_discovery -v
+Ran 3 tests in 1.186s
+FAILED (failures=18, errors=2)
+exit 1
+```
+
+The two errors were the reproduced uncaught `ValueError` from the 4,301-digit
+Gate; the eighteen subtest failures were rejected valid forms or absent/wrongly
+located equivalent-duplicate findings.
+
+Covering GREEN, same exact command:
+
+```text
+Ran 3 tests in 1.137s
+OK
+exit 0
+```
+
+Final static and documentation verification:
+
+```text
+uv run ruff check --no-force-exclude .codex/skills/backlog-status/scripts
+All checks passed!
+exit 0
+uv run ruff format --check --no-force-exclude .codex/skills/backlog-status/scripts
+13 files already formatted
+exit 0
+uv run ty check .codex/skills/backlog-status/scripts
+All checks passed!
+exit 0
+uv run mkdocs build --strict
+Documentation built in 1.59 seconds
+exit 0 (existing nonblocking Material advisory banner remains)
+git diff --check
+git diff --cached --check
+no output; exit 0
+```
+
+Real source observation is unchanged: load 0, lifecycle 1, release authorization
+0. The sole lifecycle finding remains `lifecycle.historical-plan` for D1.2 at
+BACKLOG.md:91, caused by the preexisting four governing gate drifts. Authority
+documents and this finding were preserved. The oversized BACKLOG gate-count
+conversion is separately reserved for Task 5 and was not changed here.
+
+Self-review checked that conversion error translation preserves exception
+chaining without introducing an arbitrary ordinal range; normalization happens
+after full-statement collection and before prefix selection; and source line
+and section boundaries survive folding. Only the two reviewed corrections,
+their three tests, and this report were changed in this round.
+
+Supported-version full unittest results on the unchanged fix candidate:
+
+```text
+& C:/Users/Jeff/AppData/Local/Programs/Python/Python313/python.exe -m unittest discover -v
+Ran 358 tests in 45.866s
+OK
+exit 0
+& C:/Users/Jeff/AppData/Roaming/uv/python/cpython-3.14-windows-x86_64-none/python.exe -m unittest discover -v
+Ran 358 tests in 45.062s
+OK
+exit 0
+```
+
+Required aggregate, run once on the unchanged production fix candidate:
+
+```text
+uv run python tools/quality.py check
+All checks passed!                         (Ruff)
+57 files already formatted
+All checks passed!                         (ty)
+Ran 358 tests in 45.703s                    (Python 3.12.13)
+OK
+Ran 358 tests in 41.379s                    (coverage run)
+OK
+TOTAL 1527 98 94%                          (configured runtime coverage)
+RESULT: PASSED (minimum: 40.0%, actual: 43.6%)  (Interrogate)
+Bandit, tracked-file detect-secrets, Vulture, Xenon: passed
+exit 0
+```
+
+Round 1 result: both Important review findings corrected and covered; all
+required gates and supported Python full unittest targets pass. Remaining
+concerns are the unchanged D1.2 historical finding and Task 5 CLI integration.

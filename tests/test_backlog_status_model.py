@@ -11,11 +11,19 @@ SCRIPTS = ROOT / ".codex/skills/backlog-status/scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 from backlog.model import (  # noqa: E402  # ty: ignore[unresolved-import]
+    AuditLoad,
+    AuditPolicy,
+    AuditSources,
     CHILD_STATUSES,
     GATE_STATES,
     NODE_KINDS,
     BacklogChild,
     GateSummary,
+    HistoricalAdmission,
+    RepositorySnapshot,
+    Roadmap,
+    Backlog,
+    Artifacts,
     RoadmapChild,
     SourceLocation,
 )
@@ -73,6 +81,21 @@ class BacklogStatusModelTests(unittest.TestCase):
         self.assertTrue(backlog_child.dependency_ready)
         with self.assertRaises(FrozenInstanceError):
             child.title = "changed"  # type: ignore[misc]
+
+    def test_audit_load_and_policy_models_are_frozen(self) -> None:
+        root = Path("fixture").resolve()
+        snapshot = RepositorySnapshot(
+            root,
+            Roadmap((), (), (), (), ()),
+            Backlog(None, (), (), "BACKLOG.md"),
+            Artifacts((), (), ()),
+        )
+        policy = AuditPolicy((HistoricalAdmission("D1.1", "docs/plan.md", "a" * 64),))
+        load = AuditLoad(snapshot, (), frozenset(), AuditSources.empty(), policy)
+
+        self.assertEqual("D1.1", load.policy.historical[0].child if load.policy else None)
+        with self.assertRaises(FrozenInstanceError):
+            load.policy = None  # type: ignore[misc]
 
 
 if __name__ == "__main__":

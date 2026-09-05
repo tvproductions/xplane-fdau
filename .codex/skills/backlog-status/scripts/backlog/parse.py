@@ -85,10 +85,22 @@ _HISTORICAL_STATUSES = ("completed", "superseded")
 
 
 class MarkdownParseError(ValueError):
-    def __init__(self, path: Path, line: int, message: str) -> None:
+    def __init__(
+        self,
+        path: Path,
+        line: int,
+        message: str,
+        *,
+        code: str,
+        node: str | None = None,
+        gate: int | None = None,
+    ) -> None:
         self.path = path
         self.line = line
         self.message = message
+        self.code = code
+        self.node = node
+        self.gate = gate
         super().__init__(f"{path.as_posix()}:{line}: {message}")
 
 
@@ -102,7 +114,7 @@ def _read(path: Path) -> tuple[_Line, ...]:
     try:
         text = path.read_text(encoding="utf-8")
     except (OSError, UnicodeError) as error:
-        raise MarkdownParseError(path, 1, f"cannot read UTF-8 Markdown: {error}") from error
+        raise MarkdownParseError(path, 1, f"cannot read UTF-8 Markdown: {error}", code="input.unreadable") from error
     return tuple(_Line(index, line) for index, line in enumerate(text.splitlines(), start=1))
 
 
@@ -114,29 +126,29 @@ def _relative_path(root: Path, path: Path) -> str:
     try:
         return path.resolve().relative_to(root.resolve()).as_posix()
     except ValueError as error:
-        raise MarkdownParseError(path, 1, "artifact path must be inside the repository root") from error
+        raise MarkdownParseError(path, 1, "artifact path must be inside the repository root", code="input.outside-root") from error
 
 
 def _cells(path: Path, line: _Line, expected: int) -> tuple[str, ...]:
     if not line.text.startswith("|") or not line.text.endswith("|"):
-        raise MarkdownParseError(path, line.number, "managed table row must begin and end with '|'")
+        raise MarkdownParseError(path, line.number, "managed table row must begin and end with '|'", code="markdown.table-boundary")
     values = tuple(cell.strip() for cell in line.text[1:-1].split("|"))
     if len(values) != expected:
-        raise MarkdownParseError(path, line.number, f"managed table row requires {expected} cells")
+        raise MarkdownParseError(path, line.number, f"managed table row requires {expected} cells", code="markdown.table-cell-count")
     return values
 
 
 def _identity(path: Path, line: int, value: str) -> str:
     match = _IDENTITY.fullmatch(value)
     if match is None:
-        raise MarkdownParseError(path, line, f"invalid identity cell: {value!r}")
+        raise MarkdownParseError(path, line, f"invalid identity cell: {value!r}", code="markdown.identity")
     return match.group(1)
 
 
 def _local_child_identity(path: Path, line: int, value: str) -> str:
     match = _LOCAL_CHILD_IDENTITY.fullmatch(value)
     if match is None:
-        raise MarkdownParseError(path, line, f"invalid local-child identity cell: {value!r}")
+        raise MarkdownParseError(path, line, f"invalid local-child identity cell: {value!r}", code="markdown.local-child-identity")
     return match.group(1)
 
 
@@ -144,7 +156,7 @@ def _find_heading(path: Path, lines: tuple[_Line, ...], heading: str) -> int:
     indexes = [index for index, line in enumerate(lines) if line.text == heading]
     if len(indexes) != 1:
         line = lines[indexes[1]].number if len(indexes) > 1 else lines[0].number if lines else 1
-        raise MarkdownParseError(path, line, f"requires exactly one heading: {heading}")
+        raise MarkdownParseError(path, line, f"requires exactly one heading: {heading}", code="markdown.heading")
     return indexes[0]
 
 
@@ -175,13 +187,13 @@ def _table(
             line = lines[-1].number
         else:
             line = 1
-        raise MarkdownParseError(path, line, f"requires exactly one {label} table header")
+        raise MarkdownParseError(path, line, f"requires exactly one {label} table header", code="markdown.table-header")
     index = indexes[0]
     separator = lines[index + 1] if index + 1 < end else None
     separator_cells = () if separator is None else tuple(separator.text.strip("|").split("|"))
     if separator is None or _SEPARATOR.fullmatch(separator.text) is None or len(separator_cells) != len(header):
         line = lines[index + 1].number if index + 1 < end else lines[index].number
-        raise MarkdownParseError(path, line, f"invalid managed table separator for {label}")
+        raise MarkdownParseError(path, line, f"invalid managed table separator for {label}", code="markdown.table-separator")
 
     rows: list[tuple[_Line, tuple[str, ...]]] = []
     for row_index in range(index + 2, end):
@@ -191,8 +203,13 @@ def _table(
         try:
             values = _cells(path, line, len(header))
         except MarkdownParseError as error:
-            if error.message.startswith("managed table row requires"):
-                raise MarkdownParseError(path, line.number, f"{label} row requires {len(header)} cells") from error
+            if error.code == "markdown.table-cell-count":
+                raise MarkdownParseError(
+                    path,
+                    line.number,
+                    f"{label} row requires {len(header)} cells",
+                    code="markdown.table-cell-count",
+                ) from error
             raise
         rows.append((line, values))
     return tuple(rows)
@@ -203,7 +220,7 @@ def _dependencies(path: Path, line: int, value: str) -> tuple[str, ...]:
         return ()
     parts = value.split(", ")
     if ", ".join(parts) != value:
-        raise MarkdownParseError(path, line, f"invalid dependency list: {value!r}")
+        raise MarkdownParseError(path, line, f"invalid dependency list: {value!r}", code="dependency.syntax")
     return tuple(_identity(path, line, part) for part in parts)
 
 
@@ -211,14 +228,14 @@ def _repository_relative_path(path: Path, line: int, target: str, message: str) 
     parts = target.split("/")
     has_uri_scheme = re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", target) is not None
     if not target or target.startswith("/") or "\\" in target or has_uri_scheme or any(part in {"", ".", ".."} for part in parts):
-        raise MarkdownParseError(path, line, message)
+        raise MarkdownParseError(path, line, message, code="link.path")
     return target
 
 
 def _repository_link(path: Path, line: int, value: str) -> str:
     match = _LINK.fullmatch(value)
     if match is None:
-        raise MarkdownParseError(path, line, f"invalid repository-relative link: {value!r}")
+        raise MarkdownParseError(path, line, f"invalid repository-relative link: {value!r}", code="link.syntax")
     target = match.group(2)
     return _repository_relative_path(path, line, target, f"invalid repository-relative link: {value!r}")
 
@@ -229,10 +246,10 @@ def _optional_link(path: Path, line: int, value: str) -> str | None:
 
 def _status(path: Path, line: int, value: str) -> ChildStatus:
     if not value.startswith("`") or not value.endswith("`"):
-        raise MarkdownParseError(path, line, f"invalid child status: {value!r}")
+        raise MarkdownParseError(path, line, f"invalid child status: {value!r}", code="backlog.status")
     status = value[1:-1]
     if status not in CHILD_STATUSES:
-        raise MarkdownParseError(path, line, f"invalid child status: {value!r}")
+        raise MarkdownParseError(path, line, f"invalid child status: {value!r}", code="backlog.status")
     return status
 
 
@@ -241,30 +258,30 @@ def _gate_count(path: Path, line: int, value: str) -> tuple[int, int]:
         return 0, 0
     match = _GATE_COUNT.fullmatch(value)
     if match is None:
-        raise MarkdownParseError(path, line, f"invalid gate count: {value!r}")
+        raise MarkdownParseError(path, line, f"invalid gate count: {value!r}", code="backlog.gate-count")
     return int(match.group(1)), int(match.group(2))
 
 
 def _links(path: Path, line: int, value: str) -> tuple[str, ...]:
     matches = tuple(_LINK.finditer(value))
     if not matches:
-        raise MarkdownParseError(path, line, "evidence requires one or more repository-relative links")
+        raise MarkdownParseError(path, line, "evidence requires one or more repository-relative links", code="evidence.links")
     remainder = _LINK.sub("", value)
     if remainder.strip():
-        raise MarkdownParseError(path, line, "evidence links must be separated only by whitespace")
+        raise MarkdownParseError(path, line, "evidence links must be separated only by whitespace", code="evidence.links")
     return tuple(_repository_link(path, line, match.group(0)) for match in matches)
 
 
 def _artifact_metadata(path: Path) -> tuple[_Line, tuple[tuple[_Line, str, str], ...]]:
     lines = _read(path)
     if not lines or not lines[0].text.startswith("# "):
-        raise MarkdownParseError(path, 1, "artifact requires a title")
+        raise MarkdownParseError(path, 1, "artifact requires a title", code="artifact.metadata")
     if len(lines) < 2 or lines[1].text != "":
         line = lines[1].number if len(lines) > 1 else lines[0].number
-        raise MarkdownParseError(path, line, "missing Governance metadata")
+        raise MarkdownParseError(path, line, "missing Governance metadata", code="artifact.metadata")
     if len(lines) < 3 or _METADATA.fullmatch(lines[2].text) is None:
         line = lines[2].number if len(lines) > 2 else lines[1].number
-        raise MarkdownParseError(path, line, "missing Governance metadata")
+        raise MarkdownParseError(path, line, "missing Governance metadata", code="artifact.metadata")
     metadata: list[tuple[_Line, str, str]] = []
     for line in lines[2:]:
         match = _METADATA.fullmatch(line.text)
@@ -272,7 +289,7 @@ def _artifact_metadata(path: Path) -> tuple[_Line, tuple[tuple[_Line, str, str],
             break
         metadata.append((line, match.group(1), match.group(2)))
     if not metadata or metadata[0][1] != "Governance":
-        raise MarkdownParseError(path, lines[2].number, "missing Governance metadata")
+        raise MarkdownParseError(path, lines[2].number, "missing Governance metadata", code="artifact.metadata")
     return lines[0], tuple(metadata)
 
 
@@ -291,32 +308,32 @@ def _metadata_values(
             line = metadata[len(expected)][0].number
         else:
             line = metadata[-1][0].number + 1
-        raise MarkdownParseError(path, line, f"{label} metadata keys must match the managed family")
+        raise MarkdownParseError(path, line, f"{label} metadata keys must match the managed family", code="artifact.metadata")
     return {key: value for _line, key, value in metadata}
 
 
 def _artifact_status(path: Path, line: int, value: str, allowed: tuple[str, ...], label: str) -> str:
     if value not in allowed:
-        raise MarkdownParseError(path, line, f"invalid {label} status: {value!r}")
+        raise MarkdownParseError(path, line, f"invalid {label} status: {value!r}", code="artifact.status")
     return value
 
 
 def _artifact_epic(path: Path, line: int, value: str) -> str:
     match = _EPIC_IDENTITY.fullmatch(value)
     if match is None:
-        raise MarkdownParseError(path, line, "Roadmap epic requires one epic identity")
+        raise MarkdownParseError(path, line, "Roadmap epic requires one epic identity", code="artifact.epic")
     return match.group(1)
 
 
 def _artifact_children(path: Path, line: int, value: str) -> tuple[str, ...]:
     parts = value.split(", ")
     if not value or ", ".join(parts) != value:
-        raise MarkdownParseError(path, line, "Roadmap children requires local-child identities")
+        raise MarkdownParseError(path, line, "Roadmap children requires local-child identities", code="artifact.children")
     children: list[str] = []
     for part in parts:
         match = _LOCAL_CHILD_IDENTITY.fullmatch(part)
         if match is None:
-            raise MarkdownParseError(path, line, "Roadmap children requires local-child identities")
+            raise MarkdownParseError(path, line, "Roadmap children requires local-child identities", code="artifact.children")
         children.append(match.group(1))
     return tuple(children)
 
@@ -325,13 +342,13 @@ def _artifact_child(path: Path, line: int, value: str) -> str:
     try:
         return _local_child_identity(path, line, value)
     except MarkdownParseError as error:
-        raise MarkdownParseError(path, line, "Roadmap child requires one identity") from error
+        raise MarkdownParseError(path, line, "Roadmap child requires one identity", code="artifact.child") from error
 
 
 def _artifact_relative_value(path: Path, line: int, value: str, label: str) -> str:
     match = re.fullmatch(r"`([^`]+)`", value)
     if match is None:
-        raise MarkdownParseError(path, line, f"{label} requires a repository-relative path")
+        raise MarkdownParseError(path, line, f"{label} requires a repository-relative path", code="artifact.path")
     target = match.group(1)
     return _repository_relative_path(path, line, target, f"{label} requires a repository-relative path")
 
@@ -347,11 +364,15 @@ def _completion_evidence(path: Path, line: int, value: str) -> str | None:
         return _artifact_relative_value(path, line, value, "Completion evidence")
     target = _repository_link(path, line, value)
     if not target.startswith("docs/"):
-        raise MarkdownParseError(path, line, "Completion evidence Markdown link must target the docs tree")
+        raise MarkdownParseError(path, line, "Completion evidence Markdown link must target the docs tree", code="artifact.completion-path")
     return target
 
 
-def _parse_artifact(root: Path, path: Path, family: str) -> SpecificationArtifact | PlanArtifact | HistoricalArtifact:
+def parse_artifact(
+    root: Path,
+    path: Path,
+    family: Literal["specification", "plan"],
+) -> SpecificationArtifact | PlanArtifact | HistoricalArtifact:
     title, metadata = _artifact_metadata(path)
     governance = metadata[0][2]
     if governance == "historical":
@@ -366,7 +387,12 @@ def _parse_artifact(root: Path, path: Path, family: str) -> SpecificationArtifac
             SourceLocation(_relative_path(root, path), title.number),
         )
     if governance != "active":
-        raise MarkdownParseError(path, metadata[0][0].number, f"invalid Governance metadata: {governance!r}")
+        raise MarkdownParseError(
+            path,
+            metadata[0][0].number,
+            f"invalid Governance metadata: {governance!r}",
+            code="artifact.governance",
+        )
     if family == "specification":
         values = _metadata_values(path, metadata, _ACTIVE_SPECIFICATION_KEYS, "active design")
         status = _artifact_status(path, metadata[1][0].number, values["Status"], _ACTIVE_SPECIFICATION_STATUSES, "active design")
@@ -400,6 +426,7 @@ def _gate_items(
     lines: tuple[_Line, ...],
     start: int,
     end: int,
+    child_id: str,
 ) -> tuple[GateItem, ...]:
     items: list[GateItem] = []
     item_line: _Line | None = None
@@ -414,14 +441,45 @@ def _gate_items(
         statement, separator, evidence_text = content.partition(marker)
         statement = statement.strip()
         if not statement:
-            raise MarkdownParseError(path, item_line.number, "gate task item requires a statement")
+            raise MarkdownParseError(
+                path,
+                item_line.number,
+                "gate task item requires a statement",
+                code="backlog.gate-item",
+                node=child_id,
+                gate=len(items) + 1,
+            )
         if checked:
             if not separator:
-                raise MarkdownParseError(path, item_line.number, "checked gate requires evidence")
-            evidence = _links(path, item_line.number, evidence_text)
+                raise MarkdownParseError(
+                    path,
+                    item_line.number,
+                    "checked gate requires evidence",
+                    code="backlog.gate-item",
+                    node=child_id,
+                    gate=len(items) + 1,
+                )
+            try:
+                evidence = _links(path, item_line.number, evidence_text)
+            except MarkdownParseError as error:
+                raise MarkdownParseError(
+                    path,
+                    item_line.number,
+                    error.message,
+                    code=error.code,
+                    node=child_id,
+                    gate=len(items) + 1,
+                ) from error
         else:
             if separator:
-                raise MarkdownParseError(path, item_line.number, "unchecked gate cannot contain evidence")
+                raise MarkdownParseError(
+                    path,
+                    item_line.number,
+                    "unchecked gate cannot contain evidence",
+                    code="backlog.gate-item",
+                    node=child_id,
+                    gate=len(items) + 1,
+                )
             evidence = ()
         items.append(
             GateItem(
@@ -445,11 +503,25 @@ def _gate_items(
             fragments = [match.group(2)]
             continue
         if line.text.startswith("- ["):
-            raise MarkdownParseError(path, line.number, f"invalid gate task item: {line.text!r}")
+            raise MarkdownParseError(
+                path,
+                line.number,
+                f"invalid gate task item: {line.text!r}",
+                code="backlog.gate-item",
+                node=child_id,
+                gate=len(items) + 1,
+            )
         if line.text[:1].isspace() and item_line is not None:
             fragments.append(" ".join(line.text.split()))
             continue
-        raise MarkdownParseError(path, line.number, "invalid gate task item")
+        raise MarkdownParseError(
+            path,
+            line.number,
+            "invalid gate task item",
+            code="backlog.gate-item",
+            node=child_id,
+            gate=len(items) + 1,
+        )
     finish_item()
     return tuple(items)
 
@@ -473,7 +545,7 @@ def parse_roadmap(path: Path) -> Roadmap:
     children: list[RoadmapChild] = []
     for index, heading in enumerate(lines):
         if _INVALID_EPIC_HEADING.fullmatch(heading.text) is not None:
-            raise MarkdownParseError(path, heading.number, "invalid managed epic heading")
+            raise MarkdownParseError(path, heading.number, "invalid managed epic heading", code="roadmap.epic-heading")
         match = _EPIC_HEADING.fullmatch(heading.text)
         if match is None:
             continue
@@ -488,7 +560,7 @@ def parse_roadmap(path: Path) -> Roadmap:
             external_prerequisite = None
             if len(values) == 4:
                 if not values[3]:
-                    raise MarkdownParseError(path, line.number, "standards row requires 4 cells")
+                    raise MarkdownParseError(path, line.number, "standards row requires 4 cells", code="roadmap.standards-row")
                 external_prerequisite = None if values[3] == "—" else values[3]
             children.append(
                 RoadmapChild(
@@ -553,13 +625,13 @@ def _active_child(path: Path, lines: tuple[_Line, ...]) -> str | None:
     selections = [line for line in lines[current_heading + 1 : end] if line.text.startswith("- Active child:")]
     if len(selections) != 1:
         line = selections[1].number if len(selections) > 1 else lines[current_heading].number
-        raise MarkdownParseError(path, line, "requires exactly one managed active child line")
+        raise MarkdownParseError(path, line, "requires exactly one managed active child line", code="backlog.selection")
     line = selections[0]
     if line.text == "- Active child: —.":
         return None
     match = re.fullmatch(r"- Active child: (`[A-Z][0-9]+(?:\.[0-9]+)?`)\.", line.text)
     if match is None:
-        raise MarkdownParseError(path, line.number, "active child selection is invalid")
+        raise MarkdownParseError(path, line.number, "active child selection is invalid", code="backlog.selection")
     return _local_child_identity(path, line.number, match.group(1))
 
 
@@ -579,7 +651,13 @@ def _gate_heading(
             if heading_child == child_id:
                 found.append((index, _section_end(lines, index, 3)))
     if len(found) > 1:
-        raise MarkdownParseError(path, lines[found[1][0]].number, f"duplicate acceptance-gate heading for {child_id}")
+        raise MarkdownParseError(
+            path,
+            lines[found[1][0]].number,
+            f"duplicate acceptance-gate heading for {child_id}",
+            code="backlog.gate-heading",
+            node=child_id,
+        )
     return found[0] if found else None
 
 
@@ -590,7 +668,13 @@ def _dashboard(path: Path, lines: tuple[_Line, ...]) -> tuple[BacklogReleaseGate
     for line, values in rows:
         gate_id = _identity(path, line.number, values[0])
         if not values[2].startswith("`") or not values[2].endswith("`") or values[2][1:-1] not in GATE_STATES:
-            raise MarkdownParseError(path, line.number, f"invalid release-gate state: {values[2]!r}")
+            raise MarkdownParseError(
+                path,
+                line.number,
+                f"invalid release-gate state: {values[2]!r}",
+                code="backlog.release-state",
+                node=gate_id,
+            )
         _dependencies(path, line.number, values[3])
         evidence = () if values[4] == "—" else _links(path, line.number, values[4])
         gates.append(BacklogReleaseGate(gate_id, cast(GateState, values[2][1:-1]), evidence, _source(path, line.number)))
@@ -619,11 +703,17 @@ def parse_backlog(path: Path) -> Backlog:
         if values[6] != "—":
             gate_heading = _gate_heading(path, lines, child_id, acceptance_heading + 1, acceptance_end)
             if gate_heading is None:
-                raise MarkdownParseError(path, line.number, f"missing acceptance-gate heading for {child_id}")
-            gate_items = _gate_items(path, lines, gate_heading[0] + 1, gate_heading[1])
+                raise MarkdownParseError(
+                    path,
+                    line.number,
+                    f"missing acceptance-gate heading for {child_id}",
+                    code="backlog.gate-heading",
+                    node=child_id,
+                )
+            gate_items = _gate_items(path, lines, gate_heading[0] + 1, gate_heading[1], child_id)
         reason = None if values[9] == "—" else values[9]
         if reason == "":
-            raise MarkdownParseError(path, line.number, "reason cell must not be empty")
+            raise MarkdownParseError(path, line.number, "reason cell must not be empty", code="backlog.reason", node=child_id)
         children.append(
             BacklogChild(
                 child_id,
@@ -652,7 +742,7 @@ def parse_artifacts(root: Path) -> Artifacts:
         (resolved / "docs/superpowers/plans", "plan"),
     ):
         for path in sorted(directory.glob("*.md")):
-            parsed = _parse_artifact(resolved, path, family)
+            parsed = parse_artifact(resolved, path, family)
             if isinstance(parsed, HistoricalArtifact):
                 historical.append(parsed)
             elif isinstance(parsed, SpecificationArtifact):

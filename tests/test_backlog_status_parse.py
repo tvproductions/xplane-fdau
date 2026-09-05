@@ -15,6 +15,7 @@ sys.path.insert(0, str(SCRIPTS))
 from backlog.parse import (  # noqa: E402  # ty: ignore[unresolved-import]
     MarkdownParseError,
     parse_artifacts,
+    parse_artifact,
     parse_backlog,
     parse_repository,
     parse_roadmap,
@@ -418,6 +419,39 @@ class ManagedMarkdownParseTests(unittest.TestCase):
         snapshot = parse_repository(FIXTURE)
         self.assertEqual(FIXTURE.resolve(), snapshot.root)
         self.assertEqual(artifacts, snapshot.artifacts)
+
+    def test_public_parse_artifact_retains_existing_artifact_types(self) -> None:
+        specification = parse_artifact(
+            FIXTURE,
+            FIXTURE / "docs/superpowers/specs/t1-design.md",
+            "specification",
+        )
+        plan = parse_artifact(
+            FIXTURE,
+            FIXTURE / "docs/superpowers/plans/t1-1.md",
+            "plan",
+        )
+        historical = parse_artifact(
+            FIXTURE,
+            FIXTURE / "docs/superpowers/plans/historical-plan.md",
+            "plan",
+        )
+
+        self.assertEqual("T1", specification.epic)  # type: ignore[union-attr]
+        self.assertEqual("T1.1", plan.child)  # type: ignore[union-attr]
+        self.assertEqual("historical", historical.governance)
+
+    def test_parse_error_retains_code_node_and_gate_without_changing_text(self) -> None:
+        path = self.copy_backlog(replace=("- [ ] Frozen parser remains open.", "- [?] Frozen parser remains open."))
+
+        with self.assertRaises(MarkdownParseError) as raised:
+            parse_backlog(path)
+
+        error = raised.exception
+        self.assertEqual("backlog.gate-item", error.code)
+        self.assertEqual("T1.2", error.node)
+        self.assertEqual(1, error.gate)
+        self.assertRegex(str(error), r"BACKLOG.md:[0-9]+: invalid gate task item")
 
     def test_em_dash_approval_and_completion_evidence_parse_as_none(self) -> None:
         root = self.copy_fixture_root()

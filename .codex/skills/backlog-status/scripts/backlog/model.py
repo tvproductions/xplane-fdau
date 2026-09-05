@@ -55,6 +55,101 @@ class SourceLocation:
 
 
 @dataclass(frozen=True, slots=True)
+class SourceValue:
+    value: str | None
+    source: SourceLocation
+
+
+@dataclass(frozen=True, slots=True)
+class InventoryRowSource:
+    child: str
+    outcome: str
+    source: SourceLocation
+
+
+@dataclass(frozen=True, slots=True)
+class SelectionSource:
+    child: str | None
+    source: SourceLocation
+
+
+@dataclass(frozen=True, slots=True)
+class ReleaseDashboardSource:
+    gate: str
+    outcome: str
+    dependencies: tuple[str, ...]
+    source: SourceLocation
+
+
+@dataclass(frozen=True, slots=True)
+class GateHeadingSource:
+    child: str
+    title: str
+    source: SourceLocation
+
+
+@dataclass(frozen=True, slots=True)
+class StatementSource:
+    value: str
+    source: SourceLocation
+    checked: bool | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ArtifactMetadataSource:
+    path: str
+    governance: SourceValue
+    status: SourceValue
+    date: SourceValue | None
+    approval: SourceValue | None
+
+
+@dataclass(frozen=True, slots=True)
+class DesignAcceptanceSource:
+    path: str
+    child: str
+    title: str
+    statements: tuple[StatementSource, ...]
+    source: SourceLocation
+
+
+@dataclass(frozen=True, slots=True)
+class RoadmapSources:
+    release_items: tuple[StatementSource, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class BacklogSources:
+    inventory_rows: tuple[InventoryRowSource, ...]
+    selection: SelectionSource
+    release_dashboard: tuple[ReleaseDashboardSource, ...]
+    gate_headings: tuple[GateHeadingSource, ...]
+    release_statements: tuple[StatementSource, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class ArtifactSources:
+    metadata: ArtifactMetadataSource
+    acceptance: tuple[DesignAcceptanceSource, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class AuditSources:
+    inventory_rows: tuple[InventoryRowSource, ...]
+    selection: SelectionSource | None
+    release_dashboard: tuple[ReleaseDashboardSource, ...]
+    gate_headings: tuple[GateHeadingSource, ...]
+    artifact_metadata: tuple[ArtifactMetadataSource, ...]
+    design_acceptance: tuple[DesignAcceptanceSource, ...]
+    backlog_release_statements: tuple[StatementSource, ...]
+    roadmap_release_items: tuple[StatementSource, ...]
+
+    @classmethod
+    def empty(cls) -> AuditSources:
+        return cls((), None, (), (), (), (), (), ())
+
+
+@dataclass(frozen=True, slots=True)
 class Milestone:
     id: str
     kind: Literal["milestone"]
@@ -234,6 +329,27 @@ class RepositorySnapshot:
     roadmap: Roadmap
     backlog: Backlog
     artifacts: Artifacts
+
+
+@dataclass(frozen=True, slots=True)
+class HistoricalAdmission:
+    child: str
+    plan: str
+    sha256: str
+
+
+@dataclass(frozen=True, slots=True)
+class AuditPolicy:
+    historical: tuple[HistoricalAdmission, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class AuditLoad:
+    snapshot: RepositorySnapshot
+    findings: tuple[Finding, ...]
+    invalid_paths: frozenset[str]
+    sources: AuditSources
+    policy: AuditPolicy | None
 
 
 @dataclass(frozen=True, slots=True)

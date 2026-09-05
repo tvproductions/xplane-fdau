@@ -204,10 +204,13 @@ from that commit. The source-snapshot pin inside the brief remains the distinct
 input-document revision `f86c6f939f1fdbfd354660c432363b9aa7f8444d`.
 
 `I1.0` is eligible as the next reportable external action so the user can
-reconcile q4xpcc's Phase 24A specification and plans. `T1.3` is the sole
-selected local child and remains `specified` at 0/4. Status recommendation
-remains unavailable until T1.4; eligibility does not add an external boundary
-to the local-child inventory.
+reconcile q4xpcc's Phase 24A specification and plans. `T1.3` is verified at
+4/4 under its [completed plan](docs/superpowers/plans/2026-09-05-t1-3-structural-audit.md)
+and [accepted review](.superpowers/sdd/2026-09-05-t1-3-structural-audit/review.md)
+of source `1211466`. No local child is selected; T1.4 remains specified and
+has not started. Status recommendation remains unavailable until T1.4;
+eligibility does not add an external boundary to the local-child inventory.
+The T1.3 branch and worktree await the user's local integration choice.
 
 The external q4xpcc thresholds remain distinct:
 

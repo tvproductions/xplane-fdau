@@ -14,11 +14,12 @@ slice receives one focused plan and one independently reviewable outcome.
   FDAU, native FDR, ARINC, and FDM/FOQA-support behavior while external clients
   own all simulator I/O.
 - Active design: repository-local backlog governance and status reporting.
-- Active child: `T1.3`.
+- Active child: —.
 - `D1.1`, `D1.2`, and `D1.3` are verified. The statusless external `I1.0`
   handoff condition is eligible for q4xpcc Phase 24A planning reconciliation;
-  `T1.3` is selected and `reviewed` with 0/4 gates under its approved audit
-  policy supplement and focused implementation plan.
+  `T1.3` is verified with 4/4 gates under its approved audit policy
+  supplement and completed implementation plan. No local child is selected;
+  `T1.4` remains specified and has not started.
 - D1 is design-handoff readiness, not implementation or release readiness.
 - `B1.1` source-layout migration: `specified` with a draft plan; resumes after
   peer prerequisites `T2.2` and `T3.1` are verified.
@@ -103,7 +104,7 @@ The child slices below refine this sequence without weakening or reordering it.
 | `F1.6` | De-identification/security/retention policy ports and end-to-end analysis conformance | `queued` | `F1.5` | [architecture](docs/architecture/xplane_fdau_core_scope_amendment.md) | — | 0/4 | — | — | — |
 | `T1.1` | Markdown authority contract and explicit inventory normalization | `verified` | `M0` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-08-15-xplane-fdau-backlog-authority-normalization.md) | 4/4 | [review](.superpowers/sdd/2026-08-15-t1-1-backlog-authority-normalization/review.md) | — | — |
 | `T1.2` | Typed parser, status report, and versioned JSON | `verified` | `T1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-08-16-xplane-fdau-typed-backlog-status-reporting.md) | 4/4 | [review](.superpowers/sdd/2026-08-16-t1-2-typed-backlog-status-reporting/review.md) | — | — |
-| `T1.3` | Structural audit and spec/plan adherence | `reviewed` | `T1.2` | [design](docs/superpowers/specs/2026-09-05-t1-3-audit-policy-supplement-design.md) | [plan](docs/superpowers/plans/2026-09-05-t1-3-structural-audit.md) | 0/4 | [review](.superpowers/sdd/2026-09-05-t1-3-structural-audit/review.md) | — | — |
+| `T1.3` | Structural audit and spec/plan adherence | `verified` | `T1.2` | [design](docs/superpowers/specs/2026-09-05-t1-3-audit-policy-supplement-design.md) | [plan](docs/superpowers/plans/2026-09-05-t1-3-structural-audit.md) | 4/4 | [review](.superpowers/sdd/2026-09-05-t1-3-structural-audit/review.md) | — | — |
 | `T1.4` | Deterministic next-action selection | `specified` | `T1.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 | — | — | — |
 | `T1.5` | Guarded child-state and gate-evidence mutations | `specified` | `T1.3`, `T1.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/5 | — | — | — |
 | `T1.6` | Skill, session-entry, hygiene, and artifact closure | `specified` | `T1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/5 | — | — | — |
@@ -435,14 +436,14 @@ The child slices below refine this sequence without weakening or reordering it.
 
 ### T1.3 — Structural audit and spec/plan adherence
 
-- [ ] Identity, kind, dependency, cycle, lifecycle, gate-count, and link rules
-      fail closed with stable finding codes.
-- [ ] Multi-child governing designs, single-child plans, and historical
-      artifacts follow the exact metadata contract.
-- [ ] Lifecycle prerequisites and eligible evidence are validated without
-      treating presence as proof.
-- [ ] Audit reports all independent findings with file, line, node, and exact
-      context and returns a blocking result when required.
+- [x] Identity, kind, dependency, cycle, lifecycle, gate-count, and link rules
+      fail closed with stable finding codes. — Evidence: [verification](.superpowers/sdd/2026-09-05-t1-3-structural-audit/gate-1.md)
+- [x] Multi-child governing designs, single-child plans, and historical
+      artifacts follow the exact metadata contract. — Evidence: [verification](.superpowers/sdd/2026-09-05-t1-3-structural-audit/gate-2.md)
+- [x] Lifecycle prerequisites and eligible evidence are validated without
+      treating presence as proof. — Evidence: [verification](.superpowers/sdd/2026-09-05-t1-3-structural-audit/gate-3.md)
+- [x] Audit reports all independent findings with file, line, node, and exact
+      context and returns a blocking result when required. — Evidence: [verification](.superpowers/sdd/2026-09-05-t1-3-structural-audit/gate-4.md)
 
 ### T1.4 — Deterministic next-action selection
 

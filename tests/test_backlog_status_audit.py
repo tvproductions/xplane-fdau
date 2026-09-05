@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path
+import importlib
+import importlib.util
 import shutil
 import sys
 import tempfile
@@ -18,6 +20,15 @@ from backlog.model import Finding  # noqa: E402  # ty: ignore[unresolved-import]
 
 
 class AuditLoadingTests(unittest.TestCase):
+    def test_finding_key_is_reexported_from_neutral_module(self) -> None:
+        module_spec = importlib.util.find_spec("backlog.findings")
+        self.assertIsNotNone(module_spec)
+        if module_spec is None:
+            return
+        shared = importlib.import_module("backlog.findings")
+
+        self.assertIs(shared.finding_key, finding_key)
+
     def copy_fixture_root(self) -> Path:
         temporary = Path(self.enterContext(tempfile.TemporaryDirectory()))
         shutil.copytree(FIXTURE, temporary, dirs_exist_ok=True)

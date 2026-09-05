@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from pathlib import Path
-import sys
 from typing import Literal
 
+from backlog.findings import finding_key
 from backlog.model import (
     Artifacts,
     AuditLoad,
@@ -25,17 +25,6 @@ from backlog.parse import (
 )
 from backlog.parse_sources import parse_artifact_sources, parse_backlog_sources, parse_roadmap_sources
 from backlog.policy import PolicyError, load_policy
-
-
-def finding_key(finding: Finding) -> tuple[int, str, int, str, str, int]:
-    return (
-        0 if finding.severity == "error" else 1,
-        finding.path,
-        finding.line if finding.line is not None else sys.maxsize,
-        finding.code,
-        finding.node or "",
-        finding.gate if finding.gate is not None else sys.maxsize,
-    )
 
 
 def _empty_roadmap() -> Roadmap:

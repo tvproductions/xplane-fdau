@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import sys
 from typing import TypeAlias
 
+from backlog.findings import finding_key
 from backlog.model import (
     AuditLoad,
     BacklogChild,
@@ -21,17 +21,6 @@ RoadmapNode: TypeAlias = Milestone | Epic | RoadmapChild | ReleaseGate | Externa
 
 def _finding(code: str, path: str, line: int | None, node: str | None, message: str) -> Finding:
     return Finding(code, "error", path, line, node, None, message)
-
-
-def _key(finding: Finding) -> tuple[int, str, int, str, str, int]:
-    return (
-        0 if finding.severity == "error" else 1,
-        finding.path,
-        finding.line if finding.line is not None else sys.maxsize,
-        finding.code,
-        finding.node or "",
-        finding.gate if finding.gate is not None else sys.maxsize,
-    )
 
 
 def _fold(value: str) -> str:
@@ -403,4 +392,4 @@ def _release_findings(loaded: AuditLoad) -> list[Finding]:
 def structural_findings(loaded: AuditLoad) -> tuple[Finding, ...]:
     """Return independent roadmap, backlog, and dashboard consistency findings."""
     findings = [*_roadmap_findings(loaded), *_backlog_findings(loaded), *_release_findings(loaded)]
-    return tuple(sorted(findings, key=_key))
+    return tuple(sorted(findings, key=finding_key))

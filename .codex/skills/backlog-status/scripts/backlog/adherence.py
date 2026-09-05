@@ -3,8 +3,8 @@ from __future__ import annotations
 from datetime import date
 from pathlib import Path, PurePosixPath
 import re
-import sys
 
+from backlog.findings import finding_key
 from backlog.model import (
     ArtifactMetadataSource,
     AuditLoad,
@@ -43,17 +43,6 @@ def _finding(
     gate: int | None = None,
 ) -> Finding:
     return Finding(code, "error", source.path, source.line, node, gate, message)
-
-
-def _key(finding: Finding) -> tuple[int, str, int, str, str, int]:
-    return (
-        0 if finding.severity == "error" else 1,
-        finding.path,
-        finding.line if finding.line is not None else sys.maxsize,
-        finding.code,
-        finding.node or "",
-        finding.gate if finding.gate is not None else sys.maxsize,
-    )
 
 
 def _fold(value: str) -> str:
@@ -275,21 +264,32 @@ def _gate_drift_findings(
         ]
     section = sections[0]
     roadmap_child = next((item for item in loaded.snapshot.roadmap.local_children if item.id == child.id), None)
+    findings: list[Finding] = []
     if roadmap_child is None or _fold(section.title) != _fold(roadmap_child.title):
-        return [
+        findings.append(
             _finding(
                 "artifact.gate-drift",
                 section.source,
                 f"governing design acceptance title differs for {child.id}",
                 node=child.id,
             )
-        ]
+        )
+    if section.resolution_problem is not None:
+        findings.append(
+            _finding(
+                "artifact.gate-drift",
+                section.resolution_problem.source,
+                f"managed acceptance reference is unresolved: {section.resolution_problem.value}",
+                node=child.id,
+            )
+        )
+        return findings
     expected = tuple(_fold(statement.value) for statement in section.statements)
     actual = tuple(_fold(item.statement) for item in child.gates.items)
     for index, (design_statement, backlog_statement) in enumerate(zip(expected, actual, strict=False), start=1):
         if design_statement != backlog_statement:
             source = section.statements[index - 1].source
-            return [
+            findings.append(
                 _finding(
                     "artifact.gate-drift",
                     source,
@@ -297,17 +297,17 @@ def _gate_drift_findings(
                     node=child.id,
                     gate=index,
                 )
-            ]
+            )
     if len(expected) != len(actual):
-        return [
+        findings.append(
             _finding(
                 "artifact.gate-drift",
                 section.source,
                 f"governing design acceptance count differs for {child.id}",
                 node=child.id,
             )
-        ]
-    return []
+        )
+    return findings
 
 
 def _backlog_link_findings(loaded: AuditLoad) -> list[Finding]:
@@ -383,4 +383,4 @@ def adherence_findings(loaded: AuditLoad) -> tuple[Finding, ...]:
         *_plan_definition_findings(loaded),
         *_backlog_link_findings(loaded),
     ]
-    return tuple(sorted(findings, key=_key))
+    return tuple(sorted(findings, key=finding_key))

@@ -280,7 +280,9 @@ class AdherenceTests(unittest.TestCase):
             with self.subTest(new=new):
                 root = self.fixture_root()
                 replace_text(root, "docs/superpowers/specs/t1-design.md", old, new)
-                mismatch = next(item for item in self.findings(root) if item.code == "artifact.gate-drift" and item.node == "T1.2")
+                mismatch = next(
+                    item for item in self.findings(root) if item.code == "artifact.gate-drift" and item.node == "T1.2" and item.gate == expected_gate
+                )
                 self.assertEqual(expected_gate, mismatch.gate)
 
         root = self.fixture_root()
@@ -334,6 +336,111 @@ class AdherenceTests(unittest.TestCase):
             "## T1.2 — Duplicate acceptance",
         )
         self.assertIn("artifact.gate-drift", self.codes(root))
+
+    def test_unresolved_managed_reference_is_never_treated_as_literal_gate_text(self) -> None:
+        exact_reference = "`T1.2` is complete only when its four earlier acceptance gates pass."
+        valid_section = (
+            "## T1.2 — Detailed acceptance\n\n"
+            "Its acceptance gates are:\n\n"
+            "1. First exact gate.\n"
+            "2. Second exact gate.\n"
+            "3. Third exact gate.\n"
+            "4. Fourth exact gate.\n\n"
+        )
+        cases = (
+            ("missing section", "", exact_reference),
+            ("missing marker", valid_section.replace("Its acceptance gates are:", "Acceptance gates:"), exact_reference),
+            ("wrong count", valid_section.replace("4. Fourth exact gate.\n", ""), exact_reference),
+            ("ambiguous section", valid_section + valid_section.replace("Detailed acceptance", "Duplicate acceptance"), exact_reference),
+            (
+                "ambiguous marker",
+                valid_section.replace("Its acceptance gates are:", "Its acceptance gates are:\n\nIts acceptance gates are:"),
+                exact_reference,
+            ),
+            ("wrong referenced child", valid_section, exact_reference.replace("T1.2", "T1.1")),
+        )
+        for label, earlier, reference in cases:
+            with self.subTest(label=label):
+                root = self.fixture_root()
+                replace_text(root, "docs/superpowers/specs/t1-design.md", "## Acceptance criteria", earlier + "## Acceptance criteria")
+                replace_text(root, "docs/superpowers/specs/t1-design.md", "- Frozen parser remains open.", reference)
+                replace_text(root, "BACKLOG.md", "- [ ] Frozen parser remains open.", f"- [ ] {reference}")
+
+                loaded = load_audit(root)
+                section = next(item for item in loaded.sources.design_acceptance if item.child == "T1.2")
+                mismatches = [item for item in adherence_findings(loaded) if item.code == "artifact.gate-drift" and item.node == "T1.2"]
+
+                self.assertEqual(1, len(mismatches))
+                self.assertIsNone(mismatches[0].gate)
+                self.assertIn("reference", mismatches[0].message)
+                self.assertEqual(section.source.line + 2, mismatches[0].line)
+
+    def test_managed_reference_must_be_the_only_acceptance_statement(self) -> None:
+        root = self.fixture_root()
+        reference = "`T1.2` is complete only when its four earlier acceptance gates pass."
+        replace_text(
+            root,
+            "docs/superpowers/specs/t1-design.md",
+            "## Acceptance criteria",
+            "## T1.2 — Detailed acceptance\n\n"
+            "Its acceptance gates are:\n\n"
+            "1. First exact gate.\n"
+            "2. Second exact gate.\n"
+            "3. Third exact gate.\n"
+            "4. Fourth exact gate.\n\n"
+            "## Acceptance criteria",
+        )
+        replace_text(
+            root,
+            "docs/superpowers/specs/t1-design.md",
+            "- Frozen parser remains open.",
+            f"{reference}\n\nUnexpected sibling statement.",
+        )
+        replace_text(root, "BACKLOG.md", "— | 0/1 |", "— | 0/2 |")
+        replace_text(
+            root,
+            "BACKLOG.md",
+            "- [ ] Frozen parser remains open.",
+            f"- [ ] {reference}\n- [ ] Unexpected sibling statement.",
+        )
+
+        loaded = load_audit(root)
+        mismatch = next(item for item in adherence_findings(loaded) if item.code == "artifact.gate-drift" and item.node == "T1.2")
+
+        self.assertIsNone(mismatch.gate)
+        self.assertIn("reference", mismatch.message)
+
+    def test_gate_drift_reports_title_each_ordinal_and_count_independently(self) -> None:
+        root = self.fixture_root()
+        replace_text(
+            root,
+            "docs/superpowers/specs/t1-design.md",
+            "### T1.2 — Typed parser, status report, and versioned JSON",
+            "### T1.2 — Changed title",
+        )
+        replace_text(
+            root,
+            "docs/superpowers/specs/t1-design.md",
+            "- Frozen parser remains open.",
+            "- Design first.\n\n- Design second.\n\n- Design third.",
+        )
+        replace_text(root, "BACKLOG.md", "— | 0/1 |", "— | 0/2 |")
+        replace_text(root, "BACKLOG.md", "- [ ] Frozen parser remains open.", "- [ ] Backlog first.\n- [ ] Backlog second.")
+
+        loaded = load_audit(root)
+        section = next(item for item in loaded.sources.design_acceptance if item.child == "T1.2")
+        mismatches = [item for item in adherence_findings(loaded) if item.code == "artifact.gate-drift" and item.node == "T1.2"]
+
+        self.assertEqual(4, len(mismatches))
+        self.assertEqual(2, sum(item.gate is None for item in mismatches))
+        self.assertEqual({1, 2}, {item.gate for item in mismatches if item.gate is not None})
+        title = next(item for item in mismatches if "title" in item.message)
+        count = next(item for item in mismatches if "count" in item.message)
+        self.assertEqual(section.source.line, title.line)
+        self.assertEqual(section.source.line, count.line)
+        for ordinal in (1, 2):
+            mismatch = next(item for item in mismatches if item.gate == ordinal)
+            self.assertEqual(section.statements[ordinal - 1].source.line, mismatch.line)
 
     def test_spec_link_must_remain_contained_and_resolve_to_regular_markdown(self) -> None:
         root = self.fixture_root()

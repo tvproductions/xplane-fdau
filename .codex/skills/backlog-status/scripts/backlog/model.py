@@ -118,6 +118,7 @@ class DesignAcceptanceSource:
     title: str
     statements: tuple[StatementSource, ...]
     source: SourceLocation
+    resolution_problem: SourceValue | None = None
 
 
 @dataclass(frozen=True, slots=True)

@@ -337,26 +337,36 @@ def _resolve_earlier_gate_reference(
     acceptance_heading: int,
     child: str,
     statements: tuple[StatementSource, ...],
-) -> tuple[StatementSource, ...]:
-    if len(statements) != 1:
-        return statements
-    match = _EARLIER_GATES_REFERENCE.fullmatch(statements[0].value)
-    if match is None or match.group(1) != child:
-        return statements
+) -> tuple[tuple[StatementSource, ...], SourceValue | None]:
+    references = tuple((statement, match) for statement in statements if (match := _EARLIER_GATES_REFERENCE.fullmatch(statement.value)) is not None)
+    if not references:
+        return statements, None
+    problem_source = references[0][0].source
+    if len(statements) != 1 or len(references) != 1:
+        return (), SourceValue("managed reference must be the only acceptance statement", problem_source)
+    match = references[0][1]
+    if match.group(1) != child:
+        return (), SourceValue("referenced child does not match acceptance subsection", problem_source)
     sections = [
         index
         for index in range(acceptance_heading)
         if (heading_match := _CHILD_SECTION_HEADING.fullmatch(lines[index].text)) is not None and heading_match.group(1) == child
     ]
-    if len(sections) != 1:
-        return statements
+    if not sections:
+        return (), SourceValue("missing earlier same-child section", problem_source)
+    if len(sections) > 1:
+        return (), SourceValue("ambiguous earlier same-child sections", problem_source)
     section = sections[0]
     section_end = min(_section_end(lines, section, 2), acceptance_heading)
     markers = [index for index in range(section + 1, section_end) if lines[index].text == "Its acceptance gates are:"]
-    if len(markers) != 1:
-        return statements
+    if not markers:
+        return (), SourceValue("missing acceptance-gate marker", problem_source)
+    if len(markers) > 1:
+        return (), SourceValue("ambiguous acceptance-gate markers", problem_source)
     resolved = _numbered_gate_statements(root, path, lines, markers[0] + 1, section_end)
-    return resolved if len(resolved) == 4 else statements
+    if len(resolved) != 4:
+        return (), SourceValue("acceptance-gate list must contain four sequential numbered items", problem_source)
+    return resolved, None
 
 
 def parse_artifact_sources(
@@ -381,13 +391,15 @@ def parse_artifact_sources(
             continue
         section_end = min(_section_end(lines, index, 3), end)
         statements = _acceptance_statements(root, path, lines, index + 1, section_end)
+        statements, resolution_problem = _resolve_earlier_gate_reference(root, path, lines, heading, match.group(1), statements)
         sections.append(
             DesignAcceptanceSource(
                 relative_path,
                 match.group(1),
                 match.group(2),
-                _resolve_earlier_gate_reference(root, path, lines, heading, match.group(1), statements),
+                statements,
                 SourceLocation(relative_path, line.number),
+                resolution_problem,
             )
         )
     return ArtifactSources(metadata, tuple(sections))

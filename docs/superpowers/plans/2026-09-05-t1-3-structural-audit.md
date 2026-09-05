@@ -256,6 +256,14 @@ Audit source facts include recognized roadmap cross-epic declarations, tied
 to their source lines. Use the current explicit C1-C4 and T2/T3 declarations
 as positive fixtures; arbitrary cross-epic lists remain invalid.
 
+When an acceptance subsection contains the exact managed reference
+`` `<child>` is complete only when its four earlier acceptance gates pass. ``,
+resolve the unique earlier same-child level-two section's explicit
+`Its acceptance gates are:` numbered list. Retain the actual statement lines,
+require exactly four items, and fail closed on missing or ambiguous targets.
+This reads existing declared criteria without treating the reference sentence
+as a new gate or introducing child-specific exceptions.
+
 Use the supplement's lifecycle link table before deciding whether Spec is a
 contextual reference or a governing design. Blocked/deferred uses Resume for
 this determination. An existing regular Markdown context link is valid for

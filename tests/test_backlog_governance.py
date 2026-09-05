@@ -749,6 +749,7 @@ class GovernanceArtifactTests(unittest.TestCase):
                 "`D1`",
                 ("D1.2",),
             ),
+            "2026-09-05-t1-3-audit-policy-supplement-design.md": ("`T1`", ("T1.3",)),
         }
         actual: dict[str, tuple[str, tuple[str, ...]]] = {}
         for path in sorted((ROOT / "docs/superpowers/specs").glob("*.md")):
@@ -906,6 +907,7 @@ class GovernanceArtifactTests(unittest.TestCase):
                 "2026-08-15-xplane-fdau-local-workflow-skills-design.md",
                 "2026-08-22-q4xpcc-contract-handoff-readiness-design.md",
                 "2026-08-23-xplane-fdau-acquisition-recording-projection-pinning-contracts-design.md",
+                "2026-09-05-t1-3-audit-policy-supplement-design.md",
             },
             set(active_specs),
         )
@@ -914,11 +916,13 @@ class GovernanceArtifactTests(unittest.TestCase):
                 "2026-08-09-src-layout-migration.md",
                 "2026-08-15-xplane-fdau-backlog-authority-normalization.md",
                 "2026-08-16-xplane-fdau-typed-backlog-status-reporting.md",
+                "2026-09-05-t1-3-structural-audit.md",
             },
             set(active_plans),
         )
         self.assertEqual("`T1.1`", active_plans["2026-08-15-xplane-fdau-backlog-authority-normalization.md"]["Roadmap child"])
         self.assertEqual("`T1.2`", active_plans["2026-08-16-xplane-fdau-typed-backlog-status-reporting.md"]["Roadmap child"])
+        self.assertEqual("`T1.3`", active_plans["2026-09-05-t1-3-structural-audit.md"]["Roadmap child"])
 
     def test_historical_artifacts_name_their_disposition(self) -> None:
         historical_paths = (

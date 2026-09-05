@@ -1,7 +1,7 @@
 # T1.3 gate-3 evidence
 
 - **Child:** `T1.3`
-- **Gate:** 3
+- **Gate:** `3`
 - **Kind:** verification
 - **Result:** passed
 - **Date:** 2026-09-05

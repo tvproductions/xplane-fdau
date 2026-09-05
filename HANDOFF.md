@@ -63,8 +63,8 @@ Merged-result verification on 2026-08-23 passed 276 standard-library
 checkpoint was `a1b32eedc736f0dd87276255f14ec52b64300119` on local `main`, 17
 commits ahead of `origin/main`; no push, tag, publication, or release occurred.
 This maintenance correction did not itself satisfy a D1 acceptance gate. At
-that historical checkpoint, the later D1.1 and D1.2 contract-design batches
-were verified and the next selected work was `D1.3`.
+that historical checkpoint, `D1.1` was the next selected work. Later D1
+completion is recorded below.
 
 ## Current roadmap and design review
 

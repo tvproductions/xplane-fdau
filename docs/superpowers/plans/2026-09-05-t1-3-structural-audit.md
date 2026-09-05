@@ -78,7 +78,8 @@ All implementation paths in the table are relative to
 | `backlog/model.py` | Frozen audit input and evidence types, preserving report types |
 | `backlog/parse.py` | Public strict document/evidence parsers and source facts |
 | `backlog/parse_sources.py` (new) | Source-fact extraction composed through public APIs |
-| `backlog/rules.py` (new) | Identity, inventory, dependency, lifecycle, and release checks |
+| `backlog/rules.py` (new) | Identity, inventory, dependency, and release checks |
+| `backlog/lifecycle.py` (new) | Lifecycle sufficiency and frozen historical-plan admission |
 | `backlog/adherence.py` (new) | Design/plan coverage, metadata, and gate-text agreement |
 | `backlog/evidence.py` (new) | Contained regular-file and index/HEAD evidence eligibility |
 | `backlog/audit.py` (new) | Independent loading, rule composition, finding sort |
@@ -316,11 +317,18 @@ a governing design. Discovered active designs still receive metadata checks.
 
 ## Task 4: Git-backed evidence and lifecycle sufficiency
 
-**Files:** Create `backlog/evidence.py`; modify `backlog/model.py`,
-`backlog/parse.py`, `backlog/rules.py`, and `backlog/audit.py`; create
+**Files:** Create `backlog/evidence.py` and `backlog/lifecycle.py`; modify
+`backlog/model.py`, `backlog/parse.py`, `backlog/parse_sources.py`,
+`backlog/rules.py`, and `backlog/audit.py`; create
 `tests/test_backlog_status_evidence.py` and
 `tests/test_backlog_status_lifecycle.py`; extend test support with
 `initialize_git(root: Path) -> None` and complete evidence fixture contents.
+
+Keep lifecycle and historical-plan functions in `backlog/lifecycle.py`;
+Task 5 imports that module directly, while release rules remain in rules.py.
+Retain managed release-section locations in audit source facts and report
+missing required sections as parse errors. This does not change the legacy
+strict repository parser's syntax-only API.
 
 **Interfaces:** Add frozen `EvidenceArtifact(path, child, gate, kind, result,
 date, subject, source)` with `gate: int | None` and other existing lexical

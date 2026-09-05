@@ -58,13 +58,13 @@ On 2026-09-05, primary `main` was clean at
 `T1.2` and D1.1-D1.3 are verified; T1.3 is selected, specified, and 0/4.
 An ignored worktree now exists at `.worktrees/t1-3-structural-audit` on
 `t1-3-structural-audit`. Worktree creation required sandbox escalation and
-succeeded. This draft does not mark T1.3 planned or implemented.
+succeeded. This describes the entry state before execution approval.
 
-Before execution, obtain written approval for both the policy supplement and
-this revised plan. Record approval in each artifact; change this plan's Source
-specification and T1.3's Spec link to the approved supplement, which incorporates
-the parent T1 design. Update the draft-plan label and advance only the authorized
-lifecycle stage. Commit the approved policy before implementing its consumers.
+Jeff approved the policy supplement and this revised plan on 2026-09-05.
+Approval is recorded in both artifacts, and this plan's Source specification
+and T1.3's Spec link now point to the approved supplement, which incorporates
+the parent T1 design. Commit `e082ebd` recorded the approval and planned state
+before implementing policy consumers; T1.3 is now in progress.
 Use the repository's Superpowers review checkpoints, and use subagents for
 independent tasks where their input contracts are already established.
 
@@ -126,7 +126,7 @@ The policy module defines `EvidenceSlot` as a Literal of `gate`, `review`,
 `allowed_kinds(slot: EvidenceSlot) -> frozenset[str]` using the supplement's
 fixed slot matrix. It does not inspect gate prose or provide per-child overrides.
 
-- [ ] Write failing `unittest` cases for preserved inventory outcome, selected
+- [x] Write failing `unittest` cases for preserved inventory outcome, selected
   line, release-dashboard title/dependencies, approval/date locations, all gate
   headings (including unknown/orphan headings), and each design acceptance
   subsection's child, title, statements, and lines. Use wrapped statements and
@@ -153,14 +153,14 @@ fixed slot matrix. It does not inspect gate prose or provide per-child overrides
   self.assertTrue(all(finding.line is not None for finding in result.findings))
   ```
 
-- [ ] Run RED:
+- [x] Run RED:
 
   ```powershell
   uv run python -m unittest tests.test_backlog_status_model tests.test_backlog_status_parse tests.test_backlog_status_audit -v
   uv run python -m unittest tests.test_backlog_status_policy -v
   ```
 
-- [ ] Implement public parsers that retain the facts above. Load ROADMAP,
+- [x] Implement public parsers that retain the facts above. Load ROADMAP,
   BACKLOG, and each sorted governance artifact independently. Represent an
   unreadable authority with an empty typed value only for report shape and
   mark its path invalid; never treat that value as valid rule input. Convert
@@ -182,7 +182,7 @@ fixed slot matrix. It does not inspect gate prose or provide per-child overrides
       )
   ```
 
-- [ ] Run the same command GREEN and existing report tests to prove source-only
+- [x] Run the same command GREEN and existing report tests to prove source-only
   additions leave JSON shape unchanged. Run the complete pre-commit quality
   commands in Task 5 before committing these explicit files with
   `feat: retain source facts for backlog auditing`.

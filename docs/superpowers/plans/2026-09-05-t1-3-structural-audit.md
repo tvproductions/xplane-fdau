@@ -340,7 +340,7 @@ Add `historical_plan_findings(loaded: AuditLoad, child: BacklogChild) ->
 tuple[Finding, ...]`, called only for a linked historical plan. It consumes
 typed admission data; it contains no D1-specific branching.
 
-- [ ] Write failing tests in isolated Git repositories for absent/untracked,
+- [x] Write failing tests in isolated Git repositories for absent/untracked,
   ignored-untracked, staged-new, committed, unstaged-modified, staged-modified,
   deleted, conflicted, and nonregular evidence. Include spaces and Unicode in
   paths, LF/CRLF, a contained path resolving outside the root, and Git failures.
@@ -364,7 +364,7 @@ typed admission data; it contains no D1-specific branching.
   Disable fixture signing/hooks via per-command settings so tests need no
   interactive credentials and cannot execute unrelated user hooks.
 
-- [ ] Write lifecycle tests for every status and blocked/deferred resume
+- [x] Write lifecycle tests for every status and blocked/deferred resume
   state. For ordinary active plans, apply these stage-specific requirements:
   designing requires a covering draft design; specified requires an approved
   covering design; planned additionally requires an approved plan; in_progress
@@ -397,13 +397,13 @@ typed admission data; it contains no D1-specific branching.
   simultaneously verified children, and an unselected suspended in-progress
   child to prove stage-specific selection rules.
 
-- [ ] Run RED:
+- [x] Run RED:
 
   ```powershell
   uv run python -m unittest tests.test_backlog_status_evidence tests.test_backlog_status_lifecycle -v
   ```
 
-- [ ] Implement read-only evidence observation using argument-vector Git
+- [x] Implement read-only evidence observation using argument-vector Git
   subprocesses (`shell=False`), NUL-delimited index listing, and binary blob
   reads. Require a contained regular Markdown file and normal stage-zero Git
   entry. Compare the file's actual bytes to indexed bytes, and for verified
@@ -433,12 +433,13 @@ typed admission data; it contains no D1-specific branching.
   ordinary Git-sync statement remains a positive control. Do not interpret
   arbitrary surrounding prose as a grant of release authority.
 
-- [ ] Run GREEN and all previous audit tests, then Task 5 pre-commit checks.
+- [x] Run GREEN and all previous audit tests, then Task 5 pre-commit checks.
   Commit explicit files with `feat: validate lifecycle and committed evidence`.
 
 ## Task 5: CLI integration, review, and four-gate closure
 
 **Files:** Modify `backlog_status.py`, `backlog/audit.py`, `backlog/report.py`,
+`backlog/parse.py`,
 `tests/test_backlog_status_cli.py`, `tests/test_backlog_status_report.py`,
 `tests/test_backlog_governance.py`, `tests/backlog_audit_support.py`,
 `BACKLOG.md`, `CHANGELOG.md`, and this plan. Create completion/review/gate
@@ -470,6 +471,18 @@ The independently accepted reconciliation in that directory's
 
 These are corrections to existing intent, not new design approvals or
 delivery evidence. Preserve the approved T1.3 policy supplement bytes.
+
+The controller supplies task and whole-branch independent review after the
+implementation candidate. Record accepted review and completion evidence only
+after those reviews and actual final checks; resume the Task 5 implementer for
+that closeout. Do not mark T1.3 verified at the initial code-review checkpoint.
+
+Two confirmed CLI integration regressions also belong here: disable Git's
+optional index refresh during observation, and translate oversized BACKLOG
+gate-count integer conversion failures into contextual domain findings.
+Regression details and exact observations are in `integration-notes.md` beside
+the task reports. Preserve Python's integer limits and the accepted count
+syntax; malformed input must not abort independent reporting.
 
 **Interfaces:** Add `audit_repository(root: Path) -> AuditLoad`, which loads
 and combines all applicable rule families. Extend

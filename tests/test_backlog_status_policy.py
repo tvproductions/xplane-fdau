@@ -2,12 +2,11 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
-import os
-import shutil
 import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -19,16 +18,8 @@ from backlog.policy import PolicyError, allowed_kinds, load_policy  # noqa: E402
 
 
 class AuditPolicyTests(unittest.TestCase):
-    def remove_repository(self, root: Path) -> None:
-        def make_writable(function: Callable[[str], object], path: str, _error: BaseException) -> None:
-            os.chmod(path, 0o700)
-            function(path)
-
-        shutil.rmtree(root, onexc=make_writable)
-
     def make_repository(self, transform: Callable[[str], str] | None = None) -> Path:
-        temporary = Path(tempfile.mkdtemp())
-        self.addCleanup(self.remove_repository, temporary)
+        temporary = Path(self.enterContext(tempfile.TemporaryDirectory()))
         target = temporary / POLICY_PATH
         target.parent.mkdir(parents=True)
         text = (ROOT / POLICY_PATH).read_text(encoding="utf-8")
@@ -80,14 +71,24 @@ class AuditPolicyTests(unittest.TestCase):
         self.assertEqual(frozenset({"verification", "artifact"}), allowed_kinds("release"))
 
     def test_missing_policy_is_unavailable(self) -> None:
-        temporary = Path(tempfile.mkdtemp())
-        self.addCleanup(shutil.rmtree, temporary)
+        temporary = Path(self.enterContext(tempfile.TemporaryDirectory()))
 
         with self.assertRaises(PolicyError) as raised:
             load_policy(temporary)
 
         self.assertEqual("policy.unavailable", raised.exception.code)
         self.assertEqual(POLICY_PATH, raised.exception.path)
+
+    def test_git_launch_failure_is_chained_as_policy_unavailable(self) -> None:
+        failure = OSError("git unavailable")
+
+        with patch("backlog.policy.subprocess.run", side_effect=failure):
+            with self.assertRaises(PolicyError) as raised:
+                load_policy(ROOT)
+
+        self.assertEqual("policy.unavailable", raised.exception.code)
+        self.assertEqual(POLICY_PATH, raised.exception.path)
+        self.assertIs(failure, raised.exception.__cause__)
 
     def test_draft_or_missing_approval_policy_is_unapproved(self) -> None:
         mutations = (

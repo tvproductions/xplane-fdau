@@ -698,37 +698,55 @@ def parse_backlog(path: Path) -> Backlog:
     children: list[BacklogChild] = []
     for line, values in inventory_rows:
         child_id = _local_child_identity(path, line.number, values[0])
-        displayed_satisfied, displayed_total = _gate_count(path, line.number, values[6])
-        gate_items: tuple[GateItem, ...] = ()
-        if values[6] != "—":
-            gate_heading = _gate_heading(path, lines, child_id, acceptance_heading + 1, acceptance_end)
-            if gate_heading is None:
+        try:
+            displayed_satisfied, displayed_total = _gate_count(path, line.number, values[6])
+            gate_items: tuple[GateItem, ...] = ()
+            if values[6] != "—":
+                gate_heading = _gate_heading(path, lines, child_id, acceptance_heading + 1, acceptance_end)
+                if gate_heading is None:
+                    raise MarkdownParseError(
+                        path,
+                        line.number,
+                        f"missing acceptance-gate heading for {child_id}",
+                        code="backlog.gate-heading",
+                        node=child_id,
+                    )
+                gate_items = _gate_items(path, lines, gate_heading[0] + 1, gate_heading[1], child_id)
+            reason = None if values[9] == "—" else values[9]
+            if reason == "":
                 raise MarkdownParseError(
                     path,
                     line.number,
-                    f"missing acceptance-gate heading for {child_id}",
-                    code="backlog.gate-heading",
+                    "reason cell must not be empty",
+                    code="backlog.reason",
                     node=child_id,
                 )
-            gate_items = _gate_items(path, lines, gate_heading[0] + 1, gate_heading[1], child_id)
-        reason = None if values[9] == "—" else values[9]
-        if reason == "":
-            raise MarkdownParseError(path, line.number, "reason cell must not be empty", code="backlog.reason", node=child_id)
-        children.append(
-            BacklogChild(
-                child_id,
-                _status(path, line.number, values[2]),
-                _dependencies(path, line.number, values[3]),
-                _optional_link(path, line.number, values[4]),
-                _optional_link(path, line.number, values[5]),
-                GateSummary(displayed_satisfied, displayed_total, gate_items),
-                _optional_link(path, line.number, values[7]),
-                None if values[8] == "—" else _status(path, line.number, values[8]),
-                reason,
-                False,
-                _source(path, line.number),
+            children.append(
+                BacklogChild(
+                    child_id,
+                    _status(path, line.number, values[2]),
+                    _dependencies(path, line.number, values[3]),
+                    _optional_link(path, line.number, values[4]),
+                    _optional_link(path, line.number, values[5]),
+                    GateSummary(displayed_satisfied, displayed_total, gate_items),
+                    _optional_link(path, line.number, values[7]),
+                    None if values[8] == "—" else _status(path, line.number, values[8]),
+                    reason,
+                    False,
+                    _source(path, line.number),
+                )
             )
-        )
+        except MarkdownParseError as error:
+            if error.node is not None:
+                raise
+            raise MarkdownParseError(
+                error.path,
+                error.line,
+                error.message,
+                code=error.code,
+                node=child_id,
+                gate=error.gate,
+            ) from error
     return Backlog(active_child, tuple(children), _dashboard(path, lines), path.name if path.is_absolute() else path.as_posix())
 
 

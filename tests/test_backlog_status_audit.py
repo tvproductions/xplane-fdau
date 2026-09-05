@@ -5,6 +5,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -18,8 +19,7 @@ from backlog.model import Finding  # noqa: E402  # ty: ignore[unresolved-import]
 
 class AuditLoadingTests(unittest.TestCase):
     def copy_fixture_root(self) -> Path:
-        temporary = Path(tempfile.mkdtemp())
-        self.addCleanup(shutil.rmtree, temporary)
+        temporary = Path(self.enterContext(tempfile.TemporaryDirectory()))
         shutil.copytree(FIXTURE, temporary, dirs_exist_ok=True)
         return temporary
 
@@ -61,20 +61,41 @@ class AuditLoadingTests(unittest.TestCase):
         self.assertEqual("Canonical vertical-slice reconciliation", dashboard.outcome)
         self.assertEqual(("T1.2",), dashboard.dependencies)
         self.assertEqual(
-            ("T1.1", "T1.2", "T9.9"),
-            tuple(fact.child for fact in result.sources.gate_headings),
+            (
+                ("T1.1", "Markdown authority contract and explicit inventory normalization", 16),
+                ("T1.2", "Typed parser, status report, and versioned JSON", 21),
+                ("T9.9", "Orphan criterion, retained!", 26),
+            ),
+            tuple((fact.child, fact.title, fact.source.line) for fact in result.sources.gate_headings),
         )
         metadata = next(fact for fact in result.sources.artifact_metadata if fact.path.endswith("t1-design.md"))
         self.assertEqual((5, 9), (metadata.date.source.line, metadata.approval.source.line))
         criteria = result.sources.design_acceptance
-        self.assertEqual(("T1.1", "T1.2"), tuple(section.child for section in criteria))
         self.assertEqual(
-            "Markdown authority contract and explicit inventory normalization",
-            criteria[0].title,
+            (
+                (
+                    "T1.1",
+                    "Markdown authority contract and explicit inventory normalization",
+                    15,
+                    (("Frozen contract is verified and remains explicit.", 17),),
+                ),
+                (
+                    "T1.2",
+                    "Typed parser, status report, and versioned JSON",
+                    20,
+                    (("Frozen parser remains open.", 22),),
+                ),
+            ),
+            tuple(
+                (
+                    section.child,
+                    section.title,
+                    section.source.line,
+                    tuple((statement.value, statement.source.line) for statement in section.statements),
+                )
+                for section in criteria
+            ),
         )
-        self.assertEqual("Frozen contract is verified and remains explicit.", criteria[0].statements[0].value)
-        self.assertEqual("Frozen parser remains open.", criteria[1].statements[0].value)
-        self.assertGreater(criteria[0].statements[0].source.line, criteria[0].source.line)
 
     def test_independent_authority_and_artifact_parse_failures_survive(self) -> None:
         root = self.copy_fixture_root()
@@ -113,6 +134,19 @@ class AuditLoadingTests(unittest.TestCase):
         self.assertEqual("input.unreadable", finding.code)
         self.assertEqual((), result.snapshot.roadmap.milestones)
         self.assertIn("ROADMAP.md", result.invalid_paths)
+
+    def test_git_launch_failure_is_an_independent_policy_finding(self) -> None:
+        with patch("backlog.policy.subprocess.run", side_effect=OSError("git unavailable")):
+            result = load_audit(ROOT)
+
+        finding = next(item for item in result.findings if item.code == "policy.unavailable")
+        self.assertEqual(
+            "docs/superpowers/specs/2026-09-05-t1-3-audit-policy-supplement-design.md",
+            finding.path,
+        )
+        self.assertIsNone(result.policy)
+        self.assertEqual(64, len(result.snapshot.roadmap.local_children))
+        self.assertEqual(64, len(result.snapshot.backlog.children))
 
     def test_finding_key_orders_missing_context_last(self) -> None:
         findings = (

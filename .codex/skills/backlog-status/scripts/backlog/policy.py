@@ -40,11 +40,14 @@ def allowed_kinds(slot: EvidenceSlot) -> frozenset[str]:
 
 
 def _git_blob(root: Path, object_name: str) -> bytes:
-    completed = subprocess.run(
-        ("git", "-C", str(root), "show", object_name),
-        check=False,
-        capture_output=True,
-    )
+    try:
+        completed = subprocess.run(
+            ("git", "-C", str(root), "show", object_name),
+            check=False,
+            capture_output=True,
+        )
+    except OSError as error:
+        raise PolicyError("policy.unavailable", POLICY_PATH, 1, f"cannot inspect policy in Git: {error}") from error
     if completed.returncode != 0:
         raise PolicyError("policy.unavailable", POLICY_PATH, 1, "policy must exist in both the Git index and HEAD")
     return completed.stdout

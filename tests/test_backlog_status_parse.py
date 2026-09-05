@@ -453,6 +453,25 @@ class ManagedMarkdownParseTests(unittest.TestCase):
         self.assertEqual(1, error.gate)
         self.assertRegex(str(error), r"BACKLOG.md:[0-9]+: invalid gate task item")
 
+    def test_inventory_row_parse_errors_retain_the_known_child(self) -> None:
+        mutations = (
+            ("`specified`", "`unknown`"),
+            ("`T1.1` | [design]", "T1.1 | [design]"),
+            (
+                "| [design](docs/superpowers/specs/t1-design.md) | — | 0/1 |",
+                "| [design](../design.md) | — | 0/1 |",
+            ),
+            ("| — | 0/1 | — |", "| — | invalid | — |"),
+        )
+        for old, new in mutations:
+            with self.subTest(replacement=new):
+                path = self.copy_backlog(replace=(old, new))
+
+                with self.assertRaises(MarkdownParseError) as raised:
+                    parse_backlog(path)
+
+                self.assertEqual("T1.2", raised.exception.node)
+
     def test_em_dash_approval_and_completion_evidence_parse_as_none(self) -> None:
         root = self.copy_fixture_root()
         design = root / "docs/superpowers/specs/t1-design.md"

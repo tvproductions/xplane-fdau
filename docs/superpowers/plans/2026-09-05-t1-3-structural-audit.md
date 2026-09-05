@@ -189,8 +189,11 @@ fixed slot matrix. It does not inspect gate prose or provide per-child overrides
 
 ## Task 2: Structural consistency and dependency rules
 
-**Files:** Create `backlog/rules.py`; modify `backlog/audit.py`; create
+**Files:** Create `backlog/rules.py`; create
 `tests/test_backlog_status_rules.py` and `tests/backlog_audit_support.py`.
+
+Task 2 supplies the standalone structural rule API. Task 5 composes it in
+`backlog/audit.py`; no audit-layer change is required before that integration.
 
 **Interfaces:** Add `structural_findings(loaded: AuditLoad) -> tuple[Finding, ...]`.
 Test support exposes `copy_fixture(root: Path) -> None`, which copies the

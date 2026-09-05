@@ -275,7 +275,7 @@ queued work, including the current F1.1-F1.6 references; it cannot justify a
 later lifecycle or checked gate. Run gate-text agreement only when the link is
 a governing design. Discovered active designs still receive metadata checks.
 
-- [ ] Write RED cases for unknown/duplicate/unordered design children, an
+- [x] Write RED cases for unknown/duplicate/unordered design children, an
   unknown epic, undeclared cross-epic coverage, zero/multiple plan children,
   wrong source family, absent/unapproved/superseded governing design, wrong
   plan child, and a linked design that does not cover the backlog child.
@@ -301,8 +301,8 @@ a governing design. Discovered active designs still receive metadata checks.
   self.assertEqual(1, mismatch.gate)
   ```
 
-- [ ] Run `uv run python -m unittest tests.test_backlog_status_adherence -v`.
-- [ ] Implement artifact checks with `artifact.spec.*`, `artifact.plan.*`,
+- [x] Run `uv run python -m unittest tests.test_backlog_status_adherence -v`.
+- [x] Implement artifact checks with `artifact.spec.*`, `artifact.plan.*`,
   `artifact.historical.disposition`, `artifact.approval`, and
   `artifact.gate-drift` codes. Preserve the design's example
   `artifact.plan.multiple-children` for that exact error. Validate metadata
@@ -311,7 +311,7 @@ a governing design. Discovered active designs still receive metadata checks.
   link while its child remains specified; a draft never proves planned state.
   Do not require a governing approved design for queued children with no link
   or with a valid contextual reference, as specified by the supplement.
-- [ ] Run GREEN, the earlier audit tests, and Task 5 pre-commit checks. Commit
+- [x] Run GREEN, the earlier audit tests, and Task 5 pre-commit checks. Commit
   explicit files with `feat: audit governing artifacts and acceptance criteria`.
 
 ## Task 4: Git-backed evidence and lifecycle sufficiency

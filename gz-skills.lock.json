@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "skills": [
+    {
+      "name": "gzs-agent-context-diet",
+      "version": "0.1.0",
+      "source": {
+        "repository": "https://github.com/tvproductions/gz-skills.git",
+        "revision": "e925081362eec2517ab429517e250ecca6877cdc",
+        "path": "skills/gzs-agent-context-diet"
+      },
+      "sha256": "ee74ed481ecb66d93fcbb2a1fe2e98e72f50d55560232b8712a82f7f3415252b",
+      "installed_path": ".agents/skills/gzs-agent-context-diet"
+    },
+    {
+      "name": "gzs-cross-platform-python",
+      "version": "0.1.0",
+      "source": {
+        "repository": "https://github.com/tvproductions/gz-skills.git",
+        "revision": "e925081362eec2517ab429517e250ecca6877cdc",
+        "path": "skills/gzs-cross-platform-python"
+      },
+      "sha256": "7c48f22973b4d24d320e9afcfd7a8b6f9efc4e94d738e9b18b876663f5cc52bd",
+      "installed_path": ".agents/skills/gzs-cross-platform-python"
+    },
+    {
+      "name": "gzs-git-sync",
+      "version": "0.1.0",
+      "source": {
+        "repository": "https://github.com/tvproductions/gz-skills.git",
+        "revision": "e925081362eec2517ab429517e250ecca6877cdc",
+        "path": "skills/gzs-git-sync"
+      },
+      "sha256": "74943b30af37beecc77d21e5e9f23ed04d3814e5c8689cf4b3b8d2e31917529e",
+      "installed_path": ".agents/skills/gzs-git-sync"
+    },
+    {
+      "name": "gzs-intent-audit",
+      "version": "0.1.0",
+      "source": {
+        "repository": "https://github.com/tvproductions/gz-skills.git",
+        "revision": "e925081362eec2517ab429517e250ecca6877cdc",
+        "path": "skills/gzs-intent-audit"
+      },
+      "sha256": "b30574fe293c46a3a930e88c9f547ba1debc85ed2de071009d0ad2297242396f",
+      "installed_path": ".agents/skills/gzs-intent-audit"
+    },
+    {
+      "name": "gzs-plan-audit",
+      "version": "0.1.0",
+      "source": {
+        "repository": "https://github.com/tvproductions/gz-skills.git",
+        "revision": "e925081362eec2517ab429517e250ecca6877cdc",
+        "path": "skills/gzs-plan-audit"
+      },
+      "sha256": "db6a63426ac98bfa77648343ad6a2af6e361ddd92a11e355c71f50167b2d2f1a",
+      "installed_path": ".agents/skills/gzs-plan-audit"
+    },
+    {
+      "name": "gzs-quality-gate",
+      "version": "0.1.0",
+      "source": {
+        "repository": "https://github.com/tvproductions/gz-skills.git",
+        "revision": "e925081362eec2517ab429517e250ecca6877cdc",
+        "path": "skills/gzs-quality-gate"
+      },
+      "sha256": "60f9ed68a6d1f6669960ea328b017847c543b9efd8ae8d289222c78006f49db8",
+      "installed_path": ".agents/skills/gzs-quality-gate"
+    },
+    {
+      "name": "gzs-repository-hygiene",
+      "version": "0.1.0",
+      "source": {
+        "repository": "https://github.com/tvproductions/gz-skills.git",
+        "revision": "e925081362eec2517ab429517e250ecca6877cdc",
+        "path": "skills/gzs-repository-hygiene"
+      },
+      "sha256": "8ddb2ba157b0b89f07c118dddd512d6559f1a5046f3d725b039be816a58624d4",
+      "installed_path": ".agents/skills/gzs-repository-hygiene"
+    },
+    {
+      "name": "gzs-router",
+      "version": "0.1.0",
+      "source": {
+        "repository": "https://github.com/tvproductions/gz-skills.git",
+        "revision": "e925081362eec2517ab429517e250ecca6877cdc",
+        "path": "skills/gzs-router"
+      },
+      "sha256": "0b06b591565da979874db82538791788d5b8fdb13de47efe701bd8c461829156",
+      "installed_path": ".agents/skills/gzs-router"
+    },
+    {
+      "name": "gzs-session-handoff",
+      "version": "0.1.0",
+      "source": {
+        "repository": "https://github.com/tvproductions/gz-skills.git",
+        "revision": "e925081362eec2517ab429517e250ecca6877cdc",
+        "path": "skills/gzs-session-handoff"
+      },
+      "sha256": "d1452b7b38b598de325ea7798b4d576f6bffb8460980065835decfc59d6c7c79",
+      "installed_path": ".agents/skills/gzs-session-handoff"
+    },
+    {
+      "name": "gzs-tech-debt-review",
+      "version": "0.1.0",
+      "source": {
+        "repository": "https://github.com/tvproductions/gz-skills.git",
+        "revision": "e925081362eec2517ab429517e250ecca6877cdc",
+        "path": "skills/gzs-tech-debt-review"
+      },
+      "sha256": "2a49d27b567a48a426fdd36b45759d48b1b762e1fa28197dccc24c4638d9e59f",
+      "installed_path": ".agents/skills/gzs-tech-debt-review"
+    },
+    {
+      "name": "gzs-update-dependencies",
+      "version": "0.1.0",
+      "source": {
+        "repository": "https://github.com/tvproductions/gz-skills.git",
+        "revision": "e925081362eec2517ab429517e250ecca6877cdc",
+        "path": "skills/gzs-update-dependencies"
+      },
+      "sha256": "84832775bfe0831e24136e0b1bc57d5ccdf5527ef865bba09a98d0f94888b535",
+      "installed_path": ".agents/skills/gzs-update-dependencies"
+    }
+  ]
+}

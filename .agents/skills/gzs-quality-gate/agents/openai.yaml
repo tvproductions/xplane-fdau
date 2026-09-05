@@ -1,0 +1,6 @@
+interface:
+  display_name: "GovZero Quality Gate"
+  short_description: "Run the repository's complete verification"
+  default_prompt: "Use $gzs-quality-gate to run and evidence the complete quality gate for this repository."
+policy:
+  allow_implicit_invocation: true

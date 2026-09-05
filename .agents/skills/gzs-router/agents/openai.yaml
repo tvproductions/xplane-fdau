@@ -1,0 +1,6 @@
+interface:
+  display_name: "GovZero Skill Router"
+  short_description: "Choose the right GovZero skill"
+  default_prompt: "Use $gzs-router to choose the right skill or sequence for my task."
+policy:
+  allow_implicit_invocation: false

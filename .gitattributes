@@ -3,3 +3,6 @@
 
 # Preserve fixture line separators as part of their format contracts.
 tests/fixtures/fdr/*.fdr -text whitespace=cr-at-eol
+
+# Preserve canonical gz-skills snapshots byte-for-byte for lock verification.
+.agents/skills/gzs-*/** -text

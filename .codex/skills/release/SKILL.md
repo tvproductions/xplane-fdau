@@ -5,7 +5,11 @@ description: Use when validating local readiness for the unreleased xplane-fdau 
 
 # xplane-fdau Release Readiness
 
-Validate local readiness only; publication is not authorized for this increment.
+Validate local readiness only; release publication is not authorized by this
+workflow and it does not sync Git. A separately and explicitly requested
+`gzs-git-sync` may perform an
+ordinary guarded commit and push without granting tag, package-publication, or
+GitHub-release authority.
 
 ## Local Readiness
 
@@ -32,4 +36,7 @@ For Python 3.12, 3.13, and 3.14, create an isolated environment outside the chec
 
 ## Authorization Gate
 
-Stop after reporting local readiness and immutable artifact names and SHA-256 hashes. Do not push, tag, publish to PyPI, or create a GitHub release; the canonical vertical slice must be complete and separately authorized first.
+Stop after reporting local readiness and immutable artifact names and SHA-256
+hashes. Do not tag, publish to PyPI, or create a GitHub release; the canonical
+vertical slice must be complete and release publication must be separately
+authorized first.

@@ -1,0 +1,6 @@
+interface:
+  display_name: "GovZero Cross-Platform Python"
+  short_description: "Keep Python portable across operating systems"
+  default_prompt: "Use $gzs-cross-platform-python to review this Python change for Windows, macOS, and Linux portability."
+policy:
+  allow_implicit_invocation: true

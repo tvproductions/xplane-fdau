@@ -20,7 +20,9 @@
   `BACKLOG.md` before changing canonical FDAU behavior. A draft specification
   is review material, not implementation authority.
 - The next release remains prohibited until a reviewed canonical vertical slice
-  is complete. Do not push, tag, publish, or create a release in this increment.
+  is complete. Tags, package publication, and GitHub releases remain separately
+  gated; an explicitly requested ordinary Git sync does not grant release
+  authority.
 
 ## Testing
 
@@ -34,6 +36,29 @@
 - Do not introduce a dependency on `xpwebapi`, XPPython3, XPLM, or any network
   client.
 
+## Canonical gz-skills Workflows
+
+- The canonical portable workflow catalog is the complete eleven-skill
+  `gz-skills` snapshot under `.agents/skills/gzs-*`. Its generated provenance
+  lock is `gz-skills.lock.json`; use that lock and this exact discovery root,
+  never a sibling checkout, as the repository authority.
+- Use `gzs-router` for catalog orientation. Apply the documented automatic
+  triggers for `gzs-agent-context-diet`, `gzs-cross-platform-python`,
+  `gzs-intent-audit`, `gzs-plan-audit`, `gzs-quality-gate`,
+  `gzs-repository-hygiene`, `gzs-tech-debt-review`, and
+  `gzs-update-dependencies`.
+- `gzs-git-sync` and `gzs-session-handoff` are explicit-only. Invoke Git sync
+  only when the user asks to sync, commit and push, publish the current work, or
+  create a remote save point. Invoke session handoff only when the user asks to
+  hand off, checkpoint, resume, or preserve work. Installing or using any other
+  workflow never implies either operation.
+- Project adapters under `.codex/skills` provide exact xplane-fdau commands and
+  domain boundaries beneath the portable invariants. The quality command is
+  `uv run python tools/quality.py check`; the current hygiene command is
+  `uv run python .codex/skills/hygiene/scripts/hygiene.py`. Use `unittest`
+  only, preserve the standard-library-only runtime, and follow the canonical
+  Git-sync safeguards for any explicitly authorized ordinary push.
+
 ## Superpowers Workflow
 
 - Use `.agents/superpowers` as the governing external Superpowers checkout.
@@ -42,8 +67,9 @@
 - Expose its skills at `.agents/skills/superpowers` using a local directory
   junction to `.agents/superpowers/skills`, matching the q4xpcc discovery
   surface. Keep both the checkout and junction ignored.
-- Keep `.codex/skills` limited to xplane-fdau-specific workflow skills and
-  repository-local tooling.
+- Keep `.codex/skills` limited to xplane-fdau-specific adapters, domain
+  guidance, and repository-local tooling; do not duplicate a canonical
+  `gzs-*` workflow there.
 - Follow the upstream Superpowers workflow in order:
   1. `superpowers:brainstorming` before changing behavior, with the reviewed
      design saved under `docs/superpowers/specs/`.

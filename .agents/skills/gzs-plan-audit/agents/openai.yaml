@@ -1,0 +1,6 @@
+interface:
+  display_name: "GovZero Plan Audit"
+  short_description: "Check intent, scope, and plan alignment"
+  default_prompt: "Use $gzs-plan-audit to verify this implementation plan matches its intent and scoped requirements."
+policy:
+  allow_implicit_invocation: true

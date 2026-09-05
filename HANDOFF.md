@@ -40,7 +40,9 @@ worktrees. Report completed but unmerged work explicitly so it is integrated
 through the authorized workflow before being mistaken for unfinished work.
 The selected next increment at that checkpoint was `D1.3`, the reviewed q4xpcc
 consumer brief.
-No push, tag, publication, or release occurred.
+No push, tag, publication, or release occurred. That sentence records the
+checkpoint's historical activity; it is not a current prohibition on a
+separately requested ordinary Git sync.
 
 ## Historical verified maintenance progress
 
@@ -64,7 +66,8 @@ checkpoint was `a1b32eedc736f0dd87276255f14ec52b64300119` on local `main`, 17
 commits ahead of `origin/main`; no push, tag, publication, or release occurred.
 This maintenance correction did not itself satisfy a D1 acceptance gate. At
 that historical checkpoint, `D1.1` was the next selected work. Later D1
-completion is recorded below.
+completion is recorded below. The no-push statement describes that historical
+maintenance activity, not the current explicit Git-sync policy.
 
 ## Current roadmap and design review
 
@@ -105,6 +108,33 @@ gates. Its approved focused implementation plan remains:
 `docs/superpowers/plans/2026-08-16-xplane-fdau-typed-backlog-status-reporting.md`
 
 The tooling does not govern consumer projects or ship in the distribution.
+
+## Canonical workflow catalog
+
+On 2026-09-05 Jeff adopted all eleven workflows from
+`https://github.com/tvproductions/gz-skills` and sunset the localized Git-sync
+version. The canonical unmodified snapshots are discovered at
+`.agents/skills/gzs-*`; `gz-skills.lock.json` pins source revision
+`e925081362eec2517ab429517e250ecca6877cdc`, paths, versions, and full-tree
+hashes. The catalog is `gzs-agent-context-diet`, `gzs-cross-platform-python`,
+`gzs-git-sync`, `gzs-intent-audit`, `gzs-plan-audit`, `gzs-quality-gate`,
+`gzs-repository-hygiene`, `gzs-router`, `gzs-session-handoff`,
+`gzs-tech-debt-review`, and `gzs-update-dependencies`.
+
+Project-local quality, hygiene, documentation, and release guidance remains
+subordinate command/domain adaptation. `gzs-git-sync` and
+`gzs-session-handoff` are explicit-only; installation, ordinary coding, local
+integration, or another workflow never invokes them. An explicit Git-sync
+request authorizes an ordinary guarded commit and push, followed by a fresh
+fetch and proof of `ahead=0`, `behind=0`. It never authorizes force push,
+destructive reset, hook bypass, unrelated cleanup, tags, package publication,
+or a GitHub release.
+
+This dated current-policy amendment supersedes older no-push wording only for
+explicitly requested ordinary Git synchronization. Accepted D1 designs, the
+D1.3 brief, and other provenance-locked historical evidence remain unchanged;
+their implementation and release boundaries still apply, but their historical
+no-push statements are not the current routine-Git rule.
 
 ## q4xpcc contract-handoff readiness
 
@@ -192,19 +222,24 @@ runtime API, schema, fixture, conformance corpus, implementation artifact,
 deployment receipt, native-FDR output, or q4xpcc adoption. It does not satisfy
 `I1.1`, `I1.2`, or `G1`, and does not authorize release, push, tag, or
 publication.
+That historical D1 operation did not request Git sync; current explicit-sync
+authority remains governed separately by `gzs-git-sync`.
 
 The approved translation of q4xpcc's remaining project-local workflows is:
 
 `docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md`
 
-It defines `T2.1` canonical full-strength `repo-hygiene`, followed by peer
-children `T2.2` governed dependency/toolchain refresh and `T3.1` q4xpcc-style
-guarded Git synchronization with push disabled. `T2.2` keeps an exact `uv` pin
-moving toward new stable releases while ordinary development dependencies use
-compatible declarations plus the complete lock. Superpowers remains an
-external dependency and is excluded from parity comparison and dependency
-refresh; no Superpowers skill is copied or treated as a local onboarding
-target. The ignored `.agents/superpowers` checkout supplies
+It defines future deterministic project adapters: `T2.1` supplies exact
+xplane-fdau hygiene commands beneath `gzs-repository-hygiene`, `T2.2` supplies
+dependency/toolchain mechanics beneath `gzs-update-dependencies`, and `T3.1`
+supplies guarded project state handling beneath `gzs-git-sync`. All remain
+`specified` with zero gates satisfied; the canonical suite installation does
+not deliver them. `T2.2` keeps an exact `uv` pin moving toward new stable
+releases while ordinary development dependencies use compatible declarations
+plus the complete lock. Superpowers remains an external dependency and is
+excluded from parity comparison and dependency refresh; no Superpowers skill
+is copied or treated as a local onboarding target. The ignored
+`.agents/superpowers` checkout supplies
 the upstream workflow through the ignored `.agents/skills/superpowers`
 discovery junction; `.codex/skills` remains project-specific. Completed
 feature worktrees merge back to `main`, pass merged-result verification, and
@@ -256,9 +291,11 @@ regulatory claims remain external.
 
 ## Release boundary
 
-No release, tag, push, GitHub release, or PyPI publication is authorized. Version
+No release tag, GitHub release, or PyPI publication is authorized. Version
 `0.1.0` remains unreleased until the required canonical vertical slice is
-implemented and independently reviewed.
+implemented and independently reviewed. A separately requested ordinary Git
+sync may push through `gzs-git-sync` safeguards and does not change release
+readiness or publication authority.
 
 Use only Python's standard-library test framework. Keep runtime code
 standard-library-only and do not add Web API, XPLM, XPPython3, q4xpcc, or

@@ -1,0 +1,6 @@
+interface:
+  display_name: "GovZero Update Dependencies"
+  short_description: "Refresh dependencies and project tools"
+  default_prompt: "Use $gzs-update-dependencies to bring every project-managed dependency and tool current, then verify the repository."
+policy:
+  allow_implicit_invocation: true

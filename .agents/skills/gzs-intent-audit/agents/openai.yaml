@@ -1,0 +1,6 @@
+interface:
+  display_name: "GovZero Intent Audit"
+  short_description: "Trace intent to observed shipped behavior"
+  default_prompt: "Use $gzs-intent-audit to determine whether the shipped surface fulfills its declared intent."
+policy:
+  allow_implicit_invocation: true

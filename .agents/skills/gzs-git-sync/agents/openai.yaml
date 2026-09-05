@@ -1,0 +1,6 @@
+interface:
+  display_name: "GovZero Git Sync"
+  short_description: "Publish a guarded Git save point"
+  default_prompt: "Use $gzs-git-sync to validate, commit, and push the current repository safely."
+policy:
+  allow_implicit_invocation: false

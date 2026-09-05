@@ -291,17 +291,19 @@ dependency refresh.
 
 | Child | Outcome | Depends on |
 | --- | --- | --- |
-| `T2.1` | Canonical repo-hygiene and fresh artifact verification | `T1.6` |
+| `T2.1` | Project repository-hygiene adapter and fresh artifact verification | `T1.6` |
 | `T2.2` | Governed dependency and toolchain refresh | `T2.1` |
 
 ## T3 — Guarded Git synchronization tooling epic
 
-This track translates q4xpcc's dry-run/apply Git synchronization state machine
-while retaining xplane-fdau's push and release prohibition.
+This track adds deterministic project behavior beneath canonical
+`gzs-git-sync`. It preserves guarded dry-run/apply planning, permits an ordinary
+push only when Git sync is explicitly requested, and proves final remote
+alignment. Release publication remains a separate decision.
 
 | Child | Outcome | Depends on |
 | --- | --- | --- |
-| `T3.1` | Guarded local Git synchronization with push disabled | `T2.1` |
+| `T3.1` | Guarded Git synchronization adapter | `T2.1` |
 
 ## Version 0.1.0 release gates
 

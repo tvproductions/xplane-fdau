@@ -6,7 +6,7 @@
 - **Decision owner:** Jeff / tvproductions
 - **Roadmap epic:** `T2`
 - **Roadmap children:** `T2.1`, `T2.2`, `T3.1`
-- **Approval:** 2026-08-15 — Jeff / tvproductions
+- **Approval:** 2026-08-15 — Jeff / tvproductions; canonical workflow amendment approved 2026-09-05 by Jeff / tvproductions
 
 ## Authority and purpose
 
@@ -19,27 +19,36 @@ The repository-owned
 governs the Python compatibility and dependency boundaries used here.
 
 This specification translates the remaining q4xpcc-local repository workflows
-into xplane-fdau-native `repo-hygiene`, `refresh-dependencies`, and `git-sync`
-skills. It uses q4xpcc as review input, not as a code source or runtime/tooling
-dependency. The translated skills are newly designed around xplane-fdau's
-distribution artifacts, roadmap, release prohibition, standard-library
-boundary, 3.12-3.14 compatibility matrix, and `unittest` requirement.
+into future deterministic xplane-fdau project adapters for canonical
+`gzs-repository-hygiene`, `gzs-update-dependencies`, and `gzs-git-sync`. Jeff's
+2026-09-05 adoption of all eleven `gz-skills` workflows sunsets the proposed
+local canonical skill definitions: the pinned `.agents/skills/gzs-*` catalog
+and `gz-skills.lock.json` own portable workflow behavior. This design still owns
+the project-specific commands, distribution artifacts, roadmap, release
+boundary, standard-library boundary, 3.12-3.14 compatibility matrix, and
+`unittest` requirement. q4xpcc remains review input, not a code source or
+runtime/tooling dependency.
 
 The workflow sequence is:
 
 ```text
 T1.1 -> T1.2 -> T1.3 -> T1.4 -> T1.5 -> T1.6
                                                |
-                                               +-> T2.1 repo-hygiene
+                                               +-> T2.1 hygiene adapter
                                                        |
-                                                       +-> T2.2 refresh-dependencies -+
+                                                       +-> T2.2 dependency adapter ---+
                                                        |                            |
-                                                       +-> T3.1 git-sync ------------+-> B1.1
+                                                       +-> T3.1 Git-sync adapter -----+-> B1.1
 ```
 
 Repository governance is completed before the source-layout migration resumes.
-Neither this design nor its skills authorize a push, tag, publication, GitHub
-release, or PyPI release.
+Installing the canonical workflows or implementing these adapters does not
+execute or authorize a sync. A later explicit Git-sync request authorizes an
+ordinary guarded commit and push with final remote-alignment proof. Tags,
+package publication, and GitHub releases remain separately gated.
+This 2026-09-05 current-policy amendment supersedes older no-push wording only
+for explicitly requested ordinary Git synchronization. It does not rewrite or
+weaken accepted D1, provenance, implementation, or release evidence.
 
 ## q4xpcc design-input provenance
 
@@ -53,9 +62,9 @@ inventory.
 | q4xpcc local skill | SHA-256 of `SKILL.md` | xplane-fdau disposition |
 | --- | --- | --- |
 | `backlog-status` | `105e6e6c0cb14417b61556136961d6a8c24159ee40db0ebf3df6c5d3e9a6c65a` | Adopted through the existing modular `T1` design. Phase-specific parsing and product-evidence rules are rejected. |
-| `repo-hygiene` | `7d9a62122ae9723d2dfa1db28f94934a407c67bca254a7bcd346c0094ef46509` | Translated by `T2.1` from plugin-tree inspection to fresh wheel/sdist verification. |
-| `refresh-dependencies` | `94141338f038a3d59006bd74e6088aab1b1865f50edc6122b63e003f6cbb4de5` | Translated by `T2.2` for a multi-version library, exact `uv` tool pin, compatible development constraints, lock refresh, and artifact verification. Superpowers operations are excluded. |
-| `git-sync` | `f2ed129d6e98e888be9b96d04cc88df89d0432a515e88fc5c34fbb3879a24ea5` | Translated by `T3.1` with q4xpcc-style planning/apply behavior and a code-enforced xplane-fdau push prohibition. |
+| `repo-hygiene` | `7d9a62122ae9723d2dfa1db28f94934a407c67bca254a7bcd346c0094ef46509` | Its project-specific artifact checks inform the future `T2.1` adapter beneath `gzs-repository-hygiene`. |
+| `refresh-dependencies` | `94141338f038a3d59006bd74e6088aab1b1865f50edc6122b63e003f6cbb4de5` | Its project-specific dependency mechanics inform the future `T2.2` adapter beneath `gzs-update-dependencies`. Superpowers operations are excluded. |
+| `git-sync` | `f2ed129d6e98e888be9b96d04cc88df89d0432a515e88fc5c34fbb3879a24ea5` | Its deterministic state observations inform the future `T3.1` adapter beneath `gzs-git-sync`; the canonical portable workflow owns guarded publication behavior. |
 
 The q4xpcc scripts and tests are not copied. No translated skill reads q4xpcc,
 assumes a sibling path, or imports a q4xpcc module.
@@ -66,12 +75,13 @@ The repository will keep three independently governed workflow concerns:
 
 1. `T1` owns backlog authority, typed status, audit, next action, guarded
    backlog mutation, and the `backlog-status` skill.
-2. `T2.1` owns the canonical full-strength `repo-hygiene` workflow and replaces
-   the current `hygiene` skill without an alias.
-3. `T2.2` owns explicit live dependency and toolchain audit/refresh behavior,
-   including the exact repository `uv` pin and complete development lock.
-4. `T3.1` owns q4xpcc-style guarded Git planning and apply behavior, using
-   `repo-hygiene` as its mandatory pre-commit gate.
+2. `T2.1` owns the future deterministic project hygiene adapter used by
+   `gzs-repository-hygiene`; it does not create another canonical skill.
+3. `T2.2` owns the future deterministic project dependency adapter used by
+   `gzs-update-dependencies`, including the exact repository `uv` pin and
+   complete development lock.
+4. `T3.1` owns the future deterministic project Git adapter used by
+   `gzs-git-sync`, with full project hygiene as its mandatory pre-commit gate.
 
 The existing `code-quality`, `documentation`, and `release` skills remain
 focused supporting workflows. They are not aliases for the translated skills.
@@ -87,8 +97,8 @@ This increment will:
 3. make routine hygiene validate real wheel and source-distribution artifacts;
 4. make Git synchronization dry-run-first, script-backed, deterministic, and
    testable against local repositories;
-5. mirror q4xpcc's guarded Git state handling while enforcing xplane-fdau's
-   current no-push boundary;
+5. mirror q4xpcc's guarded Git state handling while allowing only an explicitly
+   authorized ordinary push and requiring final fetch/alignment proof;
 6. keep the exact `uv` pin current through newest-stable discovery and review,
    while ordinary development dependencies use compatible declarations plus a
    complete reproducible lock;
@@ -104,11 +114,13 @@ This increment will not:
   aircraft rules, plugin packaging, native build rules, or sibling paths;
 - replace Superpowers or vendor it as a local workflow;
 - inspect, compare, update, or otherwise manage the external Superpowers
-  checkout through `refresh-dependencies`;
+  checkout through the dependency adapter or `gzs-update-dependencies`;
 - change the xplane-fdau runtime API or native FDR behavior;
 - run the Python 3.12-3.14 installed-wheel matrix during routine hygiene;
 - make routine hygiene depend on network access;
-- permit a push, tag, publication, GitHub release, or PyPI release; or
+- infer Git-sync permission from implementation, installation, handoff, or any
+  request other than explicit synchronization; permit a tag, package
+  publication, GitHub release, or PyPI release; or
 - collapse T1, T2.1, T2.2, T3.1, and B1.1 into one implementation plan.
 
 ## T1 boundary
@@ -127,11 +139,12 @@ retained. Generic typed evidence replaces q4xpcc's product-specific artifact
 recognizers. Stable finding codes, deterministic ordering, and explicit
 conflict reporting replace conversational inference.
 
-## T2.1 repo-hygiene contract
+## T2.1 project repository-hygiene adapter contract
 
-`T2.1` creates `.codex/skills/repo-hygiene/` and removes the former
-`.codex/skills/hygiene/` skill. No compatibility alias remains because these
-repository-internal workflows are unreleased.
+`T2.1` supplies a deterministic project-owned command adapter for canonical
+`gzs-repository-hygiene`. It may replace the current provisional hygiene script
+and guidance when implemented, but it does not create or rename a competing
+canonical/local workflow skill.
 
 Every invocation runs the complete workflow:
 
@@ -159,12 +172,13 @@ Routine hygiene does not run the installed Python-version matrix. The
 freshness remains an explicit opt-in network inquiry. Hygiene never formats,
 stages, commits, changes declarations, or deletes repository files.
 
-## T2.2 refresh-dependencies contract
+## T2.2 dependency-update adapter contract
 
-`T2.2` creates `.codex/skills/refresh-dependencies/` as the only workflow that
-may intentionally inquire about and update repository dependency declarations,
-the lock, and the pinned `uv` tool version. It is explicit and network-aware;
-routine hygiene remains offline.
+`T2.2` supplies the deterministic project-owned command adapter used by
+canonical `gzs-update-dependencies` to inquire about and update repository
+dependency declarations, the lock, and the pinned `uv` tool version. It is
+explicit and network-aware; routine hygiene remains offline. It does not create
+a competing canonical/local workflow skill.
 
 Every invocation begins read-only and reports human and deterministic JSON
 status for:
@@ -208,11 +222,12 @@ verification, or artifact failures are blockers. It never updates Python past
 the reviewed compatibility range, touches the external Superpowers checkout,
 deploys to X-Plane, stages, commits, pushes, tags, publishes, or releases.
 
-## T3.1 git-sync contract
+## T3.1 guarded Git synchronization adapter contract
 
-`T3.1` replaces the prose-only Git routine with a standard-library script. The
-workflow mirrors q4xpcc's guarded state machine while translating its policy to
-xplane-fdau.
+`T3.1` supplies a standard-library project adapter beneath canonical
+`gzs-git-sync`. It mirrors q4xpcc's useful guarded observations while preserving
+the portable workflow's authority and does not create a competing
+canonical/local workflow skill.
 
 Dry-run is the default. Human and deterministic JSON output report:
 
@@ -234,20 +249,21 @@ A fetch with prune refreshes remote observations before planning. Apply mode:
 4. runs the full `repo-hygiene` gate;
 5. creates an intentional commit;
 6. pulls fast-forward when only behind;
-7. rebases when local and remote histories diverge;
-8. creates a uniquely named backup branch and linearizes a repairable local
-   merge-head commit before synchronization; and
-9. reruns planning to report the actual resulting state.
+7. rebases only unpublished local commits when local and remote histories
+   diverge and project policy permits it;
+8. pushes only under the user's explicit Git-sync authorization; and
+9. fetches again and proves the final local/remote state is `ahead=0`,
+   `behind=0` with no unintended worktree changes.
 
 Apply refuses detached HEAD, unresolved conflicts, merge-in-progress,
 unexpected branch, stale expected HEAD or worktree scope, a missing remote
-branch, fetch failure, failed hygiene, or an unrepairable merge head. No force,
-`--no-verify`, `--no-hygiene`, or silent safety bypass exists.
-
-Unlike q4xpcc, push is unavailable in both the command-line interface and the
-implementation. The script contains no push execution path. An ahead branch is
-reported as an expected local state and never treated as authorization for a
-remote write. Tags, publication, and releases are also outside the skill.
+branch, fetch failure, failed hygiene, ambiguous divergence, published-history
+rewrite, or unresolved merge head. The portable skill does not require automatic
+merge-head rewriting or linearization; the adapter stops rather than inventing
+that behavior. No force, destructive reset, `--no-verify`, `--no-hygiene`, or
+silent safety bypass exists. An ahead branch is incomplete until an explicitly
+authorized push and fresh alignment proof succeed. Tags, publication, and
+releases remain outside the adapter.
 
 ## Error handling and exit status
 
@@ -293,10 +309,11 @@ verification, and the absence of any Superpowers or release mutation path.
 
 Tests create temporary working repositories and local bare remotes. They cover
 clean, dirty, ahead, behind, diverged, detached, conflicting, missing-remote,
-stale-state, hygiene-failure, repairable-merge, and unrepairable-merge states.
-They prove reviewed auto-add, commit, fast-forward pull, rebase, backup-branch
-linearization, dry-run immutability, deterministic JSON, and the absence of any
-push option or execution path. Tests never use the real repository or network.
+stale-state, hygiene-failure, published-history, merge-head, push-failure, and
+final-alignment-failure states. They prove reviewed auto-add, commit,
+fast-forward pull, rebase of unpublished commits only, explicit-authorized
+push, post-push fetch/alignment, dry-run immutability, and deterministic JSON.
+Tests never use the real repository or network.
 
 ### Repository closure
 
@@ -310,23 +327,25 @@ routine hygiene invocation.
 After the implementation children are verified:
 
 - `AGENTS.md` invokes `backlog-status` for status/resume/adherence questions;
-- `AGENTS.md` invokes `repo-hygiene` for every full hygiene and pre-handoff
-  request;
-- `AGENTS.md` invokes `refresh-dependencies` for dependency, Python-compatibility,
-  `uv`, lock-freshness, and vulnerability work;
-- `AGENTS.md` invokes `git-sync` for guarded synchronization requests;
+- `AGENTS.md` routes full hygiene to `gzs-repository-hygiene` and the project
+  hygiene command adapter;
+- `AGENTS.md` routes dependency, Python-compatibility, `uv`, lock-freshness,
+  and vulnerability work to `gzs-update-dependencies` and the future project
+  dependency adapter;
+- `AGENTS.md` invokes explicit-only `gzs-git-sync` for guarded synchronization
+  requests and uses the future project Git adapter when available;
 - `HANDOFF.md` points to the backlog and exact resume child;
-- the old `hygiene` trigger is absent; and
+- no project helper claims canonical portable-workflow ownership; and
 - build/release documentation states that repository-governance tooling never
   ships.
 
 ## Acceptance criteria
 
-### T2.1 — Canonical repo-hygiene and fresh artifact verification
+### T2.1 — Project repository-hygiene adapter and fresh artifact verification
 
-- The canonical `repo-hygiene` skill replaces `hygiene` and runs status,
-  offline lock, backlog audit, quality, strict documentation, and pre-commit
-  gates at full strength.
+- A deterministic project hygiene adapter supplies xplane-fdau commands to
+  canonical `gzs-repository-hygiene` and runs status, offline lock, backlog
+  audit, quality, strict documentation, and pre-commit gates at full strength.
 - Every run builds one fresh wheel/sdist pair outside the checkout and validates
   exact metadata, members, payload bytes, and repository-governance exclusion.
 - Successful temporary artifacts are safely removed while failed artifacts are
@@ -350,18 +369,19 @@ After the implementation children are verified:
 - Superpowers, X-Plane deployment, staging, commit, push, tag, publication, and
   release behavior is absent from the skill and implementation.
 
-### T3.1 — Guarded local Git synchronization with push disabled
+### T3.1 — Guarded Git synchronization adapter
 
 - Dry-run and JSON reports deterministically expose branch, remote, scope,
   ahead/behind/divergence, actions, warnings, blockers, and expected state.
 - Apply revalidates pinned state, performs reviewed auto-add, full hygiene,
-  intentional commit, fast-forward pull or rebase, and repairable merge-head
-  backup/linearization with final verification.
+  intentional commit, fast-forward pull or rebase of unpublished commits, an
+  explicitly authorized ordinary push, and a fresh final fetch/alignment check.
 - Detached, conflicting, stale, unexpected, missing-remote, failed-fetch,
-  failed-hygiene, and unrepairable-merge states fail closed without partial
-  unsafe continuation.
-- Push is absent from both CLI and implementation, and no tag, publication,
-  release, force, or verification-bypass path exists.
+  failed-hygiene, merge-head, published-history-rewrite, failed-push, and
+  failed-alignment states fail closed without partial unsafe continuation.
+- An explicitly authorized ordinary push finishes only after proof that local
+  and remote are `ahead=0`, `behind=0`; no tag, publication, release, force,
+  destructive-reset, or verification-bypass path exists.
 - Temporary-repository tests, current-repository dry-run, complete quality
   gates, and independent review pass without changing release authorization.
 

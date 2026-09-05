@@ -23,8 +23,11 @@ slice receives one focused plan and one independently reviewable outcome.
   peer prerequisites `T2.2` and `T3.1` are verified.
 - Canonical contract design: approved with accepted independent review; `C1.1`
   through `C4.4` are specified with zero delivery gates satisfied.
-- Release: prohibited.
-- Push/tag/publication: prohibited.
+- Release, tag, and package publication: prohibited pending their separate
+  gates and authorization.
+- Ordinary Git synchronization may commit and push only through an explicit
+  user request and canonical `gzs-git-sync` safeguards; this adoption does not
+  itself authorize or perform a sync.
 
 ## Canonical release boundary
 
@@ -103,9 +106,9 @@ The child slices below refine this sequence without weakening or reordering it.
 | `T1.4` | Deterministic next-action selection | `specified` | `T1.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/4 | — | — | — |
 | `T1.5` | Guarded child-state and gate-evidence mutations | `specified` | `T1.3`, `T1.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/5 | — | — | — |
 | `T1.6` | Skill, session-entry, hygiene, and artifact closure | `specified` | `T1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/5 | — | — | — |
-| `T2.1` | Canonical repo-hygiene and fresh artifact verification | `specified` | `T1.6` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/5 | — | — | — |
+| `T2.1` | Project repository-hygiene adapter and fresh artifact verification | `specified` | `T1.6` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/5 | — | — | — |
 | `T2.2` | Governed dependency and toolchain refresh | `specified` | `T2.1` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/4 | — | — | — |
-| `T3.1` | Guarded local Git synchronization with push disabled | `specified` | `T2.1` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/5 | — | — | — |
+| `T3.1` | Guarded Git synchronization adapter | `specified` | `T2.1` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/5 | — | — | — |
 
 ## Local-child acceptance gates
 
@@ -276,7 +279,9 @@ The child slices below refine this sequence without weakening or reordering it.
 - [ ] Installed-wheel smoke passes on Python 3.12, 3.13, and 3.14 outside the
       checkout.
 - [ ] Independent review has no unresolved load-bearing finding.
-- [ ] Version `0.1.0` remains unreleased and no push/tag/publication occurs.
+- [ ] Version `0.1.0` remains unreleased and no release tag or package
+      publication occurs; separately authorized routine Git sync does not
+      satisfy or violate this release gate.
 
 ### D1.1 — Canonical C1–C4 design approval
 
@@ -462,11 +467,12 @@ The child slices below refine this sequence without weakening or reordering it.
 - [ ] All standard-library tests and independent review pass without changing
       release or publication authorization.
 
-### T2.1 — Canonical repo-hygiene and fresh artifact verification
+### T2.1 — Project repository-hygiene adapter and fresh artifact verification
 
-- [ ] The canonical `repo-hygiene` skill replaces `hygiene` and runs status,
-      offline lock, backlog audit, quality, strict documentation, and pre-commit
-      gates at full strength.
+- [ ] A deterministic project hygiene adapter supplies xplane-fdau commands to
+      canonical `gzs-repository-hygiene` and runs status, offline lock, backlog
+      audit, quality, strict documentation, and pre-commit gates at full
+      strength.
 - [ ] Every run builds one fresh wheel/sdist pair outside the checkout and
       validates exact metadata, members, payload bytes, and
       repository-governance exclusion.
@@ -493,18 +499,20 @@ The child slices below refine this sequence without weakening or reordering it.
 - [ ] Superpowers comparison/update, X-Plane deployment, staging, commit, push,
       tag, publication, and release behavior is absent.
 
-### T3.1 — Guarded local Git synchronization with push disabled
+### T3.1 — Guarded Git synchronization adapter
 
 - [ ] Dry-run and JSON reports deterministically expose branch, remote, scope,
       ahead/behind/divergence, actions, warnings, blockers, and expected state.
 - [ ] Apply revalidates pinned state, performs reviewed auto-add, full hygiene,
-      intentional commit, fast-forward pull or rebase, and repairable merge-head
-      backup/linearization with final verification.
+      intentional commit, fast-forward pull or rebase of unpublished commits,
+      and final verification without rewriting published or merge-head history.
 - [ ] Detached, conflicting, stale, unexpected, missing-remote, failed-fetch,
-      failed-hygiene, and unrepairable-merge states fail closed without partial
-      unsafe continuation.
-- [ ] Push is absent from both CLI and implementation, and no tag, publication,
-      release, force, or verification-bypass path exists.
+      failed-hygiene, merge-head, ambiguous-divergence, push-failure, and
+      alignment-failure states fail closed without unsafe continuation.
+- [ ] An explicitly authorized ordinary push is followed by a fresh fetch and
+      proof that local and remote are `ahead=0`, `behind=0`; no tag,
+      publication, release, force, destructive reset, or verification-bypass
+      path exists.
 - [ ] Temporary-repository tests, current-repository dry-run, complete quality
       gates, and independent review pass without changing release
       authorization.

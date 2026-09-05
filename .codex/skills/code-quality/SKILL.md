@@ -3,9 +3,11 @@ name: code-quality
 description: Use when changing xplane-fdau code or tooling, checking lint, formatting, types, tests, coverage, security, complexity, pre-commit, or CI-equivalent quality gates.
 ---
 
-# Code Quality
+# xplane-fdau Quality Adapter
 
-Use the repository gate so local validation has the same order and scope as CI.
+`gzs-quality-gate` owns the portable complete-verification workflow. This
+project adapter supplies xplane-fdau's exact aggregate and focused commands so
+local validation has the same order and scope as CI.
 
 Run the blocking gate before a commit, handoff, or non-trivial change:
 

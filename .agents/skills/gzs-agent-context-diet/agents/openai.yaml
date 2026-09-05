@@ -1,0 +1,6 @@
+interface:
+  display_name: "GovZero Agent Context Diet"
+  short_description: "Trim agent context without losing policy"
+  default_prompt: "Use $gzs-agent-context-diet to reduce this repository's always-loaded agent instructions safely."
+policy:
+  allow_implicit_invocation: true

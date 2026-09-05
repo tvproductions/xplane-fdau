@@ -244,8 +244,12 @@ Each test owns its temporary directory and mutations.
 ## Task 3: Governing artifact and acceptance adherence
 
 **Files:** Create `backlog/adherence.py`; modify `backlog/audit.py` and
-`backlog/parse.py`; create `tests/test_backlog_status_adherence.py`; extend
+`backlog/parse.py`, `backlog/model.py`, and `backlog/parse_sources.py`; create
+`tests/test_backlog_status_adherence.py`; extend
 `tests/backlog_audit_support.py` with audit-valid design acceptance text.
+
+The model and source-extraction changes retain typed cross-epic declarations
+and their source locations, using the source-fact separation introduced in Task 1.
 
 **Interfaces:** Add `adherence_findings(loaded: AuditLoad) -> tuple[Finding, ...]`.
 Audit source facts include recognized roadmap cross-epic declarations, tied

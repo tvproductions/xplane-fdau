@@ -6,6 +6,7 @@ Implementation commits:
 
 - `a51186d` (`feat: audit governing artifacts and acceptance criteria`)
 - `4f824c9` (`fix: close task 3 adherence review findings`)
+- `7ca4bfb` (`fix: retain mixed acceptance statements for references`)
 
 ## Changes
 
@@ -279,3 +280,81 @@ report title drift, every differing ordinal, and count drift independently,
 and centralize `finding_key` in neutral `backlog/findings.py`. `backlog.audit`
 continues to re-export the public import, while adherence and structural rules
 consume the same function.
+
+## Review fix round 2
+
+Review baseline: `1255a5d`.
+
+RED for both mixed prose/list presentations, with BACKLOG matching the
+previously surviving statements:
+
+```text
+uv run python -m unittest tests.test_backlog_status_adherence.AdherenceTests.test_managed_reference_detects_mixed_prose_and_list_siblings -v
+test_managed_reference_detects_mixed_prose_and_list_siblings ...
+  (label='plain reference and bullet sibling') ... FAIL
+  (label='bullet reference and plain sibling') ... FAIL
+Ran 1 test in 0.058s
+FAILED (failures=2)
+```
+
+Targeted GREEN:
+
+```text
+uv run python -m unittest tests.test_backlog_status_adherence.AdherenceTests.test_managed_reference_detects_mixed_prose_and_list_siblings tests.test_backlog_status_adherence.AdherenceTests.test_managed_reference_must_be_the_only_acceptance_statement tests.test_backlog_status_adherence.AdherenceTests.test_unresolved_managed_reference_is_never_treated_as_literal_gate_text tests.test_backlog_status_adherence.AdherenceTests.test_exact_four_gate_reference_resolves_a_unique_earlier_child_section -v
+Ran 4 tests in 0.217s
+OK
+```
+
+Focused adherence/audit/parse regression:
+
+```text
+uv run python -m unittest tests.test_backlog_status_adherence tests.test_backlog_status_audit tests.test_backlog_status_parse -q
+Ran 62 tests in 1.801s
+OK
+```
+
+The parser now retains its established list-selected acceptance statements and
+a complete logical-statement tuple. Managed-reference detection uses the
+complete tuple before list-family filtering, so either mixed presentation emits
+one source-located resolution problem instead of accepting matching BACKLOG
+text.
+
+Final real-repository control:
+
+```text
+uv run python -c "from pathlib import Path; import sys; sys.path.insert(0, str(Path('.codex/skills/backlog-status/scripts').resolve())); from backlog.audit import load_audit; from backlog.rules import structural_findings; from backlog.adherence import adherence_findings; loaded=load_audit(Path('.')); print('load',len(loaded.findings),'structural',len(structural_findings(loaded)),'adherence',len(adherence_findings(loaded)))"
+load 0 structural 0 adherence 22
+```
+
+Final complete gate:
+
+```text
+uv run python tools/quality.py check
+Ran 334 tests in 6.333s
+Ran 334 tests under coverage in 7.230s
+TOTAL 1527 statements, 98 missed, 94% coverage
+Interrogate: 43.6% (minimum 40.0%)
+exit 0
+```
+
+Final hidden-source and documentation controls:
+
+```text
+uv run ruff check --no-force-exclude .codex/skills/backlog-status/scripts
+All checks passed!
+
+uv run ruff format --check --no-force-exclude .codex/skills/backlog-status/scripts
+11 files already formatted
+
+uv run ty check .codex/skills/backlog-status/scripts
+All checks passed!
+
+uv run mkdocs build --strict
+Documentation built in 1.31 seconds
+
+git diff --check
+exit 0, no output
+```
+
+The real-repository concern remains unchanged: 22 findings across the same 10
+preserved-document discrepancy groups routed to Task 5.

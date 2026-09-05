@@ -17,6 +17,29 @@ Completed implementation plan:
 
 Identity and native-FDR-kernel migration: implemented and verified, but unreleased.
 
+## Latest local integration
+
+On 2026-09-05, the user authorized local integration and removal of the completed
+D1.2 worktree. Local `main` fast-forwarded to
+`327bc4b91a8eee23cc425d08ac0ad0100cad9dbb`. Fresh merged-result verification
+passed 280 standard-library `unittest` tests, 94% statement coverage, the full
+repository quality gate, strict MkDocs, and Git whitespace checks. The final
+independent branch review found no Critical, Important, or Minor issue.
+
+The `d1-2-contract-verification` branch and its
+`.worktrees/d1-2-contract-verification` worktree were removed after verification.
+All reviewed deliverables are committed on `main`; the five ignored working
+notes were copied and hash-checked into the primary checkout's existing
+`.superpowers/sdd/2026-08-23-d1-2-acquisition-recording-projection-pinning-contracts/`
+directory. Only the primary `main` worktree remains at this checkpoint.
+
+Before reporting backlog status or selecting another increment, inspect
+`git worktree list --porcelain` and the status and commits of any linked
+worktrees. Report completed but unmerged work explicitly so it is integrated
+through the authorized workflow before being mistaken for unfinished work.
+The selected next increment remains `D1.3`, the reviewed q4xpcc consumer brief.
+No push, tag, publication, or release occurred.
+
 ## Latest verified maintenance progress
 
 Local `main` includes the reviewed GeoJSON no-overwrite collision correction:

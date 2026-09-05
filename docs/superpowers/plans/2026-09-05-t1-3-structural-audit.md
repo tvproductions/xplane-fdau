@@ -201,7 +201,7 @@ existing syntax fixture, and `replace_text(root: Path, path: str, old: str,
 new: str) -> None`, which requires one exact occurrence and writes UTF-8.
 Each test owns its temporary directory and mutations.
 
-- [ ] Write parameterized `subTest` cases for this complete rule matrix, with
+- [x] Write parameterized `subTest` cases for this complete rule matrix, with
   valid controls and assertions on code, path, line, node, and gate context:
 
   | Trigger | Stable code |
@@ -230,15 +230,15 @@ Each test owns its temporary directory and mutations.
   self.assertIsNotNone(mismatch.line)
   ```
 
-- [ ] Run RED: `uv run python -m unittest tests.test_backlog_status_rules -v`.
-- [ ] Implement rules using multimaps for identity collisions. Traverse only
+- [x] Run RED: `uv run python -m unittest tests.test_backlog_status_rules -v`.
+- [x] Implement rules using multimaps for identity collisions. Traverse only
   validated local edges with a color/stack graph walk; report each cycle
   deterministically without infinite recursion or duplicate cascades. Treat M0
   as a prerequisite only when the milestone exists in valid roadmap input.
   Use roadmap order for inventory checks; compare whitespace-folded titles
   and exact ordered dependency tuples. Skip only cross-file rules whose input
   is invalid or ambiguous, retaining all independent same-file findings.
-- [ ] Run GREEN plus Task 1 tests, then the Task 5 pre-commit checks. Commit
+- [x] Run GREEN plus Task 1 tests, then the Task 5 pre-commit checks. Commit
   explicit files with `feat: audit backlog structure and dependencies`.
 
 ## Task 3: Governing artifact and acceptance adherence

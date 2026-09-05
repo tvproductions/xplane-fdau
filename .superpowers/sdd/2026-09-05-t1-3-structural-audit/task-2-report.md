@@ -152,3 +152,44 @@ target is claimed here.
 The final direct `unittest discover -q` confirmation ran 308 tests in 5.809
 seconds with 94% repository coverage (1,527 statements, 98 missed). The
 current-worktree audit confirmation was `load_findings=0 structural_findings=0`.
+
+## Review fix round 2/5
+
+The re-review found one new wrong-kind dashboard case: an ID with exactly one
+roadmap identity that is a local child must produce `release.inventory`; only
+ambiguous identities are excluded from dependent comparisons. The regression
+now asserts both the missing `G1` dashboard row and the present wrong-kind
+`T1.1` row, including its line and null gate context.
+
+RED:
+
+```text
+uv run python -m unittest tests.test_backlog_status_rules.StructuralRulesTests.test_release_dashboard_rules -v
+Ran 1 test — FAILED
+expected release.inventory nodes {'G1', 'T1.1'}; actual set omitted 'T1.1'
+```
+
+GREEN and final verification:
+
+```text
+uv run python -m unittest tests.test_backlog_status_rules -v
+Ran 10 tests — OK
+
+uv run ruff check --no-force-exclude .codex/skills/backlog-status/scripts
+All checks passed
+
+uv run ruff format --check --no-force-exclude .codex/skills/backlog-status/scripts
+9 files already formatted
+
+uv run ty check .codex/skills/backlog-status/scripts
+All checks passed
+
+uv run python tools/quality.py check
+exit 0
+
+uv run mkdocs build --strict
+exit 0; documentation built successfully
+
+git diff --check
+exit 0
+```

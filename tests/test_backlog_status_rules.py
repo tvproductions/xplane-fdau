@@ -345,6 +345,13 @@ class StructuralRulesTests(unittest.TestCase):
                 replace_text(root, "BACKLOG.md", old, new)
                 self.assert_finding(root, code, "BACKLOG.md", node, line_known=name != "missing row")
 
+        root = self.fixture_root()
+        replace_text(root, "BACKLOG.md", dashboard, dashboard.replace("`G1`", "`T1.1`", 1))
+        wrong_kind = [item for item in structural_findings(load_audit(root)) if item.code == "release.inventory"]
+        self.assertEqual({"G1", "T1.1"}, {item.node for item in wrong_kind})
+        self.assertTrue(all(item.gate is None for item in wrong_kind))
+        self.assertIsNotNone(next(item.line for item in wrong_kind if item.node == "T1.1"))
+
 
 if __name__ == "__main__":
     unittest.main()

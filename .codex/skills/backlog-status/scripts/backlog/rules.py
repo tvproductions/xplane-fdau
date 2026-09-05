@@ -374,7 +374,16 @@ def _release_findings(loaded: AuditLoad) -> list[Finding]:
                 )
             )
         elif gate_id not in expected:
-            continue
+            if len(entries) == 1:
+                findings.append(
+                    _finding(
+                        "release.inventory",
+                        "BACKLOG.md",
+                        source.line if source is not None else None,
+                        gate_id,
+                        f"release dashboard entry {gate_id} is not a roadmap release gate",
+                    )
+                )
         elif index < len(loaded.sources.release_dashboard):
             dashboard = loaded.sources.release_dashboard[index]
             roadmap_gate = expected[gate_id]

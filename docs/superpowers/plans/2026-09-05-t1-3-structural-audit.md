@@ -432,6 +432,33 @@ typed admission data; it contains no D1-specific branching.
 `BACKLOG.md`, `CHANGELOG.md`, and this plan. Create completion/review/gate
 records under `.superpowers/sdd/2026-09-05-t1-3-structural-audit/`.
 
+The independently accepted reconciliation in that directory's
+`reconciliation-review.md` also authorizes these exact document corrections:
+
+- Align BACKLOG C2.4, C3.3, T2.2, T3.1, and D1.2 statements with their linked
+  approved designs. C2.4 becomes 0/5; all previously open gates remain open.
+  D1.2 remains verified at 4/4 with unchanged evidence links: independent
+  review verified every expanded clause against committed evidence.
+- In `docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md`,
+  change only the C4.4 acceptance sentence from
+  "Version `0.1.0` remains unreleased and no push/tag/publication occurs."
+  to "Version `0.1.0` remains unreleased and no release tag or package publication
+  occurs; separately authorized routine Git sync does not satisfy or violate
+  this release gate." This 2026-09-05 correction implements the existing
+  AGENTS/HANDOFF Git-sync policy amendment and approved gz-skills adoption
+  authority. Preserve original approval metadata and every other contract
+  statement; it does not relabel the historical D1.1 review.
+- Append existing authority paths only to the dispositions of
+  `docs/superpowers/plans/2026-08-16-xplane-fdau-architecture-propagation.md`,
+  `docs/superpowers/plans/2026-08-22-q4xpcc-contract-handoff-readiness-authority.md`,
+  `docs/superpowers/plans/2026-09-05-gz-skills-adoption.md`, and
+  `docs/superpowers/specs/2026-09-05-gz-skills-adoption-design.md`, using the
+  exact mapping in the reconciliation review. Preserve execution bodies and
+  all frozen D1 plans/evidence. Update affected governance assertions.
+
+These are corrections to existing intent, not new design approvals or
+delivery evidence. Preserve the approved T1.3 policy supplement bytes.
+
 **Interfaces:** Add `audit_repository(root: Path) -> AuditLoad`, which loads
 and combines all applicable rule families. Extend
 `build_report(snapshot: RepositorySnapshot, git: GitState,

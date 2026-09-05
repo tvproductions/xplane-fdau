@@ -17,7 +17,7 @@ from .models import FDRDataref, FDRHeader, FDRLegacyColumn, FDRMetadata, FDRReco
 
 _VERSION_PATTERN = re.compile(r"^([0-9]+)(?:\s+.*)?$")
 _METADATA_PATTERN = re.compile(r"^[A-Z0-9]{4}$")
-_TIMESTAMP_PATTERN = re.compile(r"^[0-9]{1,2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]{1,6})?$")
+_TIMESTAMP_PATTERN = re.compile(r"^(?:0?[0-9]|1[0-9]|2[0-3]):[0-9]{2}:[0-9]{2}(?:\.[0-9]{1,6})?$")
 _INTEGER_PATTERN = re.compile(r"^[+-]?[0-9]+$")
 _NUMBER_PATTERN = re.compile(r"^[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?$")
 _NONFINITE_PATTERN = re.compile(r"^[+-]?(?:inf(?:inity)?|nan)$", re.IGNORECASE)

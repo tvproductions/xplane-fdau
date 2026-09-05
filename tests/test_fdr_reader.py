@@ -240,6 +240,16 @@ class FDRReaderValidV4Tests(unittest.TestCase):
 
         self.assertEqual(time(1, 2, 3, 500000), recording.samples[0].time_utc)
 
+    def test_hour_boundaries_are_valid_for_v3_and_v4(self) -> None:
+        cases = (("0:00:00", time(0)), ("00:00:00", time(0)), ("23:59:59.999999", time(23, 59, 59, 999999)))
+        for value, expected in cases:
+            with self.subTest(value=value):
+                v4 = FDRReader().read(NamedStringIO(fdr_text(f"{value}, 1, 2, 3, 4, 5, 6")))
+                v3 = FDRReader().read(NamedStringIO(fdr_text(f"TIME, {value}", v3_data(), version="3")))
+
+                self.assertEqual(expected, v4.samples[0].time_utc)
+                self.assertEqual(expected, v3.samples[0].time_utc)
+
     def test_cr_lf_and_crlf_are_normalized_from_short_chunks(self) -> None:
         records = (
             "COMM, split boundaries",

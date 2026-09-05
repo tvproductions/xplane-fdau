@@ -253,7 +253,9 @@ def _metadata_source(
     )
 
 
-def _acceptance_statements(root: Path, path: Path, lines: tuple[_Line, ...], start: int, end: int) -> tuple[StatementSource, ...]:
+def _acceptance_statements(
+    root: Path, path: Path, lines: tuple[_Line, ...], start: int, end: int
+) -> tuple[tuple[StatementSource, ...], tuple[StatementSource, ...]]:
     relative_path = _relative_path(root, path)
     statements: list[tuple[bool, StatementSource]] = []
     item_line: _Line | None = None
@@ -289,8 +291,9 @@ def _acceptance_statements(root: Path, path: Path, lines: tuple[_Line, ...], sta
         else:
             fragments.append(" ".join(line.text.split()))
     finish()
+    logical = tuple(source for _list_item, source in statements)
     listed = tuple(source for list_item, source in statements if list_item)
-    return listed or tuple(source for _list_item, source in statements)
+    return listed or logical, logical
 
 
 def _numbered_gate_statements(root: Path, path: Path, lines: tuple[_Line, ...], start: int, end: int) -> tuple[StatementSource, ...]:
@@ -337,12 +340,13 @@ def _resolve_earlier_gate_reference(
     acceptance_heading: int,
     child: str,
     statements: tuple[StatementSource, ...],
+    logical_statements: tuple[StatementSource, ...],
 ) -> tuple[tuple[StatementSource, ...], SourceValue | None]:
-    references = tuple((statement, match) for statement in statements if (match := _EARLIER_GATES_REFERENCE.fullmatch(statement.value)) is not None)
+    references = tuple((statement, match) for statement in logical_statements if (match := _EARLIER_GATES_REFERENCE.fullmatch(statement.value)) is not None)
     if not references:
         return statements, None
     problem_source = references[0][0].source
-    if len(statements) != 1 or len(references) != 1:
+    if len(logical_statements) != 1 or len(references) != 1:
         return (), SourceValue("managed reference must be the only acceptance statement", problem_source)
     match = references[0][1]
     if match.group(1) != child:
@@ -390,8 +394,8 @@ def parse_artifact_sources(
         if match is None:
             continue
         section_end = min(_section_end(lines, index, 3), end)
-        statements = _acceptance_statements(root, path, lines, index + 1, section_end)
-        statements, resolution_problem = _resolve_earlier_gate_reference(root, path, lines, heading, match.group(1), statements)
+        statements, logical_statements = _acceptance_statements(root, path, lines, index + 1, section_end)
+        statements, resolution_problem = _resolve_earlier_gate_reference(root, path, lines, heading, match.group(1), statements, logical_statements)
         sections.append(
             DesignAcceptanceSource(
                 relative_path,

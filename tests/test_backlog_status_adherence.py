@@ -410,6 +410,43 @@ class AdherenceTests(unittest.TestCase):
         self.assertIsNone(mismatch.gate)
         self.assertIn("reference", mismatch.message)
 
+    def test_managed_reference_detects_mixed_prose_and_list_siblings(self) -> None:
+        reference = "`T1.2` is complete only when its four earlier acceptance gates pass."
+        exact_gates = ("First exact gate.", "Second exact gate.", "Third exact gate.", "Fourth exact gate.")
+        earlier = (
+            "## T1.2 — Detailed acceptance\n\n"
+            "Its acceptance gates are:\n\n"
+            "1. First exact gate.\n"
+            "2. Second exact gate.\n"
+            "3. Third exact gate.\n"
+            "4. Fourth exact gate.\n\n"
+        )
+        cases = (
+            ("plain reference and bullet sibling", f"{reference}\n\n- Visible bullet criterion.", ("Visible bullet criterion.",)),
+            ("bullet reference and plain sibling", f"- {reference}\n\nPlain sibling criterion.", exact_gates),
+        )
+        for label, design_acceptance, backlog_gates in cases:
+            with self.subTest(label=label):
+                root = self.fixture_root()
+                replace_text(root, "docs/superpowers/specs/t1-design.md", "## Acceptance criteria", earlier + "## Acceptance criteria")
+                replace_text(root, "docs/superpowers/specs/t1-design.md", "- Frozen parser remains open.", design_acceptance)
+                replace_text(root, "BACKLOG.md", "— | 0/1 |", f"— | 0/{len(backlog_gates)} |")
+                replace_text(
+                    root,
+                    "BACKLOG.md",
+                    "- [ ] Frozen parser remains open.",
+                    "\n".join(f"- [ ] {gate}" for gate in backlog_gates),
+                )
+
+                loaded = load_audit(root)
+                section = next(item for item in loaded.sources.design_acceptance if item.child == "T1.2")
+                mismatches = [item for item in adherence_findings(loaded) if item.code == "artifact.gate-drift" and item.node == "T1.2"]
+
+                self.assertIsNotNone(section.resolution_problem)
+                self.assertEqual(1, len(mismatches))
+                self.assertIsNone(mismatches[0].gate)
+                self.assertIn("reference", mismatches[0].message)
+
     def test_gate_drift_reports_title_each_ordinal_and_count_independently(self) -> None:
         root = self.fixture_root()
         replace_text(

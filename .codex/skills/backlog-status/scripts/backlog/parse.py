@@ -339,6 +339,10 @@ def _artifact_children(path: Path, line: int, value: str) -> tuple[str, ...]:
 
 
 def _artifact_child(path: Path, line: int, value: str) -> str:
+    if value in {"", "—"}:
+        raise MarkdownParseError(path, line, "Roadmap child requires one identity; active plan has zero children", code="artifact.plan.zero-children")
+    if "," in value:
+        raise MarkdownParseError(path, line, "Roadmap child requires one identity; active plan has multiple children", code="artifact.plan.multiple-children")
     try:
         return _local_child_identity(path, line, value)
     except MarkdownParseError as error:
@@ -392,6 +396,21 @@ def parse_artifact(
             metadata[0][0].number,
             f"invalid Governance metadata: {governance!r}",
             code="artifact.governance",
+        )
+    keys = tuple(key for _line, key, _value in metadata)
+    if family == "specification" and keys == _ACTIVE_PLAN_KEYS:
+        raise MarkdownParseError(
+            path,
+            metadata[3][0].number,
+            "active plan metadata is stored in the specification source family",
+            code="artifact.plan.wrong-family",
+        )
+    if family == "plan" and keys == _ACTIVE_SPECIFICATION_KEYS:
+        raise MarkdownParseError(
+            path,
+            metadata[4][0].number,
+            "active design metadata is stored in the plan source family",
+            code="artifact.spec.wrong-family",
         )
     if family == "specification":
         values = _metadata_values(path, metadata, _ACTIVE_SPECIFICATION_KEYS, "active design")

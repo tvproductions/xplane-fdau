@@ -75,13 +75,16 @@ def load_audit(root: Path) -> AuditLoad:
     gate_heading_sources = ()
     backlog_release_sources = ()
     roadmap_release_sources = ()
+    roadmap_cross_epic_sources = ()
     artifact_metadata_sources = []
     design_acceptance_sources: list[DesignAcceptanceSource] = []
 
     roadmap_path = resolved / "ROADMAP.md"
     try:
         roadmap = parse_roadmap(roadmap_path)
-        roadmap_release_sources = parse_roadmap_sources(roadmap_path).release_items
+        roadmap_sources = parse_roadmap_sources(roadmap_path)
+        roadmap_release_sources = roadmap_sources.release_items
+        roadmap_cross_epic_sources = roadmap_sources.cross_epic_designs
     except MarkdownParseError as error:
         roadmap = _empty_roadmap()
         relative = _relative_path(resolved, error.path)
@@ -162,6 +165,7 @@ def load_audit(root: Path) -> AuditLoad:
         tuple(sorted(design_acceptance_sources, key=lambda source: (source.path, source.source.line))),
         tuple(backlog_release_sources),
         tuple(roadmap_release_sources),
+        tuple(roadmap_cross_epic_sources),
     )
     return AuditLoad(
         snapshot,

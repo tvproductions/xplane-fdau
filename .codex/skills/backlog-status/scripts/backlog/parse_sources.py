@@ -10,6 +10,7 @@ from backlog.model import (
     ArtifactSources,
     Backlog,
     BacklogSources,
+    CrossEpicDesignSource,
     DesignAcceptanceSource,
     GateHeadingSource,
     HistoricalArtifact,
@@ -27,11 +28,16 @@ from backlog.parse import MarkdownParseError
 
 
 _GATE_HEADING = re.compile(r"^### ([A-Z][0-9]+\.[0-9]+) — (.+)$")
+_CHILD_SECTION_HEADING = re.compile(r"^## ([A-Z][0-9]+\.[0-9]+) — .+$")
 _TASK_ITEM = re.compile(r"^- \[([ x])\] (.+)$")
 _LIST_ITEM = re.compile(r"^(?:- |[0-9]+\. )(.+)$")
+_NUMBERED_ITEM = re.compile(r"^([0-9]+)\. (.+)$")
+_EARLIER_GATES_REFERENCE = re.compile(r"^`([A-Z][0-9]+\.[0-9]+)` is complete only when its four earlier acceptance gates pass\.$")
 _METADATA = re.compile(r"^- \*\*([^*:]+):\*\* (.*)$")
 _INVENTORY_HEADER = "| Child | Outcome | Status | Depends on | Spec | Plan | Gates | Review | Resume | Reason |"
 _DASHBOARD_HEADER = "| Gate | Outcome | Gate state | Prerequisites | Evidence |"
+_EPIC_HEADING = re.compile(r"^#{2,3} ([A-Z][0-9]*) — .+ epic$")
+_CROSS_EPIC_MEMBERS = re.compile(r"`([A-Z][0-9]*(?:\.[0-9]+)?)`")
 
 
 @dataclass(frozen=True, slots=True)
@@ -128,9 +134,39 @@ def _task_statements(path: Path, lines: tuple[_Line, ...], start: int, end: int)
 def parse_roadmap_sources(path: Path) -> RoadmapSources:
     lines = _read(path)
     heading = _find_heading(path, lines, "## Version 0.1.0 release gates", required=False)
-    if heading is None:
-        return RoadmapSources(())
-    return RoadmapSources(_task_statements(path, lines, heading + 1, _section_end(lines, heading, 2)))
+    release_items = () if heading is None else _task_statements(path, lines, heading + 1, _section_end(lines, heading, 2))
+    declarations: list[CrossEpicDesignSource] = []
+    current_epic: str | None = None
+    index = 0
+    while index < len(lines):
+        epic_match = _EPIC_HEADING.fullmatch(lines[index].text)
+        if epic_match is not None:
+            current_epic = epic_match.group(1)
+        if "is explicitly a cross-epic design" not in lines[index].text:
+            index += 1
+            continue
+        start = lines[index]
+        fragments = [start.text]
+        cursor = index + 1
+        while cursor < len(lines) and lines[cursor].text:
+            fragments.append(lines[cursor].text)
+            cursor += 1
+        paragraph = " ".join(" ".join(fragment.split()) for fragment in fragments)
+        spanning = paragraph.partition("spanning ")[2]
+        if not spanning:
+            index = cursor
+            continue
+        members = tuple(_CROSS_EPIC_MEMBERS.findall(spanning.partition(";")[0]))
+        if len(members) < 2:
+            index = cursor
+            continue
+        anchor_match = re.search(r"`Roadmap epic: ([A-Z][0-9]*)`", paragraph)
+        anchor = anchor_match.group(1) if anchor_match is not None else current_epic
+        if anchor is None:
+            anchor = members[0].split(".", 1)[0]
+        declarations.append(CrossEpicDesignSource(anchor, members, _source(path, start.number)))
+        index = cursor
+    return RoadmapSources(release_items, tuple(declarations))
 
 
 def _prefixed_statements(
@@ -257,6 +293,72 @@ def _acceptance_statements(root: Path, path: Path, lines: tuple[_Line, ...], sta
     return listed or tuple(source for _list_item, source in statements)
 
 
+def _numbered_gate_statements(root: Path, path: Path, lines: tuple[_Line, ...], start: int, end: int) -> tuple[StatementSource, ...]:
+    relative_path = _relative_path(root, path)
+    statements: list[StatementSource] = []
+    item_line: _Line | None = None
+    fragments: list[str] = []
+    expected_ordinal = 1
+
+    def finish() -> None:
+        if item_line is not None:
+            statements.append(StatementSource(" ".join(fragments), SourceLocation(relative_path, item_line.number)))
+
+    for line in lines[start:end]:
+        match = _NUMBERED_ITEM.fullmatch(line.text)
+        if match is not None:
+            if int(match.group(1)) != expected_ordinal:
+                return ()
+            finish()
+            item_line = line
+            fragments = [match.group(2)]
+            expected_ordinal += 1
+        elif line.text[:1].isspace() and item_line is not None:
+            fragments.append(" ".join(line.text.split()))
+        elif not line.text:
+            if item_line is not None:
+                finish()
+                item_line = None
+                fragments = []
+                break
+        elif item_line is not None:
+            finish()
+            item_line = None
+            fragments = []
+            break
+    finish()
+    return tuple(statements)
+
+
+def _resolve_earlier_gate_reference(
+    root: Path,
+    path: Path,
+    lines: tuple[_Line, ...],
+    acceptance_heading: int,
+    child: str,
+    statements: tuple[StatementSource, ...],
+) -> tuple[StatementSource, ...]:
+    if len(statements) != 1:
+        return statements
+    match = _EARLIER_GATES_REFERENCE.fullmatch(statements[0].value)
+    if match is None or match.group(1) != child:
+        return statements
+    sections = [
+        index
+        for index in range(acceptance_heading)
+        if (heading_match := _CHILD_SECTION_HEADING.fullmatch(lines[index].text)) is not None and heading_match.group(1) == child
+    ]
+    if len(sections) != 1:
+        return statements
+    section = sections[0]
+    section_end = min(_section_end(lines, section, 2), acceptance_heading)
+    markers = [index for index in range(section + 1, section_end) if lines[index].text == "Its acceptance gates are:"]
+    if len(markers) != 1:
+        return statements
+    resolved = _numbered_gate_statements(root, path, lines, markers[0] + 1, section_end)
+    return resolved if len(resolved) == 4 else statements
+
+
 def parse_artifact_sources(
     root: Path,
     path: Path,
@@ -278,12 +380,13 @@ def parse_artifact_sources(
         if match is None:
             continue
         section_end = min(_section_end(lines, index, 3), end)
+        statements = _acceptance_statements(root, path, lines, index + 1, section_end)
         sections.append(
             DesignAcceptanceSource(
                 relative_path,
                 match.group(1),
                 match.group(2),
-                _acceptance_statements(root, path, lines, index + 1, section_end),
+                _resolve_earlier_gate_reference(root, path, lines, heading, match.group(1), statements),
                 SourceLocation(relative_path, line.number),
             )
         )

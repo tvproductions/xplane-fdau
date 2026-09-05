@@ -96,6 +96,13 @@ class StatementSource:
 
 
 @dataclass(frozen=True, slots=True)
+class CrossEpicDesignSource:
+    anchor_epic: str
+    members: tuple[str, ...]
+    source: SourceLocation
+
+
+@dataclass(frozen=True, slots=True)
 class ArtifactMetadataSource:
     path: str
     governance: SourceValue
@@ -116,6 +123,7 @@ class DesignAcceptanceSource:
 @dataclass(frozen=True, slots=True)
 class RoadmapSources:
     release_items: tuple[StatementSource, ...]
+    cross_epic_designs: tuple[CrossEpicDesignSource, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -143,10 +151,11 @@ class AuditSources:
     design_acceptance: tuple[DesignAcceptanceSource, ...]
     backlog_release_statements: tuple[StatementSource, ...]
     roadmap_release_items: tuple[StatementSource, ...]
+    roadmap_cross_epic_designs: tuple[CrossEpicDesignSource, ...]
 
     @classmethod
     def empty(cls) -> AuditSources:
-        return cls((), None, (), (), (), (), (), ())
+        return cls((), None, (), (), (), (), (), (), ())
 
 
 @dataclass(frozen=True, slots=True)

@@ -208,7 +208,7 @@
 
   Record exact command results, test counts, coverage, branch, and revision in `completion.md`; mark the plan `completed` with that completion-evidence path and T1.4 `implemented`.
 
-- [ ] **Step 3: Request independent review and address every finding**
+- [x] **Step 3: Request independent review and address every finding**
 
   Use `superpowers:requesting-code-review` against the exact implementation revision and review the complete T1.4 diff against the governing design and this plan. Record Critical, Important, and Minor findings in `review.md`. Fix all load-bearing findings test-first, rerun affected verification, and request rereview until no unresolved finding remains; then link accepted review and move T1.4 to `reviewed`.
 

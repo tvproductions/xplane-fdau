@@ -17,6 +17,110 @@ Completed implementation plan:
 
 Identity and native-FDR-kernel migration: implemented and verified, but unreleased.
 
+## Current session checkpoint — 2026-09-06
+
+### Current state and last completed action
+
+At the start of this handoff update, the only registered worktree was the
+primary checkout on `main`; it was clean and aligned with `origin/main` at
+`3ab0b94f5caab5fca1056ece928cea90eaba8e29` (`ahead=0`, `behind=0`). The user
+selected local integration for T1.4, so `main` fast-forwarded from `66e31bc` to
+`3ab0b94`; merged-result verification passed, and the temporary
+`t1-4-next-action-selection` worktree and branch were removed. The user then
+explicitly invoked `gzs-git-sync`; the guarded ordinary push published all 12
+T1.4 commits and a final fetch proved exact local/remote alignment.
+
+T1.4 deterministic next-action selection is verified with 4/4 gates. No local
+child is selected. The current backlog report is valid with zero findings and
+recommends `T1.5` with `write_plan`.
+
+### Important context and constraints
+
+`ROADMAP.md` remains the capability-order authority and `BACKLOG.md` the only
+mutable delivery ledger. Runtime remains pure Python and standard-library-only;
+simulator I/O, XPLM/XPPython3, `xpwebapi`, and q4xpcc remain outside this
+repository. Use `unittest`, never pytest. Tags, package publication, GitHub
+releases, and the unreleased `0.1.0` distribution remain separately gated.
+
+`C1.1` through `C4.4` have approved design but no implementation or gate
+evidence. Consequently no C4.4 consumer package exists and `I1.1` is not
+eligible. `A1.1` through `A1.9` are also unimplemented; A1.9 and `I1.2` are not
+live-acquisition-ready. Do not modify q4xpcc from this repository.
+
+### Decisions
+
+- User ruling: integrate the independently reviewed T1.4 branch into local
+  `main`, verify the merged result, remove its temporary worktree/branch, and
+  subsequently perform an ordinary guarded Git sync.
+- User ruling: the ordinary push did not authorize a force push, tag, package
+  publication, GitHub release, or any q4xpcc mutation.
+- Agent choice under the approved deterministic selector: advance one local
+  child at a time; T1.5 is next because T1.4 is verified and T1.5 is the first
+  dependency-ready unfinished local child in roadmap order.
+
+### Immediate next actions
+
+1. Re-read this handoff, `ROADMAP.md`, and `BACKLOG.md`, then run backlog
+   `audit`, JSON `status`, and `next` before changing state.
+2. Use `superpowers:writing-plans` to create the single-child T1.5 guarded
+   mutation plan from the approved backlog-status design. Audit that plan with
+   `gzs-plan-audit` before implementation.
+3. Execute T1.5 in an isolated worktree with `unittest`-first TDD, independent
+   review, five exact acceptance records as governed by the backlog,
+   full quality/hygiene, local integration, and cleanup only after the user
+   chooses the finishing action.
+
+### Pending work, blockers, and open loops
+
+T1.5 must precede T1.6; T1.6 must precede T2.1; T2.1 unlocks the peer T2.2 and
+T3.1 children. Both T2.2 and T3.1 must be verified before B1.1 can resume, and
+B1.1 must be verified before canonical implementation begins at C1.1. The full
+C1→C2→C3→C4.4 chain must close before an I1.1 consumer-ready handoff. A1.9 and
+I1.2 remain farther downstream. Formal release gate G1 remains waiting.
+
+The portable `gzs-git-sync` skill is installed, but the `gz` executable is not
+available and repository-local T3.1 is not implemented. The completed sync
+therefore used the skill's documented ordinary-Git fallback with repository
+quality/hygiene safeguards. This is an observed tooling limitation, not a
+blocker for the next T1.5 planning task.
+
+### Verification already run and still required
+
+Independent rereview accepted T1.4 implementation revision `972a367` with no
+Critical, Important, or Minor finding. On merged `main`, the full quality gate
+passed 382 tests in 121.311 seconds and the coverage run passed 382 tests in
+120.767 seconds at 94%; all analyzers passed, strict MkDocs built in 1.50
+seconds, and backlog audit/status/next reported zero findings and
+`T1.5`/`write_plan`. The explicit sync reran offline hygiene: 382 tests passed
+in 103.975 seconds, coverage passed in 134.192 seconds at 94%, every analyzer
+and enabled pre-commit hook passed, and the post-push fetch proved
+`ahead=0`, `behind=0` at `3ab0b94`.
+
+At the time this handoff text was authored, its own documentation tests, strict
+MkDocs, documentation quality, full repository hygiene with hooks, guarded
+commit/push, and final fetch/alignment proof were still pending. Confirm the
+resulting Git history and alignment before relying on the checkpoint. T1.5
+later requires its own fresh TDD, review, gate, quality, and merged-result
+evidence; T1.4 evidence cannot satisfy those gates.
+
+### Evidence and artifact references
+
+- T1.4 plan: `docs/superpowers/plans/2026-09-06-t1-4-deterministic-next-action-selection.md`
+- T1.4 completion: `.superpowers/sdd/2026-09-06-t1-4-deterministic-next-action-selection/completion.md`
+- T1.4 accepted review: `.superpowers/sdd/2026-09-06-t1-4-deterministic-next-action-selection/review.md`
+- T1.4 verification: `.superpowers/sdd/2026-09-06-t1-4-deterministic-next-action-selection/gate-1.md` through `gate-4.md`
+- Governing T1 design: `docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md`
+- Consumer planning brief: `docs/architecture/q4xpcc_phase_24a_contract_handoff.md`
+
+### Suggested skills for the next session
+
+Use `gzs-router` and the repository backlog-status command for orientation,
+then `superpowers:writing-plans`, `gzs-plan-audit`,
+`superpowers:using-git-worktrees`, `superpowers:test-driven-development`,
+`superpowers:requesting-code-review`, `gzs-quality-gate`, and
+`superpowers:finishing-a-development-branch` in their governed order. Use
+`gzs-session-handoff` or `gzs-git-sync` again only on an explicit user request.
+
 ## Historical local integration checkpoint
 
 This checkpoint predates the current D1.3 branch. On 2026-09-05, the user
@@ -235,8 +339,9 @@ of source `1211466`. `T1.4` is also verified at 4/4 under its
 and [accepted review](.superpowers/sdd/2026-09-06-t1-4-deterministic-next-action-selection/review.md)
 of source `972a367`. No local child is selected; the status command now
 recommends `T1.5` with `write_plan`. External eligibility does not add an
-external boundary to the local-child inventory. The T1.4 feature branch and
-worktree await the user's local integration choice.
+external boundary to the local-child inventory. T1.4 was integrated into
+`main`, verified there, synchronized to `origin/main`, and its temporary branch
+and worktree were removed.
 
 The external q4xpcc thresholds remain distinct:
 

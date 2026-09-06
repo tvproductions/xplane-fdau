@@ -18,8 +18,8 @@ slice receives one focused plan and one independently reviewable outcome.
 - `D1.1`, `D1.2`, and `D1.3` are verified. The statusless external `I1.0`
   handoff condition is eligible for q4xpcc Phase 24A planning reconciliation;
   `T1.3` is verified with 4/4 gates under its approved audit policy
-  supplement and completed implementation plan. No local child is selected;
-  `T1.4` is implemented under its approved plan and awaits independent review.
+  supplement and completed implementation plan. `T1.4` is the selected local
+  child; it is implemented under its approved plan and awaits independent review.
 - D1 is design-handoff readiness, not implementation or release readiness.
 - `B1.1` source-layout migration: `specified` with a draft plan; resumes after
   peer prerequisites `T2.2` and `T3.1` are verified.

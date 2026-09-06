@@ -72,9 +72,7 @@ class NextActionTests(unittest.TestCase):
     def test_unselected_child_uses_roadmap_order_and_skips_terminal_children(self) -> None:
         snapshot = with_dependency_readiness(parse_repository(FIXTURE))
         children = tuple(
-            replace(child, status="specified", dependency_ready=True)
-            if child.id in {"T1.1", "T1.2"}
-            else child
+            replace(child, status="specified", dependency_ready=True) if child.id in {"T1.1", "T1.2"} else child
             for child in reversed(snapshot.backlog.children)
         )
         snapshot = replace(snapshot, backlog=replace(snapshot.backlog, children=children))
@@ -87,9 +85,7 @@ class NextActionTests(unittest.TestCase):
     def test_unselected_child_skips_unready_earlier_child_for_ready_later_child(self) -> None:
         snapshot = with_dependency_readiness(parse_repository(FIXTURE))
         children = tuple(
-            replace(child, status="specified", dependency_ready=child.id == "T1.2")
-            if child.id in {"T1.1", "T1.2"}
-            else child
+            replace(child, status="specified", dependency_ready=child.id == "T1.2") if child.id in {"T1.1", "T1.2"} else child
             for child in snapshot.backlog.children
         )
         snapshot = replace(snapshot, backlog=replace(snapshot.backlog, children=children))

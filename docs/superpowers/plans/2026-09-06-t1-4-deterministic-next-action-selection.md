@@ -50,7 +50,7 @@
 
 **Interfaces:** Produce `recommend_next(snapshot: RepositorySnapshot, findings: tuple[Finding, ...]) -> Recommendation`. The caller supplies `with_dependency_readiness(...)` output. The function reads only frozen values and returns one frozen `Recommendation`; it performs no I/O.
 
-- [ ] **Step 1: Write the failing lifecycle matrix tests**
+- [x] **Step 1: Write the failing lifecycle matrix tests**
 
   Parse the valid fixture and use `dataclasses.replace` to select `T1.2`. For each effective status assert this exact action mapping:
 
@@ -70,7 +70,7 @@
 
   Assert every non-wait result names `T1.2`, gives a nonempty reason, and supplies a command that names the governing workflow (`superpowers:brainstorming`, `superpowers:requesting-code-review`, `superpowers:writing-plans`, `superpowers:subagent-driven-development`/`superpowers:executing-plans`, or `gzs-quality-gate`). Assert terminal `wait` results have no command.
 
-- [ ] **Step 2: Write failing order, kind, and blocking tests**
+- [x] **Step 2: Write failing order, kind, and blocking tests**
 
   Cover all of these cases:
 
@@ -88,7 +88,7 @@
   - warning-only findings do not block;
   - selected `blocked` and `deferred` children return `wait` with the exact recorded reason and no fallback child.
 
-- [ ] **Step 3: Run RED**
+- [x] **Step 3: Run RED**
 
   Run:
 
@@ -98,7 +98,7 @@
 
   Expected: FAIL because `backlog.next_action` does not exist.
 
-- [ ] **Step 4: Implement the minimal pure selector**
+- [x] **Step 4: Implement the minimal pure selector**
 
   Use an explicit status-to-action table and a single helper that turns a child into a recommendation. Evaluate in the specification's order: errors, selected suspension, selected child, then first dependency-ready unfinished roadmap local child. Look up backlog children by ID while iterating `snapshot.roadmap.local_children`; skip only terminal `verified`/`released` children during unselected discovery. Return `wait` when no unfinished dependency-ready local child exists.
 
@@ -108,7 +108,7 @@
   "uv run python .codex/skills/backlog-status/scripts/backlog_status.py audit"
   ```
 
-- [ ] **Step 5: Run GREEN and quality checks**
+- [x] **Step 5: Run GREEN and quality checks**
 
   Run:
 
@@ -120,7 +120,7 @@
 
   Expected: all pass.
 
-- [ ] **Step 6: Commit the independently testable policy**
+- [x] **Step 6: Commit the independently testable policy**
 
   ```powershell
   git add .codex/skills/backlog-status/scripts/backlog/next_action.py tests/test_backlog_status_next_action.py

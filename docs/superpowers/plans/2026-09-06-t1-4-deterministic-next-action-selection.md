@@ -212,7 +212,7 @@
 
   Use `superpowers:requesting-code-review` against the exact implementation revision and review the complete T1.4 diff against the governing design and this plan. Record Critical, Important, and Minor findings in `review.md`. Fix all load-bearing findings test-first, rerun affected verification, and request rereview until no unresolved finding remains; then link accepted review and move T1.4 to `reviewed`.
 
-- [ ] **Step 4: Create four exact gate records**
+- [x] **Step 4: Create four exact gate records**
 
   Create evidence using the approved metadata contract:
 
@@ -229,7 +229,7 @@
 
   Gate 1 proves every selected lifecycle state and selected suspension. Gate 2 proves first dependency-ready unfinished local-child selection in roadmap order. Gate 3 proves audit errors and suspension block substitution. Gate 4 proves only local children can be recommended and `next` is read-only. Each record cites exact tests/commands and the reviewed revision.
 
-- [ ] **Step 5: Commit evidence with the corresponding backlog gates**
+- [x] **Step 5: Commit evidence with the corresponding backlog gates**
 
   In one commit, link `gate-1.md` through `gate-4.md`, check all four T1.4 boxes, set its gate count to `4/4`, preserve T1.4 as `reviewed`, and stage every evidence file. Run audit against the staged candidate before committing. After commit, rerun audit so evidence is proven in `HEAD`, then set T1.4 to `verified`, clear the active selection, and update the final real-repository CLI assertion to exact `T1.5`/`write_plan`.
 

@@ -100,14 +100,37 @@ implementation plan is:
 
 `docs/superpowers/plans/2026-08-15-xplane-fdau-backlog-authority-normalization.md`
 
-`T1.1` and `T1.2` are `verified`: each has four committed gates and accepted
-independent-review evidence. `T1.2` review correction commit `1468c98` closed
-all findings without weakening the implementation, release, or publication
-gates. Its approved focused implementation plan remains:
+`T1.1` through `T1.4` are `verified`: each has four committed gates and
+accepted independent-review evidence. `T1.2` review correction commit
+`1468c98` closed all findings without weakening the implementation, release,
+or publication gates. Its approved focused implementation plan remains:
 
 `docs/superpowers/plans/2026-08-16-xplane-fdau-typed-backlog-status-reporting.md`
 
 The tooling does not govern consumer projects or ship in the distribution.
+
+`T1.4` delivers deterministic, read-only next-action selection through the
+backlog-status human report, schema-version-1 JSON report, and human-only
+`next` command. Independent review accepted implementation revision
+`972a36767aa2e372ac6d742a5fe92716509cafad` with no unresolved finding. The
+review and four gate records became committed evidence at `7feb4f2` and
+`dc5fb1a`; the verified ledger transition is
+`680f258cc37ecfcf83502554d61ed8f016e0cf99`. Fresh verification passed 33
+focused tests in 55.108 seconds, the full quality gate with 382 tests twice
+(111.886 and 110.398 seconds), 94% statement coverage, and strict MkDocs in
+2.95 seconds. No runtime, distribution, deployment, release, or q4xpcc surface
+changed.
+
+The final pre-handoff hygiene candidate also passed the offline lock check,
+382 discovered tests in 109.769 seconds, 382 coverage tests in 109.412 seconds
+at 94%, every configured quality analyzer, and all pre-commit hooks. The
+documentation-specific pass ran 15 tests, strict MkDocs in 1.41 seconds, and
+the 43.6% documentation threshold.
+
+No local child is selected. The deterministic next action is `T1.5` with
+`write_plan`. Its dependency chain continues through `T1.6`, `T2.1`, the peer
+children `T2.2` and `T3.1`, and `B1.1` before canonical implementation can
+begin at `C1.1`.
 
 ## Canonical workflow catalog
 
@@ -207,10 +230,13 @@ input-document revision `f86c6f939f1fdbfd354660c432363b9aa7f8444d`.
 reconcile q4xpcc's Phase 24A specification and plans. `T1.3` is verified at
 4/4 under its [completed plan](docs/superpowers/plans/2026-09-05-t1-3-structural-audit.md)
 and [accepted review](.superpowers/sdd/2026-09-05-t1-3-structural-audit/review.md)
-of source `1211466`. No local child is selected; T1.4 remains specified and
-has not started. Status recommendation remains unavailable until T1.4;
-eligibility does not add an external boundary to the local-child inventory.
-The T1.3 branch and worktree await the user's local integration choice.
+of source `1211466`. `T1.4` is also verified at 4/4 under its
+[completed plan](docs/superpowers/plans/2026-09-06-t1-4-deterministic-next-action-selection.md)
+and [accepted review](.superpowers/sdd/2026-09-06-t1-4-deterministic-next-action-selection/review.md)
+of source `972a367`. No local child is selected; the status command now
+recommends `T1.5` with `write_plan`. External eligibility does not add an
+external boundary to the local-child inventory. The T1.4 feature branch and
+worktree await the user's local integration choice.
 
 The external q4xpcc thresholds remain distinct:
 
@@ -225,6 +251,9 @@ runtime API, schema, fixture, conformance corpus, implementation artifact,
 deployment receipt, native-FDR output, or q4xpcc adoption. It does not satisfy
 `I1.1`, `I1.2`, or `G1`, and does not authorize release, push, tag, or
 publication.
+`C1.1` through `C4.4` remain unimplemented, so no consumer-ready C4.4 handoff
+exists and `I1.1` remains ineligible. `A1.1` through `A1.9` also remain
+unimplemented; `A1.9` and `I1.2` are not live-acquisition-ready.
 That historical D1 operation did not request Git sync; current explicit-sync
 authority remains governed separately by `gzs-git-sync`.
 

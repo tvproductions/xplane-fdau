@@ -233,11 +233,11 @@
 
   In one commit, link `gate-1.md` through `gate-4.md`, check all four T1.4 boxes, set its gate count to `4/4`, preserve T1.4 as `reviewed`, and stage every evidence file. Run audit against the staged candidate before committing. After commit, rerun audit so evidence is proven in `HEAD`, then set T1.4 to `verified`, clear the active selection, and update the final real-repository CLI assertion to exact `T1.5`/`write_plan`.
 
-- [ ] **Step 6: Update handoff without overstating consumer readiness**
+- [x] **Step 6: Update handoff without overstating consumer readiness**
 
   Record the exact T1.4 reviewed/verified revisions, commands, test count, coverage, and next recommendation. State explicitly that C1.1-C4.4 remain unimplemented, I1.1 is not eligible, and A1.9/I1.2 remain unready; the dependency path continues through T1.5, T1.6, T2.1, T2.2/T3.1, and B1.1 before C1.1.
 
-- [ ] **Step 7: Run final clean-state verification and commit closeout**
+- [x] **Step 7: Run final clean-state verification and commit closeout**
 
   ```powershell
   uv run python .codex/skills/backlog-status/scripts/backlog_status.py audit

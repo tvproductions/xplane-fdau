@@ -6,6 +6,7 @@ from pathlib import Path
 import subprocess
 
 from backlog.findings import finding_key
+from backlog.next_action import recommend_next
 
 from backlog.model import (
     Artifacts,
@@ -68,6 +69,7 @@ def observe_git(root: Path, limit: int = 5) -> GitState:
 
 
 def build_report(snapshot: RepositorySnapshot, git: GitState, findings: tuple[Finding, ...] = ()) -> StatusReport:
+    ordered_findings = tuple(sorted(findings, key=finding_key))
     return StatusReport(
         schema_version=1,
         repository="xplane-fdau",
@@ -75,8 +77,8 @@ def build_report(snapshot: RepositorySnapshot, git: GitState, findings: tuple[Fi
         roadmap=snapshot.roadmap,
         backlog=snapshot.backlog,
         artifacts=snapshot.artifacts,
-        findings=tuple(sorted(findings, key=finding_key)),
-        recommendation=None,
+        findings=ordered_findings,
+        recommendation=recommend_next(snapshot, ordered_findings),
         git=git,
     )
 
@@ -171,7 +173,7 @@ def render_human(report: StatusReport) -> str:
             f"node={_value(finding.node)} gate={_value(str(finding.gate) if finding.gate is not None else None)} "
             f"{finding.message}"
         )
-    lines.append("Recommendation: unavailable until T1.4" if report.recommendation is None else "Recommendation:")
+    lines.append("Recommendation:")
     if report.recommendation is not None:
         recommendation = report.recommendation
         lines.append(

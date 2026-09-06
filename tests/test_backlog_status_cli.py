@@ -78,7 +78,8 @@ class BacklogStatusCliTests(unittest.TestCase):
         self.assertEqual(1, payload["schema_version"])
         self.assertTrue(payload["valid"])
         self.assertEqual([], payload["findings"])
-        self.assertIsNone(payload["recommendation"])
+        self.assertEqual("write_plan", payload["recommendation"]["action"])
+        self.assertEqual("T1.2", payload["recommendation"]["child"])
         self.assertNotIn("timestamp", payload)
         self.assertEqual(["T1.1", "T1.2"], [child["id"] for child in payload["roadmap"]["local_children"]])
         self.assertEqual(["T1.1", "T1.2"], [child["id"] for child in payload["backlog"]["children"]])
@@ -104,7 +105,8 @@ class BacklogStatusCliTests(unittest.TestCase):
         payload = json.loads(machine.stdout)
         self.assertTrue(payload["valid"])
         self.assertEqual([], payload["findings"])
-        self.assertIsNone(payload["recommendation"])
+        self.assertEqual("execute_plan", payload["recommendation"]["action"])
+        self.assertEqual("T1.4", payload["recommendation"]["child"])
         self.assertEqual(64, len(payload["roadmap"]["local_children"]))
         self.assertEqual(64, len(payload["backlog"]["children"]))
         d1_children = {child["id"]: child for child in payload["backlog"]["children"] if child["id"].startswith("D1.")}
@@ -216,8 +218,18 @@ class BacklogStatusCliTests(unittest.TestCase):
         self.assertEqual("", audit.stderr)
         self.assertEqual(self.run_cli(["status"], root=root, mock_git=False), audit)
 
+    def test_next_is_the_same_read_only_human_report_with_an_action(self) -> None:
+        root = self.fixture_root()
+
+        result = self.run_cli(["next"], root=root, mock_git=False)
+
+        self.assertEqual(0, result.code, result.stdout)
+        self.assertEqual("", result.stderr)
+        self.assertEqual(self.run_cli(["status"], root=root, mock_git=False), result)
+        self.assertIn("action=write_plan child=T1.2", result.stdout)
+
     def test_executable_stdout_is_utf8_with_lf_even_under_legacy_pipe_encoding(self) -> None:
-        for args in (["status", "--json"], ["audit"]):
+        for args in (["status", "--json"], ["audit"], ["next"]):
             result = subprocess.run(
                 [sys.executable, str(SCRIPTS / "backlog_status.py"), *args],
                 cwd=ROOT,
@@ -235,7 +247,7 @@ class BacklogStatusCliTests(unittest.TestCase):
         root = self.fixture_root()
         replace_text(root, "BACKLOG.md", "| `specified` |", "| `planned` |")
         replace_text(root, "ROADMAP.md", "- [ ] A separate", "- [x] A separate")
-        for args in (["audit"], ["status", "--json"]):
+        for args in (["audit"], ["status", "--json"], ["next"]):
             with self.subTest(args=args):
                 result = self.run_cli(args, root=root, mock_git=False)
                 self.assertEqual(1, result.code)
@@ -245,8 +257,12 @@ class BacklogStatusCliTests(unittest.TestCase):
                 if "--json" in args:
                     payload = json.loads(result.stdout)
                     self.assertFalse(payload["valid"])
-                    self.assertIsNone(payload["recommendation"])
+                    self.assertEqual("wait", payload["recommendation"]["action"])
+                    self.assertIn("backlog_status.py audit", payload["recommendation"]["command"])
                     self.assertTrue(all(item["line"] for item in payload["findings"]))
+                elif args == ["next"]:
+                    self.assertIn("action=wait", result.stdout)
+                    self.assertIn("backlog_status.py audit", result.stdout)
 
     def test_every_managed_release_form_blocks_even_with_satisfied_prerequisites(self) -> None:
         root = self.fixture_root()
@@ -385,7 +401,7 @@ class BacklogStatusCliTests(unittest.TestCase):
         def source_bytes() -> dict[Path, bytes]:
             return {path.relative_to(root): path.read_bytes() for path in root.rglob("*") if path.is_file() and ".git" not in path.relative_to(root).parts}
 
-        for args in (["status"], ["status", "--json"], ["audit"]):
+        for args in (["status"], ["status", "--json"], ["audit"], ["next"]):
             with self.subTest(args=args):
                 target = root / "BACKLOG.md"
                 stat = target.stat()
@@ -399,8 +415,8 @@ class BacklogStatusCliTests(unittest.TestCase):
                 self.assertEqual(head, run_git(root, "rev-parse", "HEAD"))
                 self.assertEqual(before, source_bytes())
 
-    def test_audit_json_and_future_commands_are_invalid_usage(self) -> None:
-        for args in (["audit", "--json"], ["next"], ["status", "--apply"], []):
+    def test_command_specific_options_and_missing_command_are_invalid_usage(self) -> None:
+        for args in (["audit", "--json"], ["next", "--json"], ["next", "--apply"], ["status", "--apply"], []):
             result = self.run_cli(args, root=ROOT)
             self.assertEqual(2, result.code)
             self.assertEqual("", result.stdout)

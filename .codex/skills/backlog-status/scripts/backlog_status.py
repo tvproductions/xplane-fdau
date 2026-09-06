@@ -31,6 +31,7 @@ def main(
     status = commands.add_parser("status", help="report repository delivery status")
     status.add_argument("--json", action="store_true", dest="as_json")
     commands.add_parser("audit", help="audit repository structure, adherence, and evidence")
+    commands.add_parser("next", help="recommend the next Superpowers lifecycle action")
     with redirect_stderr(errors):
         try:
             arguments = parser.parse_args(argv)

@@ -74,7 +74,12 @@ class HumanStatusReportTests(unittest.TestCase):
         self.assertIn("docs/superpowers/specs/t1-design.md", output)
         self.assertIn("Git: branch=main dirty=no", output)
         self.assertIn("Findings: none", output)
-        self.assertIn("Recommendation: unavailable until T1.4", output)
+        self.assertIn("Recommendation:", output)
+        self.assertIn(
+            "action=write_plan child=T1.2 reason=T1.2 is specified and requires an approved single-child implementation plan. "
+            "command=Use superpowers:writing-plans to create the single-child implementation plan.",
+            output,
+        )
         self.assertTrue(output.endswith("\n"))
         self.assertFalse(output.endswith("\n\n"))
 
@@ -200,7 +205,15 @@ class JsonStatusReportTests(unittest.TestCase):
         self.assertEqual(1, payload["schema_version"])
         self.assertTrue(payload["valid"])
         self.assertEqual([], payload["findings"])
-        self.assertIsNone(payload["recommendation"])
+        self.assertEqual(
+            {
+                "action": "write_plan",
+                "child": "T1.2",
+                "reason": "T1.2 is specified and requires an approved single-child implementation plan.",
+                "command": "Use superpowers:writing-plans to create the single-child implementation plan.",
+            },
+            payload["recommendation"],
+        )
         self.assertTrue(rendered.endswith("\n"))
         self.assertFalse(rendered.endswith("\n\n"))
         self.assertEqual(["id", "kind", "title"], list(payload["roadmap"]["milestones"][0]))
@@ -403,7 +416,12 @@ class JsonStatusReportTests(unittest.TestCase):
     ]
   },
   "findings": [],
-  "recommendation": null,
+  "recommendation": {
+    "action": "write_plan",
+    "child": "T1.2",
+    "reason": "T1.2 is specified and requires an approved single-child implementation plan.",
+    "command": "Use superpowers:writing-plans to create the single-child implementation plan."
+  },
   "git": {
     "branch": "main",
     "dirty": false,

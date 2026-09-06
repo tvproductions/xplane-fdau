@@ -133,7 +133,7 @@
 
 **Interfaces:** `build_report(...)` continues returning the existing `StatusReport` schema version 1 but populates `recommendation` via `recommend_next`. CLI `next` accepts no options, renders the same complete human report as `status`/`audit`, and returns `0` only when the report has no audit error.
 
-- [ ] **Step 1: Write failing report tests**
+- [x] **Step 1: Write failing report tests**
 
   Replace the historical `Recommendation: unavailable until T1.4` assertion with exact human fields for the fixture's `T1.2`/`write_plan` recommendation. Assert `report_dict` and `render_json` retain the exact top-level and recommendation key order while changing the valid fixture's recommendation from null to:
 
@@ -148,13 +148,13 @@
 
   Retain the existing synthetic-null-optionals serialization test by constructing its report with `dataclasses.replace`.
 
-- [ ] **Step 2: Write failing CLI tests**
+- [x] **Step 2: Write failing CLI tests**
 
   Add `next` to valid executable/mtime-read-only command loops. Assert `next` equals human `status` for the same committed fixture, returns `0`, writes nothing to stderr, and contains `action=write_plan child=T1.2`. Remove `next` from invalid-future-command coverage, and assert `next --json` and `next --apply` return usage status `2`.
 
   For an audit-error fixture, assert `next` returns `1` and renders `action=wait` with the audit command. For the real repository integration at implementation time, assert the selected T1.4 lifecycle yields `execute_plan`; after Task 3 closure, update that assertion to the first dependency-ready unfinished child `T1.5` with `write_plan`.
 
-- [ ] **Step 3: Run RED**
+- [x] **Step 3: Run RED**
 
   ```powershell
   uv run python -m unittest tests.test_backlog_status_report tests.test_backlog_status_cli -v
@@ -162,11 +162,11 @@
 
   Expected: failures because reports still force `recommendation=None` and `next` is not parsed.
 
-- [ ] **Step 4: Compose selector and CLI**
+- [x] **Step 4: Compose selector and CLI**
 
   Import `recommend_next` in `report.py` and set `recommendation=recommend_next(snapshot, sorted_findings)` while preserving `valid` and finding order. Remove the temporary unavailable wording from human rendering. Add `commands.add_parser("next", help="recommend the next Superpowers lifecycle action")`; render JSON only for `status --json`, otherwise preserve the human report.
 
-- [ ] **Step 5: Run GREEN and focused regression**
+- [x] **Step 5: Run GREEN and focused regression**
 
   ```powershell
   uv run python -m unittest tests.test_backlog_status_next_action tests.test_backlog_status_report tests.test_backlog_status_cli -v
@@ -176,7 +176,7 @@
 
   Expected: all pass and schema version remains 1.
 
-- [ ] **Step 6: Commit report/CLI composition**
+- [x] **Step 6: Commit report/CLI composition**
 
   ```powershell
   git add .codex/skills/backlog-status/scripts/backlog/report.py .codex/skills/backlog-status/scripts/backlog_status.py tests/test_backlog_status_report.py tests/test_backlog_status_cli.py

@@ -375,7 +375,8 @@ class BacklogAuthorityTests(unittest.TestCase):
     def test_current_position_has_one_exact_selection_line(self) -> None:
         backlog = read_text(BACKLOG)
         selection_lines = [line for line in backlog.splitlines() if line.startswith("- Active child:")]
-        self.assertEqual(["- Active child: —."], selection_lines)
+        self.assertEqual(1, len(selection_lines))
+        self.assertRegex(selection_lines[0], r"^- Active child: (?:—|`[A-Z][0-9]*\.[0-9]+`)\.$")
         self.assertNotIn("Active child slice:", backlog)
 
     def test_inventory_matches_every_roadmap_child_once_in_order(self) -> None:
@@ -923,12 +924,14 @@ class GovernanceArtifactTests(unittest.TestCase):
                 "2026-08-15-xplane-fdau-backlog-authority-normalization.md",
                 "2026-08-16-xplane-fdau-typed-backlog-status-reporting.md",
                 "2026-09-05-t1-3-structural-audit.md",
+                "2026-09-06-t1-4-deterministic-next-action-selection.md",
             },
             set(active_plans),
         )
         self.assertEqual("`T1.1`", active_plans["2026-08-15-xplane-fdau-backlog-authority-normalization.md"]["Roadmap child"])
         self.assertEqual("`T1.2`", active_plans["2026-08-16-xplane-fdau-typed-backlog-status-reporting.md"]["Roadmap child"])
         self.assertEqual("`T1.3`", active_plans["2026-09-05-t1-3-structural-audit.md"]["Roadmap child"])
+        self.assertEqual("`T1.4`", active_plans["2026-09-06-t1-4-deterministic-next-action-selection.md"]["Roadmap child"])
 
     def test_historical_artifacts_name_their_disposition(self) -> None:
         historical_paths = (

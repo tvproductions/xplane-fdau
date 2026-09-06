@@ -40,6 +40,7 @@
 | `tests/test_backlog_status_next_action.py` (new) | Exhaustive selector policy, lifecycle, suspension, finding, and node-kind tests |
 | `tests/test_backlog_status_report.py` | Human/JSON recommendation rendering and exact schema compatibility |
 | `tests/test_backlog_status_cli.py` | CLI usage, read-only behavior, and real-repository recommendation integration |
+| `tests/test_backlog_governance.py` | Current selection grammar and exact active-plan inventory during lifecycle migration |
 | `BACKLOG.md` | Selected child, approved plan link, lifecycle state, gate evidence, review link, and final selection |
 | `HANDOFF.md` | Concise T1.4 closure and next dependency-ready child pointer |
 | `.superpowers/sdd/2026-09-06-t1-4-deterministic-next-action-selection/*.md` | Completion, independent review, and four committed acceptance-gate records |
@@ -185,7 +186,7 @@
 
 ### Task 3: T1.4 lifecycle, independent review, and acceptance evidence
 
-**Files:** Modify `BACKLOG.md`, `HANDOFF.md`, this plan, and the final real-repository assertions in `tests/test_backlog_status_cli.py`; create `.superpowers/sdd/2026-09-06-t1-4-deterministic-next-action-selection/completion.md`, `review.md`, and `gate-1.md` through `gate-4.md`.
+**Files:** Modify `BACKLOG.md`, `HANDOFF.md`, this plan, `tests/test_backlog_governance.py`, and the final real-repository assertions in `tests/test_backlog_status_cli.py`; create `.superpowers/sdd/2026-09-06-t1-4-deterministic-next-action-selection/completion.md`, `review.md`, and `gate-1.md` through `gate-4.md`.
 
 **Interfaces:** The committed final `next` result is `T1.5`/`write_plan`, because T1.4 becomes verified and unselected. No C, A, R, P, release-gate, or external-boundary state changes.
 

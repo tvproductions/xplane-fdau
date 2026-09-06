@@ -1,12 +1,12 @@
 # T1.4 Deterministic Next-Action Selection Implementation Plan
 
 - **Governance:** active
-- **Status:** in_progress
+- **Status:** completed
 - **Date:** 2026-09-06
 - **Roadmap child:** `T1.4`
 - **Source specification:** `docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md`
 - **Approval:** 2026-09-06 — Jeff / tvproductions
-- **Completion evidence:** —
+- **Completion evidence:** `.superpowers/sdd/2026-09-06-t1-4-deterministic-next-action-selection/completion.md`
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -190,11 +190,11 @@
 
 **Interfaces:** The committed final `next` result is `T1.5`/`write_plan`, because T1.4 becomes verified and unselected. No C, A, R, P, release-gate, or external-boundary state changes.
 
-- [ ] **Step 1: Register and execute the approved plan lifecycle**
+- [x] **Step 1: Register and execute the approved plan lifecycle**
 
   Before implementation commits, update only T1.4's inventory row and active selection: link this plan, move `specified -> planned -> in_progress` as work starts, and set this plan status to `in_progress`. Run `audit` after each lifecycle edit. Do not use or implement T1.5 mutation commands.
 
-- [ ] **Step 2: Run full implementation verification**
+- [x] **Step 2: Run full implementation verification**
 
   ```powershell
   uv run python -m unittest tests.test_backlog_status_next_action tests.test_backlog_status_report tests.test_backlog_status_cli -v

@@ -20,7 +20,7 @@ Implemented source revision:
 Executed verification in the isolated Windows worktree on Python 3.12.13:
 
 - `uv run python -m unittest tests.test_backlog_status_next_action tests.test_backlog_status_report tests.test_backlog_status_cli -v`: exit 0; 33 tests passed in 51.811 seconds.
-- `uv run python -m unittest discover -v`: exit 0; 382 tests passed in 112.387 seconds after the full-suite governance-state correction, then 382 tests passed in 103.374 seconds on the unchanged committed candidate.
+- `uv run python -m unittest discover -v`: the initial 382-test run exposed exactly two stale governance-state assertions in 103.374 seconds; after correcting those assertions, all 382 tests passed in 112.387 seconds.
 - `uv run python tools/quality.py check`: exit 0; Ruff lint and format, ty, 382 discovered tests in 105.943 seconds, 382 coverage tests in 106.870 seconds, 94% statement coverage, Bandit, detect-secrets, Interrogate at 43.6%, Vulture, and Xenon all passed.
 - `uv run python .codex/skills/backlog-status/scripts/backlog_status.py audit`: exit 0 with no findings.
 - `uv run python .codex/skills/backlog-status/scripts/backlog_status.py status --json`: exit 0 with `valid=true`, zero findings, and `execute_plan` for selected T1.4.

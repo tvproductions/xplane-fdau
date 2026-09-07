@@ -53,6 +53,15 @@ def replace_text(root: Path, path: str, old: str, new: str) -> None:
     target.write_text(content.replace(old, new, 1), encoding="utf-8", newline="\n")
 
 
+def replace_bytes(root: Path, path: str, old: bytes, new: bytes) -> None:
+    """Replace one exact byte sequence without normalizing the fixture file."""
+    target = root / Path(path)
+    content = target.read_bytes()
+    if content.count(old) != 1:
+        raise ValueError(f"expected one occurrence of {old!r} in {path}")
+    target.write_bytes(content.replace(old, new, 1))
+
+
 def run_git(root: Path, *arguments: str, data: bytes | None = None) -> bytes:
     return subprocess.run(
         [

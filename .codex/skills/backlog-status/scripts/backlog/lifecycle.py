@@ -135,11 +135,16 @@ def _ordinary_plan(loaded: AuditLoad, child: BacklogChild, state: str | None) ->
     plan = plans[0]
     findings = []
     expected = "completed" if state in _COMPLETED else "in_progress" if state == "in_progress" else "approved"
-    if required and (plan.status != expected or not plan.approval or plan.child != child.id or plan.source_specification != child.specification):
-        findings.append(
-            _finding("lifecycle.plan", child.source, child.id, f"{state} child requires a {expected} approved single-child plan citing its governing design")
+    allowed_statuses = {"in_progress", "completed"} if state == "in_progress" else {expected}
+    valid_identity = bool(plan.approval) and plan.child == child.id and plan.source_specification == child.specification
+    if required and (plan.status not in allowed_statuses or not valid_identity):
+        requirement = (
+            "an approved single-child plan marked in_progress, or marked completed with eligible completion evidence, citing its governing design"
+            if state == "in_progress"
+            else f"a {expected} approved single-child plan citing its governing design"
         )
-    if plan.completion_evidence is None and state in _COMPLETED:
+        findings.append(_finding("lifecycle.plan", child.source, child.id, f"{state} child requires {requirement}"))
+    if plan.completion_evidence is None and (state in _COMPLETED or state == "in_progress" and plan.status == "completed"):
         findings.append(_finding("lifecycle.completion", plan.source, child.id, "completed plan requires eligible child-level completion evidence"))
     return findings
 

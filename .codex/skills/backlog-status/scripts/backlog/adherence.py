@@ -362,15 +362,19 @@ def _backlog_link_findings(loaded: AuditLoad) -> list[Finding]:
         if state in {"planned", "in_progress", "implemented", "reviewed", "verified", "released"} and child.plan is None:
             findings.append(_finding("artifact.plan.required", source, f"{state} child requires an implementation plan", node=child.id))
         if linked_plan is not None and linked_plan.child == child.id:
-            expected_status: str | None = None
+            allowed_statuses: set[str] | None = None
+            requirement: str | None = None
             if state == "planned":
-                expected_status = "approved"
+                allowed_statuses = {"approved"}
+                requirement = "an approved plan"
             elif state == "in_progress":
-                expected_status = "in_progress"
+                allowed_statuses = {"in_progress", "completed"}
+                requirement = "an in_progress plan or a completed plan with eligible completion evidence"
             elif state in {"implemented", "reviewed", "verified", "released"}:
-                expected_status = "completed"
-            if expected_status is not None and linked_plan.status != expected_status:
-                findings.append(_finding("artifact.plan.status", source, f"{state} child requires a {expected_status} plan", node=child.id))
+                allowed_statuses = {"completed"}
+                requirement = "a completed plan"
+            if allowed_statuses is not None and linked_plan.status not in allowed_statuses:
+                findings.append(_finding("artifact.plan.status", source, f"{state} child requires {requirement}", node=child.id))
     return findings
 
 

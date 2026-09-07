@@ -17,6 +17,7 @@ from tests.backlog_audit_support import (  # noqa: E402
     AUDIT_VALID_DESIGN_ACCEPTANCE,
     copy_fixture,
     replace_text,
+    write_active_plan,
 )
 
 
@@ -255,6 +256,53 @@ class AdherenceTests(unittest.TestCase):
             "**Source specification:** `docs/superpowers/specs/other.md`",
         )
         self.assertIn("artifact.plan.source", self.codes(root))
+
+    def test_in_progress_plan_status_allows_only_execution_and_completed_handoff(self) -> None:
+        for status, completion_evidence, expected_status_finding in (
+            ("in_progress", None, False),
+            ("completed", ".superpowers/sdd/t1-2/completion.md", False),
+            ("completed", None, False),
+            ("approved", None, True),
+            ("draft", None, True),
+        ):
+            with self.subTest(status=status, completion_evidence=completion_evidence):
+                root = self.fixture_root()
+                replace_text(root, "BACKLOG.md", "- Active child: —.", "- Active child: `T1.2`.")
+                replace_text(
+                    root,
+                    "BACKLOG.md",
+                    (
+                        "| `T1.2` | Typed parser, status report, and versioned JSON | `specified` | `T1.1` | "
+                        "[design](docs/superpowers/specs/t1-design.md) | — | 0/1 | — | — | — |"
+                    ),
+                    (
+                        "| `T1.2` | Typed parser, status report, and versioned JSON | `in_progress` | `T1.1` | "
+                        "[design](docs/superpowers/specs/t1-design.md) | [plan](docs/superpowers/plans/t1-2.md) | "
+                        "0/1 | — | — | — |"
+                    ),
+                )
+                write_active_plan(root, "docs/superpowers/plans/t1-2.md", status=status, completion_evidence=completion_evidence)
+
+                codes = self.codes(root)
+
+                self.assertEqual(expected_status_finding, "artifact.plan.status" in codes)
+                if status == "completed" and completion_evidence is None:
+                    self.assertIn("artifact.plan.completion", codes)
+
+    def test_later_states_require_an_exact_completed_plan(self) -> None:
+        for state in ("implemented", "reviewed", "verified"):
+            for plan_status in ("approved", "in_progress"):
+                with self.subTest(state=state, plan_status=plan_status):
+                    root = self.fixture_root()
+                    replace_text(
+                        root,
+                        "BACKLOG.md",
+                        "| `T1.1` | Markdown authority contract and explicit inventory normalization | `verified`",
+                        f"| `T1.1` | Markdown authority contract and explicit inventory normalization | `{state}`",
+                    )
+                    replace_text(root, "docs/superpowers/plans/t1-1.md", "**Status:** completed", f"**Status:** {plan_status}")
+
+                    self.assertIn("artifact.plan.status", self.codes(root))
 
     def test_linked_design_must_cover_the_backlog_child(self) -> None:
         root = self.fixture_root()

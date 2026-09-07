@@ -99,6 +99,36 @@ class LifecycleTests(unittest.TestCase):
         (self.root / ".superpowers/sdd/t1-1/completion.md").unlink()
         self.assertIn("evidence.path", self.codes())
 
+    def test_in_progress_accepts_execution_plan_or_completed_handoff_evidence(self) -> None:
+        for plan_status in ("in_progress", "completed"):
+            with self.subTest(plan_status=plan_status):
+                self.assertNotIn(
+                    "lifecycle.plan",
+                    self.codes(self.state("in_progress", selected=True, plan_status=plan_status)),
+                )
+
+    def test_in_progress_rejects_preexecution_or_unproven_completed_plan(self) -> None:
+        for plan_status in ("draft", "approved"):
+            with self.subTest(plan_status=plan_status):
+                self.assertIn(
+                    "lifecycle.plan",
+                    self.codes(self.state("in_progress", selected=True, plan_status=plan_status)),
+                )
+        loaded = self.state("in_progress", selected=True, plan_status="completed")
+        artifacts = replace(
+            loaded.snapshot.artifacts,
+            plans=tuple(replace(plan, completion_evidence=None) for plan in loaded.snapshot.artifacts.plans),
+        )
+        codes = self.codes(replace(loaded, snapshot=replace(loaded.snapshot, artifacts=artifacts)))
+        self.assertNotIn("lifecycle.plan", codes)
+        self.assertIn("lifecycle.completion", codes)
+
+    def test_later_states_keep_exact_completed_plan_requirement(self) -> None:
+        for state in ("implemented", "reviewed", "verified"):
+            for plan_status in ("approved", "in_progress"):
+                with self.subTest(state=state, plan_status=plan_status):
+                    self.assertIn("lifecycle.plan", self.codes(self.state(state, plan_status=plan_status)))
+
     def test_review_gates_order_duplicates_and_head(self) -> None:
         loaded = self.loaded()
         child = loaded.snapshot.backlog.children[0]

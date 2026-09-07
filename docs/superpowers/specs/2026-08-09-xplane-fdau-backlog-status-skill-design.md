@@ -398,13 +398,19 @@ Minimum evidence is:
 | `designing` | Linked active draft design covering the child |
 | `specified` | Linked approved design covering the child |
 | `planned` | Approved design and linked approved single-child plan |
-| `in_progress` | Selected child and linked plan marked `in_progress` |
+| `in_progress` | Selected child and linked plan marked `in_progress`, or linked plan marked `completed` with eligible child-level completion evidence during the explicit implementation handoff |
 | `implemented` | Plan marked `completed` with eligible child-level completion evidence |
 | `reviewed` | Implemented state plus accepted evidence linked from `Review` |
 | `verified` | Reviewed state plus every gate satisfied by eligible `HEAD` evidence |
 | `blocked` | Required resume state and explicit blocking reason |
 | `deferred` | Required resume state and explicit governance reason |
 | `released` | Outside T1 mutation scope while release remains prohibited |
+
+The completed-plan form of `in_progress` is a narrow handoff state: completing
+the plan and staging eligible completion evidence does not implicitly advance
+the child. The child remains selected and `in_progress` until an explicit
+guarded transition moves it to `implemented`. `implemented` and every later
+state continue to require an exact `completed` plan.
 
 ### Closed transition graph
 

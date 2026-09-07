@@ -147,5 +147,47 @@ Interrogate remained 43.6%, and every configured analyzer passed.
 `uv run mkdocs build --strict` passed on the completed plan in 1.25 seconds.
 `git diff --cached --check` passed.
 
-The controller must supply accepted independent review evidence before the
-next lifecycle transition. This record is implementation evidence only.
+The preceding sections record the historical implementation checkpoint.
+
+## Accepted review and final artifact verification
+
+Independent review was accepted after correction
+`ee2805f7357f901f63a0ae44e39ef83625091d8b`; sibling `review.md` records the
+five-claim intent audit, corrected Important finding, accepted scratch-only
+Minor disposition, scoped rereview PASS, and no unresolved findings.
+Review and reviewed state were committed coherently at
+`3a274fdd5c83954c9b5ecc8ddab6b5e588baec8d`.
+
+Per controller ruling, the new final artifact/matrix verification preceded
+gate creation. `uv build --no-sources --out-dir` built a new immutable pair in
+`C:\Users\Jeff\AppData\Local\Temp\xplane-fdau-t1-6-final-16743d28c5d14a7e9e636feee1aa72b5`
+at reviewed HEAD. This is not the Task 4 candidate directory.
+Strict Twine and `uv run python tools/release.py check-dist` exited 0:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| xplane_fdau-0.1.0-py3-none-any.whl | 25ac6660fa3b4b1bfd5e431d0a3d7126a126012ad998509639d3f18465802afb |
+| xplane_fdau-0.1.0.tar.gz | 5429361eb3d1569cba926bcc0f95c72dda41caa2069bb30f2ed924f6ec52bce6 |
+
+Three separate fresh venvs below
+`C:\Users\Jeff\AppData\Local\Temp\xplane-fdau-t1-6-matrix-0ae0dcded36c4ff89c7631401b9e2110`
+installed that exact wheel with `uv pip install --no-deps` and ran each
+venv's interpreter on `tools/installed_smoke.py 0.1.0` with the matrix root
+as working directory, outside checkout. Python 3.12.13 (`py312`), 3.13.14
+(`py313`), and 3.14.4 (`py314`) all passed: install and smoke exit 0.
+Gate-4.md records the exact commands, resolved paths, hashes and checks.
+Windows was observed; Linux/macOS were not executed. All artifacts/venvs
+remain intact; no publishing or dependency changes occurred.
+
+## Observed pre-gate aggregate verification
+
+At reviewed HEAD, `uv run python .codex/skills/hygiene/scripts/hygiene.py`
+exited 0 after the exact Git status, offline lock, strict audit, full quality,
+pre-commit sequence. Full quality passed 452 discovery tests in 331.583s and
+452 coverage tests in 337.252s; coverage remained 94% (1,527 statements, 98
+missed), Interrogate 43.6%, all analyzers passed. Pre-commit's repeated quality
+check, detect-secrets baseline, lizard report and cohesion report all Passed.
+`uv run mkdocs build --strict` exited 0 in 1.25s. Git remained tracked-clean
+through the run. Gate-1.md through gate-5.md record exact claim-specific proof.
+The subsequent verified/deselected closeout requires these records committed
+in HEAD before transition; final results are appended after observation.

@@ -58,7 +58,7 @@ def _parse_finding(root: Path, error: MarkdownParseError) -> Finding:
     )
 
 
-def load_audit(root: Path) -> AuditLoad:
+def load_audit(root: Path, *, backlog_text: str | None = None) -> AuditLoad:
     resolved = root.resolve()
     findings: list[Finding] = []
     invalid_paths: set[str] = set()
@@ -89,8 +89,8 @@ def load_audit(root: Path) -> AuditLoad:
 
     backlog_path = resolved / "BACKLOG.md"
     try:
-        backlog = parse_backlog(backlog_path)
-        backlog_sources = parse_backlog_sources(backlog_path, backlog)
+        backlog = parse_backlog(backlog_path, text=backlog_text)
+        backlog_sources = parse_backlog_sources(backlog_path, backlog, text=backlog_text)
         inventory_sources = backlog_sources.inventory_rows
         selection_source = backlog_sources.selection
         dashboard_sources = backlog_sources.release_dashboard
@@ -175,8 +175,8 @@ def load_audit(root: Path) -> AuditLoad:
     )
 
 
-def audit_repository(root: Path) -> AuditLoad:
-    loaded = load_audit(root)
+def audit_repository(root: Path, *, backlog_text: str | None = None) -> AuditLoad:
+    loaded = load_audit(root, backlog_text=backlog_text)
     findings = (
         *loaded.findings,
         *structural_findings(loaded),

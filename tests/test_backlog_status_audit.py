@@ -15,8 +15,9 @@ SCRIPTS = ROOT / ".codex/skills/backlog-status/scripts"
 FIXTURE = ROOT / "tests/fixtures/backlog_status/valid"
 sys.path.insert(0, str(SCRIPTS))
 
-from backlog.audit import finding_key, load_audit  # noqa: E402  # ty: ignore[unresolved-import]
+from backlog.audit import audit_repository, finding_key, load_audit  # noqa: E402  # ty: ignore[unresolved-import]
 from backlog.model import Finding  # noqa: E402  # ty: ignore[unresolved-import]
+from tests.backlog_audit_support import audit_fixture, run_git  # noqa: E402
 
 
 class AuditLoadingTests(unittest.TestCase):
@@ -169,6 +170,72 @@ class AuditLoadingTests(unittest.TestCase):
         ordered = tuple(sorted(findings, key=finding_key))
 
         self.assertEqual(("a.first", "b.second", "z.last"), tuple(item.code for item in ordered))
+
+    def test_candidate_backlog_matches_filesystem_audit_without_changing_source_locations(self) -> None:
+        root = self.copy_fixture_root()
+        audit_fixture(root)
+        text = (root / "BACKLOG.md").read_text(encoding="utf-8")
+
+        ordinary = audit_repository(root)
+        candidate = audit_repository(root, backlog_text=text)
+
+        self.assertEqual(ordinary.snapshot.backlog, candidate.snapshot.backlog)
+        self.assertEqual(ordinary.sources, candidate.sources)
+        self.assertEqual(ordinary.findings, candidate.findings)
+        self.assertEqual(
+            tuple(
+                (source.path, source.line)
+                for source in (
+                    *(row.source for row in candidate.sources.inventory_rows),
+                    candidate.sources.selection.source if candidate.sources.selection is not None else None,
+                    *(row.source for row in candidate.sources.release_dashboard),
+                    *(heading.source for heading in candidate.sources.gate_headings),
+                    *(statement.source for statement in candidate.sources.backlog_release_statements),
+                    candidate.sources.backlog_current_section,
+                )
+                if source is not None
+            ),
+            tuple(
+                (source.path, source.line)
+                for source in (
+                    *(row.source for row in ordinary.sources.inventory_rows),
+                    ordinary.sources.selection.source if ordinary.sources.selection is not None else None,
+                    *(row.source for row in ordinary.sources.release_dashboard),
+                    *(heading.source for heading in ordinary.sources.gate_headings),
+                    *(statement.source for statement in ordinary.sources.backlog_release_statements),
+                    ordinary.sources.backlog_current_section,
+                )
+                if source is not None
+            ),
+        )
+
+    def test_candidate_lifecycle_finding_leaves_repository_and_git_unchanged(self) -> None:
+        root = self.copy_fixture_root()
+        audit_fixture(root)
+        backlog_path = root / "BACKLOG.md"
+        original = backlog_path.read_bytes()
+        index = run_git(root, "show", ":BACKLOG.md")
+        head = run_git(root, "show", "HEAD:BACKLOG.md")
+        candidate = original.decode("utf-8").replace("| `specified` |", "| `planned` |", 1)
+
+        result = audit_repository(root, backlog_text=candidate)
+
+        self.assertTrue(any(finding.code == "lifecycle.plan" and finding.node == "T1.2" for finding in result.findings))
+        self.assertEqual(original, backlog_path.read_bytes())
+        self.assertEqual(index, run_git(root, "show", ":BACKLOG.md"))
+        self.assertEqual(head, run_git(root, "show", "HEAD:BACKLOG.md"))
+        self.assertEqual((), tuple(root.rglob(".BACKLOG.md.*.tmp")))
+
+    def test_invalid_candidate_preserves_backlog_path_and_gate_line_without_tempfile(self) -> None:
+        root = self.copy_fixture_root()
+        audit_fixture(root)
+        candidate = (root / "BACKLOG.md").read_text(encoding="utf-8").replace("| 1/1 |", "| 0/x |", 1)
+
+        result = audit_repository(root, backlog_text=candidate)
+
+        finding = next(finding for finding in result.findings if finding.code == "backlog.gate-count")
+        self.assertEqual(("BACKLOG.md", 12, "T1.1"), (finding.path, finding.line, finding.node))
+        self.assertEqual((), tuple(root.rglob(".BACKLOG.md.*.tmp")))
 
 
 if __name__ == "__main__":

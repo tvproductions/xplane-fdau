@@ -112,11 +112,12 @@ class _Line:
     text: str
 
 
-def _read(path: Path) -> tuple[_Line, ...]:
-    try:
-        text = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeError) as error:
-        raise MarkdownParseError(path, 1, f"cannot read UTF-8 Markdown: {error}", code="input.unreadable") from error
+def _read(path: Path, *, text: str | None = None) -> tuple[_Line, ...]:
+    if text is None:
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeError) as error:
+            raise MarkdownParseError(path, 1, f"cannot read UTF-8 Markdown: {error}", code="input.unreadable") from error
     return tuple(_Line(index, line) for index, line in enumerate(text.splitlines(), start=1))
 
 
@@ -753,8 +754,8 @@ def _dashboard(path: Path, lines: tuple[_Line, ...]) -> tuple[BacklogReleaseGate
     return tuple(gates)
 
 
-def parse_backlog(path: Path) -> Backlog:
-    lines = _read(path)
+def parse_backlog(path: Path, *, text: str | None = None) -> Backlog:
+    lines = _read(path, text=text)
     active_child = _active_child(path, lines)
     inventory_heading = _find_heading(path, lines, "## Local child inventory")
     inventory_rows = _table(

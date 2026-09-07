@@ -46,11 +46,12 @@ class _Line:
     text: str
 
 
-def _read(path: Path) -> tuple[_Line, ...]:
-    try:
-        text = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeError) as error:
-        raise MarkdownParseError(path, 1, f"cannot read UTF-8 Markdown: {error}", code="input.unreadable") from error
+def _read(path: Path, *, text: str | None = None) -> tuple[_Line, ...]:
+    if text is None:
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeError) as error:
+            raise MarkdownParseError(path, 1, f"cannot read UTF-8 Markdown: {error}", code="input.unreadable") from error
     return tuple(_Line(index, line) for index, line in enumerate(text.splitlines(), start=1))
 
 
@@ -192,8 +193,8 @@ def _prefixed_statements(
     return tuple(statements)
 
 
-def parse_backlog_sources(path: Path, backlog: Backlog) -> BacklogSources:
-    lines = _read(path)
+def parse_backlog_sources(path: Path, backlog: Backlog, *, text: str | None = None) -> BacklogSources:
+    lines = _read(path, text=text)
     inventory = tuple(InventoryRowSource(_identity(values[0]), values[1], _source(path, line.number)) for line, values in _rows(path, lines, _INVENTORY_HEADER))
     dashboard = tuple(
         ReleaseDashboardSource(

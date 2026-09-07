@@ -14,7 +14,7 @@ slice receives one focused plan and one independently reviewable outcome.
   FDAU, native FDR, ARINC, and FDM/FOQA-support behavior while external clients
   own all simulator I/O.
 - Active design: repository-local backlog governance and status reporting.
-- Active child: `T1.5`.
+- Active child: —.
 - `D1.1`, `D1.2`, and `D1.3` are verified. The statusless external `I1.0`
   handoff condition is eligible for q4xpcc Phase 24A planning reconciliation;
   `T1.3` is verified with 4/4 gates under its approved audit policy
@@ -107,7 +107,7 @@ The child slices below refine this sequence without weakening or reordering it.
 | `T1.2` | Typed parser, status report, and versioned JSON | `verified` | `T1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-08-16-xplane-fdau-typed-backlog-status-reporting.md) | 4/4 | [review](.superpowers/sdd/2026-08-16-t1-2-typed-backlog-status-reporting/review.md) | — | — |
 | `T1.3` | Structural audit and spec/plan adherence | `verified` | `T1.2` | [design](docs/superpowers/specs/2026-09-05-t1-3-audit-policy-supplement-design.md) | [plan](docs/superpowers/plans/2026-09-05-t1-3-structural-audit.md) | 4/4 | [review](.superpowers/sdd/2026-09-05-t1-3-structural-audit/review.md) | — | — |
 | `T1.4` | Deterministic next-action selection | `verified` | `T1.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-09-06-t1-4-deterministic-next-action-selection.md) | 4/4 | [review](.superpowers/sdd/2026-09-06-t1-4-deterministic-next-action-selection/review.md) | — | — |
-| `T1.5` | Guarded child-state and gate-evidence mutations | `reviewed` | `T1.3`, `T1.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-09-06-t1-5-guarded-child-state-mutations.md) | 5/5 | [review](.superpowers/sdd/2026-09-06-t1-5-guarded-child-state-mutations/review.md) | — | — |
+| `T1.5` | Guarded child-state and gate-evidence mutations | `verified` | `T1.3`, `T1.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-09-06-t1-5-guarded-child-state-mutations.md) | 5/5 | [review](.superpowers/sdd/2026-09-06-t1-5-guarded-child-state-mutations/review.md) | — | — |
 | `T1.6` | Skill, session-entry, hygiene, and artifact closure | `specified` | `T1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/5 | — | — | — |
 | `T2.1` | Project repository-hygiene adapter and fresh artifact verification | `specified` | `T1.6` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/5 | — | — | — |
 | `T2.2` | Governed dependency and toolchain refresh | `specified` | `T2.1` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/4 | — | — | — |

@@ -49,6 +49,15 @@ Executed verification in the isolated Windows worktree on 2026-09-06:
 - `uv run python .codex/skills/backlog-status/scripts/backlog_status.py next`: exit 0 with recommendation `execute_plan` for selected T1.5.
 - `git diff --check`: exit 0. Base implementation revision `e4cf2fabbe91a07cfeb2ab01e28b276a5516b67e` remained unchanged while the Task 6 current-repository assertion was the only verification-candidate edit before this evidence was authored.
 
+Final branch-closeout verification after all five gates and deselection:
+
+- `uv run python -m unittest tests.test_backlog_status_cli tests.test_backlog_governance tests.test_documentation -v`: exit 0; 71 tests passed in 69.844 seconds.
+- `uv run python tools/quality.py check`: exit 0; 449 discovery tests passed in 256.644 seconds and 449 coverage tests passed in 262.552 seconds at 94% (1,527 statements, 98 missed); every configured analyzer passed.
+- `uv run mkdocs build --strict`: exit 0; documentation built in 1.91 seconds.
+- `uv run python .codex/skills/hygiene/scripts/hygiene.py`: exit 0; offline lock validation, a second full quality pass (449 discovery tests in 259.544 seconds and 449 coverage tests in 263.424 seconds at 94%), and every enabled pre-commit hook passed.
+- Backlog audit, JSON status, and next-action commands exited 0 with no findings, no selected child, T1.5 `verified` at 5/5, and T1.6/`write_plan`.
+- `git diff --check`: exit 0 after the final tracked closeout edits.
+
 Windows directly exercised the real atomic-success path that reads the sibling
 temporary file inside the `os.replace` seam; the test notes that Windows would
 refuse the replacement if the writer remained open. The focused suite also

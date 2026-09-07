@@ -107,6 +107,19 @@ class LifecycleTests(unittest.TestCase):
                     self.codes(self.state("in_progress", selected=True, plan_status=plan_status)),
                 )
 
+    def test_adjacent_artifact_handoffs_are_valid_only_for_designing_and_planned(self) -> None:
+        for design_status in ("draft", "approved", "implemented"):
+            with self.subTest(state="designing", design_status=design_status):
+                self.assertNotIn(
+                    "lifecycle.specification",
+                    self.codes(self.state("designing", design_status=design_status)),
+                )
+        for plan_status in ("approved", "in_progress"):
+            with self.subTest(state="planned", plan_status=plan_status):
+                self.assertNotIn("lifecycle.plan", self.codes(self.state("planned", plan_status=plan_status)))
+        self.assertIn("lifecycle.plan", self.codes(self.state("planned", plan_status="completed")))
+        self.assertIn("lifecycle.specification", self.codes(self.state("designing", design_status="superseded")))
+
     def test_in_progress_rejects_preexecution_or_unproven_completed_plan(self) -> None:
         for plan_status in ("draft", "approved"):
             with self.subTest(plan_status=plan_status):

@@ -17,6 +17,7 @@ from tests.backlog_audit_support import (  # noqa: E402
     AUDIT_VALID_DESIGN_ACCEPTANCE,
     copy_fixture,
     replace_text,
+    write_active_design,
     write_active_plan,
 )
 
@@ -288,6 +289,79 @@ class AdherenceTests(unittest.TestCase):
                 self.assertEqual(expected_status_finding, "artifact.plan.status" in codes)
                 if status == "completed" and completion_evidence is None:
                     self.assertIn("artifact.plan.completion", codes)
+
+    def test_adjacent_artifact_handoffs_have_matching_adherence_rules(self) -> None:
+        for status in ("draft", "approved", "implemented"):
+            with self.subTest(state="designing", design_status=status):
+                root = self.fixture_root()
+                write_active_design(root, "docs/superpowers/specs/t1-1-design.md", children=("T1.1",))
+                replace_text(
+                    root,
+                    "BACKLOG.md",
+                    "[design](docs/superpowers/specs/t1-design.md) | [plan](docs/superpowers/plans/t1-1.md)",
+                    "[design](docs/superpowers/specs/t1-1-design.md) | [plan](docs/superpowers/plans/t1-1.md)",
+                )
+                replace_text(
+                    root,
+                    "docs/superpowers/plans/t1-1.md",
+                    "`docs/superpowers/specs/t1-design.md`",
+                    "`docs/superpowers/specs/t1-1-design.md`",
+                )
+                write_active_design(root, "docs/superpowers/specs/t1-design.md", children=("T1.2",), status=status)
+                replace_text(
+                    root,
+                    "BACKLOG.md",
+                    (
+                        "| `T1.2` | Typed parser, status report, and versioned JSON | `specified` | `T1.1` | "
+                        "[design](docs/superpowers/specs/t1-design.md) | — | 0/1 | — | — | — |"
+                    ),
+                    (
+                        "| `T1.2` | Typed parser, status report, and versioned JSON | `designing` | `T1.1` | "
+                        "[design](docs/superpowers/specs/t1-design.md) | — | 0/1 | — | — | — |"
+                    ),
+                )
+                self.assertNotIn("artifact.spec.status", self.codes(root))
+
+        for status in ("approved", "in_progress"):
+            with self.subTest(state="planned", plan_status=status):
+                root = self.fixture_root()
+                replace_text(
+                    root,
+                    "BACKLOG.md",
+                    (
+                        "| `T1.2` | Typed parser, status report, and versioned JSON | `specified` | `T1.1` | "
+                        "[design](docs/superpowers/specs/t1-design.md) | — | 0/1 | — | — | — |"
+                    ),
+                    (
+                        "| `T1.2` | Typed parser, status report, and versioned JSON | `planned` | `T1.1` | "
+                        "[design](docs/superpowers/specs/t1-design.md) | [plan](docs/superpowers/plans/t1-2.md) | "
+                        "0/1 | — | — | — |"
+                    ),
+                )
+                write_active_plan(root, "docs/superpowers/plans/t1-2.md", status=status)
+                self.assertNotIn("artifact.plan.status", self.codes(root))
+
+        root = self.fixture_root()
+        replace_text(
+            root,
+            "BACKLOG.md",
+            (
+                "| `T1.2` | Typed parser, status report, and versioned JSON | `specified` | `T1.1` | "
+                "[design](docs/superpowers/specs/t1-design.md) | — | 0/1 | — | — | — |"
+            ),
+            (
+                "| `T1.2` | Typed parser, status report, and versioned JSON | `planned` | `T1.1` | "
+                "[design](docs/superpowers/specs/t1-design.md) | [plan](docs/superpowers/plans/t1-2.md) | "
+                "0/1 | — | — | — |"
+            ),
+        )
+        write_active_plan(
+            root,
+            "docs/superpowers/plans/t1-2.md",
+            status="completed",
+            completion_evidence=".superpowers/sdd/t1-2/completion.md",
+        )
+        self.assertIn("artifact.plan.status", self.codes(root))
 
     def test_later_states_require_an_exact_completed_plan(self) -> None:
         for state in ("implemented", "reviewed", "verified"):

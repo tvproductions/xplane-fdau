@@ -332,7 +332,7 @@ def _backlog_link_findings(loaded: AuditLoad) -> list[Finding]:
                 if governing is None:
                     findings.append(_finding("artifact.spec.governing", source, "lifecycle requires an active governing design", node=child.id))
                 else:
-                    allowed_statuses = {"draft"} if state == "designing" else {"approved", "implemented"}
+                    allowed_statuses = {"draft", "approved", "implemented"} if state == "designing" else {"approved", "implemented"}
                     if governing.status not in allowed_statuses:
                         findings.append(_finding("artifact.spec.status", source, f"design status {governing.status} cannot govern {state}", node=child.id))
                     if child.id not in governing.children:
@@ -365,8 +365,8 @@ def _backlog_link_findings(loaded: AuditLoad) -> list[Finding]:
             allowed_statuses: set[str] | None = None
             requirement: str | None = None
             if state == "planned":
-                allowed_statuses = {"approved"}
-                requirement = "an approved plan"
+                allowed_statuses = {"approved", "in_progress"}
+                requirement = "an approved or in_progress plan"
             elif state == "in_progress":
                 allowed_statuses = {"in_progress", "completed"}
                 requirement = "an in_progress plan or a completed plan with eligible completion evidence"

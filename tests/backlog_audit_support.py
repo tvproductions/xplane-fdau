@@ -151,7 +151,7 @@ def write_active_design(root: Path, path: str, *, children: tuple[str, ...], sta
     target = root / path
     target.parent.mkdir(parents=True, exist_ok=True)
     targets = ", ".join(f"`{child}`" for child in children)
-    approval = "2026-09-05 — Fixture" if status == "approved" else "—"
+    approval = "2026-09-05 — Fixture" if status in {"approved", "implemented"} else "—"
     acceptance = "".join(f"\n### {child} — {_FIXTURE_ACCEPTANCE[child][0]}\n\n- {_FIXTURE_ACCEPTANCE[child][1]}\n" for child in children)
     target.write_text(
         "# Fixture design\n\n"

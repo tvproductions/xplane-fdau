@@ -109,6 +109,15 @@ def _require_owned(partial: _OwnedPartial) -> None:
         _refuse("mutation.ownership", f"partial ownership changed or is unknown; preserved {partial.path}")
 
 
+def _require_candidate_bytes(partial: _OwnedPartial, candidate: bytes) -> None:
+    """Refuse an in-place change to the still-owned publication payload."""
+    _require_owned(partial)
+    actual = partial.path.read_bytes()
+    _require_owned(partial)
+    if actual != candidate:
+        _refuse("mutation.candidate", "owned partial bytes differ from the audited mutation candidate")
+
+
 def _write_partial(fd: int, candidate: bytes, partial: _OwnedPartial) -> None:
     """Own the descriptor and close the writer before publication can continue."""
     try:
@@ -172,8 +181,8 @@ def publish_mutation(plan: MutationPlan) -> AuditLoad:
                 "mutation.audit",
                 "fresh candidate audit failed: " + "; ".join(f"{item.code}: {item.message}" for item in fresh.findings if item.severity == "error"),
             )
-        _require_owned(partial)
         _recheck_original(plan)
+        _require_candidate_bytes(partial, plan.candidate)
         os.replace(partial.path, plan.target)
     except Exception as primary:
         _publication_failure(primary, partial)
@@ -496,6 +505,8 @@ def plan_transition(
         replacements[allowed[1]] = f"[{allowed[2]}]({supplied[allowed[0]]})"
     if expect == "reviewed" and target == "implemented":
         replacements[7] = "—"
+    if expect == "specified" and target == "designing":
+        replacements[5] = "—"
     candidate_text = _inventory_line(original_text, line, replacements)
     rationale = f"Requested lifecycle transition from `{expect}` to `{target}`."
     return _finish_plan(

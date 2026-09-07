@@ -112,6 +112,38 @@ class PublicationTests(unittest.TestCase):
         self.assertEqual(changed, self.plan.target.read_bytes())
         self.assertEqual([], list(self.root.glob(".BACKLOG.md.*.tmp")))
 
+    def test_same_file_valid_partial_corruption_is_refused_before_publication(self) -> None:
+        def corrupt_partial(root, *, backlog_text=None):
+            loaded = audit_repository(root, backlog_text=backlog_text)
+            if backlog_text is not None:
+                (partial,) = self.root.glob(".BACKLOG.md.*.tmp")
+                partial.write_bytes(self.plan.original)
+            return loaded
+
+        with patch("backlog.edit.audit_repository", side_effect=corrupt_partial):
+            with self.assertRaises(MutationRefusal) as raised:
+                self.publish()
+
+        self.assertEqual("mutation.candidate", raised.exception.code)
+        self.assertIn("partial bytes differ", str(raised.exception))
+        self.assert_unpublished()
+
+    def test_same_file_invalid_partial_corruption_is_refused_before_publication(self) -> None:
+        def corrupt_partial(root, *, backlog_text=None):
+            loaded = audit_repository(root, backlog_text=backlog_text)
+            if backlog_text is not None:
+                (partial,) = self.root.glob(".BACKLOG.md.*.tmp")
+                partial.write_bytes(b"not a backlog\n")
+            return loaded
+
+        with patch("backlog.edit.audit_repository", side_effect=corrupt_partial):
+            with self.assertRaises(MutationRefusal) as raised:
+                self.publish()
+
+        self.assertEqual("mutation.candidate", raised.exception.code)
+        self.assertIn("partial bytes differ", str(raised.exception))
+        self.assert_unpublished()
+
     def test_prepublication_io_failures_preserve_original_and_remove_partial(self) -> None:
         for seam in ("mkstemp", "fsync", "chmod", "replace"):
             with self.subTest(seam=seam):
@@ -284,6 +316,8 @@ class PublicationTests(unittest.TestCase):
         def observed_read(path):
             if path == self.plan.target and "final-audit" not in events:
                 events.append("recheck")
+            elif path.parent == self.root and path.name.startswith(".BACKLOG.md.") and path.name.endswith(".tmp"):
+                events.append("candidate-recheck")
             return real_read(path)
 
         def create(**kwargs):
@@ -338,7 +372,22 @@ class PublicationTests(unittest.TestCase):
                         loaded = self.publish()
         self.assertEqual((), loaded.findings)
         self.assertEqual(
-            ["mode", "recheck", "create", "write", "flush", "fsync", "close", "chmod", "recheck", "candidate-audit", "recheck", "replace", "final-audit"],
+            [
+                "mode",
+                "recheck",
+                "create",
+                "write",
+                "flush",
+                "fsync",
+                "close",
+                "chmod",
+                "recheck",
+                "candidate-audit",
+                "recheck",
+                "candidate-recheck",
+                "replace",
+                "final-audit",
+            ],
             events,
         )
         self.assertEqual(self.plan.candidate, self.plan.target.read_bytes())
@@ -546,6 +595,111 @@ class LifecyclePlanningTests(unittest.TestCase):
             planner(*args, **kwargs)
         self.assertEqual(code, raised.exception.code)
 
+    def repository_state(self, root: Path) -> tuple[dict[Path, bytes], bytes, bytes]:
+        sources = {path.relative_to(root): path.read_bytes() for path in root.rglob("*") if path.is_file() and ".git" not in path.relative_to(root).parts}
+        return sources, (root / ".git/index").read_bytes(), run_git(root, "rev-parse", "HEAD")
+
+    def lifecycle_root(
+        self,
+        status: str,
+        *,
+        design_status: str | None = None,
+        plan_status: str | None = None,
+        link_plan: bool | None = None,
+        selected: bool | None = None,
+        closed_gate: bool = False,
+        commit_evidence: bool = False,
+    ) -> Path:
+        root = self.copy_fixture_root()
+        replace_text(
+            root,
+            "ROADMAP.md",
+            "| `G1` | Canonical vertical-slice reconciliation | `T1.2` |",
+            "| `G1` | Canonical vertical-slice reconciliation | `M0` |",
+        )
+        replace_text(
+            root,
+            "BACKLOG.md",
+            "| `G1` | Canonical vertical-slice reconciliation | `waiting` | `T1.2` | — |",
+            "| `G1` | Canonical vertical-slice reconciliation | `ready` | `M0` | — |",
+        )
+        write_active_design(root, "docs/superpowers/specs/t1-1-design.md", children=("T1.1",))
+        replace_text(
+            root,
+            "BACKLOG.md",
+            "[design](docs/superpowers/specs/t1-design.md) | [plan](docs/superpowers/plans/t1-1.md)",
+            "[design](docs/superpowers/specs/t1-1-design.md) | [plan](docs/superpowers/plans/t1-1.md)",
+        )
+        replace_text(
+            root,
+            "docs/superpowers/plans/t1-1.md",
+            "`docs/superpowers/specs/t1-design.md`",
+            "`docs/superpowers/specs/t1-1-design.md`",
+        )
+
+        effective_design_status = design_status or ("draft" if status == "designing" else "approved")
+        write_active_design(root, "docs/superpowers/specs/t1-design.md", children=("T1.2",), status=effective_design_status)
+
+        requires_plan = status in {"planned", "in_progress", "implemented", "reviewed", "verified"}
+        effective_link_plan = requires_plan if link_plan is None else link_plan
+        effective_plan_status = plan_status
+        if effective_plan_status is None and (requires_plan or effective_link_plan):
+            effective_plan_status = "approved" if status == "planned" else "in_progress" if status == "in_progress" else "completed"
+        completion_path = ".superpowers/sdd/t1-2/completion.md"
+        if effective_plan_status is not None:
+            completion_evidence = completion_path if effective_plan_status == "completed" else None
+            write_active_plan(
+                root,
+                "docs/superpowers/plans/t1-2.md",
+                status=effective_plan_status,
+                completion_evidence=completion_evidence,
+            )
+            if completion_evidence is not None:
+                write_evidence(root, completion_path, child="T1.2", gate=None)
+
+        review_path = ".superpowers/sdd/t1-2/review.md"
+        has_review = status in {"reviewed", "verified"}
+        if has_review:
+            write_evidence(root, review_path, child="T1.2", gate=None, kind="review", result="accepted")
+        gate_path = ".superpowers/sdd/t1-2/gate-1.md"
+        if closed_gate:
+            write_evidence(root, gate_path, child="T1.2")
+
+        specification_cell = "—" if status == "queued" else "[design](docs/superpowers/specs/t1-design.md)"
+        plan_cell = "[plan](docs/superpowers/plans/t1-2.md)" if effective_link_plan else "—"
+        gate_cell = "1/1" if closed_gate else "0/1"
+        review_cell = f"[review]({review_path})" if has_review else "—"
+        replacement = (
+            f"| `T1.2` | Typed parser, status report, and versioned JSON | `{status}` | `T1.1` | "
+            f"{specification_cell} | {plan_cell} | {gate_cell} | {review_cell} | — | — |"
+        )
+        replace_text(
+            root,
+            "BACKLOG.md",
+            (
+                "| `T1.2` | Typed parser, status report, and versioned JSON | `specified` | `T1.1` | "
+                "[design](docs/superpowers/specs/t1-design.md) | — | 0/1 | — | — | — |"
+            ),
+            replacement,
+        )
+        if closed_gate:
+            replace_text(
+                root,
+                "BACKLOG.md",
+                "- [ ] Frozen parser remains open.",
+                f"- [x] Frozen parser remains open. — Evidence: [verification]({gate_path})",
+            )
+        effective_selected = status == "in_progress" if selected is None else selected
+        if effective_selected:
+            replace_text(root, "BACKLOG.md", "- Active child: —.", "- Active child: `T1.2`.")
+        run_git(root, "add", "-f", "--", ".")
+        if commit_evidence or status == "verified":
+            run_git(root, "commit", "-qm", f"Coherent {status} fixture")
+        return root
+
+    def child_from(self, loaded):  # type: ignore[no-untyped-def]
+        return next(child for child in loaded.snapshot.backlog.children if child.id == "T1.2")
+
     def test_transition_allows_exact_closed_graph_only(self) -> None:
         allowed = {
             ("queued", "designing"),
@@ -563,11 +717,152 @@ class LifecyclePlanningTests(unittest.TestCase):
             ("verified", "reviewed"),
         }
         self.assertEqual(allowed, _TRANSITIONS)
-        root = self.copy_fixture_root()
-        for target in ("queued", "specified", "in_progress", "implemented", "reviewed", "verified"):
-            with self.subTest(target=target):
-                self.assert_refusal("mutation.transition", plan_transition, root, "T1.2", target, expect="specified")
-        self.assert_refusal("mutation.transition", plan_transition, root, "T1.2", "released", expect="specified")
+        targets = (*sorted(_NONSUSPENDED), "released")
+        for source in sorted(_NONSUSPENDED):
+            root = self.lifecycle_root(source, closed_gate=source == "verified", commit_evidence=source == "verified")
+            before = self.repository_state(root)
+            for target in targets:
+                if (source, target) in allowed:
+                    continue
+                with self.subTest(source=source, target=target):
+                    self.assert_refusal("mutation.transition", plan_transition, root, "T1.2", target, expect=source)
+                    self.assertEqual(before, self.repository_state(root))
+        for suspended in ("blocked", "deferred"):
+            root = self.lifecycle_root("specified")
+            suspension = plan_suspend(root, "T1.2", suspended, expect="specified", reason="Awaiting evidence")
+            (root / "BACKLOG.md").write_bytes(suspension.candidate)
+            self.assertEqual((), audit_repository(root).findings)
+            before = self.repository_state(root)
+            for target in targets:
+                with self.subTest(source=suspended, target=target):
+                    self.assert_refusal("mutation.transition", plan_transition, root, "T1.2", target, expect=suspended)
+                    self.assertEqual(before, self.repository_state(root))
+
+    def test_every_allowed_forward_and_reopen_edge_produces_a_clean_candidate(self) -> None:
+        cases = (
+            (
+                "queued",
+                "designing",
+                "draft",
+                None,
+                None,
+                None,
+                False,
+                False,
+                "docs/superpowers/specs/t1-design.md",
+                None,
+                None,
+            ),
+            ("designing", "specified", "approved", None, None, None, False, False, None, None, None),
+            (
+                "specified",
+                "planned",
+                None,
+                "approved",
+                False,
+                None,
+                False,
+                False,
+                None,
+                "docs/superpowers/plans/t1-2.md",
+                None,
+            ),
+            ("planned", "in_progress", None, "in_progress", None, True, False, False, None, None, None),
+            ("in_progress", "implemented", None, "completed", None, None, False, False, None, None, None),
+            (
+                "implemented",
+                "reviewed",
+                None,
+                None,
+                None,
+                None,
+                False,
+                False,
+                None,
+                None,
+                ".superpowers/sdd/t1-2/review.md",
+            ),
+            ("reviewed", "verified", None, None, None, None, True, True, None, None, None),
+            ("specified", "designing", None, "approved", True, None, False, False, None, None, None),
+            ("planned", "specified", None, None, None, None, False, False, None, None, None),
+            ("in_progress", "planned", None, None, None, None, False, False, None, None, None),
+            ("implemented", "in_progress", None, None, None, True, False, False, None, None, None),
+            ("reviewed", "implemented", None, None, None, None, False, False, None, None, None),
+            ("verified", "reviewed", None, None, None, None, True, True, None, None, None),
+        )
+        for (
+            source,
+            target,
+            design_status,
+            plan_status,
+            link_plan,
+            selected,
+            closed_gate,
+            commit_evidence,
+            specification,
+            plan_link,
+            review,
+        ) in cases:
+            with self.subTest(source=source, target=target):
+                root = self.lifecycle_root(
+                    source,
+                    design_status=design_status,
+                    plan_status=plan_status,
+                    link_plan=link_plan,
+                    selected=selected,
+                    closed_gate=closed_gate,
+                    commit_evidence=commit_evidence,
+                )
+                if source == "implemented" and target == "reviewed":
+                    write_evidence(
+                        root,
+                        ".superpowers/sdd/t1-2/review.md",
+                        child="T1.2",
+                        gate=None,
+                        kind="review",
+                        result="accepted",
+                    )
+                    run_git(root, "add", "-f", "--", ".superpowers/sdd/t1-2/review.md")
+                before = self.repository_state(root)
+
+                mutation = plan_transition(
+                    root,
+                    "T1.2",
+                    target,
+                    expect=source,
+                    specification=specification,
+                    plan=plan_link,
+                    review=review,
+                )
+
+                self.assertEqual((), mutation.audit.findings)
+                self.assertEqual(target, self.child_from(mutation.audit).status)
+                self.assertEqual(before, self.repository_state(root))
+                if source == "specified" and target == "designing":
+                    self.assertIsNone(self.child_from(mutation.audit).plan)
+
+    def test_planned_reopen_to_new_draft_design_clears_obsolete_plan_link(self) -> None:
+        root = self.lifecycle_root("planned")
+        original_plan = self.child_from(audit_repository(root)).plan
+
+        specified = plan_transition(root, "T1.2", "specified", expect="planned")
+        self.assertEqual(original_plan, self.child_from(specified.audit).plan)
+        (root / "BACKLOG.md").write_bytes(specified.candidate)
+        write_active_design(root, "docs/superpowers/specs/t1-2-redesign.md", children=("T1.2",), status="draft")
+
+        designing = plan_transition(
+            root,
+            "T1.2",
+            "designing",
+            expect="specified",
+            specification="docs/superpowers/specs/t1-2-redesign.md",
+        )
+
+        child = self.child_from(designing.audit)
+        self.assertEqual("designing", child.status)
+        self.assertEqual("docs/superpowers/specs/t1-2-redesign.md", child.specification)
+        self.assertIsNone(child.plan)
+        self.assertEqual((), designing.audit.findings)
 
     def test_transition_refuses_stale_expected_status_before_candidate(self) -> None:
         root = self.copy_fixture_root()
@@ -670,25 +965,46 @@ class LifecyclePlanningTests(unittest.TestCase):
         self.assertEqual("Requested lifecycle transition from `reviewed` to `implemented`.", plan.rationale)
 
     def test_suspend_and_resume_round_trip_all_nonsuspended_states(self) -> None:
-        root = self.copy_fixture_root()
         self.assertEqual(
             {"queued", "designing", "specified", "planned", "in_progress", "implemented", "reviewed", "verified"},
             _NONSUSPENDED,
         )
-        for target in ("blocked", "deferred"):
-            with self.subTest(target=target):
-                suspended = plan_suspend(root, "T1.2", target, expect="specified", reason="Awaiting evidence")
-                candidate = suspended.candidate.decode("utf-8")
-                self.assertIn(f"| `{target}` |", candidate)
-                self.assertIn("| `specified` | Awaiting evidence |", candidate)
-                self.assertEqual(f"Suspended `specified` child as `{target}`: Awaiting evidence", suspended.rationale)
-                (root / "BACKLOG.md").write_bytes(suspended.candidate)
-                resumed = plan_resume(root, "T1.2", expect=target, resume="specified", reason="Evidence received")
-                self.assertIn("| `specified` |", resumed.candidate.decode("utf-8"))
-                self.assertIn("| — | — |", resumed.candidate.decode("utf-8"))
-                self.assertNotIn("Evidence received", resumed.candidate.decode("utf-8"))
-                self.assertEqual(f"Resumed `specified` child from `{target}`: Evidence received", resumed.rationale)
-                (root / "BACKLOG.md").write_bytes(resumed.candidate)
+        for state in sorted(_NONSUSPENDED):
+            for target in ("blocked", "deferred"):
+                with self.subTest(state=state, target=target):
+                    root = self.lifecycle_root(state, closed_gate=state == "verified", commit_evidence=state == "verified")
+                    original_child = self.child_from(audit_repository(root))
+                    before_suspend = self.repository_state(root)
+
+                    suspended = plan_suspend(root, "T1.2", target, expect=state, reason="Awaiting evidence")
+
+                    suspended_child = self.child_from(suspended.audit)
+                    self.assertEqual(target, suspended_child.status)
+                    self.assertEqual(state, suspended_child.resume_state)
+                    self.assertEqual("Awaiting evidence", suspended_child.reason)
+                    self.assertEqual(original_child.specification, suspended_child.specification)
+                    self.assertEqual(original_child.plan, suspended_child.plan)
+                    self.assertEqual(original_child.review_evidence, suspended_child.review_evidence)
+                    self.assertEqual(original_child.gates, suspended_child.gates)
+                    self.assertEqual((), suspended.audit.findings)
+                    self.assertEqual(before_suspend, self.repository_state(root))
+
+                    (root / "BACKLOG.md").write_bytes(suspended.candidate)
+                    before_resume = self.repository_state(root)
+                    resumed = plan_resume(root, "T1.2", expect=target, resume=state, reason="Evidence received")
+
+                    resumed_child = self.child_from(resumed.audit)
+                    self.assertEqual(state, resumed_child.status)
+                    self.assertIsNone(resumed_child.resume_state)
+                    self.assertIsNone(resumed_child.reason)
+                    self.assertEqual(original_child.specification, resumed_child.specification)
+                    self.assertEqual(original_child.plan, resumed_child.plan)
+                    self.assertEqual(original_child.review_evidence, resumed_child.review_evidence)
+                    self.assertEqual(original_child.gates, resumed_child.gates)
+                    self.assertEqual((), resumed.audit.findings)
+                    self.assertEqual(before_resume, self.repository_state(root))
+                    self.assertEqual(f"Suspended `{state}` child as `{target}`: Awaiting evidence", suspended.rationale)
+                    self.assertEqual(f"Resumed `{state}` child from `{target}`: Evidence received", resumed.rationale)
 
     def test_suspend_and_resume_refuse_invalid_reasons_and_stale_resume(self) -> None:
         root = self.copy_fixture_root()

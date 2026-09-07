@@ -44,6 +44,20 @@ Approval and Completion-evidence values to absent optional values. Git status
 integration exercises the real current checkout without changing repository
 state, while unit coverage retains the exact read-only Git command contract.
 
+## 2026-09-06 T1.5 lifecycle handoff correction
+
+Artifact status may lead a child only across one adjacent lifecycle handoff so
+an artifact edit and guarded `BACKLOG.md` mutation do not require an impossible
+atomic cross-file update. A `designing` child accepts its linked design at
+`draft`, `approved`, or `implemented`; a `planned` child accepts its linked plan
+at `approved` or `in_progress`; and the `in_progress` completion handoff remains
+limited to `in_progress` or `completed` with eligible completion evidence.
+Later lifecycle stages keep their exact artifact requirements.
+
+Reopening `specified -> designing` clears the later-stage Plan link while
+retaining or replacing the Specification link. Other reopening moves preserve
+links that remain applicable to their target stage.
+
 ## Authority and purpose
 
 `ROADMAP.md` is the node-identity, kind, order, and dependency authority.
@@ -395,9 +409,9 @@ Minimum evidence is:
 | Status | Required evidence |
 | --- | --- |
 | `queued` | Roadmap identity and dependencies |
-| `designing` | Linked active draft design covering the child |
+| `designing` | Linked active design covering the child, marked `draft`, `approved`, or `implemented` during the adjacent specification handoff |
 | `specified` | Linked approved design covering the child |
-| `planned` | Approved design and linked approved single-child plan |
+| `planned` | Approved design and linked approved single-child plan marked `approved` or `in_progress` during the adjacent execution handoff |
 | `in_progress` | Selected child and linked plan marked `in_progress`, or linked plan marked `completed` with eligible child-level completion evidence during the explicit implementation handoff |
 | `implemented` | Plan marked `completed` with eligible child-level completion evidence |
 | `reviewed` | Implemented state plus accepted evidence linked from `Review` |
@@ -406,11 +420,16 @@ Minimum evidence is:
 | `deferred` | Required resume state and explicit governance reason |
 | `released` | Outside T1 mutation scope while release remains prohibited |
 
-The completed-plan form of `in_progress` is a narrow handoff state: completing
-the plan and staging eligible completion evidence does not implicitly advance
-the child. The child remains selected and `in_progress` until an explicit
-guarded transition moves it to `implemented`. `implemented` and every later
-state continue to require an exact `completed` plan.
+Artifact status may lead the child only across an adjacent non-atomic handoff.
+A `designing` child therefore accepts its linked design at `draft`, `approved`,
+or `implemented`; a `planned` child accepts its linked plan at `approved` or
+`in_progress`; and an `in_progress` child accepts its linked plan at
+`in_progress`, or at `completed` with eligible child-level completion evidence.
+These handoffs do not implicitly advance the child. Each child remains at its
+current status until an explicit guarded transition advances it. `specified`
+and later design requirements remain approved-or-implemented, and
+`implemented` and every later execution state continue to require an exact
+`completed` plan.
 
 ### Closed transition graph
 
@@ -431,6 +450,11 @@ implemented -> in_progress
 reviewed -> implemented
 verified -> reviewed
 ```
+
+Reopening `specified -> designing` clears the later-stage `Plan` link while
+retaining or replacing the governing `Specification` link. Other reopen moves
+preserve links that remain applicable to their target stage; reopening
+`reviewed -> implemented` clears only the no-longer-applicable `Review` link.
 
 Any nonreleased state may move to `blocked` or `deferred`. The mutation stores
 the prior state in `Resume`. A blocked/deferred child may return only to that

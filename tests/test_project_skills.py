@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import sys
 import subprocess
+import tomllib
 import unittest
 
 
@@ -63,6 +64,11 @@ def _skill_tree_sha256(skill_root: Path) -> str:
 
 
 class ProjectSkillTests(unittest.TestCase):
+    def test_repository_governance_is_excluded_from_source_builds(self) -> None:
+        project = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+        excluded = set(project["tool"]["uv"]["build-backend"]["source-exclude"])
+        self.assertTrue({".codex/**", ".git/**", ".superpowers/**", "docs/superpowers/**"}.issubset(excluded))
+
     def test_project_skills_are_scoped_to_unreleased_xplane_fdau(self) -> None:
         for name in DISCOVERABLE_PROJECT_SKILLS:
             path = Path(".codex/skills") / name / "SKILL.md"

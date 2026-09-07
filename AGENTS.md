@@ -19,6 +19,17 @@
 - Read the current canonical-contract specification and plan linked from
   `BACKLOG.md` before changing canonical FDAU behavior. A draft specification
   is review material, not implementation authority.
+- Run the repository backlog workflow after reading those authorities:
+
+  ```powershell
+  uv run python .codex/skills/backlog-status/scripts/backlog_status.py audit
+  uv run python .codex/skills/backlog-status/scripts/backlog_status.py next
+  ```
+
+  Stop on an audit finding. Otherwise follow the reported lifecycle action
+  for the selected or first dependency-ready local child. Read
+  `.codex/skills/backlog-status/SKILL.md` for status, resume, adherence,
+  next-action, or controlled state requests.
 - The next release remains prohibited until a reviewed canonical vertical slice
   is complete. Tags, package publication, and GitHub releases remain separately
   gated; an explicitly requested ordinary Git sync does not grant release

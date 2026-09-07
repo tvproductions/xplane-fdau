@@ -926,6 +926,7 @@ class GovernanceArtifactTests(unittest.TestCase):
                 "2026-09-05-t1-3-structural-audit.md",
                 "2026-09-06-t1-4-deterministic-next-action-selection.md",
                 "2026-09-06-t1-5-guarded-child-state-mutations.md",
+                "2026-09-07-t1-6-skill-session-hygiene-artifact-closure.md",
             },
             set(active_plans),
         )
@@ -939,6 +940,9 @@ class GovernanceArtifactTests(unittest.TestCase):
             "`.superpowers/sdd/2026-09-06-t1-5-guarded-child-state-mutations/completion.md`",
             active_plans["2026-09-06-t1-5-guarded-child-state-mutations.md"]["Completion evidence"],
         )
+        self.assertEqual("`T1.6`", active_plans["2026-09-07-t1-6-skill-session-hygiene-artifact-closure.md"]["Roadmap child"])
+        self.assertEqual("in_progress", active_plans["2026-09-07-t1-6-skill-session-hygiene-artifact-closure.md"]["Status"])
+        self.assertEqual("—", active_plans["2026-09-07-t1-6-skill-session-hygiene-artifact-closure.md"]["Completion evidence"])
 
     def test_historical_artifacts_name_their_disposition(self) -> None:
         historical_paths = (

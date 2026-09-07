@@ -1,7 +1,7 @@
 # xplane-fdau Backlog
 
 - **Status:** Active delivery ledger and Superpowers entry point
-- **Updated:** 2026-09-05
+- **Updated:** 2026-09-07
 
 Read `ROADMAP.md` for architecture order and dependencies. Then use this file to
 select one primary child slice whose prerequisites are verified. Each child
@@ -19,8 +19,9 @@ slice receives one focused plan and one independently reviewable outcome.
   handoff condition is eligible for q4xpcc Phase 24A planning reconciliation;
   `T1.3` is verified with 4/4 gates under its approved audit policy
   supplement and completed implementation plan. `T1.4` is verified with 4/4
-  gates and accepted independent review. No local child is selected; `T1.5` is
-  the first dependency-ready unfinished child and requires a focused plan.
+  gates, and `T1.5` is verified with 5/5 gates; both have accepted independent
+  review. No local child is selected. `T1.6` is the first dependency-ready
+  unfinished child, and the deterministic next action is `write_plan`.
 - D1 is design-handoff readiness, not implementation or release readiness.
 - `B1.1` source-layout migration: `specified` with a draft plan; resumes after
   peer prerequisites `T2.2` and `T3.1` are verified.

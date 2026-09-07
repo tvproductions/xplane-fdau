@@ -580,10 +580,6 @@ class SelectionBytePreservationTests(unittest.TestCase):
         self.assert_refusal("mutation.target", root, "T1.2", expect_current=None)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class LifecyclePlanningTests(unittest.TestCase):
     def copy_fixture_root(self) -> Path:
         root = Path(self.enterContext(tempfile.TemporaryDirectory())) / "repository"
@@ -1216,3 +1212,7 @@ class GatePlanningTests(unittest.TestCase):
         (root / "BACKLOG.md").write_bytes(reviewed.candidate)
         reopened = plan_reopen_gate(root, "T1.2", 1, expect_closed=True, reason="Recheck")
         self.assertIn("| 0/1 |", reopened.candidate.decode("utf-8"))
+
+
+if __name__ == "__main__":
+    unittest.main()

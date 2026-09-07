@@ -177,8 +177,10 @@ implementation plan is:
 
 `docs/superpowers/plans/2026-08-15-xplane-fdau-backlog-authority-normalization.md`
 
-`T1.1` through `T1.4` are `verified`: each has four committed gates and
-accepted independent-review evidence. `T1.2` review correction commit
+`T1.1` through `T1.4` are historical `verified` work: each has four committed
+gates and accepted independent-review evidence. `T1.5` is also `verified`,
+with five committed gates and accepted independent-review evidence. `T1.2`
+review correction commit
 `1468c98` closed all findings without weakening the implementation, release,
 or publication gates. Its approved focused implementation plan remains:
 
@@ -204,10 +206,10 @@ at 94%, every configured quality analyzer, and all pre-commit hooks. The
 documentation-specific pass ran 15 tests, strict MkDocs in 1.41 seconds, and
 the 43.6% documentation threshold.
 
-No local child is selected. The deterministic next action is `T1.5` with
-`write_plan`. Its dependency chain continues through `T1.6`, `T2.1`, the peer
-children `T2.2` and `T3.1`, and `B1.1` before canonical implementation can
-begin at `C1.1`.
+No local child is selected. The deterministic next action is `T1.6` with
+`write_plan`. Its dependency chain continues through `T2.1`, the peer children
+`T2.2` and `T3.1`, and `B1.1` before canonical implementation can begin at
+`C1.1`.
 
 ## Canonical workflow catalog
 
@@ -307,14 +309,18 @@ input-document revision `f86c6f939f1fdbfd354660c432363b9aa7f8444d`.
 reconcile q4xpcc's Phase 24A specification and plans. `T1.3` is verified at
 4/4 under its [completed plan](docs/superpowers/plans/2026-09-05-t1-3-structural-audit.md)
 and [accepted review](.superpowers/sdd/2026-09-05-t1-3-structural-audit/review.md)
-of source `1211466`. `T1.4` is also verified at 4/4 under its
+of source `1211466`. `T1.4` is also historical verified work at 4/4 under its
 [completed plan](docs/superpowers/plans/2026-09-06-t1-4-deterministic-next-action-selection.md)
 and [accepted review](.superpowers/sdd/2026-09-06-t1-4-deterministic-next-action-selection/review.md)
-of source `972a367`. No local child is selected; the status command now
-recommends `T1.5` with `write_plan`. External eligibility does not add an
+of source `972a367`. `T1.5` is verified at 5/5 under its
+[completed plan](docs/superpowers/plans/2026-09-06-t1-5-guarded-child-state-mutations.md)
+and [accepted review](.superpowers/sdd/2026-09-06-t1-5-guarded-child-state-mutations/review.md)
+of source `3cef7da`. No local child is selected; the status command now
+recommends `T1.6` with `write_plan`. External eligibility does not add an
 external boundary to the local-child inventory. T1.4 was integrated into
 `main`, verified there, synchronized to `origin/main`, and its temporary branch
-and worktree were removed.
+and worktree were removed; T1.5 remains locally complete and unmerged pending
+the user's finishing choice.
 
 The external q4xpcc thresholds remain distinct:
 

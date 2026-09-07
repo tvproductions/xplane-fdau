@@ -16,7 +16,10 @@ git diff --cached --stat
 uv run python .codex/skills/hygiene/scripts/hygiene.py
 ```
 
-The script checks the lockfile offline, runs `tools/quality.py check`, and runs the repository pre-commit hooks. Do not silently format, update, stage, clean, or delete files.
+The script checks Git status, the lockfile offline, the strict backlog audit,
+complete quality, and the repository pre-commit hooks in that order. A failed
+backlog audit stops before quality; hygiene never mutates backlog state. Do not
+silently format, update, stage, clean, or delete files.
 
 For a requested dependency freshness check, use the opt-in network command:
 

@@ -17,6 +17,7 @@ Runner = Callable[..., subprocess.CompletedProcess[str]]
 LOCAL_COMMANDS = (
     ("git", "status", "--short", "--branch"),
     ("uv", "lock", "--check", "--offline"),
+    ("uv", "run", "python", ".codex/skills/backlog-status/scripts/backlog_status.py", "audit"),
     ("uv", "run", "python", "tools/quality.py", "check"),
     ("uv", "run", "python", "tools/quality.py", "pre-commit"),
 )

@@ -7,6 +7,7 @@ import hashlib
 import json
 from pathlib import Path
 import sys
+import subprocess
 import unittest
 
 
@@ -143,7 +144,7 @@ class ProjectSkillTests(unittest.TestCase):
             )
             self.assertEqual(entry["sha256"], _skill_tree_sha256(installed_path))
 
-    def test_hygiene_script_runs_the_local_quality_gate(self) -> None:
+    def _load_hygiene_module(self):
         path = Path(".codex/skills/hygiene/scripts/hygiene.py")
         spec = importlib.util.spec_from_file_location("hygiene", path)
         if spec is None or spec.loader is None:
@@ -155,5 +156,27 @@ class ProjectSkillTests(unittest.TestCase):
             loader.exec_module(module)
         finally:
             sys.modules.pop(spec.name, None)
+        return module
 
-        self.assertIn(("uv", "run", "python", "tools/quality.py", "check"), module.LOCAL_COMMANDS)
+    def test_hygiene_script_runs_strict_backlog_audit_before_quality(self) -> None:
+        module = self._load_hygiene_module()
+
+        expected = (
+            ("git", "status", "--short", "--branch"),
+            ("uv", "lock", "--check", "--offline"),
+            ("uv", "run", "python", ".codex/skills/backlog-status/scripts/backlog_status.py", "audit"),
+            ("uv", "run", "python", "tools/quality.py", "check"),
+            ("uv", "run", "python", "tools/quality.py", "pre-commit"),
+        )
+        self.assertEqual(expected, module.LOCAL_COMMANDS)
+
+    def test_hygiene_stops_when_backlog_audit_fails(self) -> None:
+        module = self._load_hygiene_module()
+        seen = []
+
+        def runner(command, **kwargs):
+            seen.append(command)
+            return subprocess.CompletedProcess(command, 7 if command == module.LOCAL_COMMANDS[2] else 0)
+
+        self.assertEqual(7, module.run_local_hygiene(runner))
+        self.assertEqual(list(module.LOCAL_COMMANDS[:3]), seen)

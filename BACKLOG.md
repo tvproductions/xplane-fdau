@@ -20,8 +20,11 @@ slice receives one focused plan and one independently reviewable outcome.
   `T1.3` is verified with 4/4 gates under its approved audit policy
   supplement and completed implementation plan. `T1.4` is verified with 4/4
   gates, and `T1.5` is verified with 5/5 gates; both have accepted independent
-  review. No local child is selected. `T1.6` is the first dependency-ready
-  unfinished child, and the deterministic next action is `write_plan`.
+  review.
+- Read the managed Active child line and Local child inventory for current
+  selection and lifecycle state. Run
+  `uv run python .codex/skills/backlog-status/scripts/backlog_status.py next`
+  for the deterministic next action.
 - D1 is design-handoff readiness, not implementation or release readiness.
 - `B1.1` source-layout migration: `specified` with a draft plan; resumes after
   peer prerequisites `T2.2` and `T3.1` are verified.

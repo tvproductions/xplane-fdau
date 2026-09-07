@@ -140,6 +140,16 @@ def _published_reporting_failure(loaded: AuditLoad, error: Exception) -> str:
         return message + "\n".join(lines) + "\n"
 
 
+def _write_published_diagnostic(output: TextIO, errors: TextIO, message: str) -> None:
+    """Deliver published-state guidance, including buffered stream failures."""
+    try:
+        output.write(message)
+        output.flush()
+    except Exception:
+        errors.write(message)
+        errors.flush()
+
+
 def main(
     argv: list[str] | None = None,
     *,
@@ -173,7 +183,11 @@ def main(
             published = arguments.apply
         except MutationRefusal as error:
             code = error.code if error.code.startswith("mutation.") else f"mutation.audit ({error.code})"
-            output.write(f"{code}: {error}\n")
+            message = f"{code}: {error}\n"
+            if error.code == "mutation.published":
+                _write_published_diagnostic(output, errors, message)
+            else:
+                output.write(message)
             return 1
     try:
         heading = _mutation_heading(plan, applied=published) if plan is not None else ""
@@ -188,15 +202,14 @@ def main(
                 findings = (*findings, Finding("mutation.published", "error", "BACKLOG.md", None, None, None, "BACKLOG.md was published; do not retry."))
         report = build_report(snapshot, git, findings)
         output.write(heading + (render_json(report) if arguments.command == "status" and arguments.as_json else render_human(report)))
+        if published:
+            output.flush()
         return 0 if report.valid else 1
     except Exception as error:
         if not published:
             raise
         message = _published_reporting_failure(loaded, error)
-        try:
-            output.write(message)
-        except Exception:
-            errors.write(message)
+        _write_published_diagnostic(output, errors, message)
         return 1
 
 

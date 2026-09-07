@@ -4,7 +4,7 @@ from contextlib import nullcontext
 from dataclasses import dataclass, replace
 import importlib.util
 import hashlib
-from io import StringIO
+from io import BytesIO, StringIO, TextIOWrapper
 import json
 import os
 import subprocess
@@ -22,7 +22,7 @@ FIXTURE = ROOT / "tests/fixtures/backlog_status/valid"
 sys.path.insert(0, str(SCRIPTS))
 
 from tests.backlog_audit_support import audit_fixture, replace_text, reviewed_gate_fixture, run_git, write_active_plan, write_evidence  # noqa: E402
-from backlog.audit import load_audit  # noqa: E402  # ty: ignore[unresolved-import]
+from backlog.audit import audit_repository, load_audit  # noqa: E402  # ty: ignore[unresolved-import]
 from backlog.model import Finding, GitState  # noqa: E402  # ty: ignore[unresolved-import]
 
 
@@ -178,6 +178,42 @@ class BacklogStatusCliTests(unittest.TestCase):
         self.assertIn("do not retry", errors.getvalue())
         self.assertIn("Active child: T1.2", errors.getvalue())
         self.assertIn(b"- Active child: `T1.2`.", (root / "BACKLOG.md").read_bytes())
+
+    def test_published_final_audit_refusal_survives_broken_stdout(self) -> None:
+        root = self.fixture_root()
+        module = load_cli()
+        output, errors = StringIO(), StringIO()
+        original = (root / "BACKLOG.md").read_bytes()
+
+        def failed_final_audit(root, *, backlog_text=None):
+            if backlog_text is None:
+                raise OSError("final audit failed after replacement")
+            return audit_repository(root, backlog_text=backlog_text)
+
+        with patch("backlog.edit.audit_repository", side_effect=failed_final_audit):
+            with patch.object(output, "write", side_effect=BrokenPipeError("stdout unavailable")):
+                code = module.main(["select", "T1.2", "--expect-current", "none", "--apply"], root=root, stdout=output, stderr=errors)
+        self.assertEqual(1, code)
+        self.assertIn("mutation.published", errors.getvalue())
+        self.assertIn("do not retry", errors.getvalue())
+        self.assertIn("final audit failed after replacement", errors.getvalue())
+        self.assertEqual(original.replace("- Active child: —.".encode(), b"- Active child: `T1.2`."), (root / "BACKLOG.md").read_bytes())
+
+    def test_applied_buffered_stdout_flush_failure_reports_published_state(self) -> None:
+        root = self.fixture_root()
+        module = load_cli()
+        raw = BytesIO()
+        output = TextIOWrapper(raw, encoding="utf-8", newline="\n")
+        self.addCleanup(output.close)
+        errors = StringIO()
+        original = (root / "BACKLOG.md").read_bytes()
+        with patch.object(raw, "write", side_effect=BrokenPipeError("buffered stdout flush failed")):
+            code = module.main(["select", "T1.2", "--expect-current", "none", "--apply"], root=root, stdout=output, stderr=errors)
+        self.assertEqual(1, code, "main returned success before buffered output was flushed")
+        self.assertIn("mutation.published", errors.getvalue())
+        self.assertIn("do not retry", errors.getvalue())
+        self.assertIn("buffered stdout flush failed", errors.getvalue())
+        self.assertEqual(original.replace("- Active child: —.".encode(), b"- Active child: `T1.2`."), (root / "BACKLOG.md").read_bytes())
 
     def test_mutation_domain_refusals_use_stdout_and_status_one(self) -> None:
         root = self.fixture_root()

@@ -253,10 +253,24 @@ q4xpcc/external repository, G1, release/tag/publication or remote state changed.
 Version 0.1.0 remains unreleased. Windows Python 3.12-3.14 was observed;
 Linux/macOS was not. Existing nonfatal tool advisories remain unchanged.
 
-The closeout commit containing this section has parent f52c489 and records
-observed results plus completed plan progress together with final state,
-handoff, and assertion. Committed-HEAD audit/status/next, focused governance
-checks, strict documentation and clean-state checks are rerun after that
-commit; their actual output and exact commit are preserved in task-5-report.md.
-No clean-worktree claim is made before the commit. Branch integration and
-scratch/worktree cleanup remain controller/user-owned and were not performed.
+## Committed-HEAD verification
+
+Closeout commit `3a43d799a831d5a4fa68875de60f99c736df56ec` (parent f52c489)
+records final state, handoff, assertion, completed plan and observed evidence.
+Fresh `audit`, `status --json`, and `next` commands using the backlog CLI above
+all exited 0 from that HEAD: Findings: none, valid=true, active_child=null,
+T1.6 verified 5/5, next T2.1/write_plan, and Git dirty=false.
+`uv run mkdocs build --strict` exited 0 in 1.20s with only the existing Material
+advisory. The exact focused command was:
+
+```powershell
+uv run python -m unittest tests.test_backlog_status_cli.BacklogStatusCliTests.test_current_repository_status_reports_human_and_json tests.test_backlog_governance.GovernanceArtifactTests.test_active_artifact_assignments_match_current_roadmap_children -v
+```
+
+It exited 0: 2 tests in 15.986s, OK. `git diff --check`, `git diff --exit-code`,
+`git diff --cached --exit-code`, and `git status --porcelain=v1` all exited 0
+without output; `git status --short --branch` printed only
+`## t1-6-skill-closure`. The exact protected-boundary diff against merge base
+listed above also exited 0 without output. Index and worktree were clean.
+Branch integration and scratch/worktree cleanup remain controller/user-owned
+and were not performed.

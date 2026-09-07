@@ -97,14 +97,21 @@ class SelectionPlanningTests(unittest.TestCase):
         root = self.copy_fixture_root()
         warning = Finding("fixture.warning", "warning", "BACKLOG.md", 5, None, None, "fixture warning")
         original_audit = audit_repository
+        audit_texts: list[str | None] = []
 
         def warning_audit(path: Path, *, backlog_text: str | None = None):
-            return replace(original_audit(path, backlog_text=backlog_text), findings=(warning,))
+            audited = original_audit(path, backlog_text=backlog_text)
+            audit_texts.append(backlog_text)
+            return replace(audited, findings=(*audited.findings, warning))
 
         with patch("backlog.edit.audit_repository", side_effect=warning_audit):
             plan = plan_selection(root, "T1.2", expect_current=None)
 
         self.assertEqual((warning,), plan.audit.findings)
+        self.assertEqual(2, len(audit_texts))
+        self.assertEqual(plan.original.decode("utf-8"), audit_texts[0])
+        self.assertEqual(plan.candidate.decode("utf-8"), audit_texts[1])
+        self.assertEqual("T1.2", plan.audit.snapshot.backlog.active_child)
 
 
 class SelectionBytePreservationTests(unittest.TestCase):

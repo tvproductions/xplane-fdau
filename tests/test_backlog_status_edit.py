@@ -9,7 +9,16 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from tests.backlog_audit_support import audit_fixture, replace_bytes, replace_text, run_git, write_active_design, write_active_plan, write_evidence
+from tests.backlog_audit_support import (
+    audit_fixture,
+    replace_bytes,
+    replace_text,
+    reviewed_gate_fixture,
+    run_git,
+    write_active_design,
+    write_active_plan,
+    write_evidence,
+)
 
 SCRIPTS = Path(__file__).resolve().parents[1] / ".codex" / "skills" / "backlog-status" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
@@ -19,6 +28,8 @@ from backlog.edit import (  # noqa: E402  # ty: ignore[unresolved-import]
     MutationPlan,
     MutationRefusal,
     plan_resume,
+    plan_record_gate,
+    plan_reopen_gate,
     plan_selection,
     plan_suspend,
     plan_transition,
@@ -200,11 +211,19 @@ class LifecyclePlanningTests(unittest.TestCase):
 
     def test_transition_allows_exact_closed_graph_only(self) -> None:
         allowed = {
-            ("queued", "designing"), ("designing", "specified"), ("specified", "planned"),
-            ("planned", "in_progress"), ("in_progress", "implemented"),
-            ("implemented", "reviewed"), ("reviewed", "verified"), ("specified", "designing"),
-            ("planned", "specified"), ("in_progress", "planned"), ("implemented", "in_progress"),
-            ("reviewed", "implemented"), ("verified", "reviewed"),
+            ("queued", "designing"),
+            ("designing", "specified"),
+            ("specified", "planned"),
+            ("planned", "in_progress"),
+            ("in_progress", "implemented"),
+            ("implemented", "reviewed"),
+            ("reviewed", "verified"),
+            ("specified", "designing"),
+            ("planned", "specified"),
+            ("in_progress", "planned"),
+            ("implemented", "in_progress"),
+            ("reviewed", "implemented"),
+            ("verified", "reviewed"),
         }
         self.assertEqual(allowed, _TRANSITIONS)
         root = self.copy_fixture_root()
@@ -343,3 +362,162 @@ class LifecyclePlanningTests(unittest.TestCase):
         (root / "BACKLOG.md").write_bytes(suspended.candidate)
         self.assert_refusal("mutation.expected-status", plan_resume, root, "T1.2", expect="deferred", resume="specified", reason="Resume")
         self.assert_refusal("mutation.resume", plan_resume, root, "T1.2", expect="blocked", resume="planned", reason="Resume")
+
+
+class GatePlanningTests(unittest.TestCase):
+    def reviewed_root(self) -> Path:
+        root = Path(self.enterContext(tempfile.TemporaryDirectory())) / "repository"
+        audit_fixture(root)
+        reviewed_gate_fixture(root)
+        replace_text(
+            root,
+            "ROADMAP.md",
+            "| `G1` | Canonical vertical-slice reconciliation | `T1.2` |",
+            "| `G1` | Canonical vertical-slice reconciliation | `M0` |",
+        )
+        replace_text(
+            root,
+            "BACKLOG.md",
+            "| `G1` | Canonical vertical-slice reconciliation | `waiting` | `T1.2` | — |",
+            "| `G1` | Canonical vertical-slice reconciliation | `ready` | `M0` | — |",
+        )
+        return root
+
+    def stage_gate_evidence(
+        self,
+        root: Path,
+        path: str = ".superpowers/sdd/t1-2/gate-1.md",
+        *,
+        child: str = "T1.2",
+        gate: int | None = 1,
+        kind: str = "verification",
+        result: str = "passed",
+    ) -> str:
+        write_evidence(root, path, child=child, gate=gate, kind=kind, result=result)
+        run_git(root, "add", "--", path)
+        return path
+
+    def assert_refusal(self, code: str, planner, *args: object, **kwargs: object) -> None:  # type: ignore[no-untyped-def]
+        with self.assertRaises(MutationRefusal) as raised:
+            planner(*args, **kwargs)
+        self.assertEqual(code, raised.exception.code)
+
+    def test_record_gate_refuses_stale_gate_preconditions_and_invalid_ordinals(self) -> None:
+        root = self.reviewed_root()
+        evidence = self.stage_gate_evidence(root)
+
+        self.assert_refusal("mutation.expected-gate", plan_record_gate, root, "T1.2", 1, expect_open=False, evidence=(evidence,))
+        for ordinal in (0, 2):
+            with self.subTest(ordinal=ordinal):
+                self.assert_refusal("mutation.gate", plan_record_gate, root, "T1.2", ordinal, expect_open=True, evidence=(evidence,))
+
+        closed = plan_record_gate(root, "T1.2", 1, expect_open=True, evidence=(evidence,))
+        (root / "BACKLOG.md").write_bytes(closed.candidate)
+        self.assert_refusal("mutation.expected-gate", plan_record_gate, root, "T1.2", 1, expect_open=True, evidence=(evidence,))
+
+    def test_record_gate_delegates_evidence_eligibility_to_candidate_audit(self) -> None:
+        cases = (
+            ("missing", ".superpowers/sdd/t1-2/missing.md", "T1.2", 1, "verification", "passed", "evidence.path"),
+            ("wrong-child", ".superpowers/sdd/t1-2/wrong-child.md", "T1.1", 1, "verification", "passed", "evidence.child-mismatch"),
+            ("wrong-gate", ".superpowers/sdd/t1-2/wrong-gate.md", "T1.2", 2, "verification", "passed", "evidence.gate-mismatch"),
+            ("wrong-kind", ".superpowers/sdd/t1-2/wrong-kind.md", "T1.2", 1, "review", "accepted", "evidence.kind"),
+            ("wrong-result", ".superpowers/sdd/t1-2/wrong-result.md", "T1.2", 1, "verification", "failed", "evidence.result"),
+        )
+        for label, path, child, gate, kind, result, code in cases:
+            with self.subTest(label=label):
+                root = self.reviewed_root()
+                if label != "missing":
+                    self.stage_gate_evidence(root, path, child=child, gate=gate, kind=kind, result=result)
+                self.assert_refusal(code, plan_record_gate, root, "T1.2", 1, expect_open=True, evidence=(path,))
+
+        root = self.reviewed_root()
+        untracked = self.stage_gate_evidence(root, ".superpowers/sdd/t1-2/untracked.md")
+        run_git(root, "reset", "--", untracked)
+        self.assert_refusal("evidence.untracked", plan_record_gate, root, "T1.2", 1, expect_open=True, evidence=(untracked,))
+
+        root = self.reviewed_root()
+        dirty = self.stage_gate_evidence(root, ".superpowers/sdd/t1-2/dirty.md")
+        (root / dirty).write_text("changed", encoding="utf-8")
+        self.assert_refusal("evidence.dirty", plan_record_gate, root, "T1.2", 1, expect_open=True, evidence=(dirty,))
+
+    def test_record_gate_rejects_empty_duplicate_and_malformed_evidence_paths(self) -> None:
+        root = self.reviewed_root()
+        evidence = self.stage_gate_evidence(root)
+
+        self.assert_refusal("mutation.evidence", plan_record_gate, root, "T1.2", 1, expect_open=True, evidence=())
+        self.assert_refusal("mutation.evidence", plan_record_gate, root, "T1.2", 1, expect_open=True, evidence=(evidence, evidence))
+        for path in ("bad|path.md", "bad\npath.md", "../outside.md", "bad\\path.md"):
+            with self.subTest(path=path):
+                self.assert_refusal("mutation.evidence", plan_record_gate, root, "T1.2", 1, expect_open=True, evidence=(path,))
+
+    def test_record_and_reopen_gate_update_the_exact_marker_suffix_and_derived_count(self) -> None:
+        root = self.reviewed_root()
+        later = self.stage_gate_evidence(root, ".superpowers/sdd/t1-2/z-gate.md")
+        earlier = self.stage_gate_evidence(root, ".superpowers/sdd/t1-2/a-gate.md")
+
+        recorded = plan_record_gate(root, "T1.2", 1, expect_open=True, evidence=(later, earlier))
+
+        candidate = recorded.candidate.decode("utf-8")
+        self.assertIn("| 1/1 |", candidate)
+        self.assertIn(
+            "- [x] Frozen parser remains open. — Evidence: [verification](.superpowers/sdd/t1-2/a-gate.md) [verification](.superpowers/sdd/t1-2/z-gate.md)",
+            candidate,
+        )
+        self.assertEqual((earlier, later), recorded.audit.snapshot.backlog.children[1].gates.items[0].evidence)
+        (root / "BACKLOG.md").write_bytes(recorded.candidate)
+
+        reopened = plan_reopen_gate(root, "T1.2", 1, expect_closed=True, reason="Evidence contract changed")
+
+        reopened_text = reopened.candidate.decode("utf-8")
+        self.assertIn("| 0/1 |", reopened_text)
+        self.assertIn("- [ ] Frozen parser remains open.", reopened_text)
+        self.assertNotIn("Evidence: [verification](.superpowers/sdd/t1-2/a-gate.md)", reopened_text)
+        self.assertEqual("Reopened gate `1` for `T1.2`: Evidence contract changed", reopened.rationale)
+
+    def test_gate_edit_preserves_wrapped_lf_crlf_and_no_final_newline_bytes(self) -> None:
+        for newline, final_newline in ((b"\n", True), (b"\r\n", True), (b"\n", False)):
+            with self.subTest(newline=newline, final_newline=final_newline):
+                root = self.reviewed_root()
+                evidence = self.stage_gate_evidence(root)
+                target = root / "BACKLOG.md"
+                original = target.read_bytes().replace(b"Frozen parser remains open.", b"Frozen parser remains\n      open.")
+                original = original.replace(b"\n", newline)
+                if not final_newline:
+                    original = original.rstrip(b"\r\n")
+                target.write_bytes(original)
+
+                recorded = plan_record_gate(root, "T1.2", 1, expect_open=True, evidence=(evidence,))
+                recorded_lines = recorded.candidate.splitlines(keepends=True)
+                original_lines = original.splitlines(keepends=True)
+                changed = [index for index, pair in enumerate(zip(original_lines, recorded_lines)) if pair[0] != pair[1]]
+                self.assertEqual(3, len(changed))
+                self.assertTrue(recorded_lines[changed[0]].endswith(newline) or not final_newline)
+                self.assertEqual(original_lines[: changed[0]], recorded_lines[: changed[0]])
+                self.assertEqual(original_lines[changed[-1] + 1 :], recorded_lines[changed[-1] + 1 :])
+
+                (root / "BACKLOG.md").write_bytes(recorded.candidate)
+                reopened = plan_reopen_gate(root, "T1.2", 1, expect_closed=True, reason="Recheck evidence")
+                self.assertEqual(original, reopened.candidate)
+
+    def test_reopen_gate_requires_a_closed_gate_reviewed_child_and_reason(self) -> None:
+        root = self.reviewed_root()
+        evidence = self.stage_gate_evidence(root)
+        recorded = plan_record_gate(root, "T1.2", 1, expect_open=True, evidence=(evidence,))
+        (root / "BACKLOG.md").write_bytes(recorded.candidate)
+        run_git(root, "add", "--", "BACKLOG.md", "docs", ".superpowers")
+        run_git(root, "commit", "-qm", "Reviewed gate fixture")
+
+        self.assert_refusal("mutation.expected-gate", plan_reopen_gate, root, "T1.2", 1, expect_closed=False, reason="Recheck")
+        self.assert_refusal("mutation.gate", plan_reopen_gate, root, "T1.2", 2, expect_closed=True, reason="Recheck")
+        self.assert_refusal("mutation.reason", plan_reopen_gate, root, "T1.2", 1, expect_closed=True, reason=" bad")
+
+        verified = plan_transition(root, "T1.2", "verified", expect="reviewed")
+        (root / "BACKLOG.md").write_bytes(verified.candidate)
+        run_git(root, "add", "--", "BACKLOG.md", "docs", ".superpowers")
+        run_git(root, "commit", "-qm", "Verified evidence fixture")
+        self.assert_refusal("mutation.transition", plan_reopen_gate, root, "T1.2", 1, expect_closed=True, reason="Recheck")
+
+        reviewed = plan_transition(root, "T1.2", "reviewed", expect="verified")
+        (root / "BACKLOG.md").write_bytes(reviewed.candidate)
+        reopened = plan_reopen_gate(root, "T1.2", 1, expect_closed=True, reason="Recheck")
+        self.assertIn("| 0/1 |", reopened.candidate.decode("utf-8"))

@@ -152,9 +152,7 @@ def write_active_design(root: Path, path: str, *, children: tuple[str, ...], sta
     target.parent.mkdir(parents=True, exist_ok=True)
     targets = ", ".join(f"`{child}`" for child in children)
     approval = "2026-09-05 — Fixture" if status == "approved" else "—"
-    acceptance = "".join(
-        f"\n### {child} — {_FIXTURE_ACCEPTANCE[child][0]}\n\n- {_FIXTURE_ACCEPTANCE[child][1]}\n" for child in children
-    )
+    acceptance = "".join(f"\n### {child} — {_FIXTURE_ACCEPTANCE[child][0]}\n\n- {_FIXTURE_ACCEPTANCE[child][1]}\n" for child in children)
     target.write_text(
         "# Fixture design\n\n"
         "- **Governance:** active\n"
@@ -195,3 +193,29 @@ def write_active_plan(
         encoding="utf-8",
         newline="\n",
     )
+
+
+def reviewed_gate_fixture(root: Path) -> None:
+    """Prepare T1.2 for a gate edit with eligible staged child evidence."""
+    write_active_plan(
+        root,
+        "docs/superpowers/plans/t1-2.md",
+        status="completed",
+        completion_evidence=".superpowers/sdd/t1-2/completion.md",
+    )
+    write_evidence(root, ".superpowers/sdd/t1-2/completion.md", child="T1.2", gate=None)
+    write_evidence(root, ".superpowers/sdd/t1-2/review.md", child="T1.2", gate=None, kind="review", result="accepted")
+    replace_text(
+        root,
+        "BACKLOG.md",
+        (
+            "| `T1.2` | Typed parser, status report, and versioned JSON | `specified` | `T1.1` | "
+            "[design](docs/superpowers/specs/t1-design.md) | — | 0/1 | — | — | — |"
+        ),
+        (
+            "| `T1.2` | Typed parser, status report, and versioned JSON | `reviewed` | `T1.1` | "
+            "[design](docs/superpowers/specs/t1-design.md) | [plan](docs/superpowers/plans/t1-2.md) | "
+            "0/1 | [review](.superpowers/sdd/t1-2/review.md) | — | — |"
+        ),
+    )
+    run_git(root, "add", "--", ".superpowers")

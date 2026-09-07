@@ -8,7 +8,7 @@ import re
 from typing import Literal, NoReturn
 
 from backlog.audit import audit_repository
-from backlog.model import AuditLoad, BacklogChild, ChildStatus
+from backlog.model import AuditLoad, BacklogChild, ChildStatus, GateItem
 
 
 _TRANSITIONS = frozenset(
@@ -28,10 +28,9 @@ _TRANSITIONS = frozenset(
         ("verified", "reviewed"),
     }
 )
-_NONSUSPENDED = frozenset(
-    {"queued", "designing", "specified", "planned", "in_progress", "implemented", "reviewed", "verified"}
-)
+_NONSUSPENDED = frozenset({"queued", "designing", "specified", "planned", "in_progress", "implemented", "reviewed", "verified"})
 _LINK_CELLS = {"designing": ("specification", 4, "design"), "planned": ("plan", 5, "plan"), "reviewed": ("review", 7, "review")}
+_GATE_MARKER = re.compile(r"^- \[([ x])\] ")
 
 
 @dataclass(frozen=True, slots=True)
@@ -146,9 +145,82 @@ def _validate_reason(reason: str) -> None:
         _refuse("mutation.reason", "reason must be nonempty, trimmed, and free of table delimiters or line breaks")
 
 
-def _prepare_child(
-    root: Path, child_id: str, target_sha256: str | None
-) -> tuple[Path, Path, bytes, str, str, AuditLoad, BacklogChild, int]:
+def _validate_gate_evidence(evidence: tuple[str, ...]) -> tuple[str, ...]:
+    if not evidence:
+        _refuse("mutation.evidence", "gate recording requires one or more evidence paths")
+    normalized: list[str] = []
+    for path in evidence:
+        if not isinstance(path, str):
+            _refuse("mutation.evidence", "evidence paths must be repository-relative Markdown paths")
+        parts = path.split("/")
+        if (
+            not path.endswith(".md")
+            or path.startswith("/")
+            or "\\" in path
+            or ":" in path
+            or any(part in {"", ".", ".."} for part in parts)
+            or any(character in path for character in ("|", "\n", "\r", "(", ")"))
+        ):
+            _refuse("mutation.evidence", "evidence paths must be repository-relative Markdown paths")
+        normalized.append("/".join(parts))
+    if len(normalized) != len(set(normalized)):
+        _refuse("mutation.evidence", "evidence paths must not repeat after normalization")
+    return tuple(sorted(normalized))
+
+
+def _gate_item(child: BacklogChild, ordinal: int) -> GateItem:
+    if not isinstance(ordinal, int) or isinstance(ordinal, bool) or ordinal < 1 or ordinal > len(child.gates.items):
+        _refuse("mutation.gate", "gate ordinal must name one existing positive gate")
+    return child.gates.items[ordinal - 1]
+
+
+def _gate_edit(text: str, item: GateItem, *, close: bool, suffix: str = "") -> str:
+    """Edit only one parsed gate marker and its block's final content line."""
+    lines = text.splitlines(keepends=True)
+    start = item.source.line - 1
+    if not 0 <= start < len(lines):
+        _refuse("mutation.audit", "gate source line is outside BACKLOG.md")
+
+    def split_terminator(line: str) -> tuple[str, str]:
+        if line.endswith("\r\n"):
+            return line[:-2], "\r\n"
+        if line.endswith("\n"):
+            return line[:-1], "\n"
+        return line, ""
+
+    first, first_terminator = split_terminator(lines[start])
+    marker = _GATE_MARKER.match(first)
+    expected = " " if close else "x"
+    if marker is None or marker.group(1) != expected:
+        _refuse("mutation.audit", "parsed gate marker no longer matches BACKLOG.md")
+    lines[start] = f"{first[:3]}{'x' if close else ' '}{first[4:]}{first_terminator}"
+
+    end = start + 1
+    while end < len(lines):
+        content, _ = split_terminator(lines[end])
+        if _GATE_MARKER.match(content) is not None or content.startswith("#") or content and not content[:1].isspace():
+            break
+        end += 1
+    content_indexes = [index for index in range(start, end) if split_terminator(lines[index])[0]]
+    if not content_indexes:
+        _refuse("mutation.audit", "gate block has no content line")
+    last = content_indexes[-1]
+    content, terminator = split_terminator(lines[last])
+    if close:
+        lines[last] = f"{content}{suffix}{terminator}"
+    else:
+        if not content.endswith(suffix):
+            _refuse("mutation.audit", "parsed gate evidence suffix no longer matches BACKLOG.md")
+        lines[last] = f"{content[: -len(suffix)]}{terminator}"
+    return "".join(lines)
+
+
+def _gate_count(child: BacklogChild, item: GateItem, *, satisfied: bool) -> str:
+    values = tuple(satisfied if candidate.ordinal == item.ordinal else candidate.satisfied for candidate in child.gates.items)
+    return f"{sum(values)}/{len(values)}"
+
+
+def _prepare_child(root: Path, child_id: str, target_sha256: str | None) -> tuple[Path, Path, bytes, str, str, AuditLoad, BacklogChild, int]:
     resolved, target = _target(root)
     original, original_text = _read_target(target)
     original_sha256 = _sha256(original)
@@ -172,10 +244,15 @@ def _finish_plan(
     candidate_text: str,
     summary: str,
     rationale: str,
+    *,
+    preserve_candidate_finding: bool = False,
 ) -> MutationPlan:
     candidate = candidate_text.encode("utf-8")
     candidate_audit = audit_repository(resolved, backlog_text=candidate_text)
     if _has_errors(candidate_audit):
+        if preserve_candidate_finding:
+            finding = next(finding for finding in candidate_audit.findings if finding.severity == "error")
+            _refuse(finding.code, f"planned gate mutation fails repository audit: {finding.message}")
         _refuse("mutation.audit", "planned lifecycle mutation fails repository audit")
     diff = "".join(
         difflib.unified_diff(
@@ -367,4 +444,72 @@ def plan_resume(
         candidate_text,
         f"Resume `{child}` as `{resume}`.",
         rationale,
+    )
+
+
+def plan_record_gate(
+    root: Path,
+    child: str,
+    ordinal: int,
+    *,
+    expect_open: bool,
+    evidence: tuple[str, ...],
+    target_sha256: str | None = None,
+) -> MutationPlan:
+    """Plan closing one open gate with eligible evidence."""
+    paths = _validate_gate_evidence(evidence)
+    resolved, backlog_path, original, original_text, original_sha256, _, current, line = _prepare_child(root, child, target_sha256)
+    if current.status != "reviewed":
+        _refuse("mutation.transition", "gate recording requires an explicitly reviewed child")
+    item = _gate_item(current, ordinal)
+    if not expect_open or item.satisfied:
+        _refuse("mutation.expected-gate", "gate state differs from the expected open value")
+    suffix = " — Evidence: " + " ".join(f"[verification]({path})" for path in paths)
+    candidate_text = _gate_edit(original_text, item, close=True, suffix=suffix)
+    candidate_text = _inventory_line(candidate_text, line, {6: _gate_count(current, item, satisfied=True)})
+    rationale = f"Recorded gate `{ordinal}` for `{child}` with eligible evidence."
+    return _finish_plan(
+        resolved,
+        backlog_path,
+        original,
+        original_text,
+        original_sha256,
+        candidate_text,
+        f"Record gate `{ordinal}` for `{child}`.",
+        rationale,
+        preserve_candidate_finding=True,
+    )
+
+
+def plan_reopen_gate(
+    root: Path,
+    child: str,
+    ordinal: int,
+    *,
+    expect_closed: bool,
+    reason: str,
+    target_sha256: str | None = None,
+) -> MutationPlan:
+    """Plan reopening one closed gate with explicit rationale."""
+    _validate_reason(reason)
+    resolved, backlog_path, original, original_text, original_sha256, _, current, line = _prepare_child(root, child, target_sha256)
+    if current.status != "reviewed":
+        _refuse("mutation.transition", "gate reopening requires an explicitly reviewed child")
+    item = _gate_item(current, ordinal)
+    if not expect_closed or not item.satisfied:
+        _refuse("mutation.expected-gate", "gate state differs from the expected closed value")
+    suffix = " — Evidence: " + " ".join(f"[verification]({path})" for path in item.evidence)
+    candidate_text = _gate_edit(original_text, item, close=False, suffix=suffix)
+    candidate_text = _inventory_line(candidate_text, line, {6: _gate_count(current, item, satisfied=False)})
+    rationale = f"Reopened gate `{ordinal}` for `{child}`: {reason}"
+    return _finish_plan(
+        resolved,
+        backlog_path,
+        original,
+        original_text,
+        original_sha256,
+        candidate_text,
+        f"Reopen gate `{ordinal}` for `{child}`.",
+        rationale,
+        preserve_candidate_finding=True,
     )

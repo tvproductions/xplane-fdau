@@ -3,6 +3,7 @@ from __future__ import annotations
 from contextlib import nullcontext
 from dataclasses import dataclass, replace
 import importlib.util
+import hashlib
 from io import StringIO
 import json
 import os
@@ -20,7 +21,7 @@ SCRIPTS = ROOT / ".codex/skills/backlog-status/scripts"
 FIXTURE = ROOT / "tests/fixtures/backlog_status/valid"
 sys.path.insert(0, str(SCRIPTS))
 
-from tests.backlog_audit_support import audit_fixture, replace_text, run_git, write_evidence  # noqa: E402
+from tests.backlog_audit_support import audit_fixture, replace_text, reviewed_gate_fixture, run_git, write_active_plan, write_evidence  # noqa: E402
 from backlog.audit import load_audit  # noqa: E402  # ty: ignore[unresolved-import]
 from backlog.model import Finding, GitState  # noqa: E402  # ty: ignore[unresolved-import]
 
@@ -61,6 +62,129 @@ class BacklogStatusCliTests(unittest.TestCase):
         with git_context:
             code = module.main(argv, root=root, stdout=output, stderr=errors)
         return CliResult(code, output.getvalue(), errors.getvalue())
+
+    def test_all_mutation_dry_runs_render_candidate_and_preserve_every_file(self) -> None:
+        cases = (
+            ["select", "T1.2", "--expect-current", "none"],
+            ["transition", "T1.2", "planned", "--expect", "specified", "--plan", "docs/superpowers/plans/t1-2.md"],
+            [
+                "record-gate",
+                "T1.2",
+                "1",
+                "--expect-open",
+                "--evidence",
+                ".superpowers/sdd/t1-2/gate-1.md",
+                "--evidence",
+                ".superpowers/sdd/t1-2/gate-1-artifact.md",
+            ],
+            ["reopen-gate", "T1.2", "1", "--expect-closed", "--reason", "Evidence contract changed"],
+            ["suspend", "T1.2", "blocked", "--expect", "specified", "--reason", "Named prerequisite unavailable"],
+            ["resume", "T1.2", "--expect", "blocked", "--resume", "specified", "--reason", "Prerequisite restored"],
+        )
+        for args in cases:
+            with self.subTest(command=args[0]):
+                root = self.fixture_root()
+                if args[0] == "transition":
+                    write_active_plan(root, "docs/superpowers/plans/t1-2.md")
+                elif args[0] in {"record-gate", "reopen-gate"}:
+                    reviewed_gate_fixture(root)
+                    for path in (".superpowers/sdd/t1-2/gate-1.md", ".superpowers/sdd/t1-2/gate-1-artifact.md"):
+                        write_evidence(root, path, child="T1.2")
+                    run_git(root, "add", "--", ".superpowers")
+                    if args[0] == "reopen-gate":
+                        replace_text(root, "BACKLOG.md", "| 0/1 |", "| 1/1 |")
+                        replace_text(
+                            root,
+                            "BACKLOG.md",
+                            "- [ ] Frozen parser remains open.",
+                            "- [x] Frozen parser remains open. — Evidence: [verification](.superpowers/sdd/t1-2/gate-1.md)",
+                        )
+                elif args[0] == "resume":
+                    replace_text(root, "BACKLOG.md", "`specified`", "`blocked`")
+                    replace_text(root, "BACKLOG.md", "| 0/1 | — | — | — |", "| 0/1 | — | `specified` | Named prerequisite unavailable |")
+                before = {path.relative_to(root): path.read_bytes() for path in root.rglob("*") if path.is_file()}
+                digest = hashlib.sha256((root / "BACKLOG.md").read_bytes()).hexdigest()
+                result = self.run_cli([*args, "--target-sha256", digest], root=root, mock_git=False)
+                self.assertEqual(0, result.code, result.stdout + result.stderr)
+                self.assertEqual("", result.stderr)
+                for marker in (
+                    "Mutation:",
+                    "Mode: dry-run",
+                    "Target: BACKLOG.md",
+                    "Original SHA-256:",
+                    "Candidate SHA-256:",
+                    "Rationale:",
+                    "Diff:",
+                    "--- a/BACKLOG.md",
+                    "+++ b/BACKLOG.md",
+                    "Post-change audit:",
+                    "Repository: xplane-fdau",
+                ):
+                    self.assertIn(marker, result.stdout)
+                self.assertNotIn("\r", result.stdout)
+                self.assertEqual(before, {path.relative_to(root): path.read_bytes() for path in root.rglob("*") if path.is_file()})
+                if args[0] == "select":
+                    self.assertIn("dependency-ready=yes", result.stdout)
+
+    def test_mutation_output_is_lf_even_when_backlog_uses_crlf(self) -> None:
+        root = self.fixture_root()
+        target = root / "BACKLOG.md"
+        original = target.read_bytes().replace(b"\n", b"\r\n")
+        target.write_bytes(original)
+        result = self.run_cli(["select", "T1.2", "--expect-current", "none"], root=root)
+        self.assertEqual(0, result.code, result.stdout + result.stderr)
+        self.assertNotIn("\r", result.stdout)
+        self.assertEqual(original, target.read_bytes())
+
+    def test_apply_changes_only_backlog_and_returns_ordinary_valid_audit(self) -> None:
+        root = self.fixture_root()
+        before = {path.relative_to(root): path.read_bytes() for path in root.rglob("*") if path.is_file()}
+        result = self.run_cli(["select", "T1.2", "--expect-current", "none", "--apply"], root=root, mock_git=False)
+        self.assertEqual(0, result.code, result.stdout + result.stderr)
+        self.assertIn("Mode: applied", result.stdout)
+        after = {path.relative_to(root): path.read_bytes() for path in root.rglob("*") if path.is_file()}
+        self.assertEqual(before.keys(), after.keys())
+        self.assertEqual([Path("BACKLOG.md")], [path for path in before if before[path] != after[path]])
+        self.assertEqual(0, self.run_cli(["audit"], root=root, mock_git=False).code)
+
+    def test_mutation_domain_refusals_use_stdout_and_status_one(self) -> None:
+        root = self.fixture_root()
+        for args in (
+            ["select", "T1.2", "--expect-current", "T1.1"],
+            ["select", "T1.2", "--expect-current", "none", "--target-sha256", "0" * 64],
+            ["record-gate", "T1.2", "1", "--expect-open", "--evidence", "a.md", "--evidence", "a.md"],
+        ):
+            result = self.run_cli(args, root=root)
+            self.assertEqual(1, result.code, result.stderr)
+            self.assertEqual("", result.stderr)
+            self.assertIn("mutation.", result.stdout)
+            self.assertNotIn("Traceback", result.stdout)
+
+    def test_mutation_invalid_grammar_is_usage_error(self) -> None:
+        root = self.fixture_root()
+        valid = ["select", "T1.2", "--expect-current", "none"]
+        cases = (
+            ["select", "T1.2"],
+            ["transition", "T1.2", "planned"],
+            ["transition", "T1.2", "released", "--expect", "verified"],
+            ["transition", "T1.2", "unknown", "--expect", "specified"],
+            ["record-gate", "T1.2", "1", "--expect-open"],
+            ["record-gate", "T1.2", "1", "--expect-open=false", "--evidence", "a.md"],
+            ["reopen-gate", "T1.2", "1", "--expect-closed=false", "--reason", "reason"],
+            ["record-gate", "T1.2", "0", "--expect-open", "--evidence", "a.md"],
+            ["record-gate", "T1.2", "x", "--expect-open", "--evidence", "a.md"],
+            ["suspend", "T1.2", "blocked", "--reason", "reason"],
+            ["resume", "T1.2", "--resume", "specified", "--reason", "reason"],
+            [*valid, "--json"],
+            [*valid, "--target-sha256", "A" * 64],
+            ["audit", "--target-sha256", "0" * 64],
+        )
+        for args in cases:
+            with self.subTest(args=args):
+                result = self.run_cli(args, root=root)
+                self.assertEqual(2, result.code)
+                self.assertEqual("", result.stdout)
+                self.assertIn("usage:", result.stderr)
 
     def test_status_writes_human_report_to_stdout(self) -> None:
         status = self.run_cli(["status"], root=self.fixture_root())

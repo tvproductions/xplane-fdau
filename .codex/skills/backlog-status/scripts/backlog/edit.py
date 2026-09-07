@@ -3,8 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 import difflib
 import hashlib
+import os
 from pathlib import Path
 import re
+import stat
+import tempfile
 from typing import Literal, NoReturn
 
 from backlog.audit import audit_repository
@@ -87,6 +90,83 @@ def _sha256(content: bytes) -> str:
 
 def _has_errors(loaded: AuditLoad) -> bool:
     return any(finding.severity == "error" for finding in loaded.findings)
+
+
+def _recheck_original(plan: MutationPlan) -> None:
+    if plan.target.read_bytes() != plan.original:
+        _refuse("mutation.stale", "BACKLOG.md changed after mutation planning")
+
+
+def _write_partial(fd: int, candidate: bytes) -> None:
+    """Own the descriptor and close the writer before publication can continue."""
+    try:
+        stream = os.fdopen(fd, "wb")
+    except Exception as opening:
+        try:
+            os.close(fd)
+        except OSError as closing:
+            raise OSError(f"{opening}; closing partial descriptor also failed: {closing}") from opening
+        raise
+    primary: Exception | None = None
+    try:
+        with stream:
+            try:
+                if stream.write(candidate) != len(candidate):
+                    raise OSError("short write of mutation candidate")
+                stream.flush()
+                os.fsync(stream.fileno())
+            except Exception as error:
+                primary = error
+                raise
+    except Exception as closing:
+        if primary is not None and closing is not primary:
+            raise OSError(f"{primary}; closing partial also failed: {closing}") from primary
+        raise
+
+
+def _publication_failure(primary: Exception, partial: Path | None) -> NoReturn:
+    message = str(primary)
+    if partial is not None:
+        try:
+            partial.unlink()
+        except OSError as cleanup:
+            message += f"; cleanup failed for {partial}: {cleanup}"
+    code = primary.code if isinstance(primary, MutationRefusal) else "mutation.publish"
+    raise MutationRefusal(code, message) from primary
+
+
+def publish_mutation(plan: MutationPlan) -> AuditLoad:
+    """Atomically publish an unchanged, freshly audited BACKLOG.md candidate."""
+    partial: Path | None = None
+    try:
+        if plan.target != plan.root / "BACKLOG.md":
+            _refuse("mutation.target", "publication target must be the repository BACKLOG.md")
+        target_stat = plan.target.stat(follow_symlinks=False)
+        if not stat.S_ISREG(target_stat.st_mode):
+            _refuse("mutation.target", "BACKLOG.md must be a regular non-symlink file")
+        mode = stat.S_IMODE(target_stat.st_mode)
+        _recheck_original(plan)
+        fd, name = tempfile.mkstemp(prefix=f".{plan.target.name}.", suffix=".tmp", dir=plan.target.parent)
+        partial = Path(name)
+        _write_partial(fd, plan.candidate)
+        os.chmod(partial, mode)
+        _recheck_original(plan)
+        fresh = audit_repository(plan.root, backlog_text=plan.candidate.decode("utf-8"))
+        if _has_errors(fresh):
+            _refuse(
+                "mutation.audit",
+                "fresh candidate audit failed: " + "; ".join(f"{item.code}: {item.message}" for item in fresh.findings if item.severity == "error"),
+            )
+        os.replace(partial, plan.target)
+    except Exception as primary:
+        _publication_failure(primary, partial)
+    try:
+        final = audit_repository(plan.root)
+        if _has_errors(final):
+            _refuse("mutation.audit", "; ".join(f"{item.code}: {item.message}" for item in final.findings if item.severity == "error"))
+    except Exception as error:
+        raise MutationRefusal("mutation.published", f"BACKLOG.md was published, but its final audit failed; do not retry: {error}") from error
+    return final
 
 
 def _selection_line(text: str, line_number: int, replacement: str) -> str:

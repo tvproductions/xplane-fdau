@@ -4,8 +4,10 @@ from dataclasses import FrozenInstanceError, is_dataclass, replace
 import hashlib
 from pathlib import Path
 import os
+import stat
 import sys
 import tempfile
+from typing import override
 import unittest
 from unittest.mock import patch
 
@@ -37,6 +39,283 @@ from backlog.edit import (  # noqa: E402  # ty: ignore[unresolved-import]
     _TRANSITIONS,
 )
 from backlog.model import Finding  # noqa: E402  # ty: ignore[unresolved-import]
+from backlog import edit  # noqa: E402  # ty: ignore[unresolved-import]
+
+
+class PublicationTests(unittest.TestCase):
+    @override
+    def setUp(self) -> None:
+        self.root = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        audit_fixture(self.root)
+        self.plan = plan_selection(self.root, "T1.2", expect_current=None)
+
+    def publish(self):
+        self.assertTrue(callable(getattr(edit, "publish_mutation", None)), "publication boundary is absent")
+        return edit.publish_mutation(self.plan)
+
+    def assert_unpublished(self) -> None:
+        self.assertEqual(self.plan.original, self.plan.target.read_bytes())
+        self.assertEqual([], list(self.root.glob(".BACKLOG.md.*.tmp")))
+
+    def test_success_publishes_exact_bytes_preserves_mode_and_closes_before_replace(self) -> None:
+        mode = stat.S_IMODE(self.plan.target.stat().st_mode)
+        original_replace = os.replace
+        partials: list[Path] = []
+
+        def replace_closed(source, target):
+            partial = Path(source)
+            partials.append(partial)
+            self.assertEqual(self.root, partial.parent)
+            self.assertRegex(partial.name, r"^\.BACKLOG\.md\..+\.tmp$")
+            self.assertEqual(mode, stat.S_IMODE(partial.stat().st_mode))
+            self.assertEqual(self.plan.candidate, partial.read_bytes())
+            # Windows refuses this rename if the writer is still open.
+            return original_replace(source, target)
+
+        with patch("os.replace", side_effect=replace_closed):
+            loaded = self.publish()
+        self.assertEqual((), loaded.findings)
+        self.assertEqual(self.plan.candidate, self.plan.target.read_bytes())
+        self.assertEqual(1, len(partials))
+        self.assertFalse(partials[0].exists())
+
+    def test_initial_stale_target_refuses_before_creating_a_partial(self) -> None:
+        changed = self.plan.original + b"\n"
+        self.plan.target.write_bytes(changed)
+        with patch("tempfile.mkstemp", side_effect=AssertionError("stale plan created a partial")):
+            with self.assertRaises(MutationRefusal) as raised:
+                self.publish()
+        self.assertEqual("mutation.stale", raised.exception.code)
+        self.assertEqual(changed, self.plan.target.read_bytes())
+
+    def test_fresh_candidate_audit_refuses_changed_non_target_authority(self) -> None:
+        evidence = self.root / ".superpowers/sdd/t1-1/gate-1.md"
+        evidence.write_bytes(evidence.read_bytes() + b"Changed after planning.\n")
+        with self.assertRaises(MutationRefusal) as raised:
+            self.publish()
+        self.assertEqual("mutation.audit", raised.exception.code)
+        self.assert_unpublished()
+
+    def test_prepublication_io_failures_preserve_original_and_remove_partial(self) -> None:
+        for seam in ("mkstemp", "fsync", "chmod", "replace"):
+            with self.subTest(seam=seam):
+                module = "tempfile" if seam == "mkstemp" else "os"
+                with patch(f"{module}.{seam}", side_effect=OSError(f"{seam} failed")):
+                    with self.assertRaises(MutationRefusal) as raised:
+                        self.publish()
+                self.assertEqual("mutation.publish", raised.exception.code)
+                self.assertIn(f"{seam} failed", str(raised.exception))
+                self.assert_unpublished()
+
+    def test_target_stat_failure_is_a_domain_refusal_without_publication(self) -> None:
+        original_stat = Path.stat
+
+        def failing_stat(path, *args, **kwargs):
+            if path == self.plan.target:
+                raise OSError("target stat failed")
+            return original_stat(path, *args, **kwargs)
+
+        with patch.object(Path, "stat", failing_stat):
+            with self.assertRaises(MutationRefusal) as raised:
+                self.publish()
+        self.assertIn("target stat failed", str(raised.exception))
+        self.assert_unpublished()
+
+    def test_cleanup_failure_keeps_primary_first_and_names_owned_partial(self) -> None:
+        with patch("os.replace", side_effect=OSError("primary replace failed")):
+            with patch.object(Path, "unlink", side_effect=OSError("cleanup failed")):
+                with self.assertRaises(MutationRefusal) as raised:
+                    self.publish()
+        partials = list(self.root.glob(".BACKLOG.md.*.tmp"))
+        self.assertEqual(1, len(partials))
+        message = str(raised.exception)
+        self.assertLess(message.index("primary replace failed"), message.index("cleanup failed"))
+        self.assertIn(str(partials[0]), message)
+        self.assertEqual(self.plan.original, self.plan.target.read_bytes())
+
+    def test_descriptor_cleanup_failure_keeps_open_failure_first(self) -> None:
+        real_close = os.close
+
+        def close_then_fail(fd):
+            real_close(fd)
+            raise OSError("descriptor cleanup failed")
+
+        with patch("os.fdopen", side_effect=OSError("opening partial failed")), patch("os.close", side_effect=close_then_fail):
+            with self.assertRaises(MutationRefusal) as raised:
+                self.publish()
+        message = str(raised.exception)
+        self.assertIn("opening partial failed", message)
+        self.assertLess(message.index("opening partial failed"), message.index("descriptor cleanup failed"))
+        self.assert_unpublished()
+
+    def test_failure_cleans_only_owned_partial_and_leaves_other_siblings(self) -> None:
+        other = self.root / ".BACKLOG.md.other-owner.tmp"
+        other.write_bytes(b"another writer")
+        with patch("os.fsync", side_effect=OSError("fsync failed")):
+            with self.assertRaises(MutationRefusal):
+                self.publish()
+        self.assertEqual(b"another writer", other.read_bytes())
+        self.assertEqual([other], list(self.root.glob(".BACKLOG.md.*.tmp")))
+        self.assertEqual(self.plan.original, self.plan.target.read_bytes())
+
+    def test_final_audit_failure_reports_published_state_and_no_retry(self) -> None:
+        def fail_final(root, *, backlog_text=None):
+            if backlog_text is None:
+                raise OSError("final audit failed")
+            return audit_repository(root, backlog_text=backlog_text)
+
+        with patch("backlog.edit.audit_repository", side_effect=fail_final):
+            with self.assertRaises(MutationRefusal) as raised:
+                self.publish()
+        self.assertEqual("mutation.published", raised.exception.code)
+        self.assertIn("do not retry", str(raised.exception).lower())
+        self.assertEqual(self.plan.candidate, self.plan.target.read_bytes())
+        self.assertEqual([], list(self.root.glob(".BACKLOG.md.*.tmp")))
+
+    def test_write_flush_close_failures_and_short_write_do_not_publish(self) -> None:
+        real_fdopen = os.fdopen
+        for stage in ("write", "short-write", "flush", "close"):
+            with self.subTest(stage=stage):
+
+                class FaultyStream:
+                    def __init__(self, fd, mode):
+                        self.stream = real_fdopen(fd, mode)
+
+                    def write(self, data):
+                        if stage == "write":
+                            raise OSError("write failed")
+                        if stage == "short-write":
+                            return self.stream.write(data[:-1])
+                        return self.stream.write(data)
+
+                    def flush(self):
+                        if stage == "flush":
+                            raise OSError("flush failed")
+                        return self.stream.flush()
+
+                    def fileno(self):
+                        return self.stream.fileno()
+
+                    def close(self):
+                        self.stream.close()
+                        if stage == "close":
+                            raise OSError("close failed")
+
+                    def __enter__(self):
+                        return self
+
+                    def __exit__(self, *args):
+                        self.close()
+
+                with patch("os.fdopen", side_effect=FaultyStream):
+                    with self.assertRaises(MutationRefusal) as raised:
+                        self.publish()
+                self.assertEqual("mutation.publish", raised.exception.code)
+                self.assert_unpublished()
+
+    def test_publication_orders_durability_stale_checks_and_fresh_audits(self) -> None:
+        events: list[str] = []
+        real_stat, real_read = Path.stat, Path.read_bytes
+        real_create, real_fdopen = tempfile.mkstemp, os.fdopen
+        real_fsync, real_chmod, real_replace = os.fsync, os.chmod, os.replace
+
+        def observed_stat(path, *args, **kwargs):
+            if path == self.plan.target and kwargs.get("follow_symlinks") is False:
+                events.append("mode")
+            return real_stat(path, *args, **kwargs)
+
+        def observed_read(path):
+            if path == self.plan.target and "final-audit" not in events:
+                events.append("recheck")
+            return real_read(path)
+
+        def create(**kwargs):
+            events.append("create")
+            return real_create(**kwargs)
+
+        class ObservedStream:
+            def __init__(self, fd, mode):
+                self.stream = real_fdopen(fd, mode)
+
+            def write(self, data):
+                events.append("write")
+                return self.stream.write(data)
+
+            def flush(self):
+                events.append("flush")
+                return self.stream.flush()
+
+            def fileno(self):
+                return self.stream.fileno()
+
+            def close(self):
+                events.append("close")
+                self.stream.close()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                self.close()
+
+        def fsync(fd):
+            events.append("fsync")
+            return real_fsync(fd)
+
+        def chmod(path, mode):
+            events.append("chmod")
+            return real_chmod(path, mode)
+
+        def audit(root, *, backlog_text=None):
+            events.append("final-audit" if backlog_text is None else "candidate-audit")
+            return audit_repository(root, backlog_text=backlog_text)
+
+        def publish_replace(source, target):
+            events.append("replace")
+            return real_replace(source, target)
+
+        with patch.object(Path, "stat", observed_stat), patch.object(Path, "read_bytes", observed_read):
+            with patch("tempfile.mkstemp", side_effect=create), patch("os.fdopen", side_effect=ObservedStream):
+                with patch("os.fsync", side_effect=fsync), patch("os.chmod", side_effect=chmod), patch("os.replace", side_effect=publish_replace):
+                    with patch("backlog.edit.audit_repository", side_effect=audit):
+                        loaded = self.publish()
+        self.assertEqual((), loaded.findings)
+        self.assertEqual(
+            ["mode", "recheck", "create", "write", "flush", "fsync", "close", "chmod", "recheck", "candidate-audit", "replace", "final-audit"], events
+        )
+        self.assertEqual(self.plan.candidate, self.plan.target.read_bytes())
+
+    def test_final_stale_recheck_failure_cleans_partial(self) -> None:
+        original_read = Path.read_bytes
+        reads = 0
+
+        def fail_second_read(path):
+            nonlocal reads
+            if path == self.plan.target:
+                reads += 1
+                if reads == 2:
+                    return self.plan.original + b"changed"
+            return original_read(path)
+
+        with patch.object(Path, "read_bytes", fail_second_read):
+            with self.assertRaises(MutationRefusal) as raised:
+                self.publish()
+        self.assertEqual("mutation.stale", raised.exception.code)
+        self.assert_unpublished()
+
+    def test_final_audit_error_finding_is_a_published_state_refusal(self) -> None:
+        failure = Finding("fixture.error", "error", "BACKLOG.md", 1, None, None, "final audit invalid")
+
+        def audit(root, *, backlog_text=None):
+            loaded = audit_repository(root, backlog_text=backlog_text)
+            return replace(loaded, findings=(failure,)) if backlog_text is None else loaded
+
+        with patch("backlog.edit.audit_repository", side_effect=audit):
+            with self.assertRaises(MutationRefusal) as raised:
+                self.publish()
+        self.assertEqual("mutation.published", raised.exception.code)
+        self.assertIn("do not retry", str(raised.exception).lower())
+        self.assertEqual(self.plan.candidate, self.plan.target.read_bytes())
 
 
 class SelectionPlanningTests(unittest.TestCase):

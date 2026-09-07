@@ -1,12 +1,12 @@
 # T1.6 Skill, Session-Entry, Hygiene, and Artifact Closure Implementation Plan
 
 - **Governance:** active
-- **Status:** in_progress
+- **Status:** completed
 - **Date:** 2026-09-07
 - **Roadmap child:** `T1.6`
 - **Source specification:** `docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md`
 - **Approval:** 2026-09-07 — Jeff / tvproductions
-- **Completion evidence:** —
+- **Completion evidence:** `.superpowers/sdd/2026-09-07-t1-6-skill-session-hygiene-artifact-closure/completion.md`
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -458,11 +458,15 @@
 
 ### Task 5: T1.6 lifecycle, independent review, evidence, and closeout
 
+Tasks 1-4 are implemented. Completion metadata records the Step 2
+implementation handoff; Steps 3-8 remain the subsequent independent-review,
+acceptance-evidence, installed-artifact, and verified-state closeout work.
+
 **Files:** Modify this plan, `BACKLOG.md`, `HANDOFF.md`, `tests/test_backlog_governance.py`, and `tests/test_backlog_status_cli.py`; create `.superpowers/sdd/2026-09-07-t1-6-skill-session-hygiene-artifact-closure/completion.md`, `review.md`, and `gate-1.md` through `gate-5.md`.
 
 **Interfaces:** The committed final backlog has T1.6 `verified` at 5/5, no selected child, and deterministic recommendation `T2.1`/`write_plan`. Runtime, external boundaries, G1, release, tag, and publication state remain unchanged.
 
-- [ ] **Step 1: Establish coherent planned and in-progress states with the guarded CLI**
+- [x] **Step 1: Establish coherent planned and in-progress states with the guarded CLI**
 
   With this approved plan present, run:
 
@@ -472,7 +476,7 @@
 
   Inspect the diff and candidate audit, then repeat the exact command with its printed `--target-sha256` and `--apply`. Next dry-run/apply `select T1.6 --expect-current none`. Change this plan's status to `in_progress`; then dry-run/apply `transition T1.6 in_progress --expect planned`. Run `audit`, JSON `status`, and `next` after every applied change. Commit the plan and coherent in-progress state before implementation commits.
 
-- [ ] **Step 2: Complete implementation and record completion evidence**
+- [x] **Step 2: Complete implementation and record completion evidence**
 
   After Tasks 1-4 pass, run:
 

@@ -941,8 +941,11 @@ class GovernanceArtifactTests(unittest.TestCase):
             active_plans["2026-09-06-t1-5-guarded-child-state-mutations.md"]["Completion evidence"],
         )
         self.assertEqual("`T1.6`", active_plans["2026-09-07-t1-6-skill-session-hygiene-artifact-closure.md"]["Roadmap child"])
-        self.assertEqual("in_progress", active_plans["2026-09-07-t1-6-skill-session-hygiene-artifact-closure.md"]["Status"])
-        self.assertEqual("—", active_plans["2026-09-07-t1-6-skill-session-hygiene-artifact-closure.md"]["Completion evidence"])
+        self.assertEqual("completed", active_plans["2026-09-07-t1-6-skill-session-hygiene-artifact-closure.md"]["Status"])
+        self.assertEqual(
+            "`.superpowers/sdd/2026-09-07-t1-6-skill-session-hygiene-artifact-closure/completion.md`",
+            active_plans["2026-09-07-t1-6-skill-session-hygiene-artifact-closure.md"]["Completion evidence"],
+        )
 
     def test_historical_artifacts_name_their_disposition(self) -> None:
         historical_paths = (

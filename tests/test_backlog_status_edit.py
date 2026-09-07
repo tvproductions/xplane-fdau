@@ -9,13 +9,22 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from tests.backlog_audit_support import audit_fixture, replace_bytes
+from tests.backlog_audit_support import audit_fixture, replace_bytes, replace_text, run_git, write_active_design, write_active_plan, write_evidence
 
 SCRIPTS = Path(__file__).resolve().parents[1] / ".codex" / "skills" / "backlog-status" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 from backlog.audit import audit_repository  # noqa: E402  # ty: ignore[unresolved-import]
-from backlog.edit import MutationPlan, MutationRefusal, plan_selection  # noqa: E402  # ty: ignore[unresolved-import]
+from backlog.edit import (  # noqa: E402  # ty: ignore[unresolved-import]
+    MutationPlan,
+    MutationRefusal,
+    plan_resume,
+    plan_selection,
+    plan_suspend,
+    plan_transition,
+    _NONSUSPENDED,
+    _TRANSITIONS,
+)
 from backlog.model import Finding  # noqa: E402  # ty: ignore[unresolved-import]
 
 
@@ -176,3 +185,161 @@ class SelectionBytePreservationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LifecyclePlanningTests(unittest.TestCase):
+    def copy_fixture_root(self) -> Path:
+        root = Path(self.enterContext(tempfile.TemporaryDirectory())) / "repository"
+        audit_fixture(root)
+        return root
+
+    def assert_refusal(self, code: str, planner, *args: object, **kwargs: object) -> None:  # type: ignore[no-untyped-def]
+        with self.assertRaises(MutationRefusal) as raised:
+            planner(*args, **kwargs)
+        self.assertEqual(code, raised.exception.code)
+
+    def test_transition_allows_exact_closed_graph_only(self) -> None:
+        allowed = {
+            ("queued", "designing"), ("designing", "specified"), ("specified", "planned"),
+            ("planned", "in_progress"), ("in_progress", "implemented"),
+            ("implemented", "reviewed"), ("reviewed", "verified"), ("specified", "designing"),
+            ("planned", "specified"), ("in_progress", "planned"), ("implemented", "in_progress"),
+            ("reviewed", "implemented"), ("verified", "reviewed"),
+        }
+        self.assertEqual(allowed, _TRANSITIONS)
+        root = self.copy_fixture_root()
+        for target in ("queued", "specified", "in_progress", "implemented", "reviewed", "verified"):
+            with self.subTest(target=target):
+                self.assert_refusal("mutation.transition", plan_transition, root, "T1.2", target, expect="specified")
+        self.assert_refusal("mutation.transition", plan_transition, root, "T1.2", "released", expect="specified")
+
+    def test_transition_refuses_stale_expected_status_before_candidate(self) -> None:
+        root = self.copy_fixture_root()
+
+        self.assert_refusal("mutation.expected-status", plan_transition, root, "T1.2", "planned", expect="queued")
+
+    def test_transition_updates_only_the_allowed_link_cell_and_preserves_other_cells(self) -> None:
+        root = self.copy_fixture_root()
+        original = (root / "BACKLOG.md").read_bytes()
+        write_active_plan(root, "docs/superpowers/plans/t1-2.md")
+
+        plan = plan_transition(root, "T1.2", "planned", expect="specified", plan="docs/superpowers/plans/t1-2.md")
+
+        before = next(line for line in original.decode("utf-8").splitlines() if line.startswith("| `T1.2` |"))
+        after = next(line for line in plan.candidate.decode("utf-8").splitlines() if line.startswith("| `T1.2` |"))
+        self.assertEqual(before.split("|")[1:3], after.split("|")[1:3])
+        self.assertEqual(before.split("|")[4:5], after.split("|")[4:5])
+        self.assertEqual(" `planned` ", after.split("|")[3])
+        self.assertEqual(" [plan](docs/superpowers/plans/t1-2.md) ", after.split("|")[6])
+        self.assertEqual(before.split("|")[7:], after.split("|")[7:])
+        self.assertEqual("Requested lifecycle transition from `specified` to `planned`.", plan.rationale)
+
+    def test_transition_accepts_stage_specific_specification_and_review_links(self) -> None:
+        root = self.copy_fixture_root()
+        write_active_design(root, "docs/superpowers/specs/t1-1-design.md", children=("T1.1",))
+        write_active_design(root, "docs/superpowers/specs/t1-design.md", children=("T1.2",), status="draft")
+        replace_text(
+            root,
+            "BACKLOG.md",
+            "[design](docs/superpowers/specs/t1-design.md) | [plan](docs/superpowers/plans/t1-1.md)",
+            "[design](docs/superpowers/specs/t1-1-design.md) | [plan](docs/superpowers/plans/t1-1.md)",
+        )
+        replace_text(root, "docs/superpowers/plans/t1-1.md", "`docs/superpowers/specs/t1-design.md`", "`docs/superpowers/specs/t1-1-design.md`")
+        replace_text(
+            root,
+            "BACKLOG.md",
+            "| `T1.2` | Typed parser, status report, and versioned JSON | `specified` | `T1.1` | [design](docs/superpowers/specs/t1-design.md)",
+            "| `T1.2` | Typed parser, status report, and versioned JSON | `queued` | `T1.1` | —",
+        )
+        self.assertEqual((), audit_repository(root).findings)
+
+        designing = plan_transition(root, "T1.2", "designing", expect="queued", specification="docs/superpowers/specs/t1-design.md")
+
+        self.assertIn("| `designing` | `T1.1` | [design](docs/superpowers/specs/t1-design.md)", designing.candidate.decode("utf-8"))
+
+        root = self.copy_fixture_root()
+        write_active_plan(root, "docs/superpowers/plans/t1-2.md", status="completed", completion_evidence=".superpowers/sdd/t1-2/completion.md")
+        write_evidence(root, ".superpowers/sdd/t1-2/completion.md", child="T1.2", gate=None)
+        write_evidence(root, ".superpowers/sdd/t1-2/review.md", child="T1.2", gate=None, kind="review", result="accepted")
+        replace_text(
+            root,
+            "BACKLOG.md",
+            "| `T1.2` | Typed parser, status report, and versioned JSON | `specified` | `T1.1` | [design](docs/superpowers/specs/t1-design.md) | — |",
+            (
+                "| `T1.2` | Typed parser, status report, and versioned JSON | `implemented` | `T1.1` | "
+                "[design](docs/superpowers/specs/t1-design.md) | [plan](docs/superpowers/plans/t1-2.md) |"
+            ),
+        )
+        run_git(root, "add", "--", "BACKLOG.md", "docs", ".superpowers")
+        run_git(root, "commit", "-qm", "Implemented fixture")
+
+        reviewed = plan_transition(root, "T1.2", "reviewed", expect="implemented", review=".superpowers/sdd/t1-2/review.md")
+
+        self.assertIn("| 0/1 | [review](.superpowers/sdd/t1-2/review.md) |", reviewed.candidate.decode("utf-8"))
+
+    def test_transition_rejects_links_outside_the_target_stage_or_with_table_delimiters(self) -> None:
+        root = self.copy_fixture_root()
+        self.assert_refusal("mutation.link", plan_transition, root, "T1.2", "planned", expect="specified", specification="docs/superpowers/specs/t1-design.md")
+        self.assert_refusal("mutation.link", plan_transition, root, "T1.2", "planned", expect="specified", plan="bad|path")
+        self.assert_refusal("mutation.link", plan_transition, root, "T1.2", "planned", expect="specified", plan="bad\npath")
+
+    def test_reviewed_reopen_clears_only_review_and_records_rationale(self) -> None:
+        root = self.copy_fixture_root()
+        replace_text(
+            root,
+            "BACKLOG.md",
+            "| `T1.2` | Typed parser, status report, and versioned JSON | `specified` |",
+            "| `T1.2` | Typed parser, status report, and versioned JSON | `reviewed` |",
+        )
+        replace_text(
+            root,
+            "BACKLOG.md",
+            "| `T1.2` | Typed parser, status report, and versioned JSON | `reviewed` | `T1.1` | [design](docs/superpowers/specs/t1-design.md) | — | 0/1 | — |",
+            (
+                "| `T1.2` | Typed parser, status report, and versioned JSON | `reviewed` | `T1.1` | "
+                "[design](docs/superpowers/specs/t1-design.md) | [plan](docs/superpowers/plans/t1-2.md) | "
+                "0/1 | [review](.superpowers/sdd/t1-2/review.md) |"
+            ),
+        )
+        write_active_plan(root, "docs/superpowers/plans/t1-2.md", status="completed", completion_evidence=".superpowers/sdd/t1-2/completion.md")
+        write_evidence(root, ".superpowers/sdd/t1-2/completion.md", child="T1.2", gate=None)
+        write_evidence(root, ".superpowers/sdd/t1-2/review.md", child="T1.2", gate=None, kind="review", result="accepted")
+        run_git(root, "add", "--", "BACKLOG.md", "docs", ".superpowers")
+        run_git(root, "commit", "-qm", "Reviewed fixture")
+
+        plan = plan_transition(root, "T1.2", "implemented", expect="reviewed")
+
+        self.assertIn("| `T1.2` | Typed parser, status report, and versioned JSON | `implemented` |", plan.candidate.decode("utf-8"))
+        self.assertIn("| 0/1 | — | — | — |", plan.candidate.decode("utf-8"))
+        self.assertEqual("Requested lifecycle transition from `reviewed` to `implemented`.", plan.rationale)
+
+    def test_suspend_and_resume_round_trip_all_nonsuspended_states(self) -> None:
+        root = self.copy_fixture_root()
+        self.assertEqual(
+            {"queued", "designing", "specified", "planned", "in_progress", "implemented", "reviewed", "verified"},
+            _NONSUSPENDED,
+        )
+        for target in ("blocked", "deferred"):
+            with self.subTest(target=target):
+                suspended = plan_suspend(root, "T1.2", target, expect="specified", reason="Awaiting evidence")
+                candidate = suspended.candidate.decode("utf-8")
+                self.assertIn(f"| `{target}` |", candidate)
+                self.assertIn("| `specified` | Awaiting evidence |", candidate)
+                self.assertEqual(f"Suspended `specified` child as `{target}`: Awaiting evidence", suspended.rationale)
+                (root / "BACKLOG.md").write_bytes(suspended.candidate)
+                resumed = plan_resume(root, "T1.2", expect=target, resume="specified", reason="Evidence received")
+                self.assertIn("| `specified` |", resumed.candidate.decode("utf-8"))
+                self.assertIn("| — | — |", resumed.candidate.decode("utf-8"))
+                self.assertNotIn("Evidence received", resumed.candidate.decode("utf-8"))
+                self.assertEqual(f"Resumed `specified` child from `{target}`: Evidence received", resumed.rationale)
+                (root / "BACKLOG.md").write_bytes(resumed.candidate)
+
+    def test_suspend_and_resume_refuse_invalid_reasons_and_stale_resume(self) -> None:
+        root = self.copy_fixture_root()
+        for reason in ("", " reason", "reason ", "bad\nreason", "bad\rreason", "bad|reason"):
+            with self.subTest(reason=reason):
+                self.assert_refusal("mutation.reason", plan_suspend, root, "T1.2", "blocked", expect="specified", reason=reason)
+        suspended = plan_suspend(root, "T1.2", "blocked", expect="specified", reason="Awaiting evidence")
+        (root / "BACKLOG.md").write_bytes(suspended.candidate)
+        self.assert_refusal("mutation.expected-status", plan_resume, root, "T1.2", expect="deferred", resume="specified", reason="Resume")
+        self.assert_refusal("mutation.resume", plan_resume, root, "T1.2", expect="blocked", resume="planned", reason="Resume")

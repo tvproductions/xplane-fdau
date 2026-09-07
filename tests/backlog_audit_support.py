@@ -20,6 +20,11 @@ AUDIT_VALID_DESIGN_ACCEPTANCE = """\
 - Frozen parser remains open.
 """
 
+_FIXTURE_ACCEPTANCE = {
+    "T1.1": ("Markdown authority contract and explicit inventory normalization", "Frozen contract is verified and\n  remains explicit."),
+    "T1.2": ("Typed parser, status report, and versioned JSON", "Frozen parser remains open."),
+}
+
 
 def copy_fixture(root: Path) -> None:
     shutil.copytree(FIXTURE, root, dirs_exist_ok=True)
@@ -139,3 +144,54 @@ def audit_fixture(root: Path) -> None:
     )
     run_git(root, "add", "--", policy.relative_to(root).as_posix())
     run_git(root, "commit", "-qm", "Fixture policy")
+
+
+def write_active_design(root: Path, path: str, *, children: tuple[str, ...], status: str = "approved") -> None:
+    """Write a minimal active design accepted by the lifecycle audit."""
+    target = root / path
+    target.parent.mkdir(parents=True, exist_ok=True)
+    targets = ", ".join(f"`{child}`" for child in children)
+    approval = "2026-09-05 — Fixture" if status == "approved" else "—"
+    acceptance = "".join(
+        f"\n### {child} — {_FIXTURE_ACCEPTANCE[child][0]}\n\n- {_FIXTURE_ACCEPTANCE[child][1]}\n" for child in children
+    )
+    target.write_text(
+        "# Fixture design\n\n"
+        "- **Governance:** active\n"
+        f"- **Status:** {status}\n"
+        "- **Date:** 2026-09-05\n"
+        "- **Decision owner:** Fixture\n"
+        "- **Roadmap epic:** `T1`\n"
+        f"- **Roadmap children:** {targets}\n"
+        f"- **Approval:** {approval}\n\n## Acceptance criteria\n" + acceptance,
+        encoding="utf-8",
+        newline="\n",
+    )
+
+
+def write_active_plan(
+    root: Path,
+    path: str,
+    *,
+    child: str = "T1.2",
+    specification: str = "docs/superpowers/specs/t1-design.md",
+    status: str = "approved",
+    completion_evidence: str | None = None,
+) -> None:
+    """Write a minimal active single-child plan accepted by the lifecycle audit."""
+    target = root / path
+    target.parent.mkdir(parents=True, exist_ok=True)
+    approval = "2026-09-05 — Fixture" if status in {"approved", "in_progress", "completed"} else "—"
+    completion = f"`{completion_evidence}`" if completion_evidence is not None else "—"
+    target.write_text(
+        "# Fixture plan\n\n"
+        "- **Governance:** active\n"
+        f"- **Status:** {status}\n"
+        "- **Date:** 2026-09-05\n"
+        f"- **Roadmap child:** `{child}`\n"
+        f"- **Source specification:** `{specification}`\n"
+        f"- **Approval:** {approval}\n"
+        f"- **Completion evidence:** {completion}\n",
+        encoding="utf-8",
+        newline="\n",
+    )

@@ -97,9 +97,22 @@ def _recheck_original(plan: MutationPlan) -> None:
         _refuse("mutation.stale", "BACKLOG.md changed after mutation planning")
 
 
-def _write_partial(fd: int, candidate: bytes) -> None:
+@dataclass(slots=True)
+class _OwnedPartial:
+    path: Path
+    identity: os.stat_result | None = None
+
+
+def _require_owned(partial: _OwnedPartial) -> None:
+    current = partial.path.stat(follow_symlinks=False)
+    if partial.identity is None or not stat.S_ISREG(current.st_mode) or not os.path.samestat(partial.identity, current):
+        _refuse("mutation.ownership", f"partial ownership changed or is unknown; preserved {partial.path}")
+
+
+def _write_partial(fd: int, candidate: bytes, partial: _OwnedPartial) -> None:
     """Own the descriptor and close the writer before publication can continue."""
     try:
+        partial.identity = os.fstat(fd)
         stream = os.fdopen(fd, "wb")
     except Exception as opening:
         try:
@@ -124,20 +137,21 @@ def _write_partial(fd: int, candidate: bytes) -> None:
         raise
 
 
-def _publication_failure(primary: Exception, partial: Path | None) -> NoReturn:
+def _publication_failure(primary: Exception, partial: _OwnedPartial | None) -> NoReturn:
     message = str(primary)
     if partial is not None:
         try:
-            partial.unlink()
-        except OSError as cleanup:
-            message += f"; cleanup failed for {partial}: {cleanup}"
+            _require_owned(partial)
+            partial.path.unlink()
+        except (OSError, MutationRefusal) as cleanup:
+            message += f"; cleanup failed for {partial.path}: {cleanup}"
     code = primary.code if isinstance(primary, MutationRefusal) else "mutation.publish"
     raise MutationRefusal(code, message) from primary
 
 
 def publish_mutation(plan: MutationPlan) -> AuditLoad:
     """Atomically publish an unchanged, freshly audited BACKLOG.md candidate."""
-    partial: Path | None = None
+    partial: _OwnedPartial | None = None
     try:
         if plan.target != plan.root / "BACKLOG.md":
             _refuse("mutation.target", "publication target must be the repository BACKLOG.md")
@@ -147,9 +161,10 @@ def publish_mutation(plan: MutationPlan) -> AuditLoad:
         mode = stat.S_IMODE(target_stat.st_mode)
         _recheck_original(plan)
         fd, name = tempfile.mkstemp(prefix=f".{plan.target.name}.", suffix=".tmp", dir=plan.target.parent)
-        partial = Path(name)
-        _write_partial(fd, plan.candidate)
-        os.chmod(partial, mode)
+        partial = _OwnedPartial(Path(name))
+        _write_partial(fd, plan.candidate, partial)
+        _require_owned(partial)
+        os.chmod(partial.path, mode)
         _recheck_original(plan)
         fresh = audit_repository(plan.root, backlog_text=plan.candidate.decode("utf-8"))
         if _has_errors(fresh):
@@ -157,7 +172,9 @@ def publish_mutation(plan: MutationPlan) -> AuditLoad:
                 "mutation.audit",
                 "fresh candidate audit failed: " + "; ".join(f"{item.code}: {item.message}" for item in fresh.findings if item.severity == "error"),
             )
-        os.replace(partial, plan.target)
+        _require_owned(partial)
+        _recheck_original(plan)
+        os.replace(partial.path, plan.target)
     except Exception as primary:
         _publication_failure(primary, partial)
     try:

@@ -96,6 +96,22 @@ class PublicationTests(unittest.TestCase):
         self.assertEqual("mutation.audit", raised.exception.code)
         self.assert_unpublished()
 
+    def test_target_changed_during_fresh_candidate_audit_is_not_overwritten(self) -> None:
+        changed = self.plan.original + b"\nConcurrent target edit.\n"
+
+        def concurrent_audit(root, *, backlog_text=None):
+            loaded = audit_repository(root, backlog_text=backlog_text)
+            if backlog_text is not None:
+                self.plan.target.write_bytes(changed)
+            return loaded
+
+        with patch("backlog.edit.audit_repository", side_effect=concurrent_audit):
+            with self.assertRaises(MutationRefusal) as raised:
+                self.publish()
+        self.assertEqual("mutation.stale", raised.exception.code)
+        self.assertEqual(changed, self.plan.target.read_bytes())
+        self.assertEqual([], list(self.root.glob(".BACKLOG.md.*.tmp")))
+
     def test_prepublication_io_failures_preserve_original_and_remove_partial(self) -> None:
         for seam in ("mkstemp", "fsync", "chmod", "replace"):
             with self.subTest(seam=seam):
@@ -157,6 +173,47 @@ class PublicationTests(unittest.TestCase):
         self.assertEqual(b"another writer", other.read_bytes())
         self.assertEqual([other], list(self.root.glob(".BACKLOG.md.*.tmp")))
         self.assertEqual(self.plan.original, self.plan.target.read_bytes())
+
+    def replace_partial_with_foreign_file(self) -> Path:
+        (partial,) = self.root.glob(".BACKLOG.md.*.tmp")
+        foreign = self.root / "foreign-file"
+        foreign.write_bytes(b"another owner's file")
+        os.replace(foreign, partial)
+        return partial
+
+    def test_cleanup_preserves_a_foreign_file_replacing_the_owned_partial(self) -> None:
+        partials: list[Path] = []
+
+        def replaced_partial_audit(root, *, backlog_text=None):
+            partials.append(self.replace_partial_with_foreign_file())
+            raise OSError("primary audit failure")
+
+        with patch("backlog.edit.audit_repository", side_effect=replaced_partial_audit):
+            with self.assertRaises(MutationRefusal) as raised:
+                self.publish()
+        self.assertTrue(partials[0].exists(), "cleanup deleted another owner's replacement file")
+        self.assertEqual(b"another owner's file", partials[0].read_bytes())
+        self.assertEqual(self.plan.original, self.plan.target.read_bytes())
+        message = str(raised.exception)
+        self.assertIn(str(partials[0]), message)
+        self.assertLess(message.index("primary audit failure"), message.index("ownership"))
+
+    def test_publication_refuses_a_foreign_file_replacing_the_owned_partial(self) -> None:
+        partials: list[Path] = []
+
+        def replaced_partial_audit(root, *, backlog_text=None):
+            loaded = audit_repository(root, backlog_text=backlog_text)
+            if backlog_text is not None:
+                partials.append(self.replace_partial_with_foreign_file())
+            return loaded
+
+        with patch("backlog.edit.audit_repository", side_effect=replaced_partial_audit):
+            with self.assertRaises(MutationRefusal) as raised:
+                self.publish()
+        self.assertEqual(self.plan.original, self.plan.target.read_bytes(), "publication replaced BACKLOG.md with another owner's file")
+        self.assertEqual("mutation.ownership", raised.exception.code)
+        self.assertEqual(b"another owner's file", partials[0].read_bytes())
+        self.assertIn(str(partials[0]), str(raised.exception))
 
     def test_final_audit_failure_reports_published_state_and_no_retry(self) -> None:
         def fail_final(root, *, backlog_text=None):
@@ -281,7 +338,8 @@ class PublicationTests(unittest.TestCase):
                         loaded = self.publish()
         self.assertEqual((), loaded.findings)
         self.assertEqual(
-            ["mode", "recheck", "create", "write", "flush", "fsync", "close", "chmod", "recheck", "candidate-audit", "replace", "final-audit"], events
+            ["mode", "recheck", "create", "write", "flush", "fsync", "close", "chmod", "recheck", "candidate-audit", "recheck", "replace", "final-audit"],
+            events,
         )
         self.assertEqual(self.plan.candidate, self.plan.target.read_bytes())
 

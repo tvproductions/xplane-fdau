@@ -21,7 +21,7 @@ from backlog.edit import (
     plan_resume,
     publish_mutation,
 )
-from backlog.model import CHILD_STATUSES, Finding, GitState
+from backlog.model import AuditLoad, CHILD_STATUSES, Finding, GitState
 from backlog.report import build_report, observe_git, render_human, render_json, with_dependency_readiness
 
 
@@ -127,6 +127,19 @@ def _mutation_heading(plan: MutationPlan, *, applied: bool) -> str:
     return "\n".join(lines) + "\nDiff:\n" + plan.diff.replace("\r\n", "\n").rstrip("\n") + "\nPost-change audit:\n"
 
 
+def _published_reporting_failure(loaded: AuditLoad, error: Exception) -> str:
+    """Retain the completed audit even if normal report assembly is unavailable."""
+    message = f"mutation.published: BACKLOG.md was published, but reporting failed; do not retry: {error}\nPost-change audit:\n"
+    try:
+        report = build_report(with_dependency_readiness(loaded.snapshot), GitState("", False, ()), loaded.findings)
+        return message + render_human(report)
+    except Exception:
+        lines = ["Full report unavailable; completed audit results follow.", f"Active child: {loaded.snapshot.backlog.active_child or '—'}"]
+        lines.append("Findings:" if loaded.findings else "Findings: none")
+        lines.extend(f"  {item.severity} {item.code} {item.path}:{item.line} node={item.node} gate={item.gate} {item.message}" for item in loaded.findings)
+        return message + "\n".join(lines) + "\n"
+
+
 def main(
     argv: list[str] | None = None,
     *,
@@ -149,28 +162,42 @@ def main(
         except SystemExit as error:
             return 2 if error.code is None else int(error.code)
     selected_root = repository_root() if root is None else root
-    heading = ""
+    plan: MutationPlan | None = None
+    published = False
     if arguments.command in {"status", "audit", "next"}:
         loaded = audit_repository(selected_root)
     else:
         try:
             plan = _plan_mutation(selected_root, arguments)
             loaded = publish_mutation(plan) if arguments.apply else plan.audit
-            heading = _mutation_heading(plan, applied=arguments.apply)
+            published = arguments.apply
         except MutationRefusal as error:
             code = error.code if error.code.startswith("mutation.") else f"mutation.audit ({error.code})"
             output.write(f"{code}: {error}\n")
             return 1
-    snapshot = with_dependency_readiness(loaded.snapshot)
-    findings = loaded.findings
     try:
-        git = observe_git(selected_root)
-    except (OSError, subprocess.SubprocessError) as error:
-        git = GitState("", False, ())
-        findings = (*findings, Finding("git.unavailable", "error", ".", None, None, None, f"cannot observe Git: {error}"))
-    report = build_report(snapshot, git, findings)
-    output.write(heading + (render_json(report) if arguments.command == "status" and arguments.as_json else render_human(report)))
-    return 0 if report.valid else 1
+        heading = _mutation_heading(plan, applied=published) if plan is not None else ""
+        snapshot = with_dependency_readiness(loaded.snapshot)
+        findings = loaded.findings
+        try:
+            git = observe_git(selected_root)
+        except (OSError, subprocess.SubprocessError) as error:
+            git = GitState("", False, ())
+            findings = (*findings, Finding("git.unavailable", "error", ".", None, None, None, f"cannot observe Git: {error}"))
+            if published:
+                findings = (*findings, Finding("mutation.published", "error", "BACKLOG.md", None, None, None, "BACKLOG.md was published; do not retry."))
+        report = build_report(snapshot, git, findings)
+        output.write(heading + (render_json(report) if arguments.command == "status" and arguments.as_json else render_human(report)))
+        return 0 if report.valid else 1
+    except Exception as error:
+        if not published:
+            raise
+        message = _published_reporting_failure(loaded, error)
+        try:
+            output.write(message)
+        except Exception:
+            errors.write(message)
+        return 1
 
 
 if __name__ == "__main__":

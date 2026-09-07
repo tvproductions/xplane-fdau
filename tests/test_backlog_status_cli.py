@@ -147,6 +147,38 @@ class BacklogStatusCliTests(unittest.TestCase):
         self.assertEqual([Path("BACKLOG.md")], [path for path in before if before[path] != after[path]])
         self.assertEqual(0, self.run_cli(["audit"], root=root, mock_git=False).code)
 
+    def test_postpublication_reporting_failures_retain_audit_and_warn_against_retry(self) -> None:
+        for seam in ("observe_git", "with_dependency_readiness", "build_report", "render_human", "_mutation_heading"):
+            with self.subTest(seam=seam):
+                root = self.fixture_root()
+                module = load_cli()
+                output, errors = StringIO(), StringIO()
+                original = (root / "BACKLOG.md").read_bytes()
+                with patch.object(module, seam, side_effect=OSError(f"{seam} failed after publication")):
+                    code = module.main(["select", "T1.2", "--expect-current", "none", "--apply"], root=root, stdout=output, stderr=errors)
+                self.assertEqual(1, code)
+                self.assertEqual("", errors.getvalue())
+                self.assertIn("mutation.published", output.getvalue())
+                self.assertIn("do not retry", output.getvalue().lower())
+                self.assertIn(f"{seam} failed after publication", output.getvalue())
+                self.assertIn("Post-change audit:", output.getvalue())
+                self.assertIn("Active child: T1.2", output.getvalue())
+                self.assertNotIn("Traceback", output.getvalue())
+                self.assertNotEqual(original, (root / "BACKLOG.md").read_bytes())
+                self.assertEqual(0, self.run_cli(["audit"], root=root, mock_git=False).code)
+
+    def test_postpublication_broken_stdout_reports_published_state_on_stderr(self) -> None:
+        root = self.fixture_root()
+        module = load_cli()
+        output, errors = StringIO(), StringIO()
+        with patch.object(output, "write", side_effect=BrokenPipeError("stdout closed after publication")):
+            code = module.main(["select", "T1.2", "--expect-current", "none", "--apply"], root=root, stdout=output, stderr=errors)
+        self.assertEqual(1, code)
+        self.assertIn("mutation.published", errors.getvalue())
+        self.assertIn("do not retry", errors.getvalue())
+        self.assertIn("Active child: T1.2", errors.getvalue())
+        self.assertIn(b"- Active child: `T1.2`.", (root / "BACKLOG.md").read_bytes())
+
     def test_mutation_domain_refusals_use_stdout_and_status_one(self) -> None:
         root = self.fixture_root()
         for args in (

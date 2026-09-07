@@ -1,4 +1,4 @@
-# T1.6 implementation completion evidence
+# T1.6 implementation and verified-closeout evidence
 
 - **Child:** `T1.6`
 - **Gate:** —
@@ -9,10 +9,12 @@
 
 Tasks 1-4 are implemented in the isolated Windows worktree
 `C:\Users\Jeff\source\repos\xp\xplane-fdau\.worktrees\t1-6-skill-closure`
-on branch `t1-6-skill-closure`. This is the Task 5 Step 2 implementation
-checkpoint. Independent review, five gate records, the fresh installed-wheel
-Python matrix, and final verified-state closeout remain subsequent Task 5 work.
-This child-level completion record does not claim those gates have passed.
+on branch `t1-6-skill-closure`. This record preserves the historical Task 5
+Step 2 implementation checkpoint followed by accepted review, five committed
+gates, the fresh installed-wheel matrix, and final verified-state checks.
+Earlier phase labels describe their observed checkpoints, not current state.
+The final outcome is T1.6 verified at 5/5, no selected child, and deterministic
+T2.1/write_plan next. BACKLOG and its strict audit remain authoritative.
 
 ## Implemented revision range
 
@@ -191,3 +193,70 @@ check, detect-secrets baseline, lizard report and cohesion report all Passed.
 through the run. Gate-1.md through gate-5.md record exact claim-specific proof.
 The subsequent verified/deselected closeout requires these records committed
 in HEAD before transition; final results are appended after observation.
+
+## Final verified and unselected closeout
+
+All five gates and updated completion were committed together with BACKLOG
+at `f52c489a731c5c544d07fdbeba6beb1316e3c099`. Review was already committed at
+`3a274fdd5c83954c9b5ecc8ddab6b5e588baec8d`; every required evidence record
+therefore matched HEAD before the verified transition. The following commands
+first ran as dry runs, with inspected one-cell diffs and finding-free candidate
+audits, then ran exactly with their printed original hashes and explicit apply:
+
+```powershell
+uv run python .codex/skills/backlog-status/scripts/backlog_status.py transition T1.6 verified --expect reviewed --target-sha256 5d38df3ceb5649ac6a0699c76f62a5c80562698be36732642b4fd4326b9be38e --apply
+uv run python .codex/skills/backlog-status/scripts/backlog_status.py select none --expect-current T1.6 --target-sha256 6f28f61ca28d6951894da59841407c70bba690c525224460a7fe5dd0e8fe608d --apply
+```
+
+Both exited 0. Verified BACKLOG SHA-256 was
+`6f28f61ca28d6951894da59841407c70bba690c525224460a7fe5dd0e8fe608d`;
+after deselection it was
+`d5d4e607be6116a9033f846483a9813241fe6dd8f86a075f2f00868faf7838c6`.
+The phase-local CLI assertion now expects no selected child and T2.1/write_plan.
+HANDOFF records verified T1.6 and the next dependency-ready child while
+retaining live authority pointers and every external/release guardrail.
+
+Final commands ran on that verified/deselected closeout candidate, with
+completion/review/gate bytes kept HEAD-backed during all checks:
+
+| Exact command | Observed result |
+| --- | --- |
+| `uv run python .codex/skills/backlog-status/scripts/backlog_status.py audit` | Exit 0; Findings: none. |
+| `uv run python .codex/skills/backlog-status/scripts/backlog_status.py status --json` | Exit 0; valid=true, findings=[], active_child=null, T1.6 verified 5/5, T2.1/write_plan. |
+| `uv run python .codex/skills/backlog-status/scripts/backlog_status.py next` | Exit 0; write_plan/T2.1. |
+| `uv run python tools/quality.py check` | Exit 0; 452 discovery tests in 343.074s, 452 coverage tests in 350.388s; every analyzer passed. |
+| `uv run mkdocs build --strict` | Exit 0; built in 1.23s, existing Material advisory only. |
+| `uv run python .codex/skills/hygiene/scripts/hygiene.py` | Exit 0; offline lock/audit, full quality and all pre-commit hooks passed. |
+| `git diff --check` | Exit 0, no output. |
+| `git status --short --branch` | Only the four intended pre-commit closeout modifications: BACKLOG, HANDOFF, plan and current-repository assertion. |
+
+Final hygiene's quality phase independently passed 452 discovery tests in
+348.364s and 452 coverage tests in 356.026s. Coverage remained 94% (1,527
+statements, 98 missed), Interrogate 43.6%, Ruff lint/format (59 files), ty,
+Bandit, detect-secrets, Vulture and Xenon all passed unchanged thresholds.
+Pre-commit printed Passed for quality check, detect-secrets baseline, lizard
+report and cohesion report; the quality hook repeats the full quality command.
+Its successful verbose output is suppressed, so no separate timing is claimed.
+
+Final instruction measurements (Get-Item byte length, Get-Content physical/
+nonblank counts, Get-FileHash SHA256): AGENTS remains 5,678 bytes / 105 physical
+/ 93 nonblank lines, hash
+`6a739b84d3addbadaf731fafbd992d35e5381448684a335500781af378428f59`.
+HANDOFF is 3,116 bytes / 67 physical / 52 nonblank lines, hash
+`3fe9d743c4490961c07bfa0628147634a8e4ee73f83beef39fdeda44da0d74c2`,
+versus baseline 22,098 bytes / 418 physical / 332 nonblank lines.
+
+Self-review and `git diff --quiet 56adc2c06c96c5bc5f3fbc0f0d98f4c84a71ce26 -- xplane_fdau pyproject.toml uv.lock ROADMAP.md .github/workflows tools/release.py .codex/skills/backlog-status/scripts`
+(exit 0) confirm unchanged runtime, dependencies, roadmap ordering, release
+workflows/validator, and backlog engine. No runtime/provider/network client,
+q4xpcc/external repository, G1, release/tag/publication or remote state changed.
+Version 0.1.0 remains unreleased. Windows Python 3.12-3.14 was observed;
+Linux/macOS was not. Existing nonfatal tool advisories remain unchanged.
+
+The closeout commit containing this section has parent f52c489 and records
+observed results plus completed plan progress together with final state,
+handoff, and assertion. Committed-HEAD audit/status/next, focused governance
+checks, strict documentation and clean-state checks are rerun after that
+commit; their actual output and exact commit are preserved in task-5-report.md.
+No clean-worktree claim is made before the commit. Branch integration and
+scratch/worktree cleanup remain controller/user-owned and were not performed.

@@ -38,9 +38,11 @@ and `gzs-session-handoff` are explicit-only workflows.
 
 ## Current delivery path
 
-T1.5 is verified and integrated. T1.6 closes skill discovery, session entry,
-hygiene audit integration, and artifact exclusion. The governed path remains
-`T1.6 -> T2.1 -> T2.2/T3.1 -> B1.1 -> C1.1` and then through `C4.4`.
+T1.6 is verified at 5/5: skill discovery, session entry, hygiene audit
+integration, and artifact exclusion are complete. T2.1 is the next
+dependency-ready child; follow the live BACKLOG audit/next result for its
+`write_plan` action. The governed path remains
+`T2.1 -> T2.2/T3.1 -> B1.1 -> C1.1` and then through `C4.4`.
 
 ## q4xpcc readiness
 

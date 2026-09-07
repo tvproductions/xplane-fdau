@@ -54,7 +54,7 @@
 
 **Interfaces:** Produce a discoverable `backlog-status` skill that routes read-only requests to `status`, `audit`, and `next`, and routes controlled state requests to the existing dry-run-first mutation CLI without adding another state engine.
 
-- [ ] **Step 1: Write the failing discovery test and run baseline skill evaluations**
+- [x] **Step 1: Write the failing discovery test and run baseline skill evaluations**
 
   Set the discovered skill set to all project skill directories:
 
@@ -71,7 +71,7 @@
   and dry-run followed by the printed `--target-sha256` plus explicit `--apply`
   for controlled mutations.
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
   ```powershell
   uv run python -m unittest tests.test_project_skills.ProjectSkillTests.test_project_skills_are_scoped_to_unreleased_xplane_fdau -v
@@ -82,7 +82,7 @@
   fresh-context evaluations provide the behavioral RED evidence for the new
   reference skill; do not replace them with assertions that grep prose.
 
-- [ ] **Step 3: Create the thin skill adapter**
+- [x] **Step 3: Create the thin skill adapter**
 
   Create this exact frontmatter and routing structure:
 
@@ -123,7 +123,7 @@
   standard-library-only runtime boundary.
   ````
 
-- [ ] **Step 4: Run GREEN and repeat the skill evaluations**
+- [x] **Step 4: Run GREEN and repeat the skill evaluations**
 
   ```powershell
   uv run python -m unittest tests.test_project_skills -v
@@ -138,7 +138,7 @@
   five project skill directories are discoverable, and the evaluations show that
   the backlog skill is usable as a command adapter rather than another engine.
 
-- [ ] **Step 5: Commit skill discovery**
+- [x] **Step 5: Commit skill discovery**
 
   ```powershell
   git add .codex/skills/backlog-status/SKILL.md tests/test_project_skills.py
@@ -151,7 +151,7 @@
 
 **Interfaces:** Session entry runs the strict audit and deterministic next-action report after reading the required authorities. `HANDOFF.md` retains immediate constraints and q4xpcc boundaries but explicitly delegates all mutable delivery state to `BACKLOG.md`.
 
-- [ ] **Step 1: Measure the current instruction surfaces**
+- [x] **Step 1: Measure the current instruction surfaces**
 
   ```powershell
   Get-Item AGENTS.md,HANDOFF.md | Select-Object Name,Length
@@ -165,7 +165,7 @@
   boundary, explicit-only Git sync/session handoff, Superpowers order, release
   prohibition, q4xpcc readiness thresholds, and the local dependency path.
 
-- [ ] **Step 2: Run a failing session-entry evaluation and preserve existing contracts**
+- [x] **Step 2: Run a failing session-entry evaluation and preserve existing contracts**
 
   Before editing `AGENTS.md`, dispatch one fresh-context evaluator asked to resume
   repository work from the current checkout without naming the backlog commands.
@@ -179,14 +179,14 @@
   the active-plan governance assertion for the committed T1.6 plan and its current
   lifecycle state.
 
-- [ ] **Step 3: Confirm RED evidence**
+- [x] **Step 3: Confirm RED evidence**
 
   Expected: the evaluator omits at least one required session-entry behavior and
   the measured handoff still reports the removed T1.5 branch as unmerged. If the
   evaluator already complies, strengthen the scenario around resumption pressure;
   do not manufacture a source-text failure.
 
-- [ ] **Step 4: Add the mandatory session-entry commands**
+- [x] **Step 4: Add the mandatory session-entry commands**
 
   After the authority-reading bullets in `AGENTS.md`, add:
 
@@ -206,7 +206,7 @@
 
   Preserve every existing testing, runtime, portable-workflow, Superpowers, worktree, integration, Git-sync, and release guardrail.
 
-- [ ] **Step 5: Replace stale handoff history with a concise current pointer**
+- [x] **Step 5: Replace stale handoff history with a concise current pointer**
 
   Rewrite `HANDOFF.md` to fewer than 120 lines with these sections and meanings:
 
@@ -273,7 +273,7 @@
 
   Keep the exact migration-boundary strings required by `tests/test_documentation.py`. Do not copy the child inventory, gate dashboard, historical commit narrative, or active branch status into the handoff.
 
-- [ ] **Step 6: Run GREEN, repeat the evaluator, and measure context**
+- [x] **Step 6: Run GREEN, repeat the evaluator, and measure context**
 
   ```powershell
   uv run python -m unittest tests.test_project_skills tests.test_backlog_governance tests.test_documentation -v
@@ -289,7 +289,7 @@
   all commands pass, every binding rule remains reachable, `HANDOFF.md` is below
   120 lines, and its byte/line reduction is recorded.
 
-- [ ] **Step 7: Commit session-entry closure**
+- [x] **Step 7: Commit session-entry closure**
 
   ```powershell
   git add AGENTS.md HANDOFF.md tests/test_project_skills.py tests/test_backlog_governance.py
@@ -302,7 +302,7 @@
 
 **Interfaces:** `run_local_hygiene(runner: Runner = subprocess.run) -> int` runs the existing fail-fast sequence with the strict backlog audit inserted after the offline lock check and before full quality.
 
-- [ ] **Step 1: Write failing command-order and fail-fast tests**
+- [x] **Step 1: Write failing command-order and fail-fast tests**
 
   Replace the containment assertion with this exact order:
 
@@ -324,7 +324,7 @@
   `.codex/skills/hygiene/SKILL.md`, which remains a concise reference to the
   tested script.
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
   ```powershell
   uv run python -m unittest tests.test_project_skills.ProjectSkillTests.test_hygiene_script_runs_strict_backlog_audit_before_quality tests.test_project_skills.ProjectSkillTests.test_hygiene_stops_when_backlog_audit_fails -v
@@ -332,7 +332,7 @@
 
   Expected: FAIL because the audit command is absent from `LOCAL_COMMANDS`.
 
-- [ ] **Step 3: Insert the existing strict audit command**
+- [x] **Step 3: Insert the existing strict audit command**
 
   Change only `LOCAL_COMMANDS`:
 
@@ -348,11 +348,11 @@
 
   Do not catch or translate the audit exit status. Existing fail-fast behavior returns it unchanged.
 
-- [ ] **Step 4: Update the hygiene adapter description**
+- [x] **Step 4: Update the hygiene adapter description**
 
   State that the offline sequence checks Git status, the lock offline, strict backlog audit, complete quality, and pre-commit in that order. State that a failed audit stops before quality and that hygiene never mutates backlog state.
 
-- [ ] **Step 5: Run GREEN and focused quality**
+- [x] **Step 5: Run GREEN and focused quality**
 
   ```powershell
   uv run python -m unittest tests.test_project_skills -v
@@ -363,7 +363,7 @@
 
   Expected: all pass and no runtime package file changes.
 
-- [ ] **Step 6: Commit hygiene integration**
+- [x] **Step 6: Commit hygiene integration**
 
   ```powershell
   git add .codex/skills/hygiene/scripts/hygiene.py .codex/skills/hygiene/SKILL.md tests/test_project_skills.py
@@ -376,7 +376,7 @@
 
 **Interfaces:** Preserve the existing `uv_build` `source-exclude` configuration and exact `tools.release.check_dist()` validator while adding direct regression coverage for every repository-governance family introduced by T1.
 
-- [ ] **Step 1: Write build-policy and artifact-rejection regression tests**
+- [x] **Step 1: Write build-policy and artifact-rejection regression tests**
 
   Add `test_repository_governance_is_excluded_from_source_builds`:
 
@@ -422,7 +422,7 @@
   removing any corresponding rejection from the validator would fail at least one
   literal case.
 
-- [ ] **Step 2: Run the characterization tests**
+- [x] **Step 2: Run the characterization tests**
 
   ```powershell
   uv run python -m unittest tests.test_project_skills.ProjectSkillTests.test_repository_governance_is_excluded_from_source_builds tests.test_release_tool.ReleaseToolTests.test_check_dist_rejects_every_repository_governance_family -v
@@ -432,11 +432,11 @@
   not fabricate a failing production state merely to obtain RED evidence for a
   test-only strengthening task.
 
-- [ ] **Step 3: Add the exact regression coverage**
+- [x] **Step 3: Add the exact regression coverage**
 
   Import `tomllib` in `tests/test_project_skills.py`, add the build-policy assertion, and add the table-driven wheel/sdist cases to `tests/test_release_tool.py`. Do not widen the allowed artifact set or change product package contents.
 
-- [ ] **Step 4: Run GREEN against synthetic and fresh real artifacts**
+- [x] **Step 4: Run GREEN against synthetic and fresh real artifacts**
 
   ```powershell
   uv run python -m unittest tests.test_project_skills tests.test_release_tool tests.test_installed_smoke -v
@@ -449,7 +449,7 @@
 
   Expected: all pass; the validator reports the exact wheel/sdist pair and hashes. Preserve `$artifactDir` for the final installed smoke matrix; do not publish it.
 
-- [ ] **Step 5: Commit artifact-exclusion evidence in code**
+- [x] **Step 5: Commit artifact-exclusion evidence in code**
 
   ```powershell
   git add tests/test_project_skills.py tests/test_release_tool.py
@@ -458,9 +458,12 @@
 
 ### Task 5: T1.6 lifecycle, independent review, evidence, and closeout
 
-Tasks 1-4 are implemented. Completion metadata records the Step 2
-implementation handoff; Steps 3-8 remain the subsequent independent-review,
-acceptance-evidence, installed-artifact, and verified-state closeout work.
+Tasks 1-4 are implemented. Completion metadata includes the historical
+implementation checkpoint and subsequent closure evidence. The controller
+accepted independent rereview and directed Step 6's fresh artifact/matrix
+verification before authoring/linking Steps 4-5 gate records. Final local
+verification is recorded in completion evidence; integration remains
+controller/user-owned and is not performed by this plan executor.
 
 **Files:** Modify this plan, `BACKLOG.md`, `HANDOFF.md`, `tests/test_backlog_governance.py`, and `tests/test_backlog_status_cli.py`; create `.superpowers/sdd/2026-09-07-t1-6-skill-session-hygiene-artifact-closure/completion.md`, `review.md`, and `gate-1.md` through `gate-5.md`.
 
@@ -491,13 +494,13 @@ acceptance-evidence, installed-artifact, and verified-state closeout work.
 
   Create `completion.md` with child-level evidence metadata, exact commands/counts/coverage, instruction measurements, artifact paths/hashes, implemented commit range, and confirmation that no runtime, remote, release, or q4xpcc surface changed. Mark this plan `completed` with that exact completion path. Stage both files, dry-run/apply `transition T1.6 implemented --expect in_progress`, audit, and commit the completion transition.
 
-- [ ] **Step 3: Request independent review and resolve all findings**
+- [x] **Step 3: Request independent review and resolve all findings**
 
   Use `superpowers:requesting-code-review` over the merge-base-to-implementation revision. Review against the T1 design, this plan, the authority model, dry-run/apply boundary, context-diet invariant inventory, hygiene fail-fast behavior, artifact exclusion, runtime boundary, and release prohibition. Record Critical, Important, and Minor findings in `review.md`.
 
   Apply accepted corrections with `superpowers:receiving-code-review`, `superpowers:systematic-debugging` for failures, and a failing `unittest` first. Rerun affected verification and request rereview until no unresolved finding remains. Stage the accepted review, dry-run/apply `transition T1.6 reviewed --expect implemented --review .superpowers/sdd/2026-09-07-t1-6-skill-session-hygiene-artifact-closure/review.md`, audit, and commit review plus state together.
 
-- [ ] **Step 4: Create five exact gate records**
+- [x] **Step 4: Create five exact gate records**
 
   Use the approved evidence metadata contract with these subjects and proof:
 
@@ -511,19 +514,19 @@ acceptance-evidence, installed-artifact, and verified-state closeout work.
 
   Each evidence file names exact tests, commands, revision, artifact hashes, and any platform dimension not directly observed. Stage all five before linking them.
 
-- [ ] **Step 5: Record gate evidence with the guarded CLI**
+- [x] **Step 5: Record gate evidence with the guarded CLI**
 
   For ordinals 1 through 5, run `record-gate T1.6 <ordinal> --expect-open --evidence <gate-path>` without `--apply`, inspect the diff/audit, then repeat with its printed `--target-sha256` and `--apply`. Confirm the inventory row becomes `5/5` and all evidence is eligible from the Git index. Audit and commit evidence plus corresponding backlog changes together.
 
-- [ ] **Step 6: Run final artifact and installed-version verification**
+- [x] **Step 6: Run final artifact and installed-version verification**
 
   Build a new immutable pair in a new temporary directory and run `twine check` plus `tools/release.py check-dist`. For each version in `3.12`, `3.13`, and `3.14`, create a uniquely named temporary venv outside the checkout, install the exact wheel, change location outside the checkout, and run that interpreter on `tools/installed_smoke.py 0.1.0`. Record artifact SHA-256 values and all three results. Do not reuse a candidate artifact from Task 4 and do not publish.
 
-- [ ] **Step 7: Verify from HEAD, close selection, and update the handoff**
+- [x] **Step 7: Verify from HEAD, close selection, and update the handoff**
 
   With completion, review, and all five gate records committed in `HEAD`, dry-run/apply `transition T1.6 verified --expect reviewed`, then dry-run/apply `select none --expect-current T1.6`. Update the current-repository CLI assertion to expect `T2.1` with `write_plan`. Update `HANDOFF.md` so the current path says T1.6 is verified and `T2.1` is the next dependency-ready child, while keeping `BACKLOG.md` authoritative and all q4xpcc/release boundaries exact.
 
-- [ ] **Step 8: Run the final clean-state gate and commit closeout**
+- [x] **Step 8: Run the final clean-state gate and commit closeout**
 
   ```powershell
   uv run python .codex/skills/backlog-status/scripts/backlog_status.py audit

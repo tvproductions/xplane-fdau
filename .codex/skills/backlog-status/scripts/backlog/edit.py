@@ -201,17 +201,45 @@ def _gate_edit(text: str, item: GateItem, *, close: bool, suffix: str = "") -> s
         if _GATE_MARKER.match(content) is not None or content.startswith("#") or content and not content[:1].isspace():
             break
         end += 1
-    content_indexes = [index for index in range(start, end) if split_terminator(lines[index])[0]]
+    content_indexes = [index for index in range(start, end) if split_terminator(lines[index])[0].strip()]
     if not content_indexes:
         _refuse("mutation.audit", "gate block has no content line")
     last = content_indexes[-1]
-    content, terminator = split_terminator(lines[last])
     if close:
+        content, terminator = split_terminator(lines[last])
         lines[last] = f"{content}{suffix}{terminator}"
     else:
-        if not content.endswith(suffix):
+        fragments: list[tuple[str, tuple[int, int] | None]] = []
+
+        def append_fragment(value: str, line: int, offset: int, *, normalize: bool) -> None:
+            if fragments:
+                fragments.append((" ", None))
+            if not normalize:
+                fragments.extend((character, (line, offset + position)) for position, character in enumerate(value))
+                return
+            for match in re.finditer(r"\S+", value):
+                if match.start() > 0 and fragments[-1][0] != " ":
+                    fragments.append((" ", (line, match.start() - 1)))
+                fragments.extend((character, (line, match.start() + position)) for position, character in enumerate(match.group(0)))
+
+        append_fragment(first[marker.end() :], start, marker.end(), normalize=False)
+        for index in range(start + 1, end):
+            continuation, _ = split_terminator(lines[index])
+            append_fragment(continuation, index, 0, normalize=True)
+        logical = "".join(character for character, _ in fragments)
+        marker_offset = logical.find(" — Evidence: ")
+        if marker_offset < 0:
             _refuse("mutation.audit", "parsed gate evidence suffix no longer matches BACKLOG.md")
-        lines[last] = f"{content[: -len(suffix)]}{terminator}"
+        source = next((origin for _character, origin in fragments[marker_offset:] if origin is not None), None)
+        if source is None:
+            _refuse("mutation.audit", "parsed gate evidence suffix no longer matches BACKLOG.md")
+        source_line, source_offset = source
+        content, terminator = split_terminator(lines[source_line])
+        lines[source_line] = f"{content[:source_offset]}{terminator}"
+        for index in range(source_line + 1, end):
+            content, terminator = split_terminator(lines[index])
+            if content.strip():
+                lines[index] = terminator
     return "".join(lines)
 
 
@@ -498,8 +526,7 @@ def plan_reopen_gate(
     item = _gate_item(current, ordinal)
     if not expect_closed or not item.satisfied:
         _refuse("mutation.expected-gate", "gate state differs from the expected closed value")
-    suffix = " — Evidence: " + " ".join(f"[verification]({path})" for path in item.evidence)
-    candidate_text = _gate_edit(original_text, item, close=False, suffix=suffix)
+    candidate_text = _gate_edit(original_text, item, close=False)
     candidate_text = _inventory_line(candidate_text, line, {6: _gate_count(current, item, satisfied=False)})
     rationale = f"Reopened gate `{ordinal}` for `{child}`: {reason}"
     return _finish_plan(

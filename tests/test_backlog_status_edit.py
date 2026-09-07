@@ -499,6 +499,48 @@ class GatePlanningTests(unittest.TestCase):
                 reopened = plan_reopen_gate(root, "T1.2", 1, expect_closed=True, reason="Recheck evidence")
                 self.assertEqual(original, reopened.candidate)
 
+    def test_reopen_gate_removes_source_wrapped_multi_whitespace_evidence(self) -> None:
+        """A source-preserving reopen must not canonicalize a valid wrapped suffix."""
+        root = self.reviewed_root()
+        artifact = self.stage_gate_evidence(root, ".superpowers/sdd/t1-2/gate-artifact.md", kind="artifact")
+        verification = self.stage_gate_evidence(root, ".superpowers/sdd/t1-2/gate-verification.md")
+        replace_bytes(
+            root,
+            "BACKLOG.md",
+            b"- [ ] Frozen parser remains open.\n",
+            (
+                b"- [x] Frozen parser remains\n"
+                + f"      open. — Evidence: [artifact]({artifact})   \n".encode()
+                + f"      [verification]({verification})\n".encode()
+            ),
+        )
+        replace_bytes(root, "BACKLOG.md", b"| 0/1 | [review]", b"| 1/1 | [review]")
+
+        reopened = plan_reopen_gate(root, "T1.2", 1, expect_closed=True, reason="Recheck source evidence")
+
+        self.assertIn(b"- [ ] Frozen parser remains\n      open.\n", reopened.candidate)
+        self.assertNotIn(b"open. \xe2\x80\x94 Evidence:", reopened.candidate)
+        self.assertNotIn(artifact.encode(), reopened.candidate)
+        self.assertNotIn(verification.encode(), reopened.candidate)
+
+    def test_record_gate_appends_before_a_trailing_whitespace_only_continuation(self) -> None:
+        """A record must append to the last meaningful line, not a blank continuation."""
+        root = self.reviewed_root()
+        evidence = self.stage_gate_evidence(root)
+        replace_bytes(
+            root,
+            "BACKLOG.md",
+            b"- [ ] Frozen parser remains open.\n",
+            b"- [ ] Frozen parser remains open.\n      \t \n",
+        )
+
+        recorded = plan_record_gate(root, "T1.2", 1, expect_open=True, evidence=(evidence,))
+
+        self.assertIn(
+            "- [x] Frozen parser remains open. — Evidence: [verification](.superpowers/sdd/t1-2/gate-1.md)\n      \t \n".encode(),
+            recorded.candidate,
+        )
+
     def test_reopen_gate_requires_a_closed_gate_reviewed_child_and_reason(self) -> None:
         root = self.reviewed_root()
         evidence = self.stage_gate_evidence(root)

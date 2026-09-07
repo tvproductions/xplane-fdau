@@ -925,6 +925,7 @@ class GovernanceArtifactTests(unittest.TestCase):
                 "2026-08-16-xplane-fdau-typed-backlog-status-reporting.md",
                 "2026-09-05-t1-3-structural-audit.md",
                 "2026-09-06-t1-4-deterministic-next-action-selection.md",
+                "2026-09-06-t1-5-guarded-child-state-mutations.md",
             },
             set(active_plans),
         )
@@ -932,6 +933,7 @@ class GovernanceArtifactTests(unittest.TestCase):
         self.assertEqual("`T1.2`", active_plans["2026-08-16-xplane-fdau-typed-backlog-status-reporting.md"]["Roadmap child"])
         self.assertEqual("`T1.3`", active_plans["2026-09-05-t1-3-structural-audit.md"]["Roadmap child"])
         self.assertEqual("`T1.4`", active_plans["2026-09-06-t1-4-deterministic-next-action-selection.md"]["Roadmap child"])
+        self.assertEqual("`T1.5`", active_plans["2026-09-06-t1-5-guarded-child-state-mutations.md"]["Roadmap child"])
 
     def test_historical_artifacts_name_their_disposition(self) -> None:
         historical_paths = (

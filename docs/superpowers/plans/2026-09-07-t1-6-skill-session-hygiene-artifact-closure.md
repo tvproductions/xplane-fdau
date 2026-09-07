@@ -54,7 +54,7 @@
 
 **Interfaces:** Produce a discoverable `backlog-status` skill that routes read-only requests to `status`, `audit`, and `next`, and routes controlled state requests to the existing dry-run-first mutation CLI without adding another state engine.
 
-- [ ] **Step 1: Write failing discovery and content tests**
+- [ ] **Step 1: Write the failing discovery test and run baseline skill evaluations**
 
   Set the discovered skill set to all project skill directories:
 
@@ -62,35 +62,25 @@
   DISCOVERABLE_PROJECT_SKILLS = PROJECT_SKILL_DIRECTORIES
   ```
 
-  Add `test_backlog_status_skill_routes_exact_repository_commands`. Read the new `SKILL.md` and require these exact strings:
-
-  ```python
-  required = (
-      "name: backlog-status",
-      "reporting or resuming xplane-fdau delivery status",
-      "uv run python .codex/skills/backlog-status/scripts/backlog_status.py status",
-      "uv run python .codex/skills/backlog-status/scripts/backlog_status.py status --json",
-      "uv run python .codex/skills/backlog-status/scripts/backlog_status.py audit",
-      "uv run python .codex/skills/backlog-status/scripts/backlog_status.py next",
-      "--target-sha256",
-      "--apply",
-      "BACKLOG.md",
-  )
-  for value in required:
-      self.assertIn(value, text)
-  self.assertIn("dry-run", text.lower())
-  self.assertIn("only mutable delivery-state authority", text)
-  self.assertNotIn("git push", text.lower())
-  self.assertNotIn("pytest", text.lower())
-  ```
+  Before creating `SKILL.md`, the controller dispatches three fresh-context
+  reference-skill evaluations without the skill: status/resume routing,
+  roadmap/backlog/spec/plan adherence routing, and a pressured controlled-state
+  request. Evaluators must not mutate the checkout. Record their command choices
+  and omissions verbatim in the plan workspace as the RED baseline. The intended
+  behaviors are audit-before-next for status/resume, strict `audit` for adherence,
+  and dry-run followed by the printed `--target-sha256` plus explicit `--apply`
+  for controlled mutations.
 
 - [ ] **Step 2: Run RED**
 
   ```powershell
-  uv run python -m unittest tests.test_project_skills.ProjectSkillTests.test_project_skills_are_scoped_to_unreleased_xplane_fdau tests.test_project_skills.ProjectSkillTests.test_backlog_status_skill_routes_exact_repository_commands -v
+  uv run python -m unittest tests.test_project_skills.ProjectSkillTests.test_project_skills_are_scoped_to_unreleased_xplane_fdau -v
   ```
 
-  Expected: FAIL because `.codex/skills/backlog-status/SKILL.md` does not exist and `backlog-status` is currently excluded from discovery assertions.
+  Expected: FAIL because `.codex/skills/backlog-status/SKILL.md` does not exist
+  and `backlog-status` is no longer excluded from discovery assertions. The
+  fresh-context evaluations provide the behavioral RED evidence for the new
+  reference skill; do not replace them with assertions that grep prose.
 
 - [ ] **Step 3: Create the thin skill adapter**
 
@@ -133,7 +123,7 @@
   standard-library-only runtime boundary.
   ````
 
-- [ ] **Step 4: Run GREEN and skill regression checks**
+- [ ] **Step 4: Run GREEN and repeat the skill evaluations**
 
   ```powershell
   uv run python -m unittest tests.test_project_skills -v
@@ -141,7 +131,12 @@
   uv run ruff format --check tests/test_project_skills.py
   ```
 
-  Expected: all pass; all five project skill directories are discoverable and the backlog skill remains a command adapter rather than another engine.
+  Then the controller repeats all three fresh-context evaluations with the new
+  skill explicitly available. Each evaluator must choose the intended repository
+  command sequence and preserve the no-mutation/no-release boundary. Record the
+  responses beside the baseline evidence. Expected: automated checks pass, all
+  five project skill directories are discoverable, and the evaluations show that
+  the backlog skill is usable as a command adapter rather than another engine.
 
 - [ ] **Step 5: Commit skill discovery**
 
@@ -170,50 +165,26 @@
   boundary, explicit-only Git sync/session handoff, Superpowers order, release
   prohibition, q4xpcc readiness thresholds, and the local dependency path.
 
-- [ ] **Step 2: Write failing session-entry and handoff tests**
+- [ ] **Step 2: Run a failing session-entry evaluation and preserve existing contracts**
 
-  Add `test_session_entry_runs_backlog_audit_before_next_action` to `tests/test_project_skills.py`. Extract the `## Session Entry` section and assert both exact commands occur once and in this order:
+  Before editing `AGENTS.md`, dispatch one fresh-context evaluator asked to resume
+  repository work from the current checkout without naming the backlog commands.
+  It must remain read-only and report the actions it would take. Record the RED
+  response in the plan workspace; the expected gap is failure to run strict
+  `audit` followed by deterministic `next` and stop on an audit finding.
 
-  ```python
-  audit = "uv run python .codex/skills/backlog-status/scripts/backlog_status.py audit"
-  next_action = "uv run python .codex/skills/backlog-status/scripts/backlog_status.py next"
-  self.assertEqual(1, session_entry.count(audit))
-  self.assertEqual(1, session_entry.count(next_action))
-  self.assertLess(session_entry.index(audit), session_entry.index(next_action))
-  self.assertIn("Stop on an audit finding", session_entry)
-  self.assertIn(".codex/skills/backlog-status/SKILL.md", session_entry)
-  ```
+  Do not add tests that merely grep instructions or human prose. Preserve the
+  existing backlog-governance and documentation contract tests, including D1.1 ->
+  D1.2 -> D1.3 -> I1.0 ordering and the migration/release-boundary strings. Update
+  the active-plan governance assertion for the committed T1.6 plan and its current
+  lifecycle state.
 
-  Replace the existing handoff-order test with `test_handoff_is_a_concise_pointer_to_authoritative_delivery_state`. Require the exact authority and readiness statements:
+- [ ] **Step 3: Confirm RED evidence**
 
-  ```python
-  required = (
-      "`BACKLOG.md` is the only mutable delivery-state authority.",
-      "Do not infer current state from this file",
-      "`D1.1` canonical C1-C4 design approval is verified",
-      "`D1.2` acquisition, recording, projection, and pinning contract design is verified",
-      "`D1.3` reviewed q4xpcc Phase 24A consumer handoff is verified",
-      "`I1.0` is eligible as the next reportable external action",
-      "`I1.1` permits delivered contract-model, schema, fixture, and runtime adoption only after `C4.4`.",
-      "`I1.2` permits live XPLM acquisition adoption only after `A1.9`.",
-  )
-  for value in required:
-      self.assertIn(value, handoff)
-  sequence = required[2:6]
-  positions = tuple(handoff.index(value) for value in sequence)
-  self.assertEqual(tuple(sorted(positions)), positions)
-  self.assertNotIn("t1-5-guarded-mutations", handoff)
-  self.assertNotIn("pending the user's finishing choice", handoff)
-  self.assertLess(len(handoff.splitlines()), 120)
-  ```
-
-- [ ] **Step 3: Run RED**
-
-  ```powershell
-  uv run python -m unittest tests.test_project_skills.ProjectSkillTests.test_session_entry_runs_backlog_audit_before_next_action tests.test_backlog_governance.BacklogAuthorityTests.test_handoff_is_a_concise_pointer_to_authoritative_delivery_state -v
-  ```
-
-  Expected: FAIL because session entry does not run the CLI and the handoff still reports the removed T1.5 branch as unmerged.
+  Expected: the evaluator omits at least one required session-entry behavior and
+  the measured handoff still reports the removed T1.5 branch as unmerged. If the
+  evaluator already complies, strengthen the scenario around resumption pressure;
+  do not manufacture a source-text failure.
 
 - [ ] **Step 4: Add the mandatory session-entry commands**
 
@@ -288,6 +259,9 @@
   only after `C4.4`. `I1.2` permits live XPLM acquisition adoption only after
   `A1.9`. Do not modify q4xpcc from this repository.
 
+  `I1.0` now permits Phase 24A specification and plan reconciliation because
+  `D1.3` is verified.
+
   ## Evidence pointers
 
   - T1 design:
@@ -299,7 +273,7 @@
 
   Keep the exact migration-boundary strings required by `tests/test_documentation.py`. Do not copy the child inventory, gate dashboard, historical commit narrative, or active branch status into the handoff.
 
-- [ ] **Step 6: Run GREEN, context measurements, and documentation checks**
+- [ ] **Step 6: Run GREEN, repeat the evaluator, and measure context**
 
   ```powershell
   uv run python -m unittest tests.test_project_skills tests.test_backlog_governance tests.test_documentation -v
@@ -309,7 +283,11 @@
   git diff --check
   ```
 
-  Expected: all pass; every binding rule remains reachable, `HANDOFF.md` is below 120 lines, and its byte/line reduction is recorded.
+  Repeat the same fresh-context session-entry evaluation with the amended
+  instructions and record the response. Expected: it chooses strict audit before
+  next, stops on findings, and otherwise follows the reported lifecycle action;
+  all commands pass, every binding rule remains reachable, `HANDOFF.md` is below
+  120 lines, and its byte/line reduction is recorded.
 
 - [ ] **Step 7: Commit session-entry closure**
 
@@ -339,7 +317,12 @@
   self.assertEqual(expected, module.LOCAL_COMMANDS)
   ```
 
-  Add a fake runner that returns `CompletedProcess(command, 7)` for the audit and zero otherwise. Assert `run_local_hygiene(runner)` returns `7` and the fake sees only the first three commands. Assert `.codex/skills/hygiene/SKILL.md` names the exact audit command and says it runs before quality.
+  Add a fake runner that returns `CompletedProcess(command, 7)` for the audit
+  and zero otherwise. Assert `run_local_hygiene(runner)` returns `7` and the
+  fake sees only the first three commands. These runner assertions are the
+  behavior contract; do not add a source-text assertion for
+  `.codex/skills/hygiene/SKILL.md`, which remains a concise reference to the
+  tested script.
 
 - [ ] **Step 2: Run RED**
 
@@ -393,7 +376,7 @@
 
 **Interfaces:** Preserve the existing `uv_build` `source-exclude` configuration and exact `tools.release.check_dist()` validator while adding direct regression coverage for every repository-governance family introduced by T1.
 
-- [ ] **Step 1: Write failing build-policy and artifact-rejection tests**
+- [ ] **Step 1: Write build-policy and artifact-rejection regression tests**
 
   Add `test_repository_governance_is_excluded_from_source_builds`:
 
@@ -432,15 +415,22 @@
   }
   ```
 
-  For every candidate, rebuild the synthetic archive and assert `release.check_dist()` raises `ReleaseError`. The test is RED until the assertions and imports are added even though the existing validator is expected to satisfy them without production changes.
+  For every candidate, rebuild the synthetic archive and assert
+  `release.check_dist()` raises `ReleaseError`. These are characterization tests
+  for an already-shipped exact validator, not a production behavior change; they
+  may pass on their first execution. Verify their value with the mutation check:
+  removing any corresponding rejection from the validator would fail at least one
+  literal case.
 
-- [ ] **Step 2: Run RED**
+- [ ] **Step 2: Run the characterization tests**
 
   ```powershell
   uv run python -m unittest tests.test_project_skills.ProjectSkillTests.test_repository_governance_is_excluded_from_source_builds tests.test_release_tool.ReleaseToolTests.test_check_dist_rejects_every_repository_governance_family -v
   ```
 
-  Expected: FAIL because the two explicit regression tests do not yet exist.
+  Expected after adding the tests: PASS against the current exact validator. Do
+  not fabricate a failing production state merely to obtain RED evidence for a
+  test-only strengthening task.
 
 - [ ] **Step 3: Add the exact regression coverage**
 

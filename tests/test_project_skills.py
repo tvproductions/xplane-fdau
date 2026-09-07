@@ -17,7 +17,7 @@ PROJECT_SKILL_DIRECTORIES = {
     "hygiene",
     "release",
 }
-DISCOVERABLE_PROJECT_SKILLS = PROJECT_SKILL_DIRECTORIES - {"backlog-status"}
+DISCOVERABLE_PROJECT_SKILLS = PROJECT_SKILL_DIRECTORIES
 GZ_SKILLS = {
     "gzs-agent-context-diet",
     "gzs-cross-platform-python",

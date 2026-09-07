@@ -4,7 +4,11 @@
 
 `ROADMAP.md` is the capability-order authority and `BACKLOG.md` is the only
 mutable delivery-state authority. Do not infer current state from this file;
-after reading the required architecture and governance documents, run:
+after reading the required architecture and governance documents, inspect
+`git worktree list --porcelain` and the status and commits of any linked
+worktrees before reporting backlog status or selecting another increment.
+Report completed but unmerged work explicitly so it is integrated through the
+authorized workflow before being mistaken for unfinished work. Then run:
 
 ```powershell
 uv run python .codex/skills/backlog-status/scripts/backlog_status.py audit

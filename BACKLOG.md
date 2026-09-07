@@ -107,7 +107,7 @@ The child slices below refine this sequence without weakening or reordering it.
 | `T1.2` | Typed parser, status report, and versioned JSON | `verified` | `T1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-08-16-xplane-fdau-typed-backlog-status-reporting.md) | 4/4 | [review](.superpowers/sdd/2026-08-16-t1-2-typed-backlog-status-reporting/review.md) | — | — |
 | `T1.3` | Structural audit and spec/plan adherence | `verified` | `T1.2` | [design](docs/superpowers/specs/2026-09-05-t1-3-audit-policy-supplement-design.md) | [plan](docs/superpowers/plans/2026-09-05-t1-3-structural-audit.md) | 4/4 | [review](.superpowers/sdd/2026-09-05-t1-3-structural-audit/review.md) | — | — |
 | `T1.4` | Deterministic next-action selection | `verified` | `T1.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-09-06-t1-4-deterministic-next-action-selection.md) | 4/4 | [review](.superpowers/sdd/2026-09-06-t1-4-deterministic-next-action-selection/review.md) | — | — |
-| `T1.5` | Guarded child-state and gate-evidence mutations | `reviewed` | `T1.3`, `T1.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-09-06-t1-5-guarded-child-state-mutations.md) | 0/5 | [review](.superpowers/sdd/2026-09-06-t1-5-guarded-child-state-mutations/review.md) | — | — |
+| `T1.5` | Guarded child-state and gate-evidence mutations | `reviewed` | `T1.3`, `T1.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-09-06-t1-5-guarded-child-state-mutations.md) | 5/5 | [review](.superpowers/sdd/2026-09-06-t1-5-guarded-child-state-mutations/review.md) | — | — |
 | `T1.6` | Skill, session-entry, hygiene, and artifact closure | `specified` | `T1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/5 | — | — | — |
 | `T2.1` | Project repository-hygiene adapter and fresh artifact verification | `specified` | `T1.6` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/5 | — | — | — |
 | `T2.2` | Governed dependency and toolchain refresh | `specified` | `T2.1` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/4 | — | — | — |
@@ -458,14 +458,14 @@ The child slices below refine this sequence without weakening or reordering it.
 
 ### T1.5 — Guarded child-state and gate-evidence mutations
 
-- [ ] Every mutation is dry-run-first and requires explicit apply authority.
-- [ ] Expected selection/state/gate values and target hashes reject stale
-      changes.
-- [ ] Selection and lifecycle transitions enforce the exact transition graph
-      and prerequisites.
-- [ ] Gate recording and reopening enforce the typed evidence contract.
-- [ ] Candidate validation, atomic publication, failure cleanup, and unrelated
-      Markdown preservation pass.
+- [x] Every mutation is dry-run-first and requires explicit apply authority. — Evidence: [verification](.superpowers/sdd/2026-09-06-t1-5-guarded-child-state-mutations/gate-1.md)
+- [x] Expected selection/state/gate values and target hashes reject stale
+      changes. — Evidence: [verification](.superpowers/sdd/2026-09-06-t1-5-guarded-child-state-mutations/gate-2.md)
+- [x] Selection and lifecycle transitions enforce the exact transition graph
+      and prerequisites. — Evidence: [verification](.superpowers/sdd/2026-09-06-t1-5-guarded-child-state-mutations/gate-3.md)
+- [x] Gate recording and reopening enforce the typed evidence contract. — Evidence: [verification](.superpowers/sdd/2026-09-06-t1-5-guarded-child-state-mutations/gate-4.md)
+- [x] Candidate validation, atomic publication, failure cleanup, and unrelated
+      Markdown preservation pass. — Evidence: [verification](.superpowers/sdd/2026-09-06-t1-5-guarded-child-state-mutations/gate-5.md)
 
 ### T1.6 — Skill, session-entry, hygiene, and artifact closure
 

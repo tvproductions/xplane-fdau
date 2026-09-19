@@ -5,8 +5,12 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import shutil
+import stat
 import subprocess
 import sys
+import tempfile
+import tomllib
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -24,6 +28,16 @@ LOCAL_COMMANDS = (
     ("uv", "run", "--offline", "--frozen", "python", "tools/quality.py", "pre-commit"),
 )
 DEPENDENCY_COMMAND = ("uv", "tree", "--outdated", "--depth", "1", "--locked", "--format", "json")
+
+
+@dataclass(frozen=True, slots=True)
+class ArtifactDirectory:
+    """Record the exact temporary directory and parent created for one run."""
+
+    path: Path
+    parent: Path
+    directory_identity: os.stat_result
+    parent_identity: os.stat_result
 
 
 @dataclass(frozen=True, order=True)
@@ -98,12 +112,86 @@ def run_command(command: tuple[str, ...], runner: Runner) -> int:
     return result.returncode
 
 
-def run_local_hygiene(runner: Runner = subprocess.run) -> int:
-    """Run the deterministic local hygiene sequence."""
+def create_artifact_dir() -> ArtifactDirectory:
+    """Create one external directory and record its exact identity."""
+    parent = Path(tempfile.gettempdir()).resolve()
+    root = ROOT.resolve()
+    if parent == root or root in parent.parents:
+        raise ValueError(f"temporary directory is inside the checkout: {parent}")
+    parent_identity = parent.stat(follow_symlinks=False)
+    created = Path(tempfile.mkdtemp(prefix="xplane-fdau-hygiene-", dir=parent))
+    try:
+        directory_identity = created.stat(follow_symlinks=False)
+    except OSError as error:
+        raise RuntimeError(f"artifact directory created but not inspected; preserved {created}: {error}") from error
+    return ArtifactDirectory(created, parent, directory_identity, parent_identity)
+
+
+def artifact_commands(directory: Path, version: str) -> tuple[tuple[str, ...], ...]:
+    """Name the exact wheel and sdist expected from the current project."""
+    wheel = directory / f"xplane_fdau-{version}-py3-none-any.whl"
+    sdist = directory / f"xplane_fdau-{version}.tar.gz"
+    return (
+        ("uv", "build", "--offline", "--no-sources", "--out-dir", str(directory)),
+        ("uv", "run", "--offline", "--frozen", "twine", "check", "--strict", str(wheel), str(sdist)),
+        ("uv", "run", "--offline", "--frozen", "python", "tools/release.py", "check-dist", str(directory)),
+    )
+
+
+def verified_cleanup_target(owned: ArtifactDirectory) -> Path:
+    """Return the created path only while its parent and identity still match."""
+    root = ROOT.resolve()
+    path = owned.path
+    parent = owned.parent
+    if path.parent != parent or parent == root or root in parent.parents or path == root or root in path.parents:
+        raise ValueError(f"unsafe artifact directory location: {path}")
+    for candidate in (parent, path):
+        if candidate.is_symlink() or candidate.is_junction():
+            raise ValueError(f"artifact directory link is unsafe: {candidate}")
+    if parent.resolve(strict=True) != parent or path.resolve(strict=True) != path:
+        raise ValueError(f"artifact directory location changed: {path}")
+    current_parent = parent.stat(follow_symlinks=False)
+    current_directory = path.stat(follow_symlinks=False)
+    if not stat.S_ISDIR(current_parent.st_mode) or not stat.S_ISDIR(current_directory.st_mode):
+        raise ValueError(f"artifact directory is no longer a directory: {path}")
+    if not os.path.samestat(owned.parent_identity, current_parent):
+        raise ValueError(f"artifact directory parent identity changed: {parent}")
+    if not os.path.samestat(owned.directory_identity, current_directory):
+        raise ValueError(f"artifact directory identity changed: {path}")
+    return path
+
+
+def run_local_hygiene(
+    runner: Runner = subprocess.run,
+    create_directory: Callable[[], ArtifactDirectory] = create_artifact_dir,
+    cleanup: Callable[[Path], None] = shutil.rmtree,
+) -> int:
+    """Run offline checks, inspect one fresh artifact pair, then remove it safely."""
     for command in LOCAL_COMMANDS:
         code = run_command(command, runner)
         if code != 0:
             return code
+    try:
+        version = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+        if not isinstance(version, str) or not version:
+            raise ValueError("project version is missing")
+        owned = create_directory()
+    except (OSError, ValueError, RuntimeError, KeyError, TypeError) as error:
+        print(f"hygiene artifact preparation failed: {error}", file=sys.stderr)
+        return 1
+    print(f"hygiene artifact directory: {owned.path}", flush=True)
+    for command in (*artifact_commands(owned.path, version), *LOCAL_COMMANDS[:2]):
+        code = run_command(command, runner)
+        if code != 0:
+            print(f"preserved artifact directory: {owned.path}", file=sys.stderr)
+            return code
+    try:
+        target = verified_cleanup_target(owned)
+        cleanup(target)
+    except (OSError, ValueError, RuntimeError) as error:
+        print(f"hygiene cleanup failed; preserved artifact directory {owned.path}: {error}", file=sys.stderr)
+        return 1
+    print(f"removed artifact directory: {owned.path}", flush=True)
     return 0
 
 

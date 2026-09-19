@@ -182,7 +182,7 @@ class ProjectSkillTests(unittest.TestCase):
                 ("uv", "run", "--offline", "--frozen", "mkdocs", "build", "--strict"),
                 ("uv", "run", "--offline", "--frozen", "python", "tools/quality.py", "pre-commit"),
             ],
-            executed,
+            executed[:6],
         )
 
     def test_hygiene_stops_when_backlog_audit_fails(self) -> None:

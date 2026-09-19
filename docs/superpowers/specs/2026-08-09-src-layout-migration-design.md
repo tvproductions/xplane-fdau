@@ -6,7 +6,7 @@
 - **Decision owner:** Jeff / tvproductions
 - **Roadmap epic:** `B1`
 - **Roadmap children:** `B1.1`
-- **Approval:** 2026-08-09 — Jeff / tvproductions
+- **Approval:** 2026-08-09 — Jeff / tvproductions; sequencing correction approved 2026-09-19 by Jeff / tvproductions
 
 ## Architecture relationship
 
@@ -39,6 +39,10 @@ files by path.
 
 The distribution name, import name, public API, console command, runtime
 dependency boundary, and installed wheel paths do not change.
+
+The 2026-09-19 sequencing correction removes `T3.1` from `B1.1`
+prerequisites. The current roadmap still requires verified `T2.2`. The
+mechanical migration and its verification do not require Git synchronization.
 
 ## Scope
 

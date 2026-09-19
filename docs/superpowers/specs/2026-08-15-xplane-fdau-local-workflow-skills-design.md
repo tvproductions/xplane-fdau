@@ -6,7 +6,7 @@
 - **Decision owner:** Jeff / tvproductions
 - **Roadmap epic:** `T2`
 - **Roadmap children:** `T2.1`, `T2.2`, `T3.1`
-- **Approval:** 2026-08-15 — Jeff / tvproductions; canonical workflow amendment approved 2026-09-05 by Jeff / tvproductions; single-pass verification correction approved 2026-09-19 by Jeff / tvproductions
+- **Approval:** 2026-08-15 — Jeff / tvproductions; canonical workflow amendment approved 2026-09-05 by Jeff / tvproductions; single-pass verification correction approved 2026-09-19 by Jeff / tvproductions; B1.1 sequencing correction approved 2026-09-19 by Jeff / tvproductions
 
 ## Authority and purpose
 
@@ -36,12 +36,14 @@ T1.1 -> T1.2 -> T1.3 -> T1.4 -> T1.5 -> T1.6
                                                |
                                                +-> T2.1 hygiene adapter
                                                        |
-                                                       +-> T2.2 dependency adapter ---+
-                                                       |                            |
-                                                       +-> T3.1 Git-sync adapter -----+-> B1.1
+                                                       +-> T2.2 dependency adapter -> B1.1
+                                                       +-> T3.1 Git-sync adapter
 ```
 
-Repository governance is completed before the source-layout migration resumes.
+Backlog governance, repository hygiene, and T2.2 dependency refresh precede
+B1.1. The 2026-09-19 sequencing correction makes T3.1 an independent peer:
+B1.1 uses local Git and artifact verification, so the Git-sync adapter is not
+a prerequisite for source-layout migration or the first canonical contract.
 Installing the canonical workflows or implementing these adapters does not
 execute or authorize a sync. A later explicit Git-sync request authorizes an
 ordinary guarded commit and push with final remote-alignment proof. Tags,
@@ -397,4 +399,4 @@ This design covers exactly `T2.1`, `T2.2`, and `T3.1`. Each child receives one
 focused implementation plan after written approval. `T1.1` through `T1.6`
 remain under their existing design and execute first. After `T2.1`, `T2.2` and
 `T3.1` may proceed as peers. `B1.1` remains specified with a draft plan and
-resumes only after both `T2.2` and `T3.1` are verified.
+resumes after `T2.2` is verified; `T3.1` does not gate it.

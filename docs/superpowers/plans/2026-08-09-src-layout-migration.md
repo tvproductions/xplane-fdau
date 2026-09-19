@@ -8,11 +8,12 @@
 - **Approval:** —
 - **Completion evidence:** —
 
-> **Current architecture — 2026-08-16:** This active plan implements the
+> **Current architecture — 2026-09-19:** This active plan implements the
 > package isolation required by
 > [`xplane_fdau_core_scope_amendment.md`](../../architecture/xplane_fdau_core_scope_amendment.md).
-> `B1.1` resumes only after both `T2.2` dependency refresh and `T3.1` Git
-> synchronization are verified. The runtime remains one X-Plane-specific,
+> `B1.1` resumes after `T2.2` dependency refresh is verified. `T3.1` Git
+> synchronization remains independent and is not used by this plan. The runtime
+> remains one X-Plane-specific,
 > transport-free, standard-library-only distribution tested on Python
 > 3.12-3.14.
 
@@ -27,7 +28,7 @@
 ## Global Constraints
 
 - Governing specification: `docs/superpowers/specs/2026-08-09-src-layout-migration-design.md`.
-- Roadmap child: `B1.1`; require verified `T2.2` and `T3.1`, and do not
+- Roadmap child: `B1.1`; require verified `T2.2`, and do not
   implement canonical-contract or T1 tooling work.
 - Runtime remains pure Python and standard-library-only.
 - Import name remains `xplane_fdau`; never introduce `src.xplane_fdau` imports.

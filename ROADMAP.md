@@ -69,8 +69,8 @@ M0 Identity and native FDR kernel                                      verified
  |
  +-> T1 Backlog governance -> T2.1 Repository hygiene
       |                           |
-      |                           +-> T2.2 Dependency refresh --+
-      |                           +-> T3.1 Guarded Git sync -----+-> B1 Source-layout isolation
+      |                           +-> T2.2 Dependency refresh --> B1 Source-layout isolation
+      |                           +-> T3.1 Guarded Git sync
       |
       +-> T1.2 review -> D1 q4xpcc contract-handoff readiness
       |                    |
@@ -106,7 +106,7 @@ Each epic expands into the child slices below.
 
 | Child | Outcome | Depends on |
 | --- | --- | --- |
-| `B1.1` | Source-layout migration and installed-import isolation | `T2.2`, `T3.1` |
+| `B1.1` | Source-layout migration and installed-import isolation | `T2.2` |
 
 ## C — Canonical semantic contract kernel
 

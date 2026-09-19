@@ -1,7 +1,7 @@
 # xplane-fdau Backlog
 
 - **Status:** Active delivery ledger and Superpowers entry point
-- **Updated:** 2026-09-07
+- **Updated:** 2026-09-19
 
 Read `ROADMAP.md` for architecture order and dependencies. Then use this file to
 select one primary child slice whose prerequisites are verified. Each child
@@ -27,7 +27,7 @@ slice receives one focused plan and one independently reviewable outcome.
   for the deterministic next action.
 - D1 is design-handoff readiness, not implementation or release readiness.
 - `B1.1` source-layout migration: `specified` with a draft plan; resumes after
-  peer prerequisites `T2.2` and `T3.1` are verified.
+  `T2.2` is verified. `T3.1` remains an independent specified tooling child.
 - Canonical contract design: approved with accepted independent review; `C1.1`
   through `C4.4` are specified with zero delivery gates satisfied.
 - Release, tag, and package publication: prohibited pending their separate
@@ -52,7 +52,7 @@ The child slices below refine this sequence without weakening or reordering it.
 
 | Child | Outcome | Status | Depends on | Spec | Plan | Gates | Review | Resume | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `B1.1` | Source-layout migration and installed-import isolation | `specified` | `T2.2`, `T3.1` | [design](docs/superpowers/specs/2026-08-09-src-layout-migration-design.md) | [draft plan](docs/superpowers/plans/2026-08-09-src-layout-migration.md) | 0/5 | — | — | — |
+| `B1.1` | Source-layout migration and installed-import isolation | `specified` | `T2.2` | [design](docs/superpowers/specs/2026-08-09-src-layout-migration-design.md) | [draft plan](docs/superpowers/plans/2026-08-09-src-layout-migration.md) | 0/5 | — | — | — |
 | `C1.1` | Canonical JSON and binary64/integer encoding | `specified` | `B1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C1.2` | Identity, hashing, references, authority, and provenance | `specified` | `C1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C1.3` | Typed values and content-addressed payload references | `specified` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |

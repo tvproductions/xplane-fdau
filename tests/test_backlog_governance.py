@@ -321,7 +321,7 @@ class RoadmapAuthorityTests(unittest.TestCase):
         self.assertEqual("`P1.2`, `P1.3`, `P1.4`", by_child["P1.5"])
         self.assertEqual("`C4.4`, `R1.7`", by_child["F1.1"])
         self.assertEqual("`T2.1`", by_child["T2.2"])
-        self.assertEqual("`T2.2`, `T3.1`", by_child["B1.1"])
+        self.assertEqual("`T2.2`", by_child["B1.1"])
         self.assertEqual("`T1.2`", by_child.get("D1.1"))
         self.assertEqual("`D1.1`", by_child.get("D1.2"))
         self.assertEqual("`D1.2`", by_child.get("D1.3"))

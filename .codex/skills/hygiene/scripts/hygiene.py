@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from collections.abc import Callable, Sequence
@@ -16,9 +17,11 @@ ROOT = Path(__file__).resolve().parents[4]
 Runner = Callable[..., subprocess.CompletedProcess[str]]
 LOCAL_COMMANDS = (
     ("git", "status", "--short", "--branch"),
+    ("git", "status", "--short", "--branch", "--ignored=matching"),
     ("uv", "lock", "--check", "--offline"),
-    ("uv", "run", "python", ".codex/skills/backlog-status/scripts/backlog_status.py", "audit"),
-    ("uv", "run", "python", "tools/quality.py", "pre-commit"),
+    ("uv", "run", "--offline", "--frozen", "python", ".codex/skills/backlog-status/scripts/backlog_status.py", "audit"),
+    ("uv", "run", "--offline", "--frozen", "mkdocs", "build", "--strict"),
+    ("uv", "run", "--offline", "--frozen", "python", "tools/quality.py", "pre-commit"),
 )
 DEPENDENCY_COMMAND = ("uv", "tree", "--outdated", "--depth", "1", "--locked", "--format", "json")
 
@@ -82,13 +85,25 @@ def find_outdated_dependencies(payload: dict[str, Any]) -> list[OutdatedDependen
     return sorted(set(outdated))
 
 
+def run_command(command: tuple[str, ...], runner: Runner) -> int:
+    """Run one local check and report the exact failed command."""
+    print("+ " + " ".join(command), flush=True)
+    try:
+        result = runner(command, cwd=ROOT, check=False, shell=False, env={**os.environ, "UV_OFFLINE": "1"})
+    except OSError as error:
+        print(f"hygiene failed: {' '.join(command)} (could not start: {error})", file=sys.stderr)
+        return 1
+    if result.returncode != 0:
+        print(f"hygiene failed: {' '.join(command)} (exit {result.returncode})", file=sys.stderr)
+    return result.returncode
+
+
 def run_local_hygiene(runner: Runner = subprocess.run) -> int:
     """Run the deterministic local hygiene sequence."""
     for command in LOCAL_COMMANDS:
-        print("+ " + " ".join(command), flush=True)
-        result = runner(command, cwd=ROOT, check=False)
-        if result.returncode != 0:
-            return result.returncode
+        code = run_command(command, runner)
+        if code != 0:
+            return code
     return 0
 
 

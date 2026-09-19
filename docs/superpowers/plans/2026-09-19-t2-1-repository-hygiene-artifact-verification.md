@@ -57,7 +57,7 @@
 
 **Interfaces:** Preserve `main(argv: Sequence[str] | None = None) -> int`, `run_local_hygiene(runner: Runner = subprocess.run) -> int`, and the explicit `--dependencies` mode. Task 2 adds temporary-directory and cleanup injection when it introduces artifacts.
 
-- [ ] **Step 1: Add failing command-order and no-network tests.** In `tests/test_hygiene_tool.py`, import the script with `importlib.util.spec_from_file_location` as the existing skill test does. Inject a runner that records `tuple(command)`, `cwd`, `env`, and `check`. Assert this ordered prefix:
+- [x] **Step 1: Add failing command-order and no-network tests.** In `tests/test_hygiene_tool.py`, import the script with `importlib.util.spec_from_file_location` as the existing skill test does. Inject a runner that records `tuple(command)`, `cwd`, `env`, and `check`. Assert this ordered prefix:
 
   ```python
   expected = [
@@ -72,9 +72,9 @@
 
   Assert every **direct hygiene subprocess** receives `cwd=ROOT`, `check=False`, `shell=False`, and child environment `UV_OFFLINE=1`. The injected runner cannot observe subprocesses later launched by pre-commit: separately inspect `.pre-commit-config.yaml` in `tests/test_project_skills.py` to require only local, `language: system` hooks, `uv run` entries, and exactly one `quality-check` hook. Task 3 runs the real pre-commit chain through an offline launcher so the inherited environment and local-hook configuration are exercised. Assert the prefix has no direct `tools/quality.py check`, `uv tree`, `git add`, `git commit`, or simulator command. Inject an `OSError` for a direct pre-artifact command; assert a nonzero result, the exact failed command and error, and no later calls. Update the existing `test_hygiene_audits_backlog_then_runs_one_quality_gate_through_pre_commit` expected commands to this prefix.
 
-- [ ] **Step 2: Prove RED.** Run `uv run python -m unittest tests.test_hygiene_tool tests.test_project_skills -v`. Expect the new order and offline-environment assertions to fail while existing skill discovery passes.
+- [x] **Step 2: Prove RED.** Run `uv run python -m unittest tests.test_hygiene_tool tests.test_project_skills -v`. Expect the new order and offline-environment assertions to fail while existing skill discovery passes.
 
-- [ ] **Step 3: Implement the ordered prefix and failure report.** Keep `LOCAL_COMMANDS` as immutable argument tuples. Add the ignored-status and MkDocs commands above, change existing `uv run` calls to `--offline --frozen`, and use this command boundary. Keep `audit_dependencies` only behind `--dependencies`:
+- [x] **Step 3: Implement the ordered prefix and failure report.** Keep `LOCAL_COMMANDS` as immutable argument tuples. Add the ignored-status and MkDocs commands above, change existing `uv run` calls to `--offline --frozen`, and use this command boundary. Keep `audit_dependencies` only behind `--dependencies`:
 
   ```python
   def run_command(command: tuple[str, ...], runner: Runner) -> int:
@@ -96,7 +96,7 @@
 
   Preserve `run_local_hygiene` as the entry point; Task 2 appends its artifact and final-status phases. Do not catch a failed command and continue.
 
-- [ ] **Step 4: Verify the gate and commit.** Run:
+- [x] **Step 4: Verify the gate and commit.** Run:
 
   ```powershell
   uv run python -m unittest tests.test_hygiene_tool tests.test_project_skills -v

@@ -12,6 +12,7 @@ import tomllib
 import unittest
 
 from pre_commit.clientlib import load_config
+import yaml
 
 
 PROJECT_SKILL_DIRECTORIES = {
@@ -175,9 +176,11 @@ class ProjectSkillTests(unittest.TestCase):
         self.assertEqual(
             [
                 ("git", "status", "--short", "--branch"),
+                ("git", "status", "--short", "--branch", "--ignored=matching"),
                 ("uv", "lock", "--check", "--offline"),
-                ("uv", "run", "python", ".codex/skills/backlog-status/scripts/backlog_status.py", "audit"),
-                ("uv", "run", "python", "tools/quality.py", "pre-commit"),
+                ("uv", "run", "--offline", "--frozen", "python", ".codex/skills/backlog-status/scripts/backlog_status.py", "audit"),
+                ("uv", "run", "--offline", "--frozen", "mkdocs", "build", "--strict"),
+                ("uv", "run", "--offline", "--frozen", "python", "tools/quality.py", "pre-commit"),
             ],
             executed,
         )
@@ -195,7 +198,7 @@ class ProjectSkillTests(unittest.TestCase):
         finally:
             sys.modules.pop(spec.name, None)
 
-        audit_command = ("uv", "run", "python", ".codex/skills/backlog-status/scripts/backlog_status.py", "audit")
+        audit_command = ("uv", "run", "--offline", "--frozen", "python", ".codex/skills/backlog-status/scripts/backlog_status.py", "audit")
         executed: list[tuple[str, ...]] = []
 
         def runner(command: tuple[str, ...], **kwargs: object) -> subprocess.CompletedProcess[str]:
@@ -206,6 +209,7 @@ class ProjectSkillTests(unittest.TestCase):
         self.assertEqual(
             [
                 ("git", "status", "--short", "--branch"),
+                ("git", "status", "--short", "--branch", "--ignored=matching"),
                 ("uv", "lock", "--check", "--offline"),
                 audit_command,
             ],
@@ -231,7 +235,7 @@ class ProjectSkillTests(unittest.TestCase):
             return subprocess.CompletedProcess(command, 3 if command[0] == "uv" else 0)
 
         self.assertEqual(3, module.run_local_hygiene(runner))
-        self.assertEqual(2, len(executed))
+        self.assertEqual(3, len(executed))
 
     def test_pre_commit_runs_quality_check_and_other_repository_hooks(self) -> None:
         config = load_config(".pre-commit-config.yaml")
@@ -244,3 +248,9 @@ class ProjectSkillTests(unittest.TestCase):
         self.assertEqual(1, len(quality_hooks))
         self.assertEqual("uv run python tools/quality.py check", quality_hooks[0]["entry"])
         self.assertFalse(quality_hooks[0]["pass_filenames"])
+        raw_config = yaml.safe_load(Path(".pre-commit-config.yaml").read_text(encoding="utf-8"))
+        raw_repos = raw_config["repos"]
+        raw_hooks = [hook for repo in raw_repos for hook in repo["hooks"]]
+        self.assertTrue(all(repo["repo"] == "local" for repo in raw_repos))
+        self.assertTrue(all(hook["language"] == "system" for hook in raw_hooks))
+        self.assertTrue(all(hook["entry"].startswith("uv run ") for hook in raw_hooks))

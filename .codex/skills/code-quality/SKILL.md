@@ -30,7 +30,10 @@ uv run python tools/quality.py dead-code
 uv run python tools/quality.py complexity
 ```
 
-`check` runs Ruff, ty, `unittest`, coverage, Bandit, detect-secrets, Interrogate, Vulture, and Xenon. Metrics and history inspection stay explicit and nonblocking:
+`check` runs Ruff, ty, the full `unittest` suite once under coverage, Bandit,
+detect-secrets, Interrogate, Vulture, and Xenon. `test` remains a focused
+standalone command. Metrics and history inspection stay explicit and
+nonblocking:
 
 ```powershell
 uv run python tools/quality.py metrics

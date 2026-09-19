@@ -17,10 +17,6 @@ Run these from the repository root:
 
 ```powershell
 uv sync --frozen
-uv run python -m unittest discover -v
-uv run ruff check .
-uv run ruff format --check .
-uv run ty check
 uv run python tools/quality.py check
 uv run mkdocs build --strict
 uv build --no-sources

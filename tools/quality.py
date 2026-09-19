@@ -79,7 +79,6 @@ CHECK_STEPS = (
     *COMMANDS["lint"],
     *COMMANDS["format-check"],
     *COMMANDS["typecheck"],
-    *COMMANDS["test"],
     *COMMANDS["coverage"],
     *COMMANDS["security"],
     *COMMANDS["docs"],

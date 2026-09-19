@@ -14,7 +14,6 @@ jobs:
       - uses: astral-sh/setup-uv@v9.0.0
       - run: uv python install 3.14
       - run: uv sync --frozen --python 3.14
-      - run: uv run --python 3.14 python -m unittest discover -v
       - run: uv run --python 3.14 python tools/quality.py check
       - run: uv run --python 3.14 mkdocs build --strict
       - run: uv build --no-sources

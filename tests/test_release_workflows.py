@@ -29,6 +29,12 @@ class ReleaseWorkflowTests(unittest.TestCase):
         self.assertNotIn("publish-pypi:", workflow)
         self.assertNotIn("check-tag", workflow)
 
+    def test_release_readiness_runs_one_aggregate_source_suite(self) -> None:
+        workflow = Path(".github/workflows/release-readiness.yml").read_text(encoding="utf-8")
+        validation = workflow.split("  validate-release:", 1)[1].split("  installed-wheel:", 1)[0]
+        self.assertEqual(1, validation.count("python tools/quality.py check"))
+        self.assertNotIn("python -m unittest discover", validation)
+
 
 if __name__ == "__main__":
     unittest.main()

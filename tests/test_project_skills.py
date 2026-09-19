@@ -6,8 +6,11 @@ import importlib.util
 import hashlib
 import json
 from pathlib import Path
+import subprocess
 import sys
 import unittest
+
+from pre_commit.clientlib import load_config
 
 
 PROJECT_SKILL_DIRECTORIES = {
@@ -143,7 +146,7 @@ class ProjectSkillTests(unittest.TestCase):
             )
             self.assertEqual(entry["sha256"], _skill_tree_sha256(installed_path))
 
-    def test_hygiene_script_runs_the_local_quality_gate(self) -> None:
+    def test_hygiene_script_runs_one_quality_gate_through_pre_commit(self) -> None:
         path = Path(".codex/skills/hygiene/scripts/hygiene.py")
         spec = importlib.util.spec_from_file_location("hygiene", path)
         if spec is None or spec.loader is None:
@@ -156,4 +159,51 @@ class ProjectSkillTests(unittest.TestCase):
         finally:
             sys.modules.pop(spec.name, None)
 
-        self.assertIn(("uv", "run", "python", "tools/quality.py", "check"), module.LOCAL_COMMANDS)
+        executed: list[tuple[str, ...]] = []
+
+        def runner(command: tuple[str, ...], **kwargs: object) -> subprocess.CompletedProcess[str]:
+            executed.append(command)
+            return subprocess.CompletedProcess(command, 0)
+
+        self.assertEqual(0, module.run_local_hygiene(runner))
+        self.assertEqual(
+            [
+                ("git", "status", "--short", "--branch"),
+                ("uv", "lock", "--check", "--offline"),
+                ("uv", "run", "python", "tools/quality.py", "pre-commit"),
+            ],
+            executed,
+        )
+
+    def test_hygiene_stops_after_offline_lock_failure(self) -> None:
+        path = Path(".codex/skills/hygiene/scripts/hygiene.py")
+        spec = importlib.util.spec_from_file_location("hygiene", path)
+        if spec is None or spec.loader is None:
+            self.fail("hygiene script must be importable")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        try:
+            spec.loader.exec_module(module)
+        finally:
+            sys.modules.pop(spec.name, None)
+
+        executed: list[tuple[str, ...]] = []
+
+        def runner(command: tuple[str, ...], **kwargs: object) -> subprocess.CompletedProcess[str]:
+            executed.append(command)
+            return subprocess.CompletedProcess(command, 3 if command[0] == "uv" else 0)
+
+        self.assertEqual(3, module.run_local_hygiene(runner))
+        self.assertEqual(2, len(executed))
+
+    def test_pre_commit_runs_quality_check_and_other_repository_hooks(self) -> None:
+        config = load_config(".pre-commit-config.yaml")
+        hooks = [hook for repo in config["repos"] for hook in repo["hooks"]]
+        self.assertEqual(
+            {"quality-check", "detect-secrets-baseline", "lizard-report", "cohesion-report"},
+            {hook["id"] for hook in hooks},
+        )
+        quality_hooks = [hook for hook in hooks if hook["id"] == "quality-check"]
+        self.assertEqual(1, len(quality_hooks))
+        self.assertEqual("uv run python tools/quality.py check", quality_hooks[0]["entry"])
+        self.assertFalse(quality_hooks[0]["pass_filenames"])

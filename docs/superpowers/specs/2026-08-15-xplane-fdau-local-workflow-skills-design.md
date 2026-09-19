@@ -6,7 +6,7 @@
 - **Decision owner:** Jeff / tvproductions
 - **Roadmap epic:** `T2`
 - **Roadmap children:** `T2.1`, `T2.2`, `T3.1`
-- **Approval:** 2026-08-15 — Jeff / tvproductions; canonical workflow amendment approved 2026-09-05 by Jeff / tvproductions
+- **Approval:** 2026-08-15 — Jeff / tvproductions; canonical workflow amendment approved 2026-09-05 by Jeff / tvproductions; single-pass verification correction approved 2026-09-19 by Jeff / tvproductions
 
 ## Authority and purpose
 
@@ -151,9 +151,10 @@ Every invocation runs the complete workflow:
 1. report branch, staged/unstaged scope, and ignored/generated artifacts;
 2. verify the lockfile offline;
 3. run the T1 backlog audit;
-4. run `tools/quality.py check`;
+4. use the `quality-check` pre-commit hook as the single invocation of
+   `tools/quality.py check` rather than running it separately;
 5. run strict MkDocs validation;
-6. run every pre-commit hook;
+6. run every pre-commit hook, including `quality-check`, once;
 7. build one fresh wheel and sdist in a uniquely named temporary directory
    outside the checkout;
 8. run strict metadata validation and `tools/release.py check-dist` against
@@ -171,6 +172,11 @@ Routine hygiene does not run the installed Python-version matrix. The
 `release` skill and child-slice closeout retain that responsibility. Dependency
 freshness remains an explicit opt-in network inquiry. Hygiene never formats,
 stages, commits, changes declarations, or deletes repository files.
+`tools/quality.py check` runs the full `unittest` suite once under coverage;
+`tools/quality.py test` remains available as a focused standalone command.
+Release-readiness CI and local guidance invoke `quality.py check` without a
+preceding standalone full-suite run. Repeated full-suite executions across separate
+deliberately requested gates are not implicitly removed by this correction.
 
 ## T2.2 dependency-update adapter contract
 

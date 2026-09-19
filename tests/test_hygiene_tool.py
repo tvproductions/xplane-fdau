@@ -311,6 +311,9 @@ class HygieneArtifactTests(unittest.TestCase):
                         self.module.run_local_hygiene(runner, create_directory=create_directory, cleanup=cleanup),
                     )
                 self.assertIn(expected, stderr.getvalue())
+                if expected == "delete failed":
+                    self.assertIn(f"cleanup failed or incomplete at {owned.path}", stderr.getvalue())
+                    self.assertNotIn("preserved artifact directory", stderr.getvalue())
                 self.assertTrue(owned.path.is_dir())
 
 

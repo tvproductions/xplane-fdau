@@ -189,7 +189,7 @@ def run_local_hygiene(
         target = verified_cleanup_target(owned)
         cleanup(target)
     except (OSError, ValueError, RuntimeError) as error:
-        print(f"hygiene cleanup failed; preserved artifact directory {owned.path}: {error}", file=sys.stderr)
+        print(f"hygiene cleanup failed or incomplete at {owned.path}: {error}", file=sys.stderr)
         return 1
     print(f"removed artifact directory: {owned.path}", flush=True)
     return 0

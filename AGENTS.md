@@ -66,7 +66,7 @@
 - Project adapters under `.codex/skills` provide exact xplane-fdau commands and
   domain boundaries beneath the portable invariants. The quality command is
   `uv run python tools/quality.py check`; the current hygiene command is
-  `uv run python .codex/skills/hygiene/scripts/hygiene.py`. Use `unittest`
+  `uv run --offline --frozen python .codex/skills/hygiene/scripts/hygiene.py`. Use `unittest`
   only, preserve the standard-library-only runtime, and follow the canonical
   Git-sync safeguards for any explicitly authorized ordinary push.
 

@@ -237,6 +237,37 @@ class ProjectSkillTests(unittest.TestCase):
         self.assertEqual(3, module.run_local_hygiene(runner))
         self.assertEqual(3, len(executed))
 
+    def test_hygiene_guidance_names_full_offline_project_adapter(self) -> None:
+        command = "uv run --offline --frozen python .codex/skills/hygiene/scripts/hygiene.py"
+        skill = Path(".codex/skills/hygiene/SKILL.md").read_text(encoding="utf-8")
+        instructions = Path("AGENTS.md").read_text(encoding="utf-8")
+        self.assertIn(command, skill)
+        self.assertIn(command, instructions)
+        for required in (
+            "gzs-repository-hygiene",
+            "mkdocs build --strict",
+            "quality-check",
+            "twine check --strict",
+            "tools/release.py check-dist",
+            "temporary",
+            "preserved",
+            "cleanup",
+            "offline",
+            "3.12",
+            "3.13",
+            "3.14",
+            "code-quality",
+            "documentation",
+            "release",
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, skill)
+        self.assertIn("--dependencies", skill)
+        self.assertIn("gzs-update-dependencies", skill)
+        self.assertNotIn("git push", skill)
+        self.assertNotIn("Git sync is authorized", skill)
+        self.assertNotIn("release is authorized", skill)
+
     def test_pre_commit_runs_quality_check_and_other_repository_hooks(self) -> None:
         config = load_config(".pre-commit-config.yaml")
         hooks = [hook for repo in config["repos"] for hook in repo["hooks"]]

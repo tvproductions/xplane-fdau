@@ -193,13 +193,13 @@
 
 **Interfaces:** Document `uv run --offline --frozen python .codex/skills/hygiene/scripts/hygiene.py` as the public project command, so the outer uv invocation and every command launched by the script are offline. Canonical `gzs-repository-hygiene` remains the portable workflow owner. Keep `code-quality`, `documentation`, and `release` as focused supporting skills.
 
-- [ ] **Step 1: Add a failing guidance assertion.** In `tests/test_project_skills.py`, assert the hygiene skill and `AGENTS.md` agree on the exact offline/frozen project command. Require the skill to name canonical `gzs-repository-hygiene`, strict MkDocs, the single pre-commit quality hook, one fresh external temporary artifact pair, strict Twine and `tools/release.py check-dist`, safe successful cleanup, failed-artifact preservation, offline routine behavior, and the separate closeout Python matrix. Assert it does not claim to implement `gzs-update-dependencies` or authorize Git sync/release.
+- [x] **Step 1: Add a failing guidance assertion.** In `tests/test_project_skills.py`, assert the hygiene skill and `AGENTS.md` agree on the exact offline/frozen project command. Require the skill to name canonical `gzs-repository-hygiene`, strict MkDocs, the single pre-commit quality hook, one fresh external temporary artifact pair, strict Twine and `tools/release.py check-dist`, safe successful cleanup, failed-artifact preservation, offline routine behavior, and the separate closeout Python matrix. Assert it does not claim to implement `gzs-update-dependencies` or authorize Git sync/release.
 
-- [ ] **Step 2: Prove RED.** Run `uv run python -m unittest tests.test_project_skills -v`; expect the new guidance assertion to fail.
+- [x] **Step 2: Prove RED.** Run `uv run python -m unittest tests.test_project_skills -v`; expect the new guidance assertion to fail.
 
-- [ ] **Step 3: Update the skill and entry guidance.** Document the exact offline/frozen invocation and command order, the optional `--dependencies` network probe, temporary artifact handling, and retained supporting skills in `.codex/skills/hygiene/SKILL.md`. Update the current hygiene command in `AGENTS.md` to the same offline/frozen invocation and keep its explicit-only Git-sync and release boundaries. Assert these two command references agree in `tests/test_project_skills.py`. State that the full 3.12–3.14 installed-wheel matrix belongs to child closeout rather than routine hygiene. Do not create another local `gzs-*` skill.
+- [x] **Step 3: Update the skill and entry guidance.** Document the exact offline/frozen invocation and command order, the optional `--dependencies` network probe, temporary artifact handling, and retained supporting skills in `.codex/skills/hygiene/SKILL.md`. Update the current hygiene command in `AGENTS.md` to the same offline/frozen invocation and keep its explicit-only Git-sync and release boundaries. Assert these two command references agree in `tests/test_project_skills.py`. State that the full 3.12–3.14 installed-wheel matrix belongs to child closeout rather than routine hygiene. Do not create another local `gzs-*` skill.
 
-- [ ] **Step 4: Verify the integration.** Run from the worktree root:
+- [x] **Step 4: Verify the integration.** Run from the worktree root:
 
   ```powershell
   uv run python -m unittest tests.test_hygiene_tool tests.test_project_skills -v
@@ -210,7 +210,7 @@
 
   Capture `git status --porcelain=v1 --untracked-files=all` before and after the hygiene command and require identical output, allowing only ignored caches outside that tracked scope. Expect the command to report the one external directory, one wheel and sdist, successful Twine and exact release validation, and successful cleanup. If it fails, preserve and report the artifact directory, correct the evidenced cause test-first, and repeat on the changed tree.
 
-- [ ] **Step 5: Commit guidance.** Run `git add .codex/skills/hygiene/SKILL.md AGENTS.md tests/test_project_skills.py` and `git commit -m "docs: route full hygiene through project adapter"`. Task 4 requests independent review of the committed implementation.
+- [x] **Step 5: Commit guidance.** Run `git add .codex/skills/hygiene/SKILL.md AGENTS.md tests/test_project_skills.py` and `git commit -m "docs: route full hygiene through project adapter"`. Task 4 requests independent review of the committed implementation.
 
 ### Task 4: Close T2.1 with distinct verification evidence
 

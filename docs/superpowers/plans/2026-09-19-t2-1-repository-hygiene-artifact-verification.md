@@ -287,9 +287,9 @@
 
   Confirm the inventory row reaches 5/5, and commit the five receipts with the corresponding `BACKLOG.md` changes. A `verified` transition is premature until these exact receipt bytes are in `HEAD`.
 
-- [ ] **Step 5: Transition from committed evidence and update the handoff.** With completion, review, and all five gate receipts in `HEAD`, dry-run/apply `transition T2.1 verified --expect reviewed`, then dry-run/apply `select none --expect-current T2.1`. Update `HANDOFF.md` to state T2.1 is verified at 5/5 and direct readers to the live audit/next result for the next child. Update any current-state tests to match the verified T2.1 and actual next recommendation. Keep `BACKLOG.md` authoritative; do not edit it by hand.
+- [x] **Step 5: Transition from committed evidence and update the handoff.** With completion, review, and all five gate receipts in `HEAD`, dry-run/apply `transition T2.1 verified --expect reviewed`, then dry-run/apply `select none --expect-current T2.1`. Update `HANDOFF.md` to state T2.1 is verified at 5/5 and direct readers to the live audit/next result for the next child. Update any current-state tests to match the verified T2.1 and actual next recommendation. Keep `BACKLOG.md` authoritative; do not edit it by hand.
 
-- [ ] **Step 6: Run the final gate on the closeout candidate and commit.** Run from the worktree root:
+- [x] **Step 6: Run the final gate on the closeout candidate and commit.** Run from the worktree root:
 
   ```powershell
   uv run python .codex/skills/backlog-status/scripts/backlog_status.py audit

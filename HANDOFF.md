@@ -38,11 +38,11 @@ and `gzs-session-handoff` are explicit-only workflows.
 
 ## Current delivery path
 
-T1.6 is verified at 5/5: skill discovery, session entry, hygiene audit
-integration, and artifact exclusion are complete. T2.1 is the next
-dependency-ready child; follow the live BACKLOG audit/next result for its
-`write_plan` action. The governed path remains
-`T2.1 -> T2.2/T3.1 -> B1.1 -> C1.1` and then through `C4.4`.
+T1.6 and T2.1 are verified at 5/5. T2.1 completed the offline project
+hygiene gate and fresh wheel/sdist verification; no child is selected.
+The live BACKLOG audit/next result recommends `write_plan` for T2.2.
+T3.1 remains a separate specified peer; B1.1 depends on both T2.2 and
+T3.1 before canonical foundation work continues through C4.4.
 
 ## q4xpcc readiness
 

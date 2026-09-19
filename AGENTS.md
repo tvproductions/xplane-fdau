@@ -40,6 +40,11 @@
 - **NO pytest. EVER.** Do not add, suggest, or assume pytest as a testing
   framework.
 - Use Python's `unittest` framework.
+- Run the complete project gate on the active supported Python version for
+  ordinary changes. Do not add a full 3.12–3.14 source and installed-wheel
+  matrix to routine feature closeout. Use CI for broad compatibility coverage;
+  run a local version matrix only for version-sensitive changes or an explicit
+  release-readiness requirement.
 
 ## Runtime Boundary
 

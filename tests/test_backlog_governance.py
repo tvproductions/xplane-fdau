@@ -166,7 +166,9 @@ def identity(cell: str) -> str:
     match = re.fullmatch(r"`([A-Z][0-9]+(?:\.[0-9]+)?)`", cell)
     if match is None:
         raise AssertionError(f"not an exact identity cell: {cell!r}")
-    return match.group(1)
+    value = match.group(1)
+    assert isinstance(value, str)
+    return value
 
 
 def roadmap_rows(header: tuple[str, ...]) -> list[tuple[str, ...]]:

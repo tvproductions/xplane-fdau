@@ -1,5 +1,80 @@
 # Project Handoff
 
+## Current session checkpoint — 2026-09-19
+
+### Current state and last completed action
+
+Local main is at 53792c3, one commit ahead of origin/main, with 16 pre-existing
+modified tracked files. The only linked worktree, .worktrees/t1-6-skill-closure,
+is clean at 0fb4aa9. Its committed evidence reports T1.6 verified at 5/5,
+but the branch is not integrated into main. This session performed no commit,
+push, release, or plugin installation.
+
+Codex already reports gz-skills@gz-skills installed and enabled at v0.2.0
+(13 managed skills). This repo also discovers 11 older locked gz-skills under
+.agents/skills. It has not been migrated to plugin-only discovery.
+
+### Important context and constraints
+
+ROADMAP.md governs capability order and BACKLOG.md is the mutable delivery
+ledger. Main still shows pre-T1.6 state; the completed branch reports
+T2.1/write_plan next. Preserve dirty main edits. Use unittest, never pytest;
+runtime stays standard-library-only. This handoff authorizes no integration,
+Git sync, plugin migration, tag, publication, or release.
+
+### Decisions
+
+- The user requested this durable handoff for a context reset.
+- The already-installed plugin was not reinstalled; vendored skills remain.
+- Whether to migrate this repo to plugin-only remains a user choice.
+
+### Immediate next actions in order
+
+1. Re-read session-entry authorities and inspect both worktrees, HEADs,
+   statuses, and diffs before acting.
+2. Preserve and reconcile the dirty main maintenance batch separately. It
+   spans pyproject.toml, uv.lock, CI, tests, backlog parser, release guidance,
+   and native-FDR source. Main's single-pass quality commit overlaps T1.6
+   hygiene guidance.
+3. Obtain the user's finishing choice for T1.6. If local integration is
+   selected, merge safely into main, run the project aggregate on the merged
+   tree, then remove the temporary worktree and branch.
+4. After integrated state passes backlog audit/next, write and audit the
+   T2.1 plan before implementation. Plugin-only migration is separate.
+
+### Pending work, blockers, and open loops
+
+The dirty main batch is not claimed complete or verified. T1.6 is verified
+only in its clean branch. Plugin and vendored skill discovery overlap. No
+remote sync or release action is authorized.
+
+### Verification already run and still required
+
+This session inspected Git state, diffs, and Codex plugin status/cache.
+T1.6's committed completion documents accepted review, 5/5 gates, quality,
+hygiene, strict docs, and Windows installed-wheel smoke on Python 3.12–3.14.
+The pre-handoff command uv run python .codex/skills/hygiene/scripts/hygiene.py
+exited 0 on main: offline lock passed, and the pre-commit quality,
+detect-secrets, lizard, and cohesion hooks all reported Passed. The quality
+hook suppresses successful subcommand output, so no test or coverage count is
+claimed here. No fresh installed-wheel matrix ran for main. Neither the
+historical T1.6 result nor this main check verifies a future merge; run one
+aggregate gate after integration and report its actual result.
+
+### Evidence and artifact references
+
+- T1.6 plan: .worktrees/t1-6-skill-closure/docs/superpowers/plans/2026-09-07-t1-6-skill-session-hygiene-artifact-closure.md
+- T1.6 completion/review: .worktrees/t1-6-skill-closure/.superpowers/sdd/2026-09-07-t1-6-skill-session-hygiene-artifact-closure/
+- Single-pass correction: docs/superpowers/maintenance/2026-09-19-single-pass-verification-correction.md
+- Repo lock: gz-skills.lock.json; managed manifest: C:/Users/Jeff/.codex/plugins/cache/gz-skills/gz-skills/0.2.0/.codex-plugin/plugin.json
+
+### Suggested skills for the next session
+
+Use $gzs-session-handoff to resume; after an integration choice, use
+superpowers:finishing-a-development-branch and $gzs-quality-gate. For T2.1
+use superpowers:writing-plans then $gzs-plan-audit. Invoke $gzs-git-sync
+only on an explicit Git-sync request.
+
 ## Architecture and completed migration plan
 
 The authoritative parent architecture is

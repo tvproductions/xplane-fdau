@@ -25,6 +25,11 @@ def _tuple[T](values: tuple[T, ...] | list[T], name: str) -> tuple[T, ...]:
     return tuple(values)
 
 
+def _contains_only(values: tuple[object, ...], expected: type[object]) -> bool:
+    """Check runtime entries, including those supplied by untyped callers."""
+    return all(isinstance(value, expected) for value in values)
+
+
 def _require_text(value: object, name: str, *, allow_empty: bool = False) -> str:
     if not isinstance(value, str) or (not allow_empty and not value):
         raise FDRValidationError(f"{name} must be a non-empty string")
@@ -146,13 +151,13 @@ class FDRHeader:
         metadata = _tuple(self.metadata, "metadata")
         datarefs = _tuple(self.datarefs, "datarefs")
         legacy_columns = _tuple(self.legacy_columns, "legacy columns")
-        if any(not isinstance(comment, str) for comment in comments):
+        if not _contains_only(comments, str):
             raise FDRValidationError("comments must contain only strings")
-        if any(not isinstance(item, FDRMetadata) for item in metadata):
+        if not _contains_only(metadata, FDRMetadata):
             raise FDRValidationError("metadata must contain FDRMetadata entries")
-        if any(not isinstance(item, FDRDataref) for item in datarefs):
+        if not _contains_only(datarefs, FDRDataref):
             raise FDRValidationError("datarefs must contain FDRDataref entries")
-        if any(not isinstance(item, FDRLegacyColumn) for item in legacy_columns):
+        if not _contains_only(legacy_columns, FDRLegacyColumn):
             raise FDRValidationError("legacy columns must contain FDRLegacyColumn entries")
         if len({item.path for item in datarefs}) != len(datarefs):
             raise FDRValidationError("DataRef paths must be unique")
@@ -228,7 +233,7 @@ class FDRRecording:
         if not isinstance(self.header, FDRHeader):
             raise FDRValidationError("header must be an FDRHeader")
         samples = _tuple(self.samples, "samples")
-        if any(not isinstance(sample, FDRSample) for sample in samples):
+        if not _contains_only(samples, FDRSample):
             raise FDRValidationError("samples must contain FDRSample entries")
         for index, sample in enumerate(samples):
             if len(sample.additional_values) != len(self.header.datarefs):
@@ -293,6 +298,6 @@ class FDRNormalizationResult:
         if self.recording.header.source_version != 4:
             raise FDRValidationError("normalization results must contain a version 4 recording")
         omitted = _tuple(self.omitted_legacy_field_ids, "omitted legacy field ids")
-        if any(not isinstance(identifier, str) for identifier in omitted):
+        if not _contains_only(omitted, str):
             raise FDRValidationError("omitted legacy field ids must contain only strings")
         object.__setattr__(self, "omitted_legacy_field_ids", omitted)

@@ -20,7 +20,7 @@ uv sync --frozen
 uv run python tools/quality.py check
 uv run mkdocs build --strict
 uv build --no-sources
-uv tool run twine check --strict dist/*
+uv tool run twine@7.0.0 check --strict dist/*
 uv run python tools/release.py check-dist dist
 ```
 

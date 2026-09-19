@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import sys
 import tempfile
 from typing import override
 from unittest import mock
@@ -311,8 +312,9 @@ class FDRCliTests(unittest.TestCase):
         create_partial.assert_not_called()
 
     def test_console_script_executes_the_public_help_surface(self) -> None:
+        script = Path(sys.executable).parent / ("xplane-fdau.exe" if os.name == "nt" else "xplane-fdau")
         completed = subprocess.run(
-            ["uv", "run", "--frozen", "xplane-fdau", "--help"],
+            [str(script), "--help"],
             cwd=Path(__file__).parents[1],
             capture_output=True,
             text=True,

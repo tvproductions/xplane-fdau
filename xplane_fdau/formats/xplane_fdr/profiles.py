@@ -111,7 +111,13 @@ def _datarefs(paths: tuple[str, ...]) -> tuple[FDRDataref, ...]:
 
 def _ordered_union(*groups: tuple[FDRDataref, ...]) -> tuple[FDRDataref, ...]:
     seen: set[str] = set()
-    return tuple(dataref for group in groups for dataref in group if not (dataref.path in seen or seen.add(dataref.path)))
+    ordered: list[FDRDataref] = []
+    for group in groups:
+        for dataref in group:
+            if dataref.path not in seen:
+                seen.add(dataref.path)
+                ordered.append(dataref)
+    return tuple(ordered)
 
 
 _STANDARD_DATAREFS = _datarefs(_STANDARD_PATHS)

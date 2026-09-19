@@ -108,7 +108,7 @@ def _convert_json_tree(value: object, path: str, source: str) -> object:
 
 def _source_name(path_or_stream: str | os.PathLike[str] | _ReadableText) -> str:
     if isinstance(path_or_stream, (str, os.PathLike)):
-        return os.fspath(path_or_stream)
+        return cast(str, os.fspath(path_or_stream))
     return str(getattr(path_or_stream, "name", "<stream>"))
 
 
@@ -135,7 +135,7 @@ def _reject_unknown(value: dict[str, object], allowed: frozenset[str], path: str
 def _require_array(value: object, path: str, source: str) -> list[object]:
     if not isinstance(value, list):
         _config_error("must be an array", source=source, property_path=path)
-    return value
+    return cast(list[object], value)
 
 
 def _require_string(

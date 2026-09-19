@@ -142,7 +142,7 @@ def parse_roadmap_sources(path: Path) -> RoadmapSources:
     while index < len(lines):
         epic_match = _EPIC_HEADING.fullmatch(lines[index].text)
         if epic_match is not None:
-            current_epic = epic_match.group(1)
+            current_epic = cast(str, epic_match.group(1))
         if "is explicitly a cross-epic design" not in lines[index].text:
             index += 1
             continue

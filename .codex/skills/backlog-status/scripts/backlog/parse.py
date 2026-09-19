@@ -145,14 +145,14 @@ def _identity(path: Path, line: int, value: str) -> str:
     match = _IDENTITY.fullmatch(value)
     if match is None:
         raise MarkdownParseError(path, line, f"invalid identity cell: {value!r}", code="markdown.identity")
-    return match.group(1)
+    return cast(str, match.group(1))
 
 
 def _local_child_identity(path: Path, line: int, value: str) -> str:
     match = _LOCAL_CHILD_IDENTITY.fullmatch(value)
     if match is None:
         raise MarkdownParseError(path, line, f"invalid local-child identity cell: {value!r}", code="markdown.local-child-identity")
-    return match.group(1)
+    return cast(str, match.group(1))
 
 
 def _find_heading(path: Path, lines: tuple[_Line, ...], heading: str) -> int:
@@ -328,7 +328,7 @@ def _artifact_epic(path: Path, line: int, value: str) -> str:
     match = _EPIC_IDENTITY.fullmatch(value)
     if match is None:
         raise MarkdownParseError(path, line, "Roadmap epic requires one epic identity", code="artifact.epic")
-    return match.group(1)
+    return cast(str, match.group(1))
 
 
 def _artifact_children(path: Path, line: int, value: str) -> tuple[str, ...]:

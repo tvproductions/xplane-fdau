@@ -9,7 +9,7 @@ import io
 import math
 from pathlib import Path
 import tempfile
-from typing import cast, override
+from typing import Any, cast, override
 import unittest
 
 from xplane_fdau.formats.xplane_fdr import (
@@ -128,9 +128,9 @@ class FDRRecordingPolicyTests(unittest.TestCase):
         version_3 = FDRHeader(3, "A", (), (), (), (), None)
         invalid = (
             lambda: FDRRecordingDefinition(version_3, FDRSamplingPolicy(), FDRStoragePolicy()),
-            lambda: FDRRecordingDefinition(cast(FDRHeader, "header"), FDRSamplingPolicy(), FDRStoragePolicy()),
-            lambda: FDRRecordingDefinition(make_header(), cast(FDRSamplingPolicy, None), FDRStoragePolicy()),
-            lambda: FDRRecordingDefinition(make_header(), FDRSamplingPolicy(), cast(FDRStoragePolicy, None)),
+            lambda: FDRRecordingDefinition(cast(Any, "header"), FDRSamplingPolicy(), FDRStoragePolicy()),
+            lambda: FDRRecordingDefinition(make_header(), cast(Any, None), FDRStoragePolicy()),
+            lambda: FDRRecordingDefinition(make_header(), FDRSamplingPolicy(), cast(Any, None)),
         )
 
         for constructor in invalid:
@@ -213,7 +213,7 @@ class FDRDestinationResolutionTests(unittest.TestCase):
                     None,
                     make_definition(),
                     xplane_root=directory,
-                    utc_clock=lambda: cast(datetime, "not a datetime"),
+                    utc_clock=lambda: cast(Any, "not a datetime"),
                 )
 
     def test_relative_storage_requires_xplane_root_but_absolute_storage_does_not(self) -> None:

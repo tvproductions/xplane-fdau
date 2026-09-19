@@ -6,7 +6,7 @@ import dataclasses
 from datetime import UTC, date, datetime, time, timedelta, timezone
 import math
 from pathlib import Path
-from typing import Literal, cast
+from typing import Any, cast
 import unittest
 
 from xplane_fdau.formats.xplane_fdr import (
@@ -173,7 +173,7 @@ class FDRLeafModelTests(unittest.TestCase):
         samples = [make_sample(additional_values=additional)]
 
         header = make_v4_header(comments=comments, metadata=metadata, datarefs=datarefs)
-        recording = FDRRecording(header, cast(tuple[FDRSample, ...], samples))
+        recording = FDRRecording(header, cast(Any, samples))
         comments.append("later")
         metadata.clear()
         datarefs.clear()
@@ -190,15 +190,15 @@ class FDRLeafModelTests(unittest.TestCase):
         sample = make_sample()
         recording = FDRRecording(make_v4_header(), (sample,))
         invalid_constructors = (
-            ("comments None", lambda: make_v4_header(comments=cast(tuple[str, ...], None))),
-            ("comments set", lambda: make_v4_header(comments=cast(tuple[str, ...], {"first", "second"}))),
+            ("comments None", lambda: make_v4_header(comments=cast(Any, None))),
+            ("comments set", lambda: make_v4_header(comments=cast(Any, {"first", "second"}))),
             (
                 "metadata set",
-                lambda: make_v4_header(metadata=cast(tuple[FDRMetadata, ...], {FDRMetadata("TAIL", "N1")})),
+                lambda: make_v4_header(metadata=cast(Any, {FDRMetadata("TAIL", "N1")})),
             ),
             (
                 "datarefs set",
-                lambda: make_v4_header(datarefs=cast(tuple[FDRDataref, ...], {FDRDataref("sim/test/value", 1)})),
+                lambda: make_v4_header(datarefs=cast(Any, {FDRDataref("sim/test/value", 1)})),
             ),
             (
                 "legacy columns set",
@@ -208,25 +208,25 @@ class FDRLeafModelTests(unittest.TestCase):
                     (),
                     (),
                     (),
-                    cast(tuple[FDRLegacyColumn, ...], {FDRLegacyColumn("longitude")}),
+                    cast(Any, {FDRLegacyColumn("longitude")}),
                     None,
                 ),
             ),
             (
                 "additional values set",
-                lambda: dataclasses.replace(sample, additional_values=cast(tuple[int | float, ...], {1, 2})),
+                lambda: dataclasses.replace(sample, additional_values=cast(Any, {1, 2})),
             ),
             (
                 "legacy values set",
-                lambda: dataclasses.replace(sample, legacy_values=cast(tuple[int | float, ...], {1, 2})),
+                lambda: dataclasses.replace(sample, legacy_values=cast(Any, {1, 2})),
             ),
             (
                 "samples set",
-                lambda: FDRRecording(make_v4_header(), cast(tuple[FDRSample, ...], {sample})),
+                lambda: FDRRecording(make_v4_header(), cast(Any, {sample})),
             ),
             (
                 "omissions set",
-                lambda: FDRNormalizationResult(recording, cast(tuple[str, ...], {"legacy_one", "legacy_two"})),
+                lambda: FDRNormalizationResult(recording, cast(Any, {"legacy_one", "legacy_two"})),
             ),
         )
 
@@ -237,12 +237,12 @@ class FDRLeafModelTests(unittest.TestCase):
     def test_text_fields_reject_wrong_or_empty_values(self) -> None:
         invalid_constructors = (
             lambda: FDRMetadata("", "value"),
-            lambda: FDRMetadata(cast(str, 1), "value"),
-            lambda: FDRMetadata("DATE", cast(str, 1)),
+            lambda: FDRMetadata(cast(Any, 1), "value"),
+            lambda: FDRMetadata("DATE", cast(Any, 1)),
             lambda: FDRDataref("", 1),
-            lambda: FDRDataref("sim/test", 1, comment=cast(str, 1)),
+            lambda: FDRDataref("sim/test", 1, comment=cast(Any, 1)),
             lambda: FDRLegacyColumn(""),
-            lambda: FDRLegacyColumn("value", comment=cast(str, 1)),
+            lambda: FDRLegacyColumn("value", comment=cast(Any, 1)),
         )
 
         for constructor in invalid_constructors:
@@ -329,9 +329,9 @@ class FDRHeaderTests(unittest.TestCase):
 
     def test_header_rejects_invalid_version_origin_and_entry_types(self) -> None:
         invalid_headers = (
-            lambda: FDRHeader(cast(Literal[3, 4], True), "A", (), (), (), (), None),
-            lambda: FDRHeader(cast(Literal[3, 4], 5), "A", (), (), (), (), None),
-            lambda: FDRHeader(4, cast(Literal["A", "I"], "X"), (), (), (), (), None),
+            lambda: FDRHeader(cast(Any, True), "A", (), (), (), (), None),
+            lambda: FDRHeader(cast(Any, 5), "A", (), (), (), (), None),
+            lambda: FDRHeader(4, cast(Any, "X"), (), (), (), (), None),
             lambda: FDRHeader(4, "A", cast(tuple[str, ...], (1,)), (), (), (), None),
             lambda: FDRHeader(4, "A", (), cast(tuple[FDRMetadata, ...], ("TAIL N1",)), (), (), None),
             lambda: FDRHeader(4, "A", (), (), cast(tuple[FDRDataref, ...], ("sim/test",)), (), None),
@@ -342,8 +342,8 @@ class FDRHeaderTests(unittest.TestCase):
 
     def test_header_rejects_unhashable_version_and_origin_with_validation_error(self) -> None:
         invalid_headers = (
-            lambda: FDRHeader(cast(Literal[3, 4], []), "A", (), (), (), (), None),
-            lambda: FDRHeader(4, cast(Literal["A", "I"], []), (), (), (), (), None),
+            lambda: FDRHeader(cast(Any, []), "A", (), (), (), (), None),
+            lambda: FDRHeader(4, cast(Any, []), (), (), (), (), None),
         )
 
         for constructor in invalid_headers:
@@ -401,7 +401,7 @@ class FDRRecordingTests(unittest.TestCase):
 
     def test_recording_rejects_wrong_header_and_sample_types(self) -> None:
         with self.assertRaises(FDRValidationError):
-            FDRRecording(cast(FDRHeader, "header"), ())
+            FDRRecording(cast(Any, "header"), ())
         with self.assertRaises(FDRValidationError):
             FDRRecording(make_v4_header(), cast(tuple[FDRSample, ...], ("sample",)))
 

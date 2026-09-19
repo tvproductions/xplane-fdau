@@ -11,7 +11,7 @@ import math
 from pathlib import Path
 import re
 import tempfile
-from typing import Literal, cast
+from typing import Any, cast
 import unittest
 
 from xplane_fdau.formats.xplane_fdr import (
@@ -268,9 +268,9 @@ class FDRConfigValidationTests(unittest.TestCase):
 
     def test_programmatic_config_values_enforce_the_same_semantic_contract(self) -> None:
         invalid = (
-            lambda: FDRRecordConfig(schema_version=cast(Literal[1], True)),
+            lambda: FDRRecordConfig(schema_version=cast(Any, True)),
             lambda: FDRRecordConfig(schema_version=1, profiles=("unknown",)),
-            lambda: FDRMetadataConfig(local_date=cast(date, "2026-08-08")),
+            lambda: FDRMetadataConfig(local_date=cast(Any, "2026-08-08")),
             lambda: FDRMetadataConfig(wind_direction_deg=361),
             lambda: FDRMetadataConfig(comments=("line one\nline two",)),
             lambda: FDRDatarefConfig(path=""),

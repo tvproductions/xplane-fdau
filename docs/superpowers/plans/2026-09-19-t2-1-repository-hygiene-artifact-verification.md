@@ -1,12 +1,12 @@
 # T2.1 Repository Hygiene and Fresh Artifact Verification Implementation Plan
 
 - **Governance:** active
-- **Status:** in_progress
+- **Status:** completed
 - **Date:** 2026-09-19
 - **Roadmap child:** `T2.1`
 - **Source specification:** `docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md`
 - **Approval:** 2026-09-19 — Jeff / tvproductions
-- **Completion evidence:** —
+- **Completion evidence:** `.superpowers/sdd/2026-09-19-t2-1-repository-hygiene-artifact-verification/completion.md`
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -218,7 +218,7 @@
 
 **Interfaces:** Produce a reviewed, verified `T2.1` with 5/5 linked acceptance gates and no selected child. Report `T2.2` or `T3.1` according to the actual next-action result; leave both as separate specified peers. No release state changes. For every `select`, `transition`, and `record-gate` below, run the full command without `--apply`, inspect its diff and candidate audit, then repeat that command with its printed `--target-sha256` and `--apply`. Run backlog `audit` and `next` after each applied mutation and stop on a finding.
 
-- [ ] **Step 1: Verify the implemented candidate and preserve exact results.** Run `uv run --offline --frozen python .codex/skills/hygiene/scripts/hygiene.py` once and `git diff --check`. Hygiene supplies quality, strict MkDocs, one fresh artifact pair, and safe cleanup. For the separate closeout source/installed-wheel matrix, run this PowerShell script from the worktree root; stop on any failure and preserve both external directories for diagnosis:
+- [x] **Step 1: Verify the implemented candidate and preserve exact results.** Run `uv run --offline --frozen python .codex/skills/hygiene/scripts/hygiene.py` once and `git diff --check`. Hygiene supplies quality, strict MkDocs, one fresh artifact pair, and safe cleanup. For the separate closeout source/installed-wheel matrix, run this PowerShell script from the worktree root; stop on any failure and preserve both external directories for diagnosis:
 
   ```powershell
   $ErrorActionPreference = 'Stop'
@@ -261,7 +261,7 @@
 
   Record commands, exit codes, artifact hashes, the hygiene and matrix artifact directory paths, matrix environment paths, hygiene cleanup result, Git state, and any unexercised operating system in the completion receipt. Do not add a separate `quality.py check` before hygiene: its `quality-check` hook supplies that run. Retain a failed artifact directory and report its exact path.
 
-- [ ] **Step 2: Commit completion and transition to implemented.** Create `completion.md` with `Child: T2.1`, `Gate: —`, `Kind: verification`, `Result: passed`, date, subject, implementation commit range, and Step 1 results. Set this plan's `Status` to `completed` and `Completion evidence` to that path. Stage the plan and receipt so the audit sees exact index/worktree bytes. Dry-run/apply `transition T2.1 implemented --expect in_progress`; require no findings, then commit the plan, receipt, and `BACKLOG.md` together.
+- [x] **Step 2: Commit completion and transition to implemented.** Create `completion.md` with `Child: T2.1`, `Gate: —`, `Kind: verification`, `Result: passed`, date, subject, implementation commit range, and Step 1 results. Set this plan's `Status` to `completed` and `Completion evidence` to that path. Stage the plan and receipt so the audit sees exact index/worktree bytes. Dry-run/apply `transition T2.1 implemented --expect in_progress`; require no findings, then commit the plan, receipt, and `BACKLOG.md` together.
 
 - [ ] **Step 3: Obtain and commit accepted independent review.** Invoke `superpowers:requesting-code-review` on the committed implementation against the approved T2.1 specification, this plan, the five backlog gates, offline/no-mutation behavior, artifact ownership and exact contents, cross-platform paths, runtime boundary, and release prohibition. Record findings and disposition in `review.md` with `Child: T2.1`, `Gate: —`, `Kind: review`, `Result: accepted`, date, and subject only after all load-bearing findings are resolved. Use `superpowers:receiving-code-review` and failing `unittest` first for accepted corrections; rerun Step 1 on any changed artifact, command, package, or test behavior, update and commit the completion receipt with the new results, and request rereview. Stage the accepted receipt, dry-run/apply `transition T2.1 reviewed --expect implemented --review .superpowers/sdd/2026-09-19-t2-1-repository-hygiene-artifact-verification/review.md`, audit, and commit the receipt with `BACKLOG.md`.
 

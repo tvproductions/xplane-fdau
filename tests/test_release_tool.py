@@ -158,6 +158,38 @@ class ReleaseToolTests(unittest.TestCase):
         self.assertEqual("xplane_fdau-0.1.0-py3-none-any.whl", artifacts.wheel.name)
         self.assertEqual("xplane_fdau-0.1.0.tar.gz", artifacts.sdist.name)
 
+    def test_check_dist_rejects_every_repository_governance_family(self) -> None:
+        root = "xplane_fdau-0.1.0"
+        wheel_cases = {
+            "skill": {".codex/skills/backlog-status/SKILL.md": b"governance\n"},
+            "portable-skill": {".agents/skills/gzs-router/SKILL.md": b"governance\n"},
+            "evidence": {".superpowers/sdd/t1-6/gate-1.md": b"governance\n"},
+            "backlog": {"BACKLOG.md": b"governance\n"},
+            "roadmap": {"ROADMAP.md": b"governance\n"},
+            "handoff": {"HANDOFF.md": b"governance\n"},
+        }
+        sdist_cases = {
+            "skill": {f"{root}/.codex/skills/backlog-status/SKILL.md": b"governance\n"},
+            "portable-skill": {f"{root}/.agents/skills/gzs-router/SKILL.md": b"governance\n"},
+            "evidence": {f"{root}/.superpowers/sdd/t1-6/gate-1.md": b"governance\n"},
+            "plan": {f"{root}/docs/superpowers/plans/t1-6.md": b"governance\n"},
+            "backlog": {f"{root}/BACKLOG.md": b"governance\n"},
+            "roadmap": {f"{root}/ROADMAP.md": b"governance\n"},
+            "handoff": {f"{root}/HANDOFF.md": b"governance\n"},
+        }
+
+        for name, updates in wheel_cases.items():
+            with self.subTest(artifact="wheel", family=name), tempfile.TemporaryDirectory() as raw:
+                self._make_dist(Path(raw), wheel_updates=updates)
+                with self.assertRaises(release.ReleaseError):
+                    release.check_dist(Path(raw))
+
+        for name, updates in sdist_cases.items():
+            with self.subTest(artifact="sdist", family=name), tempfile.TemporaryDirectory() as raw:
+                self._make_dist(Path(raw), tar_updates=updates)
+                with self.assertRaises(release.ReleaseError):
+                    release.check_dist(Path(raw))
+
     def test_check_dist_rejects_invalid_wheel_record_manifests(self) -> None:
         digest = base64.urlsafe_b64encode(hashlib.sha256(b"").digest()).rstrip(b"=").decode("ascii")
         cases: dict[str, bytes | Callable[[bytes], bytes]] = {

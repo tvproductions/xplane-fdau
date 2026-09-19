@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import tomllib
 import unittest
 
 from pre_commit.clientlib import load_config
@@ -20,7 +21,7 @@ PROJECT_SKILL_DIRECTORIES = {
     "hygiene",
     "release",
 }
-DISCOVERABLE_PROJECT_SKILLS = PROJECT_SKILL_DIRECTORIES - {"backlog-status"}
+DISCOVERABLE_PROJECT_SKILLS = PROJECT_SKILL_DIRECTORIES
 GZ_SKILLS = {
     "gzs-agent-context-diet",
     "gzs-cross-platform-python",
@@ -65,6 +66,11 @@ def _skill_tree_sha256(skill_root: Path) -> str:
 
 
 class ProjectSkillTests(unittest.TestCase):
+    def test_repository_governance_is_excluded_from_source_builds(self) -> None:
+        project = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+        excluded = set(project["tool"]["uv"]["build-backend"]["source-exclude"])
+        self.assertTrue({".codex/**", ".git/**", ".superpowers/**", "docs/superpowers/**"}.issubset(excluded))
+
     def test_project_skills_are_scoped_to_unreleased_xplane_fdau(self) -> None:
         for name in DISCOVERABLE_PROJECT_SKILLS:
             path = Path(".codex/skills") / name / "SKILL.md"
@@ -146,7 +152,7 @@ class ProjectSkillTests(unittest.TestCase):
             )
             self.assertEqual(entry["sha256"], _skill_tree_sha256(installed_path))
 
-    def test_hygiene_script_runs_one_quality_gate_through_pre_commit(self) -> None:
+    def test_hygiene_audits_backlog_then_runs_one_quality_gate_through_pre_commit(self) -> None:
         path = Path(".codex/skills/hygiene/scripts/hygiene.py")
         spec = importlib.util.spec_from_file_location("hygiene", path)
         if spec is None or spec.loader is None:
@@ -170,7 +176,38 @@ class ProjectSkillTests(unittest.TestCase):
             [
                 ("git", "status", "--short", "--branch"),
                 ("uv", "lock", "--check", "--offline"),
+                ("uv", "run", "python", ".codex/skills/backlog-status/scripts/backlog_status.py", "audit"),
                 ("uv", "run", "python", "tools/quality.py", "pre-commit"),
+            ],
+            executed,
+        )
+
+    def test_hygiene_stops_when_backlog_audit_fails(self) -> None:
+        path = Path(".codex/skills/hygiene/scripts/hygiene.py")
+        spec = importlib.util.spec_from_file_location("hygiene", path)
+        if spec is None or spec.loader is None:
+            self.fail("hygiene script must be importable")
+        loader = spec.loader
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = module
+        try:
+            loader.exec_module(module)
+        finally:
+            sys.modules.pop(spec.name, None)
+
+        audit_command = ("uv", "run", "python", ".codex/skills/backlog-status/scripts/backlog_status.py", "audit")
+        executed: list[tuple[str, ...]] = []
+
+        def runner(command: tuple[str, ...], **kwargs: object) -> subprocess.CompletedProcess[str]:
+            executed.append(command)
+            return subprocess.CompletedProcess(command, 7 if command == audit_command else 0)
+
+        self.assertEqual(7, module.run_local_hygiene(runner))
+        self.assertEqual(
+            [
+                ("git", "status", "--short", "--branch"),
+                ("uv", "lock", "--check", "--offline"),
+                audit_command,
             ],
             executed,
         )

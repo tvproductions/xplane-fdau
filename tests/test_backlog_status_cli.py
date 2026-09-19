@@ -299,7 +299,7 @@ class BacklogStatusCliTests(unittest.TestCase):
         self.assertEqual([], payload["findings"])
         self.assertIsNone(payload["backlog"]["active_child"])
         self.assertEqual("write_plan", payload["recommendation"]["action"])
-        self.assertEqual("T1.6", payload["recommendation"]["child"])
+        self.assertEqual("T2.1", payload["recommendation"]["child"])
         self.assertEqual(64, len(payload["roadmap"]["local_children"]))
         self.assertEqual(64, len(payload["backlog"]["children"]))
         d1_children = {child["id"]: child for child in payload["backlog"]["children"] if child["id"].startswith("D1.")}

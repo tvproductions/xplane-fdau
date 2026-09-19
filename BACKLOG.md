@@ -20,8 +20,11 @@ slice receives one focused plan and one independently reviewable outcome.
   `T1.3` is verified with 4/4 gates under its approved audit policy
   supplement and completed implementation plan. `T1.4` is verified with 4/4
   gates, and `T1.5` is verified with 5/5 gates; both have accepted independent
-  review. No local child is selected. `T1.6` is the first dependency-ready
-  unfinished child, and the deterministic next action is `write_plan`.
+  review.
+- Read the managed Active child line and Local child inventory for current
+  selection and lifecycle state. Run
+  `uv run python .codex/skills/backlog-status/scripts/backlog_status.py next`
+  for the deterministic next action.
 - D1 is design-handoff readiness, not implementation or release readiness.
 - `B1.1` source-layout migration: `specified` with a draft plan; resumes after
   peer prerequisites `T2.2` and `T3.1` are verified.
@@ -109,7 +112,7 @@ The child slices below refine this sequence without weakening or reordering it.
 | `T1.3` | Structural audit and spec/plan adherence | `verified` | `T1.2` | [design](docs/superpowers/specs/2026-09-05-t1-3-audit-policy-supplement-design.md) | [plan](docs/superpowers/plans/2026-09-05-t1-3-structural-audit.md) | 4/4 | [review](.superpowers/sdd/2026-09-05-t1-3-structural-audit/review.md) | — | — |
 | `T1.4` | Deterministic next-action selection | `verified` | `T1.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-09-06-t1-4-deterministic-next-action-selection.md) | 4/4 | [review](.superpowers/sdd/2026-09-06-t1-4-deterministic-next-action-selection/review.md) | — | — |
 | `T1.5` | Guarded child-state and gate-evidence mutations | `verified` | `T1.3`, `T1.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-09-06-t1-5-guarded-child-state-mutations.md) | 5/5 | [review](.superpowers/sdd/2026-09-06-t1-5-guarded-child-state-mutations/review.md) | — | — |
-| `T1.6` | Skill, session-entry, hygiene, and artifact closure | `specified` | `T1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | — | 0/5 | — | — | — |
+| `T1.6` | Skill, session-entry, hygiene, and artifact closure | `verified` | `T1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-09-07-t1-6-skill-session-hygiene-artifact-closure.md) | 5/5 | [review](.superpowers/sdd/2026-09-07-t1-6-skill-session-hygiene-artifact-closure/review.md) | — | — |
 | `T2.1` | Project repository-hygiene adapter and fresh artifact verification | `specified` | `T1.6` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/5 | — | — | — |
 | `T2.2` | Governed dependency and toolchain refresh | `specified` | `T2.1` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/4 | — | — | — |
 | `T3.1` | Guarded Git synchronization adapter | `specified` | `T2.1` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/5 | — | — | — |
@@ -470,14 +473,14 @@ The child slices below refine this sequence without weakening or reordering it.
 
 ### T1.6 — Skill, session-entry, hygiene, and artifact closure
 
-- [ ] Project-local skill triggers for status, resume, adherence, next action,
-      and controlled state requests.
-- [ ] Session instructions and the concise handoff pointer invoke the backlog
-      workflow without creating another state authority.
-- [ ] Full hygiene runs the strict backlog audit.
-- [ ] Built and installed artifacts exclude all repository-governance tooling.
-- [ ] All standard-library tests and independent review pass without changing
-      release or publication authorization.
+- [x] Project-local skill triggers for status, resume, adherence, next action,
+      and controlled state requests. — Evidence: [verification](.superpowers/sdd/2026-09-07-t1-6-skill-session-hygiene-artifact-closure/gate-1.md)
+- [x] Session instructions and the concise handoff pointer invoke the backlog
+      workflow without creating another state authority. — Evidence: [verification](.superpowers/sdd/2026-09-07-t1-6-skill-session-hygiene-artifact-closure/gate-2.md)
+- [x] Full hygiene runs the strict backlog audit. — Evidence: [verification](.superpowers/sdd/2026-09-07-t1-6-skill-session-hygiene-artifact-closure/gate-3.md)
+- [x] Built and installed artifacts exclude all repository-governance tooling. — Evidence: [verification](.superpowers/sdd/2026-09-07-t1-6-skill-session-hygiene-artifact-closure/gate-4.md)
+- [x] All standard-library tests and independent review pass without changing
+      release or publication authorization. — Evidence: [verification](.superpowers/sdd/2026-09-07-t1-6-skill-session-hygiene-artifact-closure/gate-5.md)
 
 ### T2.1 — Project repository-hygiene adapter and fresh artifact verification
 

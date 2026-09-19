@@ -265,7 +265,7 @@
 
 - [x] **Step 3: Obtain and commit accepted independent review.** Invoke `superpowers:requesting-code-review` on the committed implementation against the approved T2.1 specification, this plan, the five backlog gates, offline/no-mutation behavior, artifact ownership and exact contents, cross-platform paths, runtime boundary, and release prohibition. Record findings and disposition in `review.md` with `Child: T2.1`, `Gate: —`, `Kind: review`, `Result: accepted`, date, and subject only after all load-bearing findings are resolved. Use `superpowers:receiving-code-review` and failing `unittest` first for accepted corrections; rerun Step 1 on any changed artifact, command, package, or test behavior, update and commit the completion receipt with the new results, and request rereview. Stage the accepted receipt, dry-run/apply `transition T2.1 reviewed --expect implemented --review .superpowers/sdd/2026-09-19-t2-1-repository-hygiene-artifact-verification/review.md`, audit, and commit the receipt with `BACKLOG.md`.
 
-- [ ] **Step 4: Create and link five gate receipts.** Use `Child: T2.1`, the matching gate ordinal, `Kind: verification`, `Result: passed`, date, and subject in each `gate-N.md`. Cite exact tests, command output, observed revision, artifact hashes, review result, and unexercised platforms where relevant:
+- [x] **Step 4: Create and link five gate receipts.** Use `Child: T2.1`, the matching gate ordinal, `Kind: verification`, `Result: passed`, date, and subject in each `gate-N.md`. Cite exact tests, command output, observed revision, artifact hashes, review result, and unexercised platforms where relevant:
 
   | Gate | Subject | Required proof |
   | --- | --- | --- |

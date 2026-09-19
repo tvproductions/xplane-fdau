@@ -113,7 +113,7 @@ The child slices below refine this sequence without weakening or reordering it.
 | `T1.4` | Deterministic next-action selection | `verified` | `T1.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-09-06-t1-4-deterministic-next-action-selection.md) | 4/4 | [review](.superpowers/sdd/2026-09-06-t1-4-deterministic-next-action-selection/review.md) | — | — |
 | `T1.5` | Guarded child-state and gate-evidence mutations | `verified` | `T1.3`, `T1.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-09-06-t1-5-guarded-child-state-mutations.md) | 5/5 | [review](.superpowers/sdd/2026-09-06-t1-5-guarded-child-state-mutations/review.md) | — | — |
 | `T1.6` | Skill, session-entry, hygiene, and artifact closure | `verified` | `T1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-09-07-t1-6-skill-session-hygiene-artifact-closure.md) | 5/5 | [review](.superpowers/sdd/2026-09-07-t1-6-skill-session-hygiene-artifact-closure/review.md) | — | — |
-| `T2.1` | Project repository-hygiene adapter and fresh artifact verification | `reviewed` | `T1.6` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | [plan](docs/superpowers/plans/2026-09-19-t2-1-repository-hygiene-artifact-verification.md) | 0/5 | [review](.superpowers/sdd/2026-09-19-t2-1-repository-hygiene-artifact-verification/review.md) | — | — |
+| `T2.1` | Project repository-hygiene adapter and fresh artifact verification | `reviewed` | `T1.6` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | [plan](docs/superpowers/plans/2026-09-19-t2-1-repository-hygiene-artifact-verification.md) | 5/5 | [review](.superpowers/sdd/2026-09-19-t2-1-repository-hygiene-artifact-verification/review.md) | — | — |
 | `T2.2` | Governed dependency and toolchain refresh | `specified` | `T2.1` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/4 | — | — | — |
 | `T3.1` | Guarded Git synchronization adapter | `specified` | `T2.1` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/5 | — | — | — |
 
@@ -484,21 +484,21 @@ The child slices below refine this sequence without weakening or reordering it.
 
 ### T2.1 — Project repository-hygiene adapter and fresh artifact verification
 
-- [ ] A deterministic project hygiene adapter supplies xplane-fdau commands to
+- [x] A deterministic project hygiene adapter supplies xplane-fdau commands to
       canonical `gzs-repository-hygiene` and runs status, offline lock, backlog
       audit, quality, strict documentation, and pre-commit gates at full
-      strength.
-- [ ] Every run builds one fresh wheel/sdist pair outside the checkout and
+      strength. — Evidence: [verification](.superpowers/sdd/2026-09-19-t2-1-repository-hygiene-artifact-verification/gate-1.md)
+- [x] Every run builds one fresh wheel/sdist pair outside the checkout and
       validates exact metadata, members, payload bytes, and
-      repository-governance exclusion.
-- [ ] Successful temporary artifacts are safely removed while failed artifacts
-      are preserved at a reported exact path for diagnosis.
-- [ ] Routine hygiene performs no implicit network inquiry, repository
+      repository-governance exclusion. — Evidence: [verification](.superpowers/sdd/2026-09-19-t2-1-repository-hygiene-artifact-verification/gate-2.md)
+- [x] Successful temporary artifacts are safely removed while failed artifacts
+      are preserved at a reported exact path for diagnosis. — Evidence: [verification](.superpowers/sdd/2026-09-19-t2-1-repository-hygiene-artifact-verification/gate-3.md)
+- [x] Routine hygiene performs no implicit network inquiry, repository
       mutation, or installed Python-version matrix and retains focused
-      supporting skills.
-- [ ] All standard-library tests, current-repository integration, artifact
+      supporting skills. — Evidence: [verification](.superpowers/sdd/2026-09-19-t2-1-repository-hygiene-artifact-verification/gate-4.md)
+- [x] All standard-library tests, current-repository integration, artifact
       checks, and independent review pass without changing release
-      authorization.
+      authorization. — Evidence: [verification](.superpowers/sdd/2026-09-19-t2-1-repository-hygiene-artifact-verification/gate-5.md)
 
 ### T2.2 — Governed dependency and toolchain refresh
 

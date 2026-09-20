@@ -21,9 +21,12 @@ governs the Python compatibility and dependency boundaries used here.
 This specification translates the remaining q4xpcc-local repository workflows
 into future deterministic xplane-fdau project adapters for canonical
 `gzs-repository-hygiene`, `gzs-update-dependencies`, and `gzs-git-sync`. Jeff's
-2026-09-05 adoption of all eleven `gz-skills` workflows sunsets the proposed
-local canonical skill definitions: the pinned `.agents/skills/gzs-*` catalog
-and `gz-skills.lock.json` own portable workflow behavior. This design still owns
+2026-09-05 adoption of the canonical `gz-skills` workflows sunsets the
+proposed local canonical skill definitions. The approved
+[`gz-skills` plugin-only specification](../../architecture/gz_skills_plugin_only_specification.md)
+supersedes the earlier copied-catalog and lock delivery mechanism; the pinned
+`gz-skills@gz-skills` Codex plugin owns portable workflow behavior. This
+design still owns
 the project-specific commands, distribution artifacts, roadmap, release
 boundary, standard-library boundary, 3.12-3.14 compatibility matrix, and
 `unittest` requirement. q4xpcc remains review input, not a code source or

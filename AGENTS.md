@@ -54,10 +54,20 @@
 
 ## Canonical gz-skills Workflows
 
-- The canonical portable workflow catalog is the complete eleven-skill
-  `gz-skills` snapshot under `.agents/skills/gzs-*`. Its generated provenance
-  lock is `gz-skills.lock.json`; use that lock and this exact discovery root,
-  never a sibling checkout, as the repository authority.
+- The `gz-skills@gz-skills` Codex plugin is the sole portable workflow authority.
+  The trusted project `.codex/config.toml` pins marketplace `gz-skills` to
+  `https://github.com/tvproductions/gz-skills.git` at reviewed tag `v0.2.0`
+  and enables the plugin. Install through `codex plugin add gz-skills@gz-skills`
+  if absent; verify ID, version, enabled state, and source with
+  `codex plugin list --json` and `codex plugin marketplace list --json`.
+  Stop if the plugin is unavailable. Do not use copied, linked, vendored, or
+  standalone `gzs-*` skills under `.agents/skills`, `.codex/skills`, or another
+  discovery root, and do not recreate `gz-skills.lock.json`.
+- A full `gzs-update-dependencies` run inventories the project-pinned plugin
+  alongside Python and other managed dependencies. Review a new release before
+  changing `.codex/config.toml`; Codex marketplace owns the plugin update.
+  The T2.2 Python/uv adapter does not mutate the plugin cache. A full refresh
+  cannot be reported complete while this project-managed pin is unverified.
 - Use `gzs-router` for catalog orientation. Apply the documented automatic
   triggers for `gzs-agent-context-diet`, `gzs-cross-platform-python`,
   `gzs-intent-audit`, `gzs-plan-audit`, `gzs-quality-gate`,

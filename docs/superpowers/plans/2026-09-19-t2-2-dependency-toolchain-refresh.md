@@ -18,12 +18,15 @@
 
 **Spec:** `docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md`, `T2.2` sections and four acceptance gates. Python policy: `docs/architecture/xplane_fdau_core_scope_amendment.md`.
 
+**Managed workflow dependency:** The full `gzs-update-dependencies` inventory includes the pinned `gz-skills@gz-skills` plugin in `.codex/config.toml`. Review any release change and refresh it through Codex marketplace. The T2.2 Python/uv adapter does not mutate the plugin cache; its report must account for the plugin separately and cannot claim a complete refresh while the pin is unverified. This draft needs executable plugin-inventory steps before approval.
+
 ## Global Constraints
 
 - Implement only `T2.2`. Do not edit `xplane_fdau/`, q4xpcc, external adapters, the ignored Superpowers checkout, `T3.1`, `B1.1`, or canonical FDAU contracts.
 - `ROADMAP.md` owns dependency order; `BACKLOG.md` alone owns child state. A draft plan does not select or advance `T2.2`.
 - Preserve empty runtime dependencies and the standard-library-only package. `packaging`, uv, and refresh tooling remain development-only and absent from wheel and sdist runtime payloads.
 - Use `unittest` only. Discover live official releases; never bake a newly discovered uv or package version into the adapter.
+- Include the `.codex/config.toml` plugin ref in a full project dependency review. Codex marketplace owns installation and refresh; Python/uv tooling must not write the plugin cache.
 - Every status and apply invocation begins read-only. Status may use the network but must not edit tracked files, stage, commit, push, tag, publish, release, deploy, or modify another repository.
 - Select only a verified, compatible, stable non-yanked uv target. Before mutation, block on missing or invalid official evidence, an incompatible target, unknown uv installer ownership, stale/unreviewed scope, or ambiguous edits. Record outdated, constrained, yanked, and vulnerable packages in the **current** lock as remediation findings; they do not prevent the refresh that may fix them. After refresh, unresolved yanks/advisories, unexplained constraints, resolver failures, and verification failures block successful completion; no silent ignore or gate reduction.
 - Apply requires an unchanged report digest and a clean or fully scope-reviewed dependency surface. Reject any dirty path absent from the explicit reviewed list and changed bytes on a reviewed path.
@@ -237,7 +240,7 @@ The reviewed path list is exact repository-relative paths. Status includes each 
 - [ ] **Step 8: Update release metadata validation.** In `tools/release.py`, read the project's `requires-python` from `pyproject.toml` with `tomllib`; require exactly `>=3.12,<3.15` and compare source, wheel, and sdist metadata to that value. Keep hostile metadata fixtures rejecting a different range. This step can remain red until apply changes project metadata. The expected value must come from the validated project metadata:
 
   ~~~python
-  expected_python = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["requires-python"]
+  expected_python = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"].get("requires-python")
   if expected_python != ">=3.12,<3.15":
       raise ReleaseError("unexpected Requires-Python policy")
   ~~~

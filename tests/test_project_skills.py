@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import importlib.util
-import hashlib
 import json
 from pathlib import Path
 import subprocess
@@ -23,47 +22,6 @@ PROJECT_SKILL_DIRECTORIES = {
     "release",
 }
 DISCOVERABLE_PROJECT_SKILLS = PROJECT_SKILL_DIRECTORIES
-GZ_SKILLS = {
-    "gzs-agent-context-diet",
-    "gzs-cross-platform-python",
-    "gzs-git-sync",
-    "gzs-intent-audit",
-    "gzs-plan-audit",
-    "gzs-quality-gate",
-    "gzs-repository-hygiene",
-    "gzs-router",
-    "gzs-session-handoff",
-    "gzs-tech-debt-review",
-    "gzs-update-dependencies",
-}
-GZ_SKILLS_REPOSITORY = "https://github.com/tvproductions/gz-skills.git"
-GZ_SKILLS_REVISION = "e925081362eec2517ab429517e250ecca6877cdc"  # pragma: allowlist secret
-TRANSIENT_SKILL_DIRECTORIES = {
-    ".git",
-    "__pycache__",
-    ".mypy_cache",
-    ".pytest_cache",
-    ".ruff_cache",
-}
-
-
-def _skill_tree_sha256(skill_root: Path) -> str:
-    digest = hashlib.sha256()
-    files = []
-    for path in skill_root.rglob("*"):
-        if not path.is_file():
-            continue
-        relative = path.relative_to(skill_root)
-        if any(part in TRANSIENT_SKILL_DIRECTORIES for part in relative.parts):
-            continue
-        files.append((relative.as_posix(), path))
-
-    for relative, path in sorted(files, key=lambda item: item[0].encode("utf-8")):
-        digest.update(relative.encode("utf-8"))
-        digest.update(b"\0")
-        digest.update(path.read_bytes())
-        digest.update(b"\0")
-    return digest.hexdigest()
 
 
 class ProjectSkillTests(unittest.TestCase):
@@ -120,38 +78,57 @@ class ProjectSkillTests(unittest.TestCase):
         self.assertIn("xplane_fdau-0.1.0-py3-none-any.whl", text)
         self.assertNotIn("check-tag", text)
 
-    def test_canonical_gz_skills_installation_matches_locked_catalog(self) -> None:
-        lock_path = Path("gz-skills.lock.json")
-        self.assertTrue(lock_path.is_file(), "canonical gz-skills lock must exist")
-        document = json.loads(lock_path.read_text(encoding="utf-8"))
+    def test_plugin_only_gz_skills_authority(self) -> None:
+        config = tomllib.loads(Path(".codex/config.toml").read_text(encoding="utf-8"))
+        marketplace = config["marketplaces"]["gz-skills"]
+        self.assertEqual(
+            {
+                "source_type": "git",
+                "source": "https://github.com/tvproductions/gz-skills.git",
+                "ref": "v0.2.0",
+            },
+            marketplace,
+        )
+        self.assertEqual(
+            1,
+            sum(entry.get("source") == marketplace["source"] for entry in config["marketplaces"].values()),
+        )
+        self.assertEqual({"enabled": True}, config["plugins"]["gz-skills@gz-skills"])
+        self.assertEqual(
+            ["gz-skills@gz-skills"],
+            sorted(name for name in config["plugins"] if name.startswith("gz-skills@")),
+        )
+        self.assertFalse(Path("gz-skills.lock.json").exists())
+        for root in (Path(".agents/skills"), Path(".codex/skills")):
+            with self.subTest(root=root):
+                self.assertEqual([], sorted(path.name for path in root.glob("gzs-*")))
+        for path in (
+            Path(".agents/gz-skills"),
+            Path(".codex/plugins/gz-skills"),
+            Path("gz-skills"),
+        ):
+            with self.subTest(path=path):
+                self.assertFalse(path.exists() or path.is_symlink())
 
-        self.assertEqual(1, document["schema_version"])
-        entries = document["skills"]
-        self.assertEqual(GZ_SKILLS, {entry["name"] for entry in entries})
+    def test_plugin_guidance_and_dependency_inventory(self) -> None:
+        instructions = Path("AGENTS.md").read_text(encoding="utf-8")
+        self.assertIn("sole portable workflow authority", instructions)
+        self.assertIn("gz-skills@gz-skills", instructions)
+        self.assertIn(".codex/config.toml", instructions)
+        self.assertIn("full `gzs-update-dependencies`", instructions)
+        self.assertNotIn("snapshot under `.agents/skills/gzs-*`", instructions)
 
-        discovery_root = Path(".agents/skills")
-        discovered = {path.name for path in discovery_root.glob("gzs-*") if path.is_dir() and (path / "SKILL.md").is_file()}
-        self.assertEqual(GZ_SKILLS, discovered)
+        design = Path("docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md").read_text(encoding="utf-8")
+        self.assertIn("gz_skills_plugin_only_specification.md", design)
 
-        for entry in entries:
-            name = entry["name"]
-            expected_installed_path = f".agents/skills/{name}"
-            self.assertEqual(expected_installed_path, entry["installed_path"])
-            self.assertFalse(Path(entry["installed_path"]).is_absolute())
-            installed_path = (lock_path.parent / entry["installed_path"]).resolve()
-            self.assertEqual(
-                (discovery_root / name).resolve(),
-                installed_path,
-            )
-            self.assertEqual(
-                {
-                    "repository": GZ_SKILLS_REPOSITORY,
-                    "revision": GZ_SKILLS_REVISION,
-                    "path": f"skills/{name}",
-                },
-                entry["source"],
-            )
-            self.assertEqual(entry["sha256"], _skill_tree_sha256(installed_path))
+        draft = Path("docs/superpowers/plans/2026-09-19-t2-2-dependency-toolchain-refresh.md").read_text(encoding="utf-8")
+        self.assertIn(".codex/config.toml", draft)
+        self.assertIn("Codex marketplace", draft)
+
+        attributes = Path(".gitattributes").read_text(encoding="utf-8")
+        self.assertNotIn(".agents/skills/gzs-*/**", attributes)
+        baseline = json.loads(Path(".secrets.baseline").read_text(encoding="utf-8"))
+        self.assertNotIn("gz-skills.lock.json", baseline["results"])
 
     def test_hygiene_audits_backlog_then_runs_one_quality_gate_through_pre_commit(self) -> None:
         path = Path(".codex/skills/hygiene/scripts/hygiene.py")

@@ -128,6 +128,11 @@ class DocumentationTests(unittest.TestCase):
 
         self.assertTrue(published.is_file())
         self.assertEqual(packaged.read_bytes(), published.read_bytes())
+        guide = (ROOT / "docs/usage/native-fdr.md").read_text(encoding="utf-8")
+        self.assertIn(
+            "blob/main/src/xplane_fdau/formats/xplane_fdr/schemas/fdr-record-config-v1.schema.json",
+            guide,
+        )
 
     def test_active_documentation_uses_the_fdau_native_projection_boundary(self) -> None:
         """Users need the nested native-format and sink entry points."""

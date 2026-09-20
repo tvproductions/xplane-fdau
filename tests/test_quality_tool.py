@@ -54,8 +54,25 @@ class QualityToolTests(unittest.TestCase):
         self.assertEqual(("uv", "run", "python", "-m", "unittest", "discover", "-v"), standalone[0])
 
     def test_quality_targets_only_the_renamed_runtime_root(self) -> None:
+        self.assertEqual("src/xplane_fdau", quality.SOURCE_PATH)
+        self.assertEqual(("src/xplane_fdau", "tests", "tools"), quality.SOURCE_PATHS)
+        source_steps = {
+            "ruff check",
+            "ruff format --check",
+            "ruff format",
+            "bandit",
+            "interrogate",
+            "vulture",
+            "lizard report",
+            "cohesion report",
+            "wily build",
+            "wily report",
+            "xenon complexity",
+        }
+        for steps in quality.COMMANDS.values():
+            for step in steps:
+                if step.name in source_steps:
+                    self.assertIn(quality.SOURCE_PATH, step.command)
+                    self.assertNotIn("xplane_fdau", step.command)
         commands = " ".join(" ".join(step.command) for steps in quality.COMMANDS.values() for step in steps)
-
-        self.assertEqual(("xplane_fdau", "tests", "tools"), quality.SOURCE_PATHS)
-        self.assertIn("xplane_fdau", commands)
         self.assertNotIn("xplane_fdr", commands)

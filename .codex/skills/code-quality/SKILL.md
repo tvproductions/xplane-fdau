@@ -15,8 +15,8 @@ full suite. Repair a focused failure before continuing:
 
 ```powershell
 uv run python -m unittest tests.test_fdr_reader -q
-uv run ruff check xplane_fdau tests tools
-uv run ruff format --check xplane_fdau tests tools
+uv run ruff check src/xplane_fdau tests tools
+uv run ruff format --check src/xplane_fdau tests tools
 uv run ty check
 ```
 

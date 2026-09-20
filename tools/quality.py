@@ -8,7 +8,8 @@ import sys
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
-SOURCE_PATHS = ("xplane_fdau", "tests", "tools")
+SOURCE_PATH = "src/xplane_fdau"
+SOURCE_PATHS = (SOURCE_PATH, "tests", "tools")
 PYTHON_QUALITY_PATHS = SOURCE_PATHS
 SECRET_SCAN_PATHS = (".",)
 SECRET_BASELINE = ".secrets.baseline"
@@ -43,19 +44,19 @@ COMMANDS: dict[str, tuple[Step, ...]] = {
         Step("coverage report", uv("coverage", "report", f"--fail-under={COVERAGE_MINIMUM}")),
     ),
     "security": (
-        Step("bandit", uv("bandit", "-q", "-r", "xplane_fdau")),
+        Step("bandit", uv("bandit", "-q", "-r", SOURCE_PATH)),
         Step("detect-secrets baseline", uv("detect-secrets-hook", "--baseline", SECRET_BASELINE), tracked_paths=SECRET_SCAN_PATHS),
         Step("detect-secrets report", uv("detect-secrets", "audit", "--report", SECRET_BASELINE)),
     ),
-    "docs": (Step("interrogate", uv("interrogate", "-v", "-f", "40", "xplane_fdau")),),
+    "docs": (Step("interrogate", uv("interrogate", "-v", "-f", "40", SOURCE_PATH)),),
     "dead-code": (Step("vulture", uv("vulture", *PYTHON_QUALITY_PATHS, "--min-confidence", "80")),),
     "metrics": (
-        Step("lizard report", uv("lizard", "xplane_fdau", "-i", "-1")),
-        Step("cohesion report", uv("cohesion", "-d", "xplane_fdau")),
+        Step("lizard report", uv("lizard", SOURCE_PATH, "-i", "-1")),
+        Step("cohesion report", uv("cohesion", "-d", SOURCE_PATH)),
     ),
     "wily": (
-        Step("wily build", uv("wily", "build", "xplane_fdau")),
-        Step("wily report", uv("wily", "report", "xplane_fdau")),
+        Step("wily build", uv("wily", "build", SOURCE_PATH)),
+        Step("wily report", uv("wily", "report", SOURCE_PATH)),
     ),
     "complexity": (
         Step(
@@ -68,7 +69,7 @@ COMMANDS: dict[str, tuple[Step, ...]] = {
                 XENON_MAX_MODULES,
                 "--max-average",
                 XENON_MAX_AVERAGE,
-                "xplane_fdau",
+                SOURCE_PATH,
             ),
         ),
     ),

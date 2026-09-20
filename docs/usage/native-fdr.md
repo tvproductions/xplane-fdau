@@ -115,7 +115,7 @@ connection settings, callback settings, or overwrite permission.
 
 Custom DataRefs extend or override profile declarations in order. The complete
 contract is the packaged
-[fdr-record-config-v1.schema.json](https://github.com/tvproductions/xplane-fdau/blob/main/xplane_fdau/formats/xplane_fdr/schemas/fdr-record-config-v1.schema.json).
+[fdr-record-config-v1.schema.json](https://github.com/tvproductions/xplane-fdau/blob/main/src/xplane_fdau/formats/xplane_fdr/schemas/fdr-record-config-v1.schema.json).
 
 ```python
 from xplane_fdau.formats.xplane_fdr import load_record_config, resolve_recording_definition

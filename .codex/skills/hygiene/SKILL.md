@@ -1,6 +1,6 @@
 ---
 name: hygiene
-description: Use when performing xplane-fdau cleanup, maintenance, lockfile checks, dependency chores, pre-handoff verification, or an offline repository hygiene pass.
+description: Use when performing xplane-fdau cleanup, maintenance, lockfile checks, dependency chores, artifact-sensitive pre-handoff verification, or an offline repository hygiene pass.
 ---
 
 # xplane-fdau Hygiene Adapter
@@ -17,10 +17,16 @@ uv run --offline --frozen python .codex/skills/hygiene/scripts/hygiene.py
 ```
 
 The outer uv invocation and every routine child command run offline. The script
-checks normal and ignored Git status, `uv lock --check --offline`, the strict
-backlog audit, and `mkdocs build --strict`. It then runs the local pre-commit
-hooks once. The `quality-check` hook supplies the single
-`tools/quality.py check` invocation; the remaining local hooks also run.
+checks normal and ignored Git status, `uv lock --check --offline`, and the strict
+backlog audit. It invokes `tools/quality.py check` directly exactly once, then
+runs `mkdocs build --strict` and the fast staged-file pre-commit hooks once.
+Use full hygiene at stable closeout when package layout, shipped resource or
+schema inventory, distribution metadata, lockfiles, build rules, or artifact
+validation changes. It supplies the complete active-Python quality gate, so
+do not run that gate separately on the same unchanged candidate. Edits to
+existing source files use the standalone quality gate once at closeout.
+Documentation changes use a strict MkDocs build; governance changes use the
+strict backlog audit as focused checks.
 
 The artifact phase creates one fresh external temporary directory. It builds
 one wheel and sdist with `uv build --offline --no-sources`, checks both with
@@ -31,8 +37,9 @@ immediately before deleting that exact directory. On any artifact or final
 status failure, the directory is preserved and its path is reported. The gate
 does not format, update, stage, commit, or remove user-authored files.
 
-The 3.12, 3.13, and 3.14 source and installed-wheel matrix is separate child
-closeout evidence, outside routine hygiene. Use the `code-quality`,
+The local 3.12, 3.13, and 3.14 source and installed-wheel matrix is reserved
+for version-sensitive changes and release readiness, outside routine hygiene.
+CI supplies broad compatibility coverage. Use the `code-quality`,
 `documentation`, and `release` project skills for their focused commands.
 Use `unittest` only.
 

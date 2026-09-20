@@ -40,11 +40,19 @@
 - **NO pytest. EVER.** Do not add, suggest, or assume pytest as a testing
   framework.
 - Use Python's `unittest` framework.
-- Run the complete project gate on the active supported Python version for
-  ordinary changes. Do not add a full 3.12–3.14 source and installed-wheel
-  matrix to routine feature closeout. Use CI for broad compatibility coverage;
-  run a local version matrix only for version-sensitive changes or an explicit
-  release-readiness requirement.
+- During implementation, use focused `unittest`, Ruff lint/format, and ty
+  checks for the affected work. Pre-commit runs fast staged-file checks; it
+  does not run the complete suite on each intermediate commit.
+- Run the complete project gate on the active supported Python version once at
+  stable closeout for ordinary changes. Edits to existing source files use the
+  standalone quality gate. Run full offline hygiene when package layout,
+  shipped resources, distribution metadata, lockfiles, build rules, or artifact
+  validation changes; hygiene supplies that full gate, so do not run it
+  separately on the same unchanged candidate. For documentation or governance
+  edits, run their focused checks. Do not add a full 3.12–3.14 source and
+  installed-wheel matrix to routine feature closeout. Use CI for broad
+  compatibility coverage; run a local version matrix only for
+  version-sensitive changes or an explicit release-readiness requirement.
 
 ## Runtime Boundary
 

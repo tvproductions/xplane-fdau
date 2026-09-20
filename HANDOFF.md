@@ -2,24 +2,18 @@
 
 ## Resume point — 2026-09-20
 
-**Current objective:** T2.2 Python/uv dependency refresh has completed its
-review and verification. Jeff requested this handoff and an ordinary Git sync,
-then intends to revisit the costly quality-control workflow.
+**Current objective:** The local quality-control cadence correction follows
+the 2026-09-20 design and plan. T2.2 remains verified, and the next roadmap
+action is `write_plan B1.1` after this tooling correction is closed.
 
 **Exact next action on return:** Read AGENTS.md and the linked authorities,
-then run the backlog audit and next commands. T2.2 is verified with 4/4 gates,
-no local child is selected, and the current next recommendation is
-`write_plan B1.1`. Before routine feature work, investigate and design the
-quality/hygiene cadence change described below. Seek review of a concrete
-design before changing gate policy.
+then run the backlog audit and next commands. Follow the stable-closeout
+quality workflow described below before routine B1.1 implementation.
 
 ## Observed state and evidence
 
-- T2.2 implementation and review are on temporary branch
-  `t2-2-dependency-refresh`, based on `main`. This handoff and the final
-  backlog transition are the intended closeout changes for local integration
-  and the explicitly requested ordinary sync. Check live Git status and remote
-  alignment; this paragraph is a dated observation, not proof of a push.
+- T2.2 was integrated into `main` at commit `431c195`. Its verified backlog
+  state and evidence remain unchanged by the local quality-cadence correction.
 - The approved plan is
   `docs/superpowers/plans/2026-09-19-t2-2-dependency-toolchain-refresh.md`.
   Completion, review, and four gate records are under
@@ -34,27 +28,24 @@ design before changing gate policy.
   coverage against a 40% minimum. Review accepted the implementation with no
   remaining Critical or Important findings. A minor matrix subprocess-timeout
   concern is recorded in `review.md`.
-- Installed and enabled `gz-skills@gz-skills` is 0.4.0 from the official Git
-  marketplace; project `.codex/config.toml` still pins reviewed tag 0.3.2.
-  T2.2's Python/uv adapter does not mutate the plugin cache. The full
-  project-managed plugin inventory remains unreconciled; do not describe T2.2
-  as a complete portable plugin refresh.
+- The installed and enabled `gz-skills@gz-skills` plugin was verified in this
+  session at version 0.3.2 from the pinned official Git marketplace. T2.2's
+  Python/uv adapter does not mutate the plugin cache.
 
 ## Quality-control follow-up
 
-Jeff observed that repeated full hygiene and 3-version matrices consumed far
-too much time. The current pre-commit `quality-check` hook runs
-`tools/quality.py check`; hygiene invokes all pre-commit hooks and therefore
-runs that full gate again. Manual quality runs add more duplication, and CI's
-3.14 quality and compatibility jobs overlap.
-
-Design a leaner edit loop using Ruff lint/format, ty, and focused `unittest`.
-Run the full active-version quality gate once at stable closeout. Run hygiene
-and artifact checks when their inputs change, and keep the broad 3.12–3.14
-matrix in parallel CI or for version-sensitive changes and release readiness.
-Make pre-commit fast, remove CI duplication, and time-bound matrix
-subprocesses. Do not silently weaken the release gate. This is Jeff's next
-requested topic, ahead of routine B1.1 feature work.
+Jeff narrowed the fix to the local development cadence; GitHub Actions
+remains unchanged. During edits, run focused `unittest`, Ruff, and ty checks.
+Pre-commit runs staged-file Ruff lint/format and detect-secrets checks without
+a full test suite or metrics reports. At stable closeout, run the complete
+active-version quality gate once. Edits to existing source files use the
+standalone gate. Full offline hygiene is for package layout, shipped resources,
+metadata, lockfiles, build rules, or artifact-validation changes; it invokes
+the quality gate directly once, then checks docs, hooks, and a fresh artifact
+pair. Documentation and governance edits use their focused checks. Reserve
+the local Python 3.12–3.14 source/installed-wheel matrix for
+version-sensitive changes and release readiness. The matrix subprocess-timeout
+concern from T2.2 review remains a separate follow-up.
 
 ## Decisions and boundaries
 

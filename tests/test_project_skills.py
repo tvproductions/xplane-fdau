@@ -132,7 +132,7 @@ class ProjectSkillTests(unittest.TestCase):
         baseline = json.loads(Path(".secrets.baseline").read_text(encoding="utf-8"))
         self.assertNotIn("gz-skills.lock.json", baseline["results"])
 
-    def test_hygiene_audits_backlog_then_runs_one_quality_gate_through_pre_commit(self) -> None:
+    def test_hygiene_audits_backlog_then_runs_one_quality_gate_directly(self) -> None:
         path = Path(".codex/skills/hygiene/scripts/hygiene.py")
         spec = importlib.util.spec_from_file_location("hygiene", path)
         if spec is None or spec.loader is None:
@@ -158,10 +158,11 @@ class ProjectSkillTests(unittest.TestCase):
                 ("git", "status", "--short", "--branch", "--ignored=matching"),
                 ("uv", "lock", "--check", "--offline"),
                 ("uv", "run", "--offline", "--frozen", "python", ".codex/skills/backlog-status/scripts/backlog_status.py", "audit"),
+                ("uv", "run", "--offline", "--frozen", "python", "tools/quality.py", "check"),
                 ("uv", "run", "--offline", "--frozen", "mkdocs", "build", "--strict"),
                 ("uv", "run", "--offline", "--frozen", "python", "tools/quality.py", "pre-commit"),
             ],
-            executed[:6],
+            executed[:7],
         )
 
     def test_hygiene_stops_when_backlog_audit_fails(self) -> None:
@@ -225,7 +226,7 @@ class ProjectSkillTests(unittest.TestCase):
         for required in (
             "gzs-repository-hygiene",
             "mkdocs build --strict",
-            "quality-check",
+            "tools/quality.py check",
             "twine check --strict",
             "tools/release.py check-dist",
             "temporary",
@@ -247,17 +248,38 @@ class ProjectSkillTests(unittest.TestCase):
         self.assertNotIn("Git sync is authorized", skill)
         self.assertNotIn("release is authorized", skill)
 
-    def test_pre_commit_runs_quality_check_and_other_repository_hooks(self) -> None:
+    def test_local_guidance_runs_full_gate_once_at_stable_closeout(self) -> None:
+        quality_skill = Path(".codex/skills/code-quality/SKILL.md").read_text(encoding="utf-8")
+        hygiene_skill = Path(".codex/skills/hygiene/SKILL.md").read_text(encoding="utf-8")
+        agents = Path("AGENTS.md").read_text(encoding="utf-8")
+        self.assertIn("stable closeout", quality_skill)
+        self.assertIn("focused", quality_skill)
+        self.assertNotIn("before a commit", quality_skill)
+        self.assertIn("quality.py check", hygiene_skill)
+        self.assertIn("exactly once", hygiene_skill)
+        self.assertIn("fast", hygiene_skill)
+        self.assertIn("stable closeout", agents)
+        self.assertIn("focused", agents)
+        self.assertIn("existing source files", agents)
+        self.assertIn("package layout", agents)
+        self.assertIn("existing source files", hygiene_skill)
+        self.assertIn("package layout", hygiene_skill)
+        self.assertIn("version-sensitive", agents)
+
+    def test_pre_commit_runs_only_fast_staged_checks(self) -> None:
         config = load_config(".pre-commit-config.yaml")
         hooks = [hook for repo in config["repos"] for hook in repo["hooks"]]
         self.assertEqual(
-            {"quality-check", "detect-secrets-baseline", "lizard-report", "cohesion-report"},
+            {"ruff-check", "ruff-format-check", "detect-secrets-baseline"},
             {hook["id"] for hook in hooks},
         )
-        quality_hooks = [hook for hook in hooks if hook["id"] == "quality-check"]
-        self.assertEqual(1, len(quality_hooks))
-        self.assertEqual("uv run python tools/quality.py check", quality_hooks[0]["entry"])
-        self.assertFalse(quality_hooks[0]["pass_filenames"])
+        by_id = {hook["id"]: hook for hook in hooks}
+        self.assertEqual("uv run ruff check", by_id["ruff-check"]["entry"])
+        self.assertEqual("uv run ruff format --check", by_id["ruff-format-check"]["entry"])
+        self.assertEqual(["python"], by_id["ruff-check"]["types"])
+        self.assertEqual(["python"], by_id["ruff-format-check"]["types"])
+        self.assertTrue(all(hook.get("pass_filenames", True) for hook in hooks))
+        self.assertNotIn("tools/quality.py check", " ".join(hook["entry"] for hook in hooks))
         raw_config = yaml.safe_load(Path(".pre-commit-config.yaml").read_text(encoding="utf-8"))
         raw_repos = raw_config["repos"]
         raw_hooks = [hook for repo in raw_repos for hook in repo["hooks"]]

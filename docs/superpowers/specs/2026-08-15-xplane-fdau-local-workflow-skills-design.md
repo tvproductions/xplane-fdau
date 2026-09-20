@@ -6,7 +6,7 @@
 - **Decision owner:** Jeff / tvproductions
 - **Roadmap epic:** `T2`
 - **Roadmap children:** `T2.1`, `T2.2`, `T3.1`
-- **Approval:** 2026-08-15 — Jeff / tvproductions; canonical workflow amendment approved 2026-09-05 by Jeff / tvproductions; single-pass verification correction approved 2026-09-19 by Jeff / tvproductions; B1.1 sequencing correction approved 2026-09-19 by Jeff / tvproductions
+- **Approval:** 2026-08-15 — Jeff / tvproductions; canonical workflow amendment approved 2026-09-05 by Jeff / tvproductions; single-pass verification correction approved 2026-09-19 by Jeff / tvproductions; B1.1 sequencing correction approved 2026-09-19 by Jeff / tvproductions; local development-cadence correction approved 2026-09-20 by Jeff / tvproductions
 
 ## Authority and purpose
 
@@ -156,10 +156,10 @@ Every invocation runs the complete workflow:
 1. report branch, staged/unstaged scope, and ignored/generated artifacts;
 2. verify the lockfile offline;
 3. run the T1 backlog audit;
-4. use the `quality-check` pre-commit hook as the single invocation of
-   `tools/quality.py check` rather than running it separately;
+4. invoke `tools/quality.py check` directly exactly once;
 5. run strict MkDocs validation;
-6. run every pre-commit hook, including `quality-check`, once;
+6. run the fast staged-file Ruff and detect-secrets pre-commit hooks once over
+   tracked files;
 7. build one fresh wheel and sdist in a uniquely named temporary directory
    outside the checkout;
 8. run strict metadata validation and `tools/release.py check-dist` against
@@ -173,15 +173,20 @@ Successful temporary artifacts are removed only after their resolved path is
 verified as the exact script-created temporary directory. Failed artifacts are
 preserved and their exact path is reported for diagnosis.
 
-Routine hygiene does not run the installed Python-version matrix. The
-`release` skill and child-slice closeout retain that responsibility. Dependency
-freshness remains an explicit opt-in network inquiry. Hygiene never formats,
-stages, commits, changes declarations, or deletes repository files.
-`tools/quality.py check` runs the full `unittest` suite once under coverage;
-`tools/quality.py test` remains available as a focused standalone command.
-Release-readiness CI and local guidance invoke `quality.py check` without a
-preceding standalone full-suite run. Repeated full-suite executions across separate
-deliberately requested gates are not implicitly removed by this correction.
+Routine hygiene does not run the installed Python-version matrix. CI provides
+broad compatibility coverage; the local matrix is reserved for
+version-sensitive changes and explicit release readiness. Ordinary edits to
+existing source files use focused checks during implementation and one
+standalone `tools/quality.py check` at stable closeout. Invoke full hygiene
+when package layout, shipped resource or schema inventory, distribution
+metadata, lockfiles, build rules, or artifact validation changes. Hygiene
+supplies that quality gate; do not run it separately on the same unchanged
+candidate. Documentation changes use strict MkDocs and governance changes use
+the strict backlog audit as focused checks. Dependency freshness remains an
+explicit opt-in network inquiry. Hygiene never formats, stages, commits,
+changes declarations, or deletes repository files. `tools/quality.py check`
+runs the full `unittest` suite once under coverage; `tools/quality.py test`
+remains a standalone full-suite command.
 
 ## T2.2 dependency-update adapter contract
 

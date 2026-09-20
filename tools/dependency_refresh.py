@@ -17,16 +17,37 @@ from typing import Any
 from urllib.parse import urlparse
 from urllib.request import Request
 
+from packaging.markers import Marker
 from packaging.requirements import InvalidRequirement, Requirement
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.utils import canonicalize_name
 from packaging.version import InvalidVersion, Version
 
 try:
-    from .dependency_sources import Opener, Runner, SourceError, fetch_index, fetch_release_requirements, newest_stable_release, open_index, release_is_yanked
+    from .dependency_sources import (
+        Opener,
+        Runner,
+        SourceError,
+        fetch_index,
+        fetch_release_requirements,
+        newest_stable_release,
+        open_index,
+        release_is_yanked,
+        release_python_exclusions,
+    )
     from .dependency_matrix import MatrixResult, run_matrix
 except ImportError:  # Direct script execution puts tools/ on sys.path.
-    from dependency_sources import Opener, Runner, SourceError, fetch_index, fetch_release_requirements, newest_stable_release, open_index, release_is_yanked
+    from dependency_sources import (
+        Opener,
+        Runner,
+        SourceError,
+        fetch_index,
+        fetch_release_requirements,
+        newest_stable_release,
+        open_index,
+        release_is_yanked,
+        release_python_exclusions,
+    )
     from dependency_matrix import MatrixResult, run_matrix
 
 SCHEMA_VERSION = 1
@@ -361,6 +382,19 @@ def collect_status(root: Path, runner: Runner, opener: Opener) -> dict[str, Any]
             candidate = uv_latest
     except (SourceError, InvalidSpecifier, ValueError) as source_error:
         blockers.append({"kind": "source", "name": "uv", "reason": str(source_error)})
+    build_requirements: list[tuple[str, Requirement]] = []
+    for value in declarations.get("build", []):
+        try:
+            parsed = Requirement(value)
+        except (InvalidRequirement, TypeError):
+            continue  # _required_declarations already records this source blocker.
+        if canonicalize_name(parsed.name) == "uv-build":
+            build_requirements.append((value, parsed))
+    if len(build_requirements) != 1:
+        blockers.append({"kind": "source", "reason": "expected one uv_build build requirement"})
+    elif candidate is not None and candidate not in build_requirements[0][1].specifier:
+        blockers.append({"kind": "incompatible-uv-build", "version": candidate, "requirement": build_requirements[0][0]})
+        candidate = installed
     branch, reviewed_paths = _scope(root, runner, blockers)
     proposed_files = list(MANAGED_FILES)
     proposed_commands = [["uv", "lock", "--upgrade"], ["uv", "sync", "--all-groups", "--locked"], ["uv", "lock", "--check"]]
@@ -602,6 +636,40 @@ def apply_status(
     return result
 
 
+_MARKER_PLATFORMS = (
+    ("windows", "win32", "nt", "Windows", "AMD64"),
+    ("linux", "linux", "posix", "Linux", "x86_64"),
+    ("macos", "darwin", "posix", "Darwin", "arm64"),
+    ("macos", "darwin", "posix", "Darwin", "x86_64"),
+)
+
+
+def _marker_targets(marker: Marker | None) -> tuple[list[str], list[str]]:
+    """Evaluate requirement markers over supported Python and OS targets, never the host."""
+    matches: set[tuple[str, str]] = set()
+    for python in SUPPORTED_PYTHON:
+        for platform, sys_platform, os_name, platform_system, machine in _MARKER_PLATFORMS:
+            environment = {
+                "implementation_name": "cpython",
+                "implementation_version": f"{python}.0",
+                "os_name": os_name,
+                "platform_machine": machine,
+                "platform_release": "",
+                "platform_system": platform_system,
+                "platform_version": "",
+                "platform_python_implementation": "CPython",
+                "python_full_version": f"{python}.0",
+                "python_version": str(python),
+                "sys_platform": sys_platform,
+                "extra": "",
+            }
+            if marker is None or marker.evaluate(environment):
+                matches.add((str(python), platform))
+    versions = [str(version) for version in SUPPORTED_PYTHON if any(item[0] == str(version) for item in matches)]
+    platforms = [name for name in ("windows", "linux", "macos") if any(item[1] == name for item in matches)]
+    return versions, platforms
+
+
 def _remaining_constraints(root: Path, after: dict[str, Any], opener: Opener) -> list[dict[str, object]]:
     """Attribute stale transitive versions to exact official parent requirements."""
     declarations = after["python"]["groups"]
@@ -630,10 +698,17 @@ def _remaining_constraints(root: Path, after: dict[str, Any], opener: Opener) ->
         errors: list[str] = []
         for group_name, requirement_text, parsed in direct.get(name, []):
             if latest not in parsed.specifier:
-                versions = [str(version) for version in SUPPORTED_PYTHON if parsed.marker is None or parsed.marker.evaluate({"python_version": str(version)})]
+                versions, platforms = _marker_targets(parsed.marker)
                 covered.update(versions)
                 constraints.append(
-                    {"parent": "xplane-fdau", "requirement": requirement_text, "source": "pyproject.toml", "group": group_name, "applies_python": versions}
+                    {
+                        "parent": "xplane-fdau",
+                        "requirement": requirement_text,
+                        "source": "pyproject.toml",
+                        "group": group_name,
+                        "applies_python": versions,
+                        "applies_platforms": platforms,
+                    }
                 )
         parents: list[tuple[str, str]] = []
         for package in packages:
@@ -661,7 +736,7 @@ def _remaining_constraints(root: Path, after: dict[str, Any], opener: Opener) ->
             for requirement_text, parsed in requirements:
                 if canonicalize_name(parsed.name) != name or latest in parsed.specifier:
                     continue
-                versions = [str(version) for version in SUPPORTED_PYTHON if parsed.marker is None or parsed.marker.evaluate({"python_version": str(version)})]
+                versions, platforms = _marker_targets(parsed.marker)
                 if not versions:
                     continue
                 covered.update(versions)
@@ -672,8 +747,27 @@ def _remaining_constraints(root: Path, after: dict[str, Any], opener: Opener) ->
                         "requirement": requirement_text,
                         "source": f"https://pypi.org/pypi/{parent_name}/{parent_version}/json",
                         "applies_python": versions,
+                        "applies_platforms": platforms,
                     }
                 )
+        if covered != {str(version) for version in SUPPORTED_PYTHON} and not errors:
+            try:
+                index = fetch_index(name, opener)
+                excluded, python_requirements = release_python_exclusions(index, latest, SUPPORTED_PYTHON)
+                newly_covered = [version for version in excluded if version not in covered]
+                if newly_covered:
+                    covered.update(newly_covered)
+                    constraints.append(
+                        {
+                            "kind": "candidate-python",
+                            "parent": name,
+                            "requirement": python_requirements,
+                            "source": f"https://pypi.org/simple/{name}/",
+                            "applies_python": newly_covered,
+                        }
+                    )
+            except SourceError as error:
+                errors.append(f"{name} {latest}: {error}")
         explained = not errors and covered == {str(version) for version in SUPPORTED_PYTHON}
         remaining.append(
             {
@@ -716,12 +810,34 @@ def main(argv: Sequence[str] | None = None) -> int:
         sys.stdout.write(canonical_json(report))
     else:
         print(f"Dependency refresh status (schema {report['schema_version']})")
-        print(f"uv: {report['uv']}")
-        print(f"Locked packages: {len(report['dependencies'])}")
-        print(f"Current findings: {len(report['current_findings'])}")
-        print(f"Pre-apply blockers: {len(report['pre_apply_blockers'])}")
-        for blocker in report["pre_apply_blockers"]:
-            print(f"  {blocker}")
+        uv = report["uv"]
+        print(f"uv: installed={uv['installed']} required={uv['required']} newest={uv['newest_stable']} candidate={uv['candidate']}")
+        python = report["python"]
+        print(f"Python support: {', '.join(python['supported'])} (declared {python['declared']}; lock {python['lock']}; selector {python['selector']})")
+        print("Direct constraints:")
+        for group, requirements in sorted(python["groups"].items()):
+            print(f"  {group}: {', '.join(requirements) if requirements else '(none)'}")
+        print(f"Locked packages ({len(report['dependencies'])}):")
+        for dependency in report["dependencies"]:
+            state = "outdated" if dependency["outdated"] else "current"
+            print(
+                f"  {dependency['name']}=={dependency['version']}: {state}; "
+                f"newest={dependency['newest_stable']}; resolver={dependency['resolver_candidate']}; "
+                f"declared={dependency['declared']}; source={dependency['source']}"
+            )
+        for label, key in (("Current findings", "current_findings"), ("Pre-apply blockers", "pre_apply_blockers")):
+            print(f"{label} ({len(report[key])}):")
+            for item in report[key]:
+                print(f"  {json.dumps(item, sort_keys=True, ensure_ascii=True)}")
+        print("Reviewed paths:")
+        for item in report["reviewed_paths"]:
+            print(f"  {item['status']} {item['path']} sha256={item['sha256']} index={item['index_blob']}")
+        print("Proposed files:")
+        for path in report["proposed_files"]:
+            print(f"  {path}")
+        print("Proposed commands:")
+        for command in report["proposed_commands"]:
+            print(f"  {' '.join(command)}")
         print(f"Plan SHA-256: {report['plan_sha256']}")
     return 0 if not report["pre_apply_blockers"] else 1
 

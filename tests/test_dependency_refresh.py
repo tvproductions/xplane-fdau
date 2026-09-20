@@ -220,6 +220,13 @@ class DependencyStatusTests(unittest.TestCase):
         report = collect_status(self.fixture.root, self.fixture.runner, self.fixture.opener)
         self.assertIn("source", {item["kind"] for item in report["pre_apply_blockers"]})
 
+    def test_uv_candidate_outside_build_backend_bound_is_status_blocker(self) -> None:
+        self.fixture.indexes["uv"] = _index("uv", ("0.12.17", "0.13.0"))
+        report = collect_status(self.fixture.root, self.fixture.runner, self.fixture.opener)
+        self.assertEqual(report["uv"]["newest_stable"], "0.13.0")
+        self.assertEqual(report["uv"]["candidate"], "0.12.17")
+        self.assertIn("incompatible-uv-build", {item["kind"] for item in report["pre_apply_blockers"]})
+
     def test_incompatible_uv_release_is_blocker_and_retains_installed_version(self) -> None:
         self.fixture.indexes["uv"]["files"][1]["requires-python"] = ">=3.12,<3.14"
         report = collect_status(self.fixture.root, self.fixture.runner, self.fixture.opener)
@@ -249,7 +256,7 @@ class DependencyStatusTests(unittest.TestCase):
 
         with patch(
             "tools.dependency_refresh.collect_status",
-            return_value={"schema_version": 1, "uv": {}, "pre_apply_blockers": [], "current_findings": [], "dependencies": [], "plan_sha256": "abc"},
+            return_value={**collect_status(self.fixture.root, self.fixture.runner, self.fixture.opener), "plan_sha256": "abc"},
         ):
             json_output = StringIO()
             with redirect_stdout(json_output):
@@ -259,6 +266,36 @@ class DependencyStatusTests(unittest.TestCase):
                 self.assertEqual(main(["status"]), 0)
         self.assertEqual(json.loads(json_output.getvalue())["plan_sha256"], "abc")
         self.assertIn("abc", human_output.getvalue())
+
+    def test_human_status_shows_all_reviewable_evidence(self) -> None:
+        from contextlib import redirect_stdout
+        from io import StringIO
+
+        report = collect_status(self.fixture.root, self.fixture.runner, self.fixture.opener)
+        report["current_findings"] = [{"kind": "yanked", "name": "foo", "version": "1.0"}]
+        report["pre_apply_blockers"] = [{"kind": "source", "reason": "source unavailable"}]
+        report["reviewed_paths"] = [{"path": "pyproject.toml", "status": " M", "sha256": "abc", "index_blob": None}]
+        with patch("tools.dependency_refresh.collect_status", return_value=report):
+            output = StringIO()
+            with redirect_stdout(output):
+                self.assertEqual(main(["status"]), 1)
+        rendered = output.getvalue()
+        for expected in (
+            "3.12",
+            "3.13",
+            "3.14",
+            "dev",
+            "foo>=1",
+            "universal-only",
+            "2.0",
+            "yanked",
+            "source unavailable",
+            "pyproject.toml",
+            "uv lock --upgrade",
+            "Plan SHA-256",
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, rendered)
 
     def test_unknown_preview_root_blocks_status(self) -> None:
         self.fixture.tree["unexpected"] = "drift"
@@ -413,6 +450,39 @@ class DependencyApplyTests(unittest.TestCase):
         requirement = "foo>=1"
         remaining = refresh._remaining_constraints(self.fixture.root, after, opener)
         self.assertFalse(remaining[0]["explained"])
+
+    def test_linux_only_parent_constraint_is_explained_on_windows_host(self) -> None:
+        after = collect_status(self.fixture.root, self.fixture.runner, self.fixture.opener)
+        lock = self.fixture.root / "uv.lock"
+        lock.write_text(
+            lock.read_text(encoding="utf-8") + '\n[[package]]\nname = "wily"\nversion = "1.25.0"\n'
+            'source = { registry = "https://pypi.org/simple" }\n'
+            'dependencies = [{ name = "foo", marker = "sys_platform == \'linux\'" }]\n',
+            encoding="utf-8",
+        )
+        after["dependencies"] = [item for item in after["dependencies"] if item["name"] == "foo"]
+
+        def opener(request: Request, timeout: int, ceiling: int) -> tuple[bytes, str, str]:
+            payload = {"info": {"name": "wily", "version": "1.25.0", "requires_dist": ['foo>=1,<2; sys_platform == "linux"']}}
+            return json.dumps(payload).encode(), request.full_url, "application/json"
+
+        remaining = refresh._remaining_constraints(self.fixture.root, after, opener)
+        self.assertTrue(remaining[0]["explained"])
+        constraints = remaining[0]["constraints"]
+        assert isinstance(constraints, list) and isinstance(constraints[0], dict)
+        self.assertEqual(constraints[0]["applies_python"], ["3.12", "3.13", "3.14"])
+        self.assertEqual(constraints[0]["applies_platforms"], ["linux"])
+
+    def test_candidate_python_requirement_explains_unavailable_newest_release(self) -> None:
+        self.fixture.indexes["foo"]["files"][1]["requires-python"] = ">=3.15"
+        after = collect_status(self.fixture.root, self.fixture.runner, self.fixture.opener)
+        after["dependencies"] = [item for item in after["dependencies"] if item["name"] == "foo"]
+        remaining = refresh._remaining_constraints(self.fixture.root, after, self.fixture.opener)
+        self.assertTrue(remaining[0]["explained"])
+        constraints = remaining[0]["constraints"]
+        assert isinstance(constraints, list) and isinstance(constraints[0], dict)
+        self.assertEqual(constraints[0]["kind"], "candidate-python")
+        self.assertEqual(constraints[0]["applies_python"], ["3.12", "3.13", "3.14"])
 
     def _clean_after(self, before: dict[str, Any]) -> dict[str, Any]:
         after = copy.deepcopy(before)

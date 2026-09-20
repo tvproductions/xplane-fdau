@@ -7,6 +7,8 @@ import json
 import unittest
 from typing import Any
 
+from packaging.version import Version
+
 
 def _sources() -> Any:
     try:
@@ -43,6 +45,24 @@ class SourceSelectionTests(unittest.TestCase):
     def test_selects_newest_stable_release_with_non_yanked_file(self) -> None:
         sources = _sources()
         self.assertEqual("0.12.18", sources.newest_stable_release(index_fixture()))
+
+    def test_release_python_exclusions_require_every_file_to_exclude(self) -> None:
+        sources = _sources()
+        index = index_fixture()
+        files = index["files"]
+        assert isinstance(files, list)
+        files[1]["requires-python"] = ">=3.15"
+        supported = (Version("3.12"), Version("3.13"), Version("3.14"))
+        self.assertEqual(sources.release_python_exclusions(index, "0.12.18", supported)[0], ["3.12", "3.13", "3.14"])
+        files.append(
+            {
+                "filename": "uv-0.12.18.tar.gz",
+                "hashes": {"sha256": "5" * 64},
+                "requires-python": ">=3.12",
+                "yanked": False,
+            }
+        )
+        self.assertEqual(sources.release_python_exclusions(index, "0.12.18", supported)[0], [])
 
     def test_unrelated_legacy_files_do_not_hide_valid_release(self) -> None:
         sources = _sources()

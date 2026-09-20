@@ -11,6 +11,7 @@ from typing import Any, cast, override
 from urllib.parse import parse_qs, quote, unquote, urlparse
 from urllib.request import Request, urlopen
 
+from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.utils import InvalidSdistFilename, InvalidWheelFilename, canonicalize_name, parse_sdist_filename, parse_wheel_filename
 from packaging.version import InvalidVersion, Version
 
@@ -166,6 +167,43 @@ def _artifact_identity(filename: str) -> tuple[str, Version]:
         except InvalidSdistFilename as error:
             raise SourceError(f"invalid artifact filename: {filename}") from error
     return canonicalize_name(name), version
+
+
+def release_python_exclusions(index: dict[str, object], version: str, supported: tuple[Version, ...]) -> tuple[list[str], list[str]]:
+    """Return supported Python minors excluded by every non-yanked official file."""
+    name = canonicalize_name(str(index.get("name", "")))
+    files = index.get("files")
+    if not isinstance(files, list):
+        raise SourceError(f"{name}: missing release files")
+    try:
+        expected = (name, Version(version))
+    except InvalidVersion as error:
+        raise SourceError(f"{name}: invalid release version") from error
+    specifiers: list[SpecifierSet] = []
+    requirements: set[str] = set()
+    for item in files:
+        if not isinstance(item, dict) or not isinstance(item.get("filename"), str):
+            raise SourceError(f"{name}: malformed Index file")
+        try:
+            identity = _artifact_identity(item["filename"])
+        except SourceError:
+            continue
+        if identity != expected or item.get("yanked", False):
+            continue
+        requirement = item.get("requires-python")
+        if requirement is None:
+            requirement = ""
+        if not isinstance(requirement, str):
+            raise SourceError(f"{name}: invalid Requires-Python metadata")
+        try:
+            specifiers.append(SpecifierSet(requirement))
+        except InvalidSpecifier as error:
+            raise SourceError(f"{name}: invalid Requires-Python metadata") from error
+        requirements.add(requirement or "(unconstrained)")
+    if not specifiers:
+        raise SourceError(f"{name}: no non-yanked files for {version}")
+    excluded = [str(python) for python in supported if not any(python in specifier for specifier in specifiers)]
+    return excluded, sorted(requirements)
 
 
 def newest_stable_release(index: dict[str, object]) -> str:

@@ -1,12 +1,12 @@
 # T2.2 Governed Dependency and Toolchain Refresh Implementation Plan
 
 - **Governance:** active
-- **Status:** in_progress
+- **Status:** completed
 - **Date:** 2026-09-20
 - **Roadmap child:** `T2.2`
 - **Source specification:** `docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md`
 - **Approval:** 2026-09-20 — Jeff / tvproductions
-- **Completion evidence:** —
+- **Completion evidence:** `.superpowers/sdd/2026-09-19-t2-2-dependency-toolchain-refresh/completion.md`
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -524,3 +524,7 @@ This is a semantic `gzs-plan-audit` self-check against the approved T2.2 design,
 - [x] The present WinGet-owned uv executable has a tested owner-action path; the Python adapter cannot run self-update against it.
 - [x] The plan uses `unittest`, preserves the standard-library runtime and release boundary, and does not select T2.2.
 - [x] The observed T2.2 handoff is included in the verified closeout commit; the merge does not leave an uncommitted postmerge edit.
+
+## Observed execution note — 2026-09-20
+
+The Windows matrix used external per-version source virtual environments with a frozen requirements export and editable source install. `uv run --python` attempted to replace the project `.venv` while apply was running from it; the isolated source environments avoided that conflict. The completed apply passed the targeted 76 tests, one full offline hygiene run, and the 3.12/3.13/3.14 full source suites plus installed-wheel checks. The implementation commit used the already passing hygiene and matrix evidence on the same code tree; the user directed that expensive gates not be repeated for a commit or documentation-only closeout. See the linked completion record for artifact hashes and official-source findings.

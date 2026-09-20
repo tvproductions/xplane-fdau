@@ -114,7 +114,7 @@ The child slices below refine this sequence without weakening or reordering it.
 | `T1.5` | Guarded child-state and gate-evidence mutations | `verified` | `T1.3`, `T1.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-09-06-t1-5-guarded-child-state-mutations.md) | 5/5 | [review](.superpowers/sdd/2026-09-06-t1-5-guarded-child-state-mutations/review.md) | — | — |
 | `T1.6` | Skill, session-entry, hygiene, and artifact closure | `verified` | `T1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-09-07-t1-6-skill-session-hygiene-artifact-closure.md) | 5/5 | [review](.superpowers/sdd/2026-09-07-t1-6-skill-session-hygiene-artifact-closure/review.md) | — | — |
 | `T2.1` | Project repository-hygiene adapter and fresh artifact verification | `verified` | `T1.6` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | [plan](docs/superpowers/plans/2026-09-19-t2-1-repository-hygiene-artifact-verification.md) | 5/5 | [review](.superpowers/sdd/2026-09-19-t2-1-repository-hygiene-artifact-verification/review.md) | — | — |
-| `T2.2` | Governed dependency and toolchain refresh | `in_progress` | `T2.1` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | [plan](docs/superpowers/plans/2026-09-19-t2-2-dependency-toolchain-refresh.md) | 0/4 | — | — | — |
+| `T2.2` | Governed dependency and toolchain refresh | `reviewed` | `T2.1` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | [plan](docs/superpowers/plans/2026-09-19-t2-2-dependency-toolchain-refresh.md) | 4/4 | [review](.superpowers/sdd/2026-09-19-t2-2-dependency-toolchain-refresh/review.md) | — | — |
 | `T3.1` | Guarded Git synchronization adapter | `specified` | `T2.1` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/5 | — | — | — |
 
 ## Local-child acceptance gates
@@ -502,17 +502,17 @@ The child slices below refine this sequence without weakening or reordering it.
 
 ### T2.2 — Governed dependency and toolchain refresh
 
-- [ ] Read-only human and JSON status discover the newest stable `uv`, supported Python
+- [x] Read-only human and JSON status discover the newest stable `uv`, supported Python
       matrix, locked graph, outdated releases, yanks, vulnerabilities, and constraints
-      from official sources without mutation.
-- [ ] Apply pins the exact verified stable `uv`, aligns package metadata to
+      from official sources without mutation. — Evidence: [verification](.superpowers/sdd/2026-09-19-t2-2-dependency-toolchain-refresh/gate-1.md)
+- [x] Apply pins the exact verified stable `uv`, aligns package metadata to
       `>=3.12,<3.15`, retains compatible ordinary development constraints, refreshes the
       complete lock, and fails closed on stale scope, incompatible resolution, or
-      unexplained security findings.
-- [ ] Targeted `unittest`, full repo hygiene, Python 3.12-3.14 source and
-      installed-wheel verification, and exact wheel/sdist inventory all pass.
-- [ ] Superpowers, X-Plane deployment, staging, commit, push, tag, publication, and
-      release behavior is absent from the skill and implementation.
+      unexplained security findings. — Evidence: [verification](.superpowers/sdd/2026-09-19-t2-2-dependency-toolchain-refresh/gate-2.md)
+- [x] Targeted `unittest`, full repo hygiene, Python 3.12-3.14 source and
+      installed-wheel verification, and exact wheel/sdist inventory all pass. — Evidence: [verification](.superpowers/sdd/2026-09-19-t2-2-dependency-toolchain-refresh/gate-3.md)
+- [x] Superpowers, X-Plane deployment, staging, commit, push, tag, publication, and
+      release behavior is absent from the skill and implementation. — Evidence: [verification](.superpowers/sdd/2026-09-19-t2-2-dependency-toolchain-refresh/gate-4.md)
 
 ### T3.1 — Guarded Git synchronization adapter
 

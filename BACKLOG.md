@@ -14,7 +14,7 @@ slice receives one focused plan and one independently reviewable outcome.
   FDAU, native FDR, ARINC, and FDM/FOQA-support behavior while external clients
   own all simulator I/O.
 - Active design: repository-local backlog governance and status reporting.
-- Active child: —.
+- Active child: `T2.2`.
 - `D1.1`, `D1.2`, and `D1.3` are verified. The statusless external `I1.0`
   handoff condition is eligible for q4xpcc Phase 24A planning reconciliation;
   `T1.3` is verified with 4/4 gates under its approved audit policy
@@ -114,7 +114,7 @@ The child slices below refine this sequence without weakening or reordering it.
 | `T1.5` | Guarded child-state and gate-evidence mutations | `verified` | `T1.3`, `T1.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-09-06-t1-5-guarded-child-state-mutations.md) | 5/5 | [review](.superpowers/sdd/2026-09-06-t1-5-guarded-child-state-mutations/review.md) | — | — |
 | `T1.6` | Skill, session-entry, hygiene, and artifact closure | `verified` | `T1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-backlog-status-skill-design.md) | [plan](docs/superpowers/plans/2026-09-07-t1-6-skill-session-hygiene-artifact-closure.md) | 5/5 | [review](.superpowers/sdd/2026-09-07-t1-6-skill-session-hygiene-artifact-closure/review.md) | — | — |
 | `T2.1` | Project repository-hygiene adapter and fresh artifact verification | `verified` | `T1.6` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | [plan](docs/superpowers/plans/2026-09-19-t2-1-repository-hygiene-artifact-verification.md) | 5/5 | [review](.superpowers/sdd/2026-09-19-t2-1-repository-hygiene-artifact-verification/review.md) | — | — |
-| `T2.2` | Governed dependency and toolchain refresh | `specified` | `T2.1` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | [draft plan](docs/superpowers/plans/2026-09-19-t2-2-dependency-toolchain-refresh.md) | 0/4 | — | — | — |
+| `T2.2` | Governed dependency and toolchain refresh | `in_progress` | `T2.1` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | [plan](docs/superpowers/plans/2026-09-19-t2-2-dependency-toolchain-refresh.md) | 0/4 | — | — | — |
 | `T3.1` | Guarded Git synchronization adapter | `specified` | `T2.1` | [design](docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md) | — | 0/5 | — | — | — |
 
 ## Local-child acceptance gates

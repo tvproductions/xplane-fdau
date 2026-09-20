@@ -948,7 +948,7 @@ class GovernanceArtifactTests(unittest.TestCase):
         self.assertEqual("completed", active_plans["2026-09-19-t2-1-repository-hygiene-artifact-verification.md"]["Status"])
         self.assertEqual("`T2.1`", active_plans["2026-09-19-t2-1-repository-hygiene-artifact-verification.md"]["Roadmap child"])
         self.assertEqual("`T2.2`", active_plans["2026-09-19-t2-2-dependency-toolchain-refresh.md"]["Roadmap child"])
-        self.assertEqual("draft", active_plans["2026-09-19-t2-2-dependency-toolchain-refresh.md"]["Status"])
+        self.assertEqual("in_progress", active_plans["2026-09-19-t2-2-dependency-toolchain-refresh.md"]["Status"])
         self.assertEqual("completed", active_plans["2026-09-07-t1-6-skill-session-hygiene-artifact-closure.md"]["Status"])
         self.assertEqual(
             "`.superpowers/sdd/2026-09-07-t1-6-skill-session-hygiene-artifact-closure/completion.md`",

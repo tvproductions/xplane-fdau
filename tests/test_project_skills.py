@@ -123,7 +123,8 @@ class ProjectSkillTests(unittest.TestCase):
 
         draft = Path("docs/superpowers/plans/2026-09-19-t2-2-dependency-toolchain-refresh.md").read_text(encoding="utf-8")
         self.assertIn(".codex/config.toml", draft)
-        self.assertIn("Codex marketplace", draft)
+        self.assertIn("independently of T2.2", draft)
+        self.assertIn("None invokes Codex or manages the plugin cache.", draft)
 
         attributes = Path(".gitattributes").read_text(encoding="utf-8")
         self.assertNotIn(".agents/skills/gzs-*/**", attributes)

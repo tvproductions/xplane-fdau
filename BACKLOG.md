@@ -14,7 +14,7 @@ slice receives one focused plan and one independently reviewable outcome.
   FDAU, native FDR, ARINC, and FDM/FOQA-support behavior while external clients
   own all simulator I/O.
 - Active design: repository-local backlog governance and status reporting.
-- Active child: —.
+- Active child: `B1.1`.
 - `D1.1`, `D1.2`, and `D1.3` are verified. The statusless external `I1.0`
   handoff condition is eligible for q4xpcc Phase 24A planning reconciliation;
   `T1.3` is verified with 4/4 gates under its approved audit policy
@@ -52,7 +52,7 @@ The child slices below refine this sequence without weakening or reordering it.
 
 | Child | Outcome | Status | Depends on | Spec | Plan | Gates | Review | Resume | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `B1.1` | Source-layout migration and installed-import isolation | `specified` | `T2.2` | [design](docs/superpowers/specs/2026-08-09-src-layout-migration-design.md) | [draft plan](docs/superpowers/plans/2026-08-09-src-layout-migration.md) | 0/5 | — | — | — |
+| `B1.1` | Source-layout migration and installed-import isolation | `planned` | `T2.2` | [design](docs/superpowers/specs/2026-08-09-src-layout-migration-design.md) | [plan](docs/superpowers/plans/2026-08-09-src-layout-migration.md) | 0/5 | — | — | — |
 | `C1.1` | Canonical JSON and binary64/integer encoding | `specified` | `B1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C1.2` | Identity, hashing, references, authority, and provenance | `specified` | `C1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C1.3` | Typed values and content-addressed payload references | `specified` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |

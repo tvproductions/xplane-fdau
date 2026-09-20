@@ -22,6 +22,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = "xplane_fdau"
+SOURCE_ROOT = ROOT / "src" / PACKAGE
 PROJECT = "xplane-fdau"
 RELEASE_VERSION = "0.1.0"
 
@@ -72,7 +73,7 @@ def _version_from_source(source: bytes, *, label: str) -> str:
 
 def _version() -> str:
     project_version = _project_version()
-    runtime_version = _version_from_source((ROOT / PACKAGE / "__init__.py").read_bytes(), label="source __init__.py")
+    runtime_version = _version_from_source((SOURCE_ROOT / "__init__.py").read_bytes(), label="source __init__.py")
     if project_version != RELEASE_VERSION or runtime_version != RELEASE_VERSION:
         raise ReleaseError(f"project and runtime versions must both be {RELEASE_VERSION}")
     return RELEASE_VERSION
@@ -152,9 +153,9 @@ def _validated_tar_members(archive: tarfile.TarFile, root: str) -> tuple[tuple[t
 
 def _expected_package_files() -> dict[str, bytes]:
     expected: dict[str, bytes] = {}
-    for source in (ROOT / PACKAGE).rglob("*"):
-        if source.is_file() and (source.suffix == ".py" or source.suffix == ".json" or source.name == "py.typed"):
-            expected[source.relative_to(ROOT).as_posix()] = source.read_bytes()
+    for source in SOURCE_ROOT.rglob("*"):
+        if source.is_file() and (source.suffix in {".py", ".json"} or source.name == "py.typed"):
+            expected[source.relative_to(SOURCE_ROOT.parent).as_posix()] = source.read_bytes()
     return expected
 
 
@@ -247,15 +248,15 @@ def _check_wheel_record(
             raise ReleaseError(f"wheel RECORD size is invalid for {name}")
 
 
-def _check_package_payloads(read: Callable[[str], bytes], names: set[str], version: str, *, label: str) -> None:
+def _check_package_payloads(read: Callable[[str], bytes], names: set[str], version: str, *, label: str, prefix: str = "") -> None:
     expected = _expected_package_files()
-    package_names = {name for name in names if name.startswith(f"{PACKAGE}/")}
-    if package_names != set(expected):
+    package_names = {name for name in names if name.startswith(f"{prefix}{PACKAGE}/")}
+    if package_names != {f"{prefix}{name}" for name in expected}:
         raise ReleaseError(f"{label} package members differ from the expected runtime module/resource set")
     for name, payload in expected.items():
-        if read(name) != payload:
+        if read(f"{prefix}{name}") != payload:
             raise ReleaseError(f"{label} member bytes differ from tracked source: {name}")
-    if _version_from_source(read(f"{PACKAGE}/__init__.py"), label=f"{label} __init__.py") != version:
+    if _version_from_source(read(f"{prefix}{PACKAGE}/__init__.py"), label=f"{label} __init__.py") != version:
         raise ReleaseError(f"{label} runtime __version__ differs from the release version")
 
 
@@ -302,7 +303,13 @@ def _check_sdist(sdist: Path, version: str) -> None:
         names = {member.name for member in members}
         relative = {name.removeprefix(f"{root}/") for name in names}
         relative_directories = {name.removeprefix(f"{root}/") for name in directories}
-        expected_relative = set(_expected_package_files()) | {"PKG-INFO", "pyproject.toml", "pyproject.toml.orig", "LICENSE", "README.md"}
+        expected_relative = {f"src/{name}" for name in _expected_package_files()} | {
+            "PKG-INFO",
+            "pyproject.toml",
+            "pyproject.toml.orig",
+            "LICENSE",
+            "README.md",
+        }
         if relative != expected_relative or relative_directories != _expected_directories(expected_relative):
             raise ReleaseError("sdist members differ from the exact expected artifact set")
 
@@ -320,7 +327,7 @@ def _check_sdist(sdist: Path, version: str) -> None:
             raise ReleaseError("sdist README.md must match the tracked project documentation bytes")
         if read("LICENSE") != (ROOT / "LICENSE").read_bytes() or [name for name in relative if PurePosixPath(name).name == "LICENSE"] != ["LICENSE"]:
             raise ReleaseError("sdist must contain one tracked LICENSE at its expected location")
-        _check_package_payloads(read, relative, version, label="sdist")
+        _check_package_payloads(read, relative, version, label="sdist", prefix="src/")
 
 
 def check_dist(directory: Path) -> ReleaseArtifacts:

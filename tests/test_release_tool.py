@@ -22,9 +22,10 @@ from tools import release
 class ReleaseToolTests(unittest.TestCase):
     def _package_files(self) -> dict[str, bytes]:
         files: dict[str, bytes] = {}
-        for source in Path("xplane_fdau").rglob("*"):
+        source_root = Path("src/xplane_fdau")
+        for source in source_root.rglob("*"):
             if source.is_file() and (source.suffix == ".py" or source.name == "py.typed" or source.suffix == ".json"):
-                files[source.as_posix()] = source.read_bytes()
+                files[source.relative_to(source_root.parent).as_posix()] = source.read_bytes()
         return files
 
     def _wheel_record(self, files: dict[str, bytes], record_name: str) -> bytes:
@@ -108,7 +109,7 @@ class ReleaseToolTests(unittest.TestCase):
                     warnings.simplefilter("ignore", UserWarning)
                     archive.writestr(*wheel_duplicates)
 
-        tar_files = {f"xplane_fdau-0.1.0/{name}": payload for name, payload in self._package_files().items()}
+        tar_files = {f"xplane_fdau-0.1.0/src/{name}": payload for name, payload in self._package_files().items()}
         tar_files.update(
             {
                 "xplane_fdau-0.1.0/LICENSE": Path("LICENSE").read_bytes(),
@@ -128,11 +129,12 @@ class ReleaseToolTests(unittest.TestCase):
             root.type = tarfile.DIRTYPE
             archive.addfile(root)
             for name in (
-                "xplane_fdau-0.1.0/xplane_fdau",
-                "xplane_fdau-0.1.0/xplane_fdau/formats",
-                "xplane_fdau-0.1.0/xplane_fdau/formats/xplane_fdr",
-                "xplane_fdau-0.1.0/xplane_fdau/formats/xplane_fdr/schemas",
-                "xplane_fdau-0.1.0/xplane_fdau/sinks",
+                "xplane_fdau-0.1.0/src",
+                "xplane_fdau-0.1.0/src/xplane_fdau",
+                "xplane_fdau-0.1.0/src/xplane_fdau/formats",
+                "xplane_fdau-0.1.0/src/xplane_fdau/formats/xplane_fdr",
+                "xplane_fdau-0.1.0/src/xplane_fdau/formats/xplane_fdr/schemas",
+                "xplane_fdau-0.1.0/src/xplane_fdau/sinks",
             ):
                 directory_member = tarfile.TarInfo(name)
                 directory_member.type = tarfile.DIRTYPE
@@ -147,6 +149,23 @@ class ReleaseToolTests(unittest.TestCase):
                 member.type = tarfile.SYMTYPE
                 member.linkname = target
                 archive.addfile(member)
+
+    def test_rejects_flat_package_member_in_src_sdist(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            directory = Path(raw)
+            self._make_dist(
+                directory,
+                tar_updates={"xplane_fdau-0.1.0/xplane_fdau/__init__.py": b""},
+            )
+            with self.assertRaisesRegex(release.ReleaseError, "sdist members differ"):
+                release.check_dist(directory)
+
+    def test_rejects_src_prefix_in_wheel(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            directory = Path(raw)
+            self._make_dist(directory, wheel_updates={"src/xplane_fdau/hostile.py": b""})
+            with self.assertRaisesRegex(release.ReleaseError, "outside the package"):
+                release.check_dist(directory)
 
     def test_check_dist_accepts_complete_realistic_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
@@ -305,7 +324,7 @@ class ReleaseToolTests(unittest.TestCase):
                 with self.assertRaises(release.ReleaseError):
                     release.check_dist(Path(raw))
         with tempfile.TemporaryDirectory() as raw:
-            self._make_dist(Path(raw), tar_updates={f"xplane_fdau-0.1.0/{expected_schema}": b"{}\n"})
+            self._make_dist(Path(raw), tar_updates={f"xplane_fdau-0.1.0/src/{expected_schema}": b"{}\n"})
             with self.assertRaises(release.ReleaseError):
                 release.check_dist(Path(raw))
 
@@ -356,7 +375,7 @@ class ReleaseToolTests(unittest.TestCase):
             with self.assertRaisesRegex(release.ReleaseError, "duplicate"):
                 release.check_dist(Path(raw))
         with tempfile.TemporaryDirectory() as raw:
-            self._make_dist(Path(raw), tar_link=("xplane_fdau-0.1.0/xplane_fdau/link.py", "../../evil.py"))
+            self._make_dist(Path(raw), tar_link=("xplane_fdau-0.1.0/src/xplane_fdau/link.py", "../../evil.py"))
             with self.assertRaisesRegex(release.ReleaseError, "link"):
                 release.check_dist(Path(raw))
         with tempfile.TemporaryDirectory() as raw:

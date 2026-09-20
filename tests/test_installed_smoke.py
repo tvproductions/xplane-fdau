@@ -45,7 +45,7 @@ class InstalledSmokeTests(unittest.TestCase):
     def test_checkout_path_detection_rejects_checkout_import(self) -> None:
         checkout = Path("C:/work/xplane-fdr").resolve()
         with self.assertRaisesRegex(installed_smoke.SmokeError, "checkout"):
-            installed_smoke.ensure_outside_checkout(checkout / "xplane_fdau/__init__.py", checkout)
+            installed_smoke.ensure_outside_checkout(checkout / "src/xplane_fdau/__init__.py", checkout)
 
     def test_symlinked_venv_interpreter_keeps_scripts_directory_identity(self) -> None:
         with tempfile.TemporaryDirectory() as raw:

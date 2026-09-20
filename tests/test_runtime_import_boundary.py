@@ -17,7 +17,9 @@ class RuntimeImportBoundaryTests(unittest.TestCase):
     def test_every_runtime_module_uses_only_approved_static_imports(self) -> None:
         """Adding any unapproved edge anywhere in the wheel must fail."""
         violations: list[str] = []
-        for path in sorted((ROOT / "xplane_fdau").rglob("*.py")):
+        runtime_paths = tuple(sorted((ROOT / "src/xplane_fdau").rglob("*.py")))
+        self.assertTrue(runtime_paths)
+        for path in runtime_paths:
             violations.extend(
                 runtime_import_violations(
                     path.read_text(encoding="utf-8"),

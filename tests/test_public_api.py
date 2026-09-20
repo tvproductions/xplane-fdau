@@ -68,7 +68,7 @@ class PublicAPITests(unittest.TestCase):
     def test_formats_do_not_depend_on_sinks_and_sink_imports_only_format_or_stdlib(self) -> None:
         """A format-to-sink edge would invert the native boundary."""
         project_root = Path(__file__).parents[1]
-        formats_root = project_root / "xplane_fdau" / "formats"
+        formats_root = project_root / "src" / "xplane_fdau" / "formats"
         for path in formats_root.rglob("*.py"):
             tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
             for node in ast.walk(tree):
@@ -79,7 +79,7 @@ class PublicAPITests(unittest.TestCase):
                     resolved = self._resolve_import(path, node)
                     self.assertFalse(resolved == "xplane_fdau.sinks" or resolved.startswith("xplane_fdau.sinks."))
 
-        sink_path = project_root / "xplane_fdau" / "sinks" / "xplane_fdr.py"
+        sink_path = project_root / "src" / "xplane_fdau" / "sinks" / "xplane_fdr.py"
         tree = ast.parse(sink_path.read_text(encoding="utf-8"), filename=str(sink_path))
         allowed_stdlib = set(__import__("sys").stdlib_module_names) | {"__future__"}
         for node in ast.walk(tree):
@@ -100,7 +100,7 @@ class PublicAPITests(unittest.TestCase):
         if node.level == 0:
             return node.module or ""
         project_root = Path(__file__).parents[1]
-        module_parts = list(path.relative_to(project_root).with_suffix("").parts)
+        module_parts = list(path.relative_to(project_root / "src").with_suffix("").parts)
         if module_parts[-1] != "__init__":
             module_parts.pop()
         else:

@@ -124,7 +124,7 @@ class DocumentationTests(unittest.TestCase):
     def test_documented_schema_url_has_a_published_schema_artifact(self) -> None:
         """The schema URL in a user configuration must not lead to a Pages 404."""
         published = ROOT / "docs/schemas/fdr-record-config-v1.schema.json"
-        packaged = ROOT / "xplane_fdau/formats/xplane_fdr/schemas/fdr-record-config-v1.schema.json"
+        packaged = ROOT / "src/xplane_fdau/formats/xplane_fdr/schemas/fdr-record-config-v1.schema.json"
 
         self.assertTrue(published.is_file())
         self.assertEqual(packaged.read_bytes(), published.read_bytes())
@@ -197,7 +197,8 @@ class DocumentationTests(unittest.TestCase):
     def test_active_agent_guidance_and_runtime_docstrings_use_fdau_identity(self) -> None:
         """Current agent guidance and shipped help must name the installed project."""
         agent_guidance = "\n".join(self._read_required_text(path) for path in (ROOT / "AGENTS.md", ROOT / "HANDOFF.md"))
-        runtime_paths = tuple(sorted((ROOT / "xplane_fdau").rglob("*.py")))
+        runtime_paths = tuple(sorted((ROOT / "src/xplane_fdau").rglob("*.py")))
+        self.assertTrue(runtime_paths)
         runtime_text = "\n".join(self._read_required_text(path) for path in runtime_paths)
 
         self.assertIn("xplane-fdau", agent_guidance)

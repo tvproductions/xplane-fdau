@@ -1,5 +1,7 @@
 from pathlib import Path
 import importlib.util
+import subprocess
+import sys
 import tomllib
 import unittest
 
@@ -16,6 +18,22 @@ class ProjectMetadataTests(unittest.TestCase):
         )
         self.assertEqual([], project["dependencies"])
         self.assertEqual({"xplane-fdau": "xplane_fdau.cli:main"}, project["scripts"])
+
+    def test_runtime_package_uses_only_installed_src_layout(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        project = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+        self.assertEqual("src", project["tool"]["uv"]["build-backend"]["module-root"])
+        self.assertTrue((root / "src/xplane_fdau/__init__.py").is_file())
+        self.assertFalse((root / "xplane_fdau").exists())
+        result = subprocess.run(
+            [sys.executable, "-c", "from pathlib import Path; import xplane_fdau; print(Path(xplane_fdau.__file__).resolve())"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            errors="replace",
+            check=True,
+        )
+        self.assertTrue(Path(result.stdout.strip()).is_relative_to((root / "src/xplane_fdau").resolve()))
 
     def test_runtime_root_exposes_only_matching_version(self) -> None:
         import xplane_fdau

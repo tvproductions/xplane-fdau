@@ -57,7 +57,7 @@ build-backend = "uv_build"
 required-version = "==0.12.17"
 
 [tool.uv.build-backend]
-module-root = ""
+module-root = "src"
 source-exclude = [
     ".codex/**",
     ".git/**",

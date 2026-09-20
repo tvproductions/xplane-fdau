@@ -1,5 +1,82 @@
 # Project Handoff
 
+## Session checkpoint — 2026-09-19
+
+### Current state and last completed action
+
+T2.1 is verified, merged into `main`, and its temporary worktree and branch
+are removed. The B1.1 dependency correction is on `main`: B1.1 waits on T2.2
+only; T3.1 is independent. No local child is selected. The latest live backlog
+`audit` had no findings, and `next` recommended `write_plan T2.2`.
+
+The T2.2 plan is saved at
+`docs/superpowers/plans/2026-09-19-t2-2-dependency-toolchain-refresh.md`.
+It is marked **draft** and its own plan audit says **FAIL for execution
+readiness**: several test and code steps still lack executable examples. It
+has no implementation authority and is linked as a draft plan in
+`BACKLOG.md`. Its temporary planning worktree and branch had no unique commits
+and were removed after the draft was copied byte-for-byte into `main`.
+
+### Important context and decisions
+
+The release prohibition and standard-library-only runtime boundary below
+remain in force. Use `unittest`; never use pytest. Jeff wants Superpowers
+execution behavior shaped in the T2.2 plan, without modifying Superpowers.
+No Superpowers files were changed. The plan now states its commit, verification,
+and hygiene cadence; one full hygiene pass is scoped to T2.2's actual hygiene
+gate. Do not add hygiene passes to ordinary governance edits.
+
+For ordinary changes, run the complete project gate on the active supported
+Python version; use CI for broad compatibility. Use a local version matrix for
+version-sensitive changes or explicit release-readiness work. T2.1's three-
+version matrix was a one-time closeout check, not the routine gate.
+
+Jeff's standing choice for completed, reviewed feature branches is local
+integration into `main`, merged-result verification, and removal of the
+temporary worktree and branch. Do not ask again for that choice. An ordinary
+Git sync was explicitly requested for this stopping point. It does not
+authorize a tag, package publication, or release.
+
+### Immediate next actions
+
+1. Resume using live Git and backlog state after reading the authorities in
+   `AGENTS.md`. Run the backlog audit and next-action command there; stop on a
+   finding. Treat this checkpoint as a snapshot.
+2. Keep q4xpcc Phase 24A specification and plan reconciliation under I1.0
+   high priority, using the reviewed D1.3 handoff. Runtime and fixture adoption
+   remain gated by C4.4; live XPLM acquisition remains gated by A1.9.
+3. For local T2.2, add executable fixtures and code examples to the remaining
+   prose-only test and implementation steps. Re-run the plan audit and review
+   the plan with Jeff before approval, lifecycle registration, or execution.
+   Preserve its draft status until that review succeeds.
+
+### Pending work and limits
+
+B1.1 and canonical contract implementation remain behind T2.2 in the current
+roadmap. T3.1 is an independent specified peer. I1.0 q4xpcc planning can
+proceed now. T2.2 has no implementation or completion evidence. No tag,
+package publication, or release occurred.
+
+### Verification and evidence
+
+T2.1 passed its five acceptance gates, independent review, the offline hygiene
+gate, and a one-time Python 3.12–3.14 source/installed-wheel matrix (467
+`unittest` tests per version). The B1.1 dependency amendment passed the
+aggregate quality gate and 61 focused governance tests. The aggregate gate
+runs hygiene integration tests repeatedly inside its full `unittest` suite;
+that accounts for much of its runtime and does not call for a separate hygiene
+pass on this docs-only checkpoint.
+
+- T2.1 plan: `docs/superpowers/plans/2026-09-19-t2-1-repository-hygiene-artifact-verification.md`
+- T2.1 completion, review, and gates: `.superpowers/sdd/2026-09-19-t2-1-repository-hygiene-artifact-verification/`
+- T2.2 draft: `docs/superpowers/plans/2026-09-19-t2-2-dependency-toolchain-refresh.md`
+- q4xpcc brief: `docs/architecture/q4xpcc_phase_24a_contract_handoff.md`
+
+### Suggested skills on resumption
+
+Use `gzs-session-handoff` for resumption, `backlog-status` for live delivery
+state, and `gzs-plan-audit` for the remaining T2.2 plan review.
+
 ## Session entry
 
 `ROADMAP.md` is the capability-order authority and `BACKLOG.md` is the only
@@ -41,8 +118,9 @@ and `gzs-session-handoff` are explicit-only workflows.
 T1.6 and T2.1 are verified at 5/5. T2.1 completed the offline project
 hygiene gate and fresh wheel/sdist verification; no child is selected.
 The live BACKLOG audit/next result recommends `write_plan` for T2.2.
-T3.1 remains a separate specified peer; B1.1 depends on both T2.2 and
-T3.1 before canonical foundation work continues through C4.4.
+T3.1 remains a separate specified peer; B1.1 depends only on T2.2
+before canonical foundation work continues through C4.4. I1.0 q4xpcc
+planning reconciliation is eligible and is the cross-repository priority.
 
 ## q4xpcc readiness
 

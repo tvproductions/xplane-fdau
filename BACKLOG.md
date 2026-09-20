@@ -1,7 +1,7 @@
 # xplane-fdau Backlog
 
 - **Status:** Active delivery ledger and Superpowers entry point
-- **Updated:** 2026-09-19
+- **Updated:** 2026-09-20
 
 Read `ROADMAP.md` for architecture order and dependencies. Then use this file to
 select one primary child slice whose prerequisites are verified. Each child
@@ -26,7 +26,7 @@ slice receives one focused plan and one independently reviewable outcome.
   `uv run python .codex/skills/backlog-status/scripts/backlog_status.py next`
   for the deterministic next action.
 - D1 is design-handoff readiness, not implementation or release readiness.
-- `B1.1` source-layout migration: `specified` with a draft plan; resumes after
+- `B1.1` source-layout migration: `planned` with an approved plan; executes after
   `T2.2` is verified. `T3.1` remains an independent specified tooling child.
 - Canonical contract design: approved with accepted independent review; `C1.1`
   through `C4.4` are specified with zero delivery gates satisfied.

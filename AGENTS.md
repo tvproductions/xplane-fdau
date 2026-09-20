@@ -64,7 +64,7 @@
 
 - The `gz-skills@gz-skills` Codex plugin is the sole portable workflow authority.
   The trusted project `.codex/config.toml` pins marketplace `gz-skills` to
-  `https://github.com/tvproductions/gz-skills.git` at reviewed tag `v0.3.2`
+  `https://github.com/tvproductions/gz-skills.git` at reviewed tag `v0.4.0`
   and enables the plugin. Install through `codex plugin add gz-skills@gz-skills`
   if absent; verify ID, version, enabled state, and source with
   `codex plugin list --json` and `codex plugin marketplace list --json`.

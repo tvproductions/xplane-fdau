@@ -2,13 +2,13 @@
 
 ## Resume point — 2026-09-20
 
-**Current objective:** The local quality-control cadence correction follows
-the 2026-09-20 design and plan. T2.2 remains verified, and the next roadmap
-action is `write_plan B1.1` after this tooling correction is closed.
+**Current objective:** `B1.1` is planned under its approved source-layout
+migration plan. The project reviewed and adopted `gz-skills` v0.4.0 before
+starting implementation; `T2.2` remains verified.
 
 **Exact next action on return:** Read AGENTS.md and the linked authorities,
-then run the backlog audit and next commands. Follow the stable-closeout
-quality workflow described below before routine B1.1 implementation.
+then run the backlog audit and next commands. Execute the approved `B1.1`
+plan in an isolated worktree with the stable-closeout cadence below.
 
 ## Observed state and evidence
 
@@ -28,9 +28,11 @@ quality workflow described below before routine B1.1 implementation.
   coverage against a 40% minimum. Review accepted the implementation with no
   remaining Critical or Important findings. A minor matrix subprocess-timeout
   concern is recorded in `review.md`.
-- The installed and enabled `gz-skills@gz-skills` plugin was verified in this
-  session at version 0.3.2 from the pinned official Git marketplace. T2.2's
-  Python/uv adapter does not mutate the plugin cache.
+- The installed and enabled `gz-skills@gz-skills` plugin was verified at
+  version 0.4.0 from the pinned official Git marketplace. The reviewed release
+  and adoption evidence is in
+  `.superpowers/sdd/2026-09-20-gz-skills-v0-4-0/review.md`. T2.2's Python/uv
+  adapter does not mutate the plugin cache.
 
 ## Quality-control follow-up
 

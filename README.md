@@ -30,6 +30,8 @@ Development toward the canonical FDAU architecture is tracked in the
 IDs, dependencies, specification and plan links, status, and measurable
 acceptance gates. Version `0.1.0` remains unreleased until the canonical
 vertical-slice release gates are independently verified.
+The [backlog method guide](docs/project/backlog-method.md) explains the
+designations, evidence rules, and how to adapt the approach elsewhere.
 
 See the [documentation site](https://tvproductions.github.io/xplane-fdau/) for
 the [native FDR guide](docs/usage/native-fdr.md) and

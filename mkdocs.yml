@@ -16,6 +16,9 @@ plugins:
 
 nav:
   - Overview: index.md
+  - Project:
+      - Backlog method: project/backlog-method.md
+      - Backlog model: project/backlog-governance-model.md
   - Architecture:
       - Core scope: architecture/xplane_fdau_core_scope_amendment.md
   - Usage:

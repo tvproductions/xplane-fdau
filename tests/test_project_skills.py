@@ -85,7 +85,7 @@ class ProjectSkillTests(unittest.TestCase):
             {
                 "source_type": "git",
                 "source": "https://github.com/tvproductions/gz-skills.git",
-                "ref": "v0.2.0",
+                "ref": "v0.3.2",
             },
             marketplace,
         )

@@ -2,7 +2,7 @@
 
 ## Resume point — 2026-09-20
 
-**Current objective:** `B1.1` is planned under its approved source-layout
+**Current objective:** `B1.1` is in progress under its approved source-layout
 migration plan. The project reviewed and adopted `gz-skills` v0.4.0 before
 starting implementation; `T2.2` remains verified.
 

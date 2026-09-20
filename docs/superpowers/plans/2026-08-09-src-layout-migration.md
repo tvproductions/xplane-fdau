@@ -1,7 +1,7 @@
 # xplane-fdau Source-Layout Migration Implementation Plan
 
 - **Governance:** active
-- **Status:** approved
+- **Status:** in_progress
 - **Date:** 2026-08-09
 - **Roadmap child:** `B1.1`
 - **Source specification:** `docs/superpowers/specs/2026-08-09-src-layout-migration-design.md`

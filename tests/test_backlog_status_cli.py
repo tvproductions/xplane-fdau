@@ -297,7 +297,7 @@ class BacklogStatusCliTests(unittest.TestCase):
         payload = json.loads(machine.stdout)
         self.assertTrue(payload["valid"])
         self.assertEqual([], payload["findings"])
-        self.assertEqual("T2.2", payload["backlog"]["active_child"])
+        self.assertIsNone(payload["backlog"]["active_child"])
         self.assertIsInstance(payload["recommendation"]["action"], str)
         self.assertTrue(payload["recommendation"]["command"])
         self.assertEqual(64, len(payload["roadmap"]["local_children"]))

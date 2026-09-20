@@ -116,6 +116,7 @@ class ProjectSkillTests(unittest.TestCase):
         self.assertIn("gz-skills@gz-skills", instructions)
         self.assertIn(".codex/config.toml", instructions)
         self.assertIn("full `gzs-update-dependencies`", instructions)
+        self.assertIn("tools/dependency_refresh.py", instructions)
         self.assertNotIn("snapshot under `.agents/skills/gzs-*`", instructions)
 
         design = Path("docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md").read_text(encoding="utf-8")

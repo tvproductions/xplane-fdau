@@ -85,6 +85,14 @@
   only, preserve the standard-library-only runtime, and follow the canonical
   Git-sync safeguards for any explicitly authorized ordinary push.
 
+- For an explicit complete dependency refresh, use canonical
+  `gzs-update-dependencies` and the project adapter after reviewing its status
+  report. On Windows run
+  `.venv/Scripts/python.exe tools/dependency_refresh.py status --json`;
+  use `.venv/bin/python` on POSIX. Apply with
+  `tools/dependency_refresh.py apply --plan-sha256 <digest>` and one
+  `--review-scope <path>` per reviewed dirty path. Keep routine hygiene offline.
+
 ## Superpowers Workflow
 
 - Use `.agents/superpowers` as the governing external Superpowers checkout.

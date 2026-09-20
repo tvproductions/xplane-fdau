@@ -45,6 +45,12 @@ uv run --frozen python .codex/skills/hygiene/scripts/hygiene.py --dependencies
 
 For a complete project-managed dependency refresh, follow
 `gzs-update-dependencies`; the opt-in command above is only an inquiry.
+
+The explicit network-aware project refresh adapter is
+`tools/dependency_refresh.py`: inspect `status --json`, then run
+`apply --plan-sha256 <digest>` only for the reviewed scope under canonical
+`gzs-update-dependencies`. Routine hygiene stays offline.
+
 Git sync and release remain governed by their separate authorization and
 release gates. Report commands, status, failures, preserved artifacts, skipped
 checks, dependency drift, and changed-file scope.

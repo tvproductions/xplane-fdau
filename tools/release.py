@@ -40,13 +40,22 @@ class ReleaseArtifacts:
     sdist_sha256: str
 
 
+def _project_python() -> str:
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+    expected_python = project.get("requires-python")
+    if not isinstance(expected_python, str) or expected_python != ">=3.12,<3.15":
+        raise ReleaseError("unexpected Requires-Python policy")
+    return expected_python
+
+
 def _project_version() -> str:
     project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
     version = project["version"]
     dependencies = project["dependencies"]
     if not isinstance(version, str) or not isinstance(dependencies, list):
         raise ReleaseError("pyproject project version and dependencies must be declared")
-    if version != RELEASE_VERSION or dependencies or project.get("requires-python") != ">=3.12":
+    _project_python()
+    if version != RELEASE_VERSION or dependencies:
         raise ReleaseError("project runtime dependencies and Requires-Python do not match the release contract")
     return version
 
@@ -162,8 +171,12 @@ def _check_metadata(payload: bytes, version: str, *, label: str) -> None:
     message = BytesParser().parsebytes(payload)
     if message.defects:
         raise ReleaseError(f"{label} metadata is malformed: {message.defects[0]}")
-    for field, expected in (("Name", PROJECT), ("Version", version), ("Requires-Python", ">=3.12")):
-        if message.get_all(field, []) != [expected]:
+    expected_python = _project_python()
+    for field, expected in (("Name", PROJECT), ("Version", version), ("Requires-Python", expected_python)):
+        actual = message.get_all(field, [])
+        if field == "Requires-Python" and len(actual) == 1:
+            actual = [",".join(part.strip() for part in actual[0].split(","))]
+        if actual != [expected]:
             raise ReleaseError(f"{label} metadata must contain exactly {field}: {expected}")
     if message.get_all("Requires-Dist", []):
         raise ReleaseError(f"{label} metadata declares a Requires-Dist runtime dependency")

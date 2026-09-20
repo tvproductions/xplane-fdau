@@ -9,7 +9,11 @@ class ProjectMetadataTests(unittest.TestCase):
         project = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]
         self.assertEqual("xplane-fdau", project["name"])
         self.assertEqual("0.1.0", project["version"])
-        self.assertEqual(">=3.12", project["requires-python"])
+        self.assertEqual(">=3.12,<3.15", project["requires-python"])
+        self.assertEqual(
+            {"Programming Language :: Python :: 3.12", "Programming Language :: Python :: 3.13", "Programming Language :: Python :: 3.14"},
+            {item for item in project["classifiers"] if item.startswith("Programming Language :: Python :: 3.")},
+        )
         self.assertEqual([], project["dependencies"])
         self.assertEqual({"xplane-fdau": "xplane_fdau.cli:main"}, project["scripts"])
 

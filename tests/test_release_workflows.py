@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import tomllib
 import unittest
 
 
@@ -36,6 +37,18 @@ class ReleaseWorkflowTests(unittest.TestCase):
         self.assertNotIn("tags:", workflow)
         self.assertNotIn("publish-pypi:", workflow)
         self.assertNotIn("check-tag", workflow)
+
+    def test_every_setup_uv_step_matches_the_project_pin(self) -> None:
+        project = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+        required_uv = project.get("tool", {}).get("uv", {}).get("required-version")
+        self.assertIsNotNone(required_uv, "project must pin the reviewed uv version")
+        self.assertRegex(required_uv, r"^==\d+\.\d+\.\d+$")
+        for path in (Path(".github/workflows/ci.yml"), Path(".github/workflows/release-readiness.yml")):
+            with self.subTest(path=path):
+                workflow = path.read_text(encoding="utf-8")
+                setup_count = workflow.count("astral-sh/setup-uv@")
+                self.assertGreater(setup_count, 0)
+                self.assertEqual(setup_count, workflow.count(f'version: "{required_uv[2:]}"'))
 
     def test_release_readiness_runs_one_aggregate_source_suite(self) -> None:
         workflow = Path(".github/workflows/release-readiness.yml").read_text(encoding="utf-8")

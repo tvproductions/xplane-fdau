@@ -54,6 +54,21 @@
   compatibility coverage; run a local version matrix only for
   version-sensitive changes or an explicit release-readiness requirement.
 
+### Exact local fast-forward verification
+
+After a reviewed branch passes its complete gate and the user selects local
+integration, record its HEAD and passing gate. Check both worktrees are clean,
+use `git merge --ff-only` on main without pulling, and confirm main HEAD
+equals the recorded branch HEAD. Run the focused offline main checks in the
+hygiene skill: frozen sync, lock check, backlog audit, live-state tests, and a
+fresh external artifact pair with strict metadata and inventory validation.
+For package or installed-import changes, also run external installed-wheel
+smoke. This user-approved exact fast-forward path replaces a second complete
+gate on an identical merged tree. If HEAD differs, the branch gate is stale,
+the tree changed beyond the focused checks, or any check fails, investigate
+and run the complete gate on main. Keep the worktree and branch until main
+verification passes. This does not authorize remote sync, a tag, or release.
+
 ## Runtime Boundary
 
 - `xplane-fdau` must remain pure Python and standard-library-only at runtime.

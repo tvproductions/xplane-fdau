@@ -45,9 +45,17 @@ uv run python tools/quality.py dead-code
 uv run python tools/quality.py complexity
 ```
 
-`check` runs Ruff, ty, the full `unittest` suite once under coverage, Bandit,
-detect-secrets, Interrogate, Vulture, and Xenon. `test` remains a focused
-standalone command. Metrics and history inspection stay explicit and
+`check` runs Ruff, ty, Bandit, detect-secrets, Interrogate, Vulture,
+Xenon, and the current-backlog-status and repository-root import preflight
+before the full `unittest` suite once under coverage. `test` remains a focused
+standalone command. These early checks stop the complete gate before coverage
+when they fail.
+
+After an exact fast-forward of a reviewed branch with a passing complete gate,
+use the focused main checks in the hygiene adapter after confirming identical
+HEADs. A differing tree, stale branch gate, or failed focused check requires
+the complete gate on main. This narrow local path does not change CI, remote
+sync, or release authority. Metrics and history inspection stay explicit and
 nonblocking:
 
 ```powershell

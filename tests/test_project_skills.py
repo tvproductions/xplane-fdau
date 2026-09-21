@@ -266,6 +266,27 @@ class ProjectSkillTests(unittest.TestCase):
         self.assertIn("package layout", hygiene_skill)
         self.assertIn("version-sensitive", agents)
 
+    def test_exact_fast_forward_uses_focused_main_checks(self) -> None:
+        agents = Path("AGENTS.md").read_text(encoding="utf-8")
+        quality = Path(".codex/skills/code-quality/SKILL.md").read_text(encoding="utf-8")
+        hygiene = Path(".codex/skills/hygiene/SKILL.md").read_text(encoding="utf-8")
+        for document in (agents, quality, hygiene):
+            with self.subTest(document=document[:32]):
+                self.assertIn("exact fast-forward", document)
+                self.assertIn("focused", document)
+                self.assertIn("complete gate", document)
+        self.assertIn("uv sync --offline --frozen", hygiene)
+        self.assertIn("uv lock --check --offline", hygiene)
+        self.assertIn("backlog_status.py audit", hygiene)
+        self.assertIn("test_current_repository_status_reports_human_and_json", hygiene)
+        self.assertIn("test_runtime_package_uses_only_installed_src_layout", hygiene)
+        self.assertIn("uv build --offline --no-sources", hygiene)
+        self.assertIn("twine check --strict", hygiene)
+        self.assertIn("tools/release.py check-dist", hygiene)
+        self.assertIn("installed_smoke.py", hygiene)
+        self.assertIn("git merge --ff-only", hygiene)
+        self.assertIn("main HEAD", hygiene)
+
     def test_pre_commit_runs_only_fast_staged_checks(self) -> None:
         config = load_config(".pre-commit-config.yaml")
         hooks = [hook for repo in config["repos"] for hook in repo["hooks"]]

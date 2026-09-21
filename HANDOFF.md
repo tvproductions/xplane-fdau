@@ -47,6 +47,17 @@ canonical-contract design.
   `.superpowers/sdd/2026-09-20-gz-skills-v0-4-0/review.md`. T2.2's Python/uv
   adapter does not mutate the plugin cache.
 
+## Fast local closeout follow-up
+
+Jeff approved a limited correction after B1.1's repeated multi-minute gates:
+move existing static, security, docs, hook, and live-state checks ahead of
+coverage; keep one complete branch gate; and use documented focused checks
+after an exact local fast-forward. The implementation uses existing commands
+and adds no merge verifier. The approved design and plan are under
+`docs/superpowers/specs/2026-09-20-fast-local-closeout-design.md` and
+`docs/superpowers/plans/2026-09-20-fast-local-closeout.md`. C1.1 remains
+the next canonical child planning action after this maintenance correction.
+
 ## Quality-control follow-up
 
 Jeff flagged the repeated multi-minute full gates during B1.1 as too costly

@@ -56,8 +56,11 @@ after an exact local fast-forward. The implementation uses existing commands
 and adds no merge verifier. Independent review found no code defect; its plan
 checklist finding was corrected. The single full offline hygiene gate passed
 on branch commit `af2bfc2`, with 94% coverage and an exact wheel/sdist pair.
-The branch remains isolated pending the user's local-integration choice.
-The approved design and plan are under
+Jeff selected local integration. Main fast-forwarded to `ed10665`; frozen
+sync, lock, strict backlog audit, both live-state tests, and one fresh external
+wheel/sdist pair passed on that exact commit. The temporary worktree and branch
+were removed. No Git push or release action occurred. The approved design and
+plan are under
 `docs/superpowers/specs/2026-09-20-fast-local-closeout-design.md` and
 `docs/superpowers/plans/2026-09-20-fast-local-closeout.md`. C1.1 remains
 the next canonical child planning action after this maintenance correction.
@@ -70,9 +73,9 @@ on the feature branch and 292.904 seconds after local integration; failed
 closeout runs repeated it while exposing a live-state assertion, a generated
 secrets baseline update, and stale bytecode in the pre-existing main checkout.
 The current cadence still calls for focused checks during edits and one full
-gate at stable closeout. Before the next implementation, review the gate order
-and state-sensitive preflight checks so failures surface before the expensive
-coverage run, and measure the slow unittest cases before changing suite policy.
+gate at stable closeout. The gate order and state-sensitive preflight were revised in the fast local
+closeout change above. Measuring the slow unittest cases remains a separate
+follow-up before any suite-policy change.
 
 Jeff narrowed the fix to the local development cadence; GitHub Actions
 remains unchanged. During edits, run focused `unittest`, Ruff, and ty checks.

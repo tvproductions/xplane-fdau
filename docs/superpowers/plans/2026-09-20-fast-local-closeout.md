@@ -28,4 +28,4 @@
 
 **Branch evidence:** Independent review found no code defect and requested this checklist correction. Full offline hygiene on `af2bfc2` passed on 2026-09-20, including the complete coverage suite (94%), strict docs, all-files hooks, and a fresh exact wheel/sdist pair. The run took about 312 seconds based on tool-session timing.
 
-**Post-merge action pending user selection:** On an exact local fast-forward, confirm main HEAD equality, run the documented focused main commands, then remove the temporary worktree and branch only after they pass. A differing tree or failed focused check requires the complete gate. Do not push, tag, or publish.
+**Post-merge action completed:** Jeff selected local integration. `main` fast-forwarded exactly to branch HEAD `ed10665`. Offline frozen sync, lock consistency, strict backlog audit, both live-state tests, and a fresh external wheel/sdist pair passed on that commit. The temporary artifacts, worktree, and branch were removed after verification. No push, tag, or publication occurred.

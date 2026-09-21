@@ -297,7 +297,10 @@ class BacklogStatusCliTests(unittest.TestCase):
         payload = json.loads(machine.stdout)
         self.assertTrue(payload["valid"])
         self.assertEqual([], payload["findings"])
-        self.assertIsNone(payload["backlog"]["active_child"])
+        selected = payload["backlog"]["active_child"]
+        child_ids = {child["id"] for child in payload["backlog"]["children"]}
+        self.assertTrue(selected is None or selected in child_ids)
+        self.assertIn(f"Active child: {selected if selected is not None else '—'}", human.stdout)
         self.assertIsInstance(payload["recommendation"]["action"], str)
         self.assertTrue(payload["recommendation"]["command"])
         self.assertEqual(64, len(payload["roadmap"]["local_children"]))

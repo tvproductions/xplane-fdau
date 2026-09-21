@@ -39,6 +39,18 @@ COMMANDS: dict[str, tuple[Step, ...]] = {
     "format": (Step("ruff format", uv("ruff", "format", *SOURCE_PATHS)),),
     "typecheck": (Step("ty check", uv("ty", "check")),),
     "test": (Step("unittest", uv("python", "-m", "unittest", "discover", "-v")),),
+    "preflight": (
+        Step(
+            "live-state preflight",
+            uv(
+                "python",
+                "-m",
+                "unittest",
+                "tests.test_backlog_status_cli.BacklogStatusCliTests.test_current_repository_status_reports_human_and_json",
+                "tests.test_project_metadata.ProjectMetadataTests.test_runtime_package_uses_only_installed_src_layout",
+            ),
+        ),
+    ),
     "coverage": (
         Step("coverage run", uv("coverage", "run", "-m", "unittest", "discover", "-s", "tests", "-t", ".")),
         Step("coverage report", uv("coverage", "report", f"--fail-under={COVERAGE_MINIMUM}")),
@@ -80,11 +92,12 @@ CHECK_STEPS = (
     *COMMANDS["lint"],
     *COMMANDS["format-check"],
     *COMMANDS["typecheck"],
-    *COMMANDS["coverage"],
     *COMMANDS["security"],
     *COMMANDS["docs"],
     *COMMANDS["dead-code"],
     *COMMANDS["complexity"],
+    *COMMANDS["preflight"],
+    *COMMANDS["coverage"],
 )
 
 

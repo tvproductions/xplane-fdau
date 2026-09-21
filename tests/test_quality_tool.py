@@ -17,14 +17,15 @@ class QualityToolTests(unittest.TestCase):
                 "ruff check",
                 "ruff format --check",
                 "ty check",
-                "coverage run",
-                "coverage report",
                 "bandit",
                 "detect-secrets baseline",
                 "detect-secrets report",
                 "interrogate",
                 "vulture",
                 "xenon complexity",
+                "live-state preflight",
+                "coverage run",
+                "coverage report",
             ),
             names,
         )
@@ -38,9 +39,20 @@ class QualityToolTests(unittest.TestCase):
             return subprocess.CompletedProcess(command, 0, stdout="xplane_fdau/__init__.py\n")
 
         self.assertEqual(0, quality.run_steps(quality.CHECK_STEPS, runner))
-        suite_commands = [command for command in executed if "unittest" in command]
-        self.assertEqual(1, len(suite_commands), suite_commands)
-        self.assertEqual(("uv", "run", "coverage", "run"), suite_commands[0][:4])
+        preflight = (
+            "uv",
+            "run",
+            "python",
+            "-m",
+            "unittest",
+            "tests.test_backlog_status_cli.BacklogStatusCliTests.test_current_repository_status_reports_human_and_json",
+            "tests.test_project_metadata.ProjectMetadataTests.test_runtime_package_uses_only_installed_src_layout",
+        )
+        self.assertIn(preflight, executed)
+        coverage_suites = [command for command in executed if command[:4] == ("uv", "run", "coverage", "run")]
+        self.assertEqual(1, len(coverage_suites), coverage_suites)
+        self.assertIn("unittest", coverage_suites[0])
+        self.assertLess(executed.index(preflight), executed.index(coverage_suites[0]))
         self.assertIn(("uv", "run", "coverage", "report", "--fail-under=40"), executed)
         self.assertIn(("uv", "run", "xenon"), tuple(command[:3] for command in executed))
 

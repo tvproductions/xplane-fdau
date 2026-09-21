@@ -2,16 +2,26 @@
 
 ## Resume point — 2026-09-20
 
-**Current objective:** `B1.1` is in progress under its approved source-layout
-migration plan. The project reviewed and adopted `gz-skills` v0.4.0 before
-starting implementation; `T2.2` remains verified.
+**Current objective:** `B1.1` source-layout migration is verified with 5/5
+gates and accepted independent review on the temporary `b1-1-src-layout`
+branch. The project reviewed and adopted `gz-skills` v0.4.0 before implementation.
+`T2.2` remains verified. `C1.1` is the next canonical local child.
 
 **Exact next action on return:** Read AGENTS.md and the linked authorities,
-then run the backlog audit and next commands. Execute the approved `B1.1`
-plan in an isolated worktree with the stable-closeout cadence below.
+then run the backlog audit and next commands. The reported action is to write
+an approved single-child `C1.1` implementation plan from its approved
+canonical-contract design. Integrate the B1.1 branch only after Jeff selects
+local merge or another finishing option.
 
 ## Observed state and evidence
 
+- B1.1's 17 runtime files moved byte-for-byte to `src/xplane_fdau`; the
+  flat package root is gone. The completed plan and five gate receipts are
+  under `docs/superpowers/plans/2026-08-09-src-layout-migration.md` and
+  `.superpowers/sdd/2026-08-09-src-layout-migration/`. Full offline hygiene
+  passed 521 `unittest` tests, 43.9% coverage, strict docs, and exact wheel/sdist
+  checks. External Python 3.12.13 installed-wheel smoke passed. No release or
+  Git push occurred. The current worktree is temporary pending integration.
 - T2.2 was integrated into `main` at commit `431c195`. Its verified backlog
   state and evidence remain unchanged by the local quality-cadence correction.
 - The approved plan is

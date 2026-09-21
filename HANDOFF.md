@@ -3,15 +3,15 @@
 ## Resume point — 2026-09-20
 
 **Current objective:** `B1.1` source-layout migration is verified with 5/5
-gates and accepted independent review on the temporary `b1-1-src-layout`
-branch. The project reviewed and adopted `gz-skills` v0.4.0 before implementation.
-`T2.2` remains verified. `C1.1` is the next canonical local child.
+gates and accepted independent review, and was locally integrated into `main`
+at `1f66a0f`. The temporary worktree and branch were removed. The project
+reviewed and adopted `gz-skills` v0.4.0 before implementation. `T2.2` remains
+verified. `C1.1` is the next canonical local child.
 
 **Exact next action on return:** Read AGENTS.md and the linked authorities,
 then run the backlog audit and next commands. The reported action is to write
 an approved single-child `C1.1` implementation plan from its approved
-canonical-contract design. Integrate the B1.1 branch only after Jeff selects
-local merge or another finishing option.
+canonical-contract design.
 
 ## Observed state and evidence
 
@@ -20,8 +20,11 @@ local merge or another finishing option.
   under `docs/superpowers/plans/2026-08-09-src-layout-migration.md` and
   `.superpowers/sdd/2026-08-09-src-layout-migration/`. Full offline hygiene
   passed 521 `unittest` tests, 43.9% coverage, strict docs, and exact wheel/sdist
-  checks. External Python 3.12.13 installed-wheel smoke passed. No release or
-  Git push occurred. The current worktree is temporary pending integration.
+  checks. External Python 3.12.13 installed-wheel smoke passed. The merged
+  `main` checkout passed full offline hygiene: 521 tests in 292.904 seconds,
+  43.9% coverage, strict docs, pre-commit, and exact artifacts. The old flat
+  checkout held only ignored Python bytecode after merge; its verified cache
+  tree was removed before the final green gate. No release or Git push occurred.
 - T2.2 was integrated into `main` at commit `431c195`. Its verified backlog
   state and evidence remain unchanged by the local quality-cadence correction.
 - The approved plan is
@@ -45,6 +48,16 @@ local merge or another finishing option.
   adapter does not mutate the plugin cache.
 
 ## Quality-control follow-up
+
+Jeff flagged the repeated multi-minute full gates during B1.1 as too costly
+for ordinary implementation work. The required full suite took 314.236 seconds
+on the feature branch and 292.904 seconds after local integration; failed
+closeout runs repeated it while exposing a live-state assertion, a generated
+secrets baseline update, and stale bytecode in the pre-existing main checkout.
+The current cadence still calls for focused checks during edits and one full
+gate at stable closeout. Before the next implementation, review the gate order
+and state-sensitive preflight checks so failures surface before the expensive
+coverage run, and measure the slow unittest cases before changing suite policy.
 
 Jeff narrowed the fix to the local development cadence; GitHub Actions
 remains unchanged. During edits, run focused `unittest`, Ruff, and ty checks.

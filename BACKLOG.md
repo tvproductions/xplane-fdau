@@ -52,7 +52,7 @@ The child slices below refine this sequence without weakening or reordering it.
 
 | Child | Outcome | Status | Depends on | Spec | Plan | Gates | Review | Resume | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `B1.1` | Source-layout migration and installed-import isolation | `in_progress` | `T2.2` | [design](docs/superpowers/specs/2026-08-09-src-layout-migration-design.md) | [plan](docs/superpowers/plans/2026-08-09-src-layout-migration.md) | 0/5 | — | — | — |
+| `B1.1` | Source-layout migration and installed-import isolation | `reviewed` | `T2.2` | [design](docs/superpowers/specs/2026-08-09-src-layout-migration-design.md) | [plan](docs/superpowers/plans/2026-08-09-src-layout-migration.md) | 5/5 | [review](.superpowers/sdd/2026-08-09-src-layout-migration/review.md) | — | — |
 | `C1.1` | Canonical JSON and binary64/integer encoding | `specified` | `B1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C1.2` | Identity, hashing, references, authority, and provenance | `specified` | `C1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C1.3` | Typed values and content-addressed payload references | `specified` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
@@ -121,16 +121,16 @@ The child slices below refine this sequence without weakening or reordering it.
 
 ### B1.1 — Source-layout migration and installed-import isolation
 
-- [ ] The complete runtime package exists only under `src/xplane_fdau` and
-      `uv_build` uses `module-root = "src"`.
-- [ ] Quality, coverage, import-boundary, documentation, and release tooling
-      address the new physical source root without weakening existing checks.
-- [ ] Repository-root and installed-wheel tests prove imports resolve through
-      the installed project rather than a top-level checkout package.
-- [ ] Wheel members and public imports remain unchanged while source-archive
-      members use the required `src/xplane_fdau` path.
-- [ ] The full quality, strict documentation, distribution, and
-      installed-artifact gates pass with no release, tag, or package publication.
+- [x] The complete runtime package exists only under `src/xplane_fdau` and
+      `uv_build` uses `module-root = "src"`. — Evidence: [verification](.superpowers/sdd/2026-08-09-src-layout-migration/gate-1.md)
+- [x] Quality, coverage, import-boundary, documentation, and release tooling
+      address the new physical source root without weakening existing checks. — Evidence: [verification](.superpowers/sdd/2026-08-09-src-layout-migration/gate-2.md)
+- [x] Repository-root and installed-wheel tests prove imports resolve through
+      the installed project rather than a top-level checkout package. — Evidence: [verification](.superpowers/sdd/2026-08-09-src-layout-migration/gate-3.md)
+- [x] Wheel members and public imports remain unchanged while source-archive
+      members use the required `src/xplane_fdau` path. — Evidence: [verification](.superpowers/sdd/2026-08-09-src-layout-migration/gate-4.md)
+- [x] The full quality, strict documentation, distribution, and
+      installed-artifact gates pass with no release, tag, or package publication. — Evidence: [verification](.superpowers/sdd/2026-08-09-src-layout-migration/gate-5.md)
 
 ### C1.1 — Canonical JSON and binary64/integer encoding
 

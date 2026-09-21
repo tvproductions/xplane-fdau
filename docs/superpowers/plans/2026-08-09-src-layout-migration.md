@@ -1,12 +1,12 @@
 # xplane-fdau Source-Layout Migration Implementation Plan
 
 - **Governance:** active
-- **Status:** in_progress
+- **Status:** completed
 - **Date:** 2026-08-09
 - **Roadmap child:** `B1.1`
 - **Source specification:** `docs/superpowers/specs/2026-08-09-src-layout-migration-design.md`
 - **Approval:** 2026-09-20 — Jeff / tvproductions
-- **Completion evidence:** —
+- **Completion evidence:** `.superpowers/sdd/2026-08-09-src-layout-migration/completion.md`
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -77,7 +77,7 @@ Retain this exact commit ID in the B1.1 evidence so it can be used after later t
 - Consumes: the current `xplane_fdau` import and complete tracked package tree.
 - Produces: `src/xplane_fdau` as the only physical package root, `module-root = "src"`, unchanged `xplane_fdau` imports.
 
-- [ ] **Step 1: Write the failing root and interpreter test.** Add `subprocess` and `sys` imports to `tests/test_project_metadata.py` and add this method to `ProjectMetadataTests`:
+- [x] **Step 1: Write the failing root and interpreter test.** Add `subprocess` and `sys` imports to `tests/test_project_metadata.py` and add this method to `ProjectMetadataTests`:
 
 ```python
 def test_runtime_package_uses_only_installed_src_layout(self) -> None:
@@ -93,7 +93,7 @@ def test_runtime_package_uses_only_installed_src_layout(self) -> None:
     self.assertTrue(Path(result.stdout.strip()).is_relative_to((root / "src/xplane_fdau").resolve()))
 ```
 
-- [ ] **Step 2: Make source enumeration tests fail for an empty scan.** In `tests/test_runtime_import_boundary.py`, use `ROOT / "src/xplane_fdau"` and assert that the collected `*.py` path tuple is nonempty before checking violations. In `tests/test_public_api.py`, use `project_root / "src" / "xplane_fdau"` for `formats_root` and `sink_path`; in `_resolve_import`, compute module parts relative to `project_root / "src"` so the resolved name still begins with `xplane_fdau`. In `tests/test_documentation.py`, retarget the packaged schema and runtime `*.py` scan to `ROOT / "src/xplane_fdau"` and assert the scan is nonempty.
+- [x] **Step 2: Make source enumeration tests fail for an empty scan.** In `tests/test_runtime_import_boundary.py`, use `ROOT / "src/xplane_fdau"` and assert that the collected `*.py` path tuple is nonempty before checking violations. In `tests/test_public_api.py`, use `project_root / "src" / "xplane_fdau"` for `formats_root` and `sink_path`; in `_resolve_import`, compute module parts relative to `project_root / "src"` so the resolved name still begins with `xplane_fdau`. In `tests/test_documentation.py`, retarget the packaged schema and runtime `*.py` scan to `ROOT / "src/xplane_fdau"` and assert the scan is nonempty.
 
 Use these exact expressions in the relevant tests:
 
@@ -106,9 +106,9 @@ module_parts = list(path.relative_to(project_root / "src").with_suffix("").parts
 packaged = ROOT / "src/xplane_fdau/formats/xplane_fdr/schemas/fdr-record-config-v1.schema.json"
 ```
 
-- [ ] **Step 3: Verify RED.** Run `uv run --offline --frozen python -m unittest tests.test_project_metadata tests.test_public_api tests.test_runtime_import_boundary tests.test_documentation -v`. Expect failures from the missing `src` tree, flat `module-root`, and empty source scans; unrelated assertions should still pass.
+- [x] **Step 3: Verify RED.** Run `uv run --offline --frozen python -m unittest tests.test_project_metadata tests.test_public_api tests.test_runtime_import_boundary tests.test_documentation -v`. Expect failures from the missing `src` tree, flat `module-root`, and empty source scans; unrelated assertions should still pass.
 
-- [ ] **Step 4: Make the one tracked move and change the build root.**
+- [x] **Step 4: Make the one tracked move and change the build root.**
 
 ```powershell
 if (Test-Path -LiteralPath src/xplane_fdau) { throw "src package already exists" }
@@ -118,9 +118,9 @@ git mv xplane_fdau src/xplane_fdau
 
 Set `[tool.uv.build-backend].module-root` in `pyproject.toml` to `"src"`. Keep every existing `source-exclude` entry, `[project]` field, and `[tool.coverage.run].source` unchanged. Check `git diff --cached --find-renames --summary`: every package file should be a byte-identical rename.
 
-- [ ] **Step 5: Sync and verify GREEN.** Run `uv sync --offline --frozen`, then repeat the focused `unittest` command from Step 3. Run `uv run --offline --frozen ruff check src/xplane_fdau tests/test_project_metadata.py tests/test_public_api.py tests/test_runtime_import_boundary.py tests/test_documentation.py`, `uv run --offline --frozen ruff format --check src/xplane_fdau tests/test_project_metadata.py tests/test_public_api.py tests/test_runtime_import_boundary.py tests/test_documentation.py`, and `uv run --offline --frozen ty check`. All must pass.
+- [x] **Step 5: Sync and verify GREEN.** Run `uv sync --offline --frozen`, then repeat the focused `unittest` command from Step 3. Run `uv run --offline --frozen ruff check src/xplane_fdau tests/test_project_metadata.py tests/test_public_api.py tests/test_runtime_import_boundary.py tests/test_documentation.py`, `uv run --offline --frozen ruff format --check src/xplane_fdau tests/test_project_metadata.py tests/test_public_api.py tests/test_runtime_import_boundary.py tests/test_documentation.py`, and `uv run --offline --frozen ty check`. All must pass.
 
-- [ ] **Step 6: Commit.** Stage the moved tree, `pyproject.toml`, and four named test files. Run `git diff --cached --check` and commit as `build: isolate runtime package under src`.
+- [x] **Step 6: Commit.** Stage the moved tree, `pyproject.toml`, and four named test files. Run `git diff --cached --check` and commit as `build: isolate runtime package under src`.
 
 ### Task 2: Retarget quality checks and active source guidance
 
@@ -135,7 +135,7 @@ Set `[tool.uv.build-backend].module-root` in `pyproject.toml` to `"src"`. Keep e
 - Consumes: `src/xplane_fdau` from Task 1.
 - Produces: `tools.quality.SOURCE_PATH = "src/xplane_fdau"` and source-aware checks that scan that directory; coverage and imports continue to name `xplane_fdau`.
 
-- [ ] **Step 1: Write failing quality-path assertions.** In `test_quality_targets_only_the_renamed_runtime_root`, assert `quality.SOURCE_PATH == "src/xplane_fdau"`, `quality.SOURCE_PATHS == ("src/xplane_fdau", "tests", "tools")`, and that each source-oriented command (`ruff`, `bandit`, `interrogate`, `vulture`, `lizard`, `cohesion`, `wily`, `xenon`) contains `src/xplane_fdau` as a complete argument wherever it currently contains the flat physical path. Assert `"xplane_fdau"` is not a complete path argument in those commands. Keep the existing gate-order, coverage-count, and forbidden-import assertions.
+- [x] **Step 1: Write failing quality-path assertions.** In `test_quality_targets_only_the_renamed_runtime_root`, assert `quality.SOURCE_PATH == "src/xplane_fdau"`, `quality.SOURCE_PATHS == ("src/xplane_fdau", "tests", "tools")`, and that each source-oriented command (`ruff`, `bandit`, `interrogate`, `vulture`, `lizard`, `cohesion`, `wily`, `xenon`) contains `src/xplane_fdau` as a complete argument wherever it currently contains the flat physical path. Assert `"xplane_fdau"` is not a complete path argument in those commands. Keep the existing gate-order, coverage-count, and forbidden-import assertions.
 
 Use an argument-level assertion so import-name strings cannot satisfy it:
 
@@ -154,7 +154,7 @@ for steps in quality.COMMANDS.values():
             self.assertNotIn("xplane_fdau", step.command)
 ```
 
-- [ ] **Step 2: Write a failing active-link assertion.** In `tests/test_documentation.py`, assert `docs/usage/native-fdr.md` contains `blob/main/src/xplane_fdau/formats/xplane_fdr/schemas/fdr-record-config-v1.schema.json`. The current link lacks `src/`.
+- [x] **Step 2: Write a failing active-link assertion.** In `tests/test_documentation.py`, assert `docs/usage/native-fdr.md` contains `blob/main/src/xplane_fdau/formats/xplane_fdr/schemas/fdr-record-config-v1.schema.json`. The current link lacks `src/`.
 
 Add this assertion to the existing documented-schema test:
 
@@ -166,13 +166,13 @@ self.assertIn(
 )
 ```
 
-- [ ] **Step 3: Verify RED.** Run `uv run --offline --frozen python -m unittest tests.test_quality_tool tests.test_documentation -v`. Expect only the new physical-path and link assertions to fail.
+- [x] **Step 3: Verify RED.** Run `uv run --offline --frozen python -m unittest tests.test_quality_tool tests.test_documentation -v`. Expect only the new physical-path and link assertions to fail.
 
-- [ ] **Step 4: Change the physical command arguments.** Define `SOURCE_PATH = "src/xplane_fdau"` and `SOURCE_PATHS = (SOURCE_PATH, "tests", "tools")` in `tools/quality.py`. Replace the flat physical argument in Bandit, Interrogate, Lizard, Cohesion, Wily, and Xenon steps with `SOURCE_PATH`. Ruff and Vulture already consume `SOURCE_PATHS`. Keep coverage's import-package setting unchanged.
+- [x] **Step 4: Change the physical command arguments.** Define `SOURCE_PATH = "src/xplane_fdau"` and `SOURCE_PATHS = (SOURCE_PATH, "tests", "tools")` in `tools/quality.py`. Replace the flat physical argument in Bandit, Interrogate, Lizard, Cohesion, Wily, and Xenon steps with `SOURCE_PATH`. Ruff and Vulture already consume `SOURCE_PATHS`. Keep coverage's import-package setting unchanged.
 
-- [ ] **Step 5: Change the two active guidance paths.** In `.codex/skills/code-quality/SKILL.md`, use `src/xplane_fdau` in both explicit focused Ruff commands. In `docs/usage/native-fdr.md`, change only the GitHub source-schema link to `https://github.com/tvproductions/xplane-fdau/blob/main/src/xplane_fdau/formats/xplane_fdr/schemas/fdr-record-config-v1.schema.json`; keep public Python imports unchanged.
+- [x] **Step 5: Change the two active guidance paths.** In `.codex/skills/code-quality/SKILL.md`, use `src/xplane_fdau` in both explicit focused Ruff commands. In `docs/usage/native-fdr.md`, change only the GitHub source-schema link to `https://github.com/tvproductions/xplane-fdau/blob/main/src/xplane_fdau/formats/xplane_fdr/schemas/fdr-record-config-v1.schema.json`; keep public Python imports unchanged.
 
-- [ ] **Step 6: Verify GREEN and commit.** Repeat Step 3, then run `uv run --offline --frozen ruff check tools/quality.py tests/test_quality_tool.py tests/test_documentation.py`, `uv run --offline --frozen ruff format --check tools/quality.py tests/test_quality_tool.py tests/test_documentation.py`, and `uv run --offline --frozen ty check`. Run `git diff --check`, stage the five named files, and commit as `build: retarget source quality checks`.
+- [x] **Step 6: Verify GREEN and commit.** Repeat Step 3, then run `uv run --offline --frozen ruff check tools/quality.py tests/test_quality_tool.py tests/test_documentation.py`, `uv run --offline --frozen ruff format --check tools/quality.py tests/test_quality_tool.py tests/test_documentation.py`, and `uv run --offline --frozen ty check`. Run `git diff --check`, stage the five named files, and commit as `build: retarget source quality checks`.
 
 ### Task 3: Preserve exact wheel and sdist validation
 
@@ -185,7 +185,7 @@ self.assertIn(
 - Consumes: `src/xplane_fdau` and `module-root = "src"`.
 - Produces: `_expected_package_files() -> dict[str, bytes]` keyed by wheel-relative `xplane_fdau/...` names; `_check_package_payloads(read: Callable[[str], bytes], names: set[str], version: str, *, label: str, prefix: str = "") -> None` validates wheel or `src/`-prefixed sdist payloads.
 
-- [ ] **Step 1: Make synthetic artifacts express the new split.** In `ReleaseToolTests._package_files`, enumerate `Path("src/xplane_fdau")` and key each file with `source.relative_to(Path("src")).as_posix()`. In `_make_dist`, keep wheel package directories unchanged; prefix every tar package file with `xplane_fdau-0.1.0/src/` and add `xplane_fdau-0.1.0/src` plus its nested package directories. Retarget the package-payload corruption and hostile tar link cases to `xplane_fdau-0.1.0/src/xplane_fdau/...`, leaving project-root metadata attacks as they are.
+- [x] **Step 1: Make synthetic artifacts express the new split.** In `ReleaseToolTests._package_files`, enumerate `Path("src/xplane_fdau")` and key each file with `source.relative_to(Path("src")).as_posix()`. In `_make_dist`, keep wheel package directories unchanged; prefix every tar package file with `xplane_fdau-0.1.0/src/` and add `xplane_fdau-0.1.0/src` plus its nested package directories. Retarget the package-payload corruption and hostile tar link cases to `xplane_fdau-0.1.0/src/xplane_fdau/...`, leaving project-root metadata attacks as they are.
 
 Keep the fixture's wheel-relative keys and add the prefix only when creating tar members:
 
@@ -198,7 +198,7 @@ tar_files = {
 }
 ```
 
-- [ ] **Step 2: Add explicit positive and negative layout tests.** The existing complete-artifact test must accept the new fixture without changing wheel filenames. Add a test that inserts `xplane_fdau-0.1.0/xplane_fdau/__init__.py` into the tar and expects `ReleaseError` for an extra flat member. Add a test that inserts `src/xplane_fdau/hostile.py` into the wheel and expects `ReleaseError`. Retain all existing duplicate, link, unsafe-path, metadata, RECORD, and payload-byte cases.
+- [x] **Step 2: Add explicit positive and negative layout tests.** The existing complete-artifact test must accept the new fixture without changing wheel filenames. Add a test that inserts `xplane_fdau-0.1.0/xplane_fdau/__init__.py` into the tar and expects `ReleaseError` for an extra flat member. Add a test that inserts `src/xplane_fdau/hostile.py` into the wheel and expects `ReleaseError`. Retain all existing duplicate, link, unsafe-path, metadata, RECORD, and payload-byte cases.
 
 Use the existing `_make_dist` helper for both negative controls:
 
@@ -221,9 +221,9 @@ def test_rejects_src_prefix_in_wheel(self) -> None:
             release.check_dist(directory)
 ```
 
-- [ ] **Step 3: Verify RED.** Run `uv run --offline --frozen python -m unittest tests.test_release_tool tests.test_installed_smoke -v`. Expect release validation to fail because `tools/release.py` still reads the flat checkout root and expects flat sdist members.
+- [x] **Step 3: Verify RED.** Run `uv run --offline --frozen python -m unittest tests.test_release_tool tests.test_installed_smoke -v`. Expect release validation to fail because `tools/release.py` still reads the flat checkout root and expects flat sdist members.
 
-- [ ] **Step 4: Separate checkout and archive names in `tools/release.py`.** Add `SOURCE_ROOT = ROOT / "src" / PACKAGE` and change `_version` to read `SOURCE_ROOT / "__init__.py"`. Replace `_expected_package_files` with:
+- [x] **Step 4: Separate checkout and archive names in `tools/release.py`.** Add `SOURCE_ROOT = ROOT / "src" / PACKAGE` and change `_version` to read `SOURCE_ROOT / "__init__.py"`. Replace `_expected_package_files` with:
 
 ```python
 def _expected_package_files() -> dict[str, bytes]:
@@ -236,9 +236,9 @@ def _expected_package_files() -> dict[str, bytes]:
 
 Add a `prefix: str = ""` keyword to `_check_package_payloads`. Compare package members to `{f"{prefix}{name}" for name in expected}`; read payload and `__init__.py` through `read(f"{prefix}{name}")`. Call it with the default prefix for the wheel and `prefix="src/"` for the sdist. In `_check_sdist`, build `expected_relative` from `{f"src/{name}" for name in _expected_package_files()}` plus `PKG-INFO`, `pyproject.toml`, `pyproject.toml.orig`, `LICENSE`, and `README.md`. Keep exact directory, metadata, license, content, unsafe-member, and wheel checks intact.
 
-- [ ] **Step 5: Retarget the installed-smoke unit fixture.** In `tests/test_installed_smoke.py`, make the checkout-path rejection case pass `checkout / "src/xplane_fdau/__init__.py"`. Leave import names and command names unchanged.
+- [x] **Step 5: Retarget the installed-smoke unit fixture.** In `tests/test_installed_smoke.py`, make the checkout-path rejection case pass `checkout / "src/xplane_fdau/__init__.py"`. Leave import names and command names unchanged.
 
-- [ ] **Step 6: Verify GREEN and commit.** Repeat Step 3, then run `uv run --offline --frozen ruff check tools/release.py tests/test_release_tool.py tests/test_installed_smoke.py`, `uv run --offline --frozen ruff format --check tools/release.py tests/test_release_tool.py tests/test_installed_smoke.py`, and `uv run --offline --frozen ty check`. Run `git diff --check`, stage the three named files, and commit as `build: validate src layout distributions`.
+- [x] **Step 6: Verify GREEN and commit.** Repeat Step 3, then run `uv run --offline --frozen ruff check tools/release.py tests/test_release_tool.py tests/test_installed_smoke.py`, `uv run --offline --frozen ruff format --check tools/release.py tests/test_release_tool.py tests/test_installed_smoke.py`, and `uv run --offline --frozen ty check`. Run `git diff --check`, stage the three named files, and commit as `build: validate src layout distributions`.
 
 ### Task 4: Verify the installed artifact and close B1.1
 
@@ -252,7 +252,7 @@ Add a `prefix: str = ""` keyword to `_check_package_payloads`. Compare package m
 - Consumes: Tasks 1–3 and their passing focused tests.
 - Produces: fresh artifact, installed-smoke, and independent-review evidence; `B1.1` reaches `verified` only after all five gates pass.
 
-- [ ] **Step 1: Inspect the final candidate and prove the package move preserved bytes.** The pre-migration `$baseline` is the commit recorded in the execution entry. If using a new shell, set `$baseline` to that exact recorded SHA. Require a clean candidate, then compare the tracked relative package paths, Git modes, and blob hashes at `$baseline` and `HEAD`:
+- [x] **Step 1: Inspect the final candidate and prove the package move preserved bytes.** The pre-migration `$baseline` is the commit recorded in the execution entry. If using a new shell, set `$baseline` to that exact recorded SHA. Require a clean candidate, then compare the tracked relative package paths, Git modes, and blob hashes at `$baseline` and `HEAD`:
 
 ```powershell
 $ErrorActionPreference = "Stop"
@@ -284,7 +284,7 @@ Write-Output "matched $($before.Count) tracked package files byte-for-byte"
 
 Save the comparison output and both commit IDs in `gate-1.md`. If a fix is needed, use a failing focused `unittest` first and rerun focused Ruff and ty.
 
-- [ ] **Step 2: Run the complete offline package-layout gate once.**
+- [x] **Step 2: Run the complete offline package-layout gate once.**
 
 ```powershell
 uv run --offline --frozen python .codex/skills/hygiene/scripts/hygiene.py
@@ -292,7 +292,7 @@ uv run --offline --frozen python .codex/skills/hygiene/scripts/hygiene.py
 
 Record its result, active Python version, `unittest` count, quality result, strict MkDocs result, artifact names, and exact inventory result. This command already runs `tools/quality.py check` once. If any code changes after it, rerun hygiene once on the new stable candidate.
 
-- [ ] **Step 3: Prove installed-wheel isolation on the active Python.** Create a separate temporary artifact directory outside the checkout, build one wheel/sdist pair, validate it before creating a venv in that directory, install the wheel offline, and run the installed smoke from that directory:
+- [x] **Step 3: Prove installed-wheel isolation on the active Python.** Create a separate temporary artifact directory outside the checkout, build one wheel/sdist pair, validate it before creating a venv in that directory, install the wheel offline, and run the installed smoke from that directory:
 
 ```powershell
 $ErrorActionPreference = "Stop"
@@ -332,14 +332,14 @@ if ([System.IO.Path]::GetDirectoryName($resolvedArtifactRoot) -ne $tempParent -o
 Remove-Item -LiteralPath $resolvedArtifactRoot -Recurse -Force
 ```
 
-- [ ] **Step 4: Obtain independent review.** Use `superpowers:requesting-code-review` against the implementation diff. Review the five B1.1 gates, source-byte preservation, active physical-path references, import isolation, wheel/sdist parity, hostile-archive tests, and no release action. Save the accepted review to `review.md`. Address every load-bearing finding before proceeding, then rerun affected focused checks and Steps 2–3 on the final candidate.
+- [x] **Step 4: Obtain independent review.** Use `superpowers:requesting-code-review` against the implementation diff. Review the five B1.1 gates, source-byte preservation, active physical-path references, import isolation, wheel/sdist parity, hostile-archive tests, and no release action. Save the accepted review to `review.md`. Address every load-bearing finding before proceeding, then rerun affected focused checks and Steps 2–3 on the final candidate.
 
-- [ ] **Step 5: Record five gate receipts and lifecycle transitions.** Write one receipt per B1.1 acceptance gate with exact command output and commit/artifact identities, then write `completion.md`. Mark this plan `completed` with the completion-evidence link and update `HANDOFF.md` to point to `C1.1` as the next canonical child. Use backlog-status dry-run/hash/apply for each gate and transition; do not hand-edit managed cells. Transition `in_progress` → `implemented` → `reviewed` (with `--review .superpowers/sdd/2026-08-09-src-layout-migration/review.md`) → `verified` only after all gate receipts and review pass. Clear the active-child selection after verification.
+- [x] **Step 5: Record five gate receipts and lifecycle transitions.** Write one receipt per B1.1 acceptance gate with exact command output and commit/artifact identities, then write `completion.md`. Mark this plan `completed` with the completion-evidence link and update `HANDOFF.md` to point to `C1.1` as the next canonical child. Use backlog-status dry-run/hash/apply for each gate and transition; do not hand-edit managed cells. The adapter requires `in_progress` → `implemented` → `reviewed` (with `--review .superpowers/sdd/2026-08-09-src-layout-migration/review.md`) before recording gates. Record all five gates, commit the reviewed evidence, then transition to `verified` and clear the active-child selection. The committed evidence requirement was confirmed by the adapter audit.
 
 ```powershell
-uv run --offline --frozen python .codex/skills/backlog-status/scripts/backlog_status.py record-gate B1.1 1 --expect-open --evidence .superpowers/sdd/2026-08-09-src-layout-migration/gate-1.md
 uv run --offline --frozen python .codex/skills/backlog-status/scripts/backlog_status.py transition B1.1 implemented --expect in_progress
 uv run --offline --frozen python .codex/skills/backlog-status/scripts/backlog_status.py transition B1.1 reviewed --expect implemented --review .superpowers/sdd/2026-08-09-src-layout-migration/review.md
+uv run --offline --frozen python .codex/skills/backlog-status/scripts/backlog_status.py record-gate B1.1 1 --expect-open --evidence .superpowers/sdd/2026-08-09-src-layout-migration/gate-1.md
 uv run --offline --frozen python .codex/skills/backlog-status/scripts/backlog_status.py transition B1.1 verified --expect reviewed
 uv run --offline --frozen python .codex/skills/backlog-status/scripts/backlog_status.py select none --expect-current B1.1
 ```

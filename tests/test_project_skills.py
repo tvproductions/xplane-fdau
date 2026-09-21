@@ -158,9 +158,9 @@ class ProjectSkillTests(unittest.TestCase):
                 ("git", "status", "--short", "--branch", "--ignored=matching"),
                 ("uv", "lock", "--check", "--offline"),
                 ("uv", "run", "--offline", "--frozen", "python", ".codex/skills/backlog-status/scripts/backlog_status.py", "audit"),
-                ("uv", "run", "--offline", "--frozen", "python", "tools/quality.py", "check"),
                 ("uv", "run", "--offline", "--frozen", "mkdocs", "build", "--strict"),
                 ("uv", "run", "--offline", "--frozen", "python", "tools/quality.py", "pre-commit"),
+                ("uv", "run", "--offline", "--frozen", "python", "tools/quality.py", "check"),
             ],
             executed[:7],
         )

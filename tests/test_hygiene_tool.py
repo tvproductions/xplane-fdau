@@ -24,9 +24,9 @@ EXPECTED_PREFIX = [
     ("git", "status", "--short", "--branch", "--ignored=matching"),
     ("uv", "lock", "--check", "--offline"),
     ("uv", "run", "--offline", "--frozen", "python", ".codex/skills/backlog-status/scripts/backlog_status.py", "audit"),
-    ("uv", "run", "--offline", "--frozen", "python", "tools/quality.py", "check"),
     ("uv", "run", "--offline", "--frozen", "mkdocs", "build", "--strict"),
     ("uv", "run", "--offline", "--frozen", "python", "tools/quality.py", "pre-commit"),
+    ("uv", "run", "--offline", "--frozen", "python", "tools/quality.py", "check"),
 ]
 
 
@@ -65,7 +65,7 @@ class HygieneCommandTests(unittest.TestCase):
                     self.fail("runner environment must be a dictionary")
                 self.assertEqual("1", env["UV_OFFLINE"])
                 self.assertEqual(os.environ.get("PATH"), env.get("PATH"))
-        self.assertEqual(1, [command for command, _ in calls].count(EXPECTED_PREFIX[4]))
+        self.assertEqual(1, [command for command, _ in calls].count(EXPECTED_PREFIX[6]))
         for command, _ in calls:
             self.assertNotIn(command[:2], [("uv", "tree"), ("git", "add"), ("git", "commit")])
 
@@ -87,17 +87,29 @@ class HygieneCommandTests(unittest.TestCase):
         self.assertIn(" ".join(failed), reported)
         self.assertIn("uv executable unavailable", reported)
 
-    def test_full_quality_failure_stops_before_docs_hooks_and_artifacts(self) -> None:
+    def test_full_quality_failure_stops_before_artifacts(self) -> None:
         module = load_hygiene()
         commands: list[tuple[str, ...]] = []
-        full_quality = EXPECTED_PREFIX[4]
+        full_quality = EXPECTED_PREFIX[6]
 
         def runner(command: tuple[str, ...], **kwargs: object) -> subprocess.CompletedProcess[str]:
             commands.append(command)
             return subprocess.CompletedProcess(command, 9 if command == full_quality else 0)
 
         self.assertEqual(9, module.run_local_hygiene(runner))
-        self.assertEqual(EXPECTED_PREFIX[:5], commands)
+        self.assertEqual(EXPECTED_PREFIX, commands)
+
+    def test_hook_failure_stops_before_quality_and_artifacts(self) -> None:
+        module = load_hygiene()
+        commands: list[tuple[str, ...]] = []
+        hook = EXPECTED_PREFIX[5]
+
+        def runner(command: tuple[str, ...], **kwargs: object) -> subprocess.CompletedProcess[str]:
+            commands.append(command)
+            return subprocess.CompletedProcess(command, 7 if command == hook else 0)
+
+        self.assertEqual(7, module.run_local_hygiene(runner))
+        self.assertEqual(EXPECTED_PREFIX[:6], commands)
 
 
 class OwnedDirectory(Protocol):

@@ -10,18 +10,22 @@
 
 ## Task 1: Quality order
 
-- [ ] In `tests/test_quality_tool.py`, assert security, docs, dead-code, complexity, and a focused preflight precede coverage, while the complete coverage suite runs once. Run the test and record RED.
-- [ ] Add the preflight step and reorder `CHECK_STEPS` in `tools/quality.py`, preserving all current commands and thresholds. Run `uv run --offline --frozen python -m unittest tests.test_quality_tool -q`, Ruff check/format for changed Python files, and `uv run --offline --frozen ty check`.
-- [ ] Commit `build: run fast quality checks before coverage`.
+- [x] In `tests/test_quality_tool.py`, assert security, docs, dead-code, complexity, and a focused preflight precede coverage, while the complete coverage suite runs once. Run the test and record RED.
+- [x] Add the preflight step and reorder `CHECK_STEPS` in `tools/quality.py`, preserving all current commands and thresholds. Run `uv run --offline --frozen python -m unittest tests.test_quality_tool -q`, Ruff check/format for changed Python files, and `uv run --offline --frozen ty check`.
+- [x] Commit `build: run fast quality checks before coverage`.
 
 ## Task 2: Hygiene order
 
-- [ ] In `tests/test_hygiene_tool.py` and `tests/test_project_skills.py`, assert strict docs and all-files hooks run before the complete quality gate, and a hook failure stops before quality. Run the focused tests and record RED.
-- [ ] Reorder `LOCAL_COMMANDS` in `.codex/skills/hygiene/scripts/hygiene.py` without changing the artifact phase. Repeat the focused tests, Ruff, and ty.
-- [ ] Commit `build: fail fast in offline hygiene`.
+- [x] In `tests/test_hygiene_tool.py` and `tests/test_project_skills.py`, assert strict docs and all-files hooks run before the complete quality gate, and a hook failure stops before quality. Run the focused tests and record RED.
+- [x] Reorder `LOCAL_COMMANDS` in `.codex/skills/hygiene/scripts/hygiene.py` without changing the artifact phase. Repeat the focused tests, Ruff, and ty.
+- [x] Commit `build: fail fast in offline hygiene`.
 
 ## Task 3: Guidance and closeout
 
-- [ ] Update `AGENTS.md`, `.codex/skills/code-quality/SKILL.md`, `.codex/skills/hygiene/SKILL.md`, and `HANDOFF.md` with the narrow exact-fast-forward procedure and fallback. Check guidance with `tests.test_project_skills`, strict backlog audit, strict MkDocs, and `git diff --check`.
-- [ ] Review the changed diff against the approved design. Run one full offline hygiene gate on the stable branch candidate, recording its result and timing. Later documentation-only edits receive focused checks.
-- [ ] Mark plan steps complete and commit the implementation record. After user-selected local integration, confirm exact HEAD equality, run the documented focused main commands, then remove the temporary worktree and branch only after they pass. Do not push, tag, or publish.
+- [x] Update `AGENTS.md`, `.codex/skills/code-quality/SKILL.md`, `.codex/skills/hygiene/SKILL.md`, and `HANDOFF.md` with the narrow exact-fast-forward procedure and fallback. Check guidance with `tests.test_project_skills`, strict backlog audit, strict MkDocs, and `git diff --check`.
+- [x] Review the changed diff against the approved design. Run one full offline hygiene gate on the stable branch candidate, recording its result and timing. Later documentation-only edits receive focused checks.
+- [x] Mark branch implementation steps complete and commit this record after focused documentation checks.
+
+**Branch evidence:** Independent review found no code defect and requested this checklist correction. Full offline hygiene on `af2bfc2` passed on 2026-09-20, including the complete coverage suite (94%), strict docs, all-files hooks, and a fresh exact wheel/sdist pair. The run took about 312 seconds based on tool-session timing.
+
+**Post-merge action pending user selection:** On an exact local fast-forward, confirm main HEAD equality, run the documented focused main commands, then remove the temporary worktree and branch only after they pass. A differing tree or failed focused check requires the complete gate. Do not push, tag, or publish.

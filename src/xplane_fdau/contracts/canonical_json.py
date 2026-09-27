@@ -7,6 +7,7 @@ import re
 import unicodedata
 
 from ._json_parse import _NumberToken, _ObjectPairs, _materialize_number, _pointer
+from ._binary64 import _ecmascript_number_token
 from .errors import CanonicalJSONError
 
 __all__ = ["canonical_bytes"]
@@ -102,7 +103,8 @@ def _encode(value: object, *, path: str, depth: int, parameter: bool, parts: lis
     if isinstance(value, float):
         if not math.isfinite(value):
             raise CanonicalJSONError("nonfinite binary64", path=path)
-        parts.append("0.0" if value == 0.0 else str(value))
+        token = _ecmascript_number_token(value)
+        parts.append("0.0" if value == 0.0 else token if "." in token or "e" in token else token + ".0")
         return
     raise CanonicalJSONError("unsupported canonical value", path=path)
 

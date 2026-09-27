@@ -21,6 +21,9 @@ class InstalledSmokeTests(unittest.TestCase):
         expected = {
             "xplane_fdau",
             "xplane_fdau.cli",
+            "xplane_fdau.contracts",
+            "xplane_fdau.contracts.errors",
+            "xplane_fdau.contracts._json_parse",
             "xplane_fdau.formats",
             "xplane_fdau.formats.xplane_fdr",
             "xplane_fdau.formats.xplane_fdr.config",

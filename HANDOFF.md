@@ -1,6 +1,40 @@
 # Project Handoff
 
-## Resume point — 2026-09-20
+## Resume point — 2026-09-27
+
+Observed 2026-09-27 20:58 UTC, before this handoff commit: `main` was clean at
+`b6f55eb92ede85df07fe8125d0cd419d00ae59ac` and matched `origin/main`.
+`git worktree list` showed only the `main` checkout; no C1.1 feature branch or
+worktree exists. Recheck Git state on return because this handoff's Git sync
+will create a later commit.
+
+**Current objective:** C1.1 canonical JSON and number encoding. Its approved
+[cross-epic design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md)
+has a reviewed but still
+[draft implementation plan](docs/superpowers/plans/2026-09-27-c1-1-canonical-json-number-encoding.md).
+`BACKLOG.md` remains authoritative: C1.1 is `specified`, has 0/4 gates, and
+has not entered implementation. No C1.1 runtime code or delivery evidence was
+created by the planning reviews or Git sync.
+
+**Last completed action:** The Python 3.12-only compatibility and dependency/
+tooling maintenance, together with the C1.1 draft plan, was committed as
+`b6f55eb` and synced to `origin/main`. Full offline hygiene passed with 94%
+coverage; a fresh wheel/sdist passed strict metadata and exact-inventory
+checks, and an external Python 3.12.13 installed-wheel smoke passed. Its
+temporary artifact directory is local-only:
+`C:\Users\Jeff\AppData\Local\Temp\xplane-fdau-sync-5254e7536f78456abfe6153ccc766e17`.
+No tag, package publication, GitHub release, or q4xpcc edit occurred.
+
+**First permissible action on return:** Read `AGENTS.md` and its linked
+authorities; run backlog `audit` and `next`. Obtain Jeff's explicit approval
+of the C1.1 plan before selecting the child or starting Task 1. With that
+approval and a clean current `main`, use `superpowers:using-git-worktrees` to
+create the temporary C1.1 branch/worktree from the verified HEAD, then follow
+the plan's guarded lifecycle and test-first execution steps. Stop on an audit
+finding, changed baseline, or missing approval; this handoff and ordinary Git
+sync do not themselves authorize implementation or release.
+
+## Prior resume point — 2026-09-20
 
 2026-09-27 maintenance update: support the Python 3.12 minor line only for
 now, matching XPPython3's embedded interpreter. The dependency refresh includes

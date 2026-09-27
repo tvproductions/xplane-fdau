@@ -20,6 +20,11 @@ class CanonicalJSONTests(unittest.TestCase):
         self.assertEqual(expected, _encode_document(_parse_json_document(' { "test.x" : 1 } ')))
         self.assertEqual(expected, _encode_document(_parse_json_document('{"test.x":1}')))
         self.assertEqual("c7a95602104d7db4d2fca0e277f6e064854c886d32328a57cb4d28ab10467424", hashlib.sha256(canonical_bytes({"test.x": 1})).hexdigest())
+        ordered = _encode_document(_parse_json_document('{"test.a":1,"test.x":2}'))
+        reordered = _encode_document(_parse_json_document(' { "test.x": 2, "test.a": 1 } '))
+        self.assertEqual(b'{"test.a":1,"test.x":2}\n', ordered)
+        self.assertEqual(ordered, reordered)
+        self.assertEqual(hashlib.sha256(ordered).digest(), hashlib.sha256(reordered).digest())
 
     def test_public_contract_exports_leave_root_unchanged(self) -> None:
         self.assertEqual(["__version__"], xplane_fdau.__all__)

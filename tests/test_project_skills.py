@@ -81,14 +81,11 @@ class ProjectSkillTests(unittest.TestCase):
     def test_plugin_only_gz_skills_authority(self) -> None:
         config = tomllib.loads(Path(".codex/config.toml").read_text(encoding="utf-8"))
         marketplace = config["marketplaces"]["gz-skills"]
-        self.assertEqual(
-            {
-                "source_type": "git",
-                "source": "https://github.com/tvproductions/gz-skills.git",
-                "ref": "v0.4.0",
-            },
-            marketplace,
-        )
+        self.assertEqual("git", marketplace["source_type"])
+        self.assertEqual("https://github.com/tvproductions/gz-skills.git", marketplace["source"])
+        self.assertRegex(marketplace["ref"], r"^v\d+\.\d+\.\d+$")
+        instructions = Path("AGENTS.md").read_text(encoding="utf-8")
+        self.assertIn(f"at reviewed tag `{marketplace['ref']}`", instructions)
         self.assertEqual(
             1,
             sum(entry.get("source") == marketplace["source"] for entry in config["marketplaces"].values()),
@@ -234,8 +231,6 @@ class ProjectSkillTests(unittest.TestCase):
             "cleanup",
             "offline",
             "3.12",
-            "3.13",
-            "3.14",
             "code-quality",
             "documentation",
             "release",

@@ -13,43 +13,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
-      - uses: astral-sh/setup-uv@v10.1.0
+      - uses: astral-sh/setup-uv@v10.2.0
         with:
-          version: "0.12.17"
           enable-cache: true
-      - run: uv python install 3.14
-      - run: uv sync --frozen --python 3.14
-      - run: uv run --python 3.14 python tools/quality.py check
+      - run: uv python install 3.12
+      - run: uv sync --frozen --python 3.12
+      - run: uv run --python 3.12 python tools/quality.py check
 
   compatibility:
     needs: quality
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v7.0.1
-      - uses: astral-sh/setup-uv@v10.1.0
-        with:
-          version: "0.12.17"
-      - run: uv python install ${{ matrix.python-version }}
-      - run: uv sync --frozen --python ${{ matrix.python-version }}
-      - run: uv run --python ${{ matrix.python-version }} python -m unittest discover -v
+      - uses: astral-sh/setup-uv@v10.2.0
+      - run: uv python install 3.12
+      - run: uv sync --frozen --python 3.12
+      - run: uv run --python 3.12 python -m unittest discover -v
 
   artifacts:
     needs: quality
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7.0.1
-      - uses: astral-sh/setup-uv@v10.1.0
-        with:
-          version: "0.12.17"
-      - run: uv python install 3.14
-      - run: uv sync --frozen --python 3.14
+      - uses: astral-sh/setup-uv@v10.2.0
+      - run: uv python install 3.12
+      - run: uv sync --frozen --python 3.12
       - run: uv build --no-sources
       - run: uv tool run twine@7.0.0 check --strict dist/*
-      - run: uv run --python 3.14 python tools/release.py check-dist dist
+      - run: uv run --python 3.12 python tools/release.py check-dist dist
       - uses: actions/upload-artifact@v7.0.1
         with:
           name: distribution
@@ -61,21 +52,15 @@ jobs:
   installed-wheel:
     needs: artifacts
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v7.0.1
-      - uses: astral-sh/setup-uv@v10.1.0
-        with:
-          version: "0.12.17"
-      - run: uv python install ${{ matrix.python-version }}
+      - uses: astral-sh/setup-uv@v10.2.0
+      - run: uv python install 3.12
       - uses: actions/download-artifact@v8.0.1
         with:
           name: distribution
           path: dist
-      - run: uv venv "$RUNNER_TEMP/xplane-fdau-smoke" --python ${{ matrix.python-version }}
+      - run: uv venv "$RUNNER_TEMP/xplane-fdau-smoke" --python 3.12
       - run: uv pip install --python "$RUNNER_TEMP/xplane-fdau-smoke/bin/python" dist/xplane_fdau-0.1.0-py3-none-any.whl
       - run: |
           cd "$RUNNER_TEMP"

@@ -315,7 +315,7 @@ alignment. Release publication remains a separate decision.
 - [ ] `R1.1` through `R1.7` verified and independently reviewed.
 - [ ] `P1.1` through `P1.6` verified and independently reviewed.
 - [ ] `G1` reconciles the complete canonical vertical slice.
-- [ ] Source and installed-wheel verification passes on Python 3.12–3.14.
+- [ ] Source and installed-wheel verification passes on supported Python 3.12.
 - [ ] A separate release review authorizes publication.
 
 No checked gate authorizes release by itself.

@@ -2,10 +2,19 @@
 
 ## Resume point — 2026-09-20
 
+2026-09-27 maintenance update: support the Python 3.12 minor line only for
+now, matching XPPython3's embedded interpreter. The dependency refresh includes
+the reviewed gz-skills v0.5.0 project pin and ignored Superpowers checkout
+v6.4.2. Direct full offline hygiene passed. The guarded refresh also exited
+successfully after its external Python 3.12 source tests and installed-wheel
+smoke. Four older transitive packages remain constrained by Wily/Radon; no
+release or Git sync was performed.
+
 **Current objective:** `B1.1` source-layout migration is verified with 5/5
 gates and accepted independent review, and was locally integrated into `main`
 at `1f66a0f`. The temporary worktree and branch were removed. The project
-reviewed and adopted `gz-skills` v0.4.0 before implementation. `T2.2` remains
+reviewed and adopted `gz-skills` v0.4.0 before implementation; the project pin
+has since advanced to reviewed v0.5.0. `T2.2` remains
 verified. `C1.1` is the next canonical local child.
 
 **Exact next action on return:** Read AGENTS.md and the linked authorities,
@@ -31,7 +40,8 @@ canonical-contract design.
   `docs/superpowers/plans/2026-09-19-t2-2-dependency-toolchain-refresh.md`.
   Completion, review, and four gate records are under
   `.superpowers/sdd/2026-09-19-t2-2-dependency-toolchain-refresh/`.
-- The adapter pins uv 0.12.17, inventories 98 registry packages, and records
+- T2.2 originally pinned uv 0.12.17; the 2026-09-27 tooling-policy correction
+  retains a supported minimum so newer uv releases can run. The adapter inventories 98 registry packages and records
   five constrained package versions with their upstream owners. It reported no
   yanks, advisories, or blockers. Runtime remains pure Python and
   standard-library-only.
@@ -42,10 +52,12 @@ canonical-contract design.
   remaining Critical or Important findings. A minor matrix subprocess-timeout
   concern is recorded in `review.md`.
 - The installed and enabled `gz-skills@gz-skills` plugin was verified at
-  version 0.4.0 from the pinned official Git marketplace. The reviewed release
-  and adoption evidence is in
+  version 0.5.0 from the pinned official Git marketplace. The original v0.4.0
+  adoption evidence is in
   `.superpowers/sdd/2026-09-20-gz-skills-v0-4-0/review.md`. T2.2's Python/uv
   adapter does not mutate the plugin cache.
+- The ignored Superpowers checkout was fast-forwarded from v6.3.0 to upstream
+  v6.4.2 for the 2026-09-27 dependency refresh.
 
 ## Fast local closeout follow-up
 
@@ -86,7 +98,7 @@ standalone gate. Full offline hygiene is for package layout, shipped resources,
 metadata, lockfiles, build rules, or artifact-validation changes; it invokes
 the quality gate directly once, then checks docs, hooks, and a fresh artifact
 pair. Documentation and governance edits use their focused checks. Reserve
-the local Python 3.12–3.14 source/installed-wheel matrix for
+the Python 3.12 source/installed-wheel check for
 version-sensitive changes and release readiness. The matrix subprocess-timeout
 concern from T2.2 review remains a separate follow-up.
 

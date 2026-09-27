@@ -455,6 +455,8 @@ and a nesting depth greater than 32 are prohibited. This domain is data-only:
 the contract kernel never evaluates strings or resolves imports/callables, and
 a later allow-listed algorithm registry must supply and validate each
 algorithm's permitted parameter schema before execution exists.
+The parameter root is an object, including an empty object; arrays and scalars
+are valid only as values within that object, not as standalone parameter roots.
 
 Booleans are never accepted as integers or reals. Strings are never coerced to
 enumeration values. Arrays preserve declared order and exact shape. Version 1
@@ -1373,9 +1375,11 @@ validate_frame(frame: MeasurementFrame,
 ```
 
 `canonical_bytes` accepts only one of the public immutable contract models or
-the canonical data-only parameter domain; other objects raise
-`CanonicalJSONError`. `compute_content_hash` accepts only a listed self-hashed
-model and uses its prescribed preimage. Comparison returns `-1`, `0`, or `1`.
+a standalone data-only parameter object with `Identifier` keys. The object may
+be empty. A scalar or array root is not a parameter object and raises
+`CanonicalJSONError`, as do other unsupported objects. `compute_content_hash`
+accepts only a listed self-hashed model and uses its prescribed preimage.
+Comparison returns `-1`, `0`, or `1`.
 The difference helper returns `later - earlier` in exact integer nanoseconds
 and rejects unrelated domains, fractional nanoseconds, and `Int64` overflow.
 For each literal stem and its owned `Model`, loader/dumper signatures are
@@ -1420,6 +1424,14 @@ For one load operation, error precedence is deterministic:
    `CanonicalJSONError`;
 5. declared/computed self-hash mismatch: `ContractHashError`;
 6. local semantic or cross-field invariant: `ContractValidationError`.
+
+The lexical parser preserves integer-versus-real number tokens and detects
+syntax and duplicate properties across the complete document before reporting
+canonical-domain failures. A family loader checks the family/version envelope
+and shape before converting or rejecting preserved number tokens, non-NFC or
+surrogate text, and other canonical-domain values. For example, a duplicate
+property still raises `ContractParseError` when an earlier value contains an
+out-of-range integer. Programmatic construction starts at tier 3.
 
 Within one tier, validation follows the semantic property order stated for the
 containing type, then increasing array index; pure cross-document validators
@@ -1715,8 +1727,7 @@ The complete verification matrix includes:
 - strict MkDocs build;
 - clean wheel and sdist validation;
 - exact schema and fixture resource inspection; and
-- installed-wheel smoke tests on Python 3.12, 3.13, and 3.14 outside the
-  checkout.
+- installed-wheel smoke tests on supported Python 3.12 outside the checkout.
 
 Artifact inspection must prove `dependencies = []`, no provider or network
 package ships, no stock catalog content ships, and no ARINC implementation is
@@ -1948,7 +1959,7 @@ satisfies its exact acceptance subsection below.
 - Complete `unittest` and repository quality gates pass.
 - Fresh wheel/sdist contain exact schemas, fixtures/resources, and no runtime
   dependency or provider content.
-- Installed-wheel smoke passes on Python 3.12, 3.13, and 3.14 outside the
+- Installed-wheel smoke passes on supported Python 3.12 outside the
   checkout.
 - Independent review has no unresolved load-bearing finding.
 - Version `0.1.0` remains unreleased and no release tag or package publication occurs; separately authorized routine Git sync does not satisfy or violate this release gate.

@@ -28,7 +28,7 @@ The validator requires only `xplane_fdau-0.1.0-py3-none-any.whl` and `xplane_fda
 
 ## Installed Matrix
 
-For Python 3.12, 3.13, and 3.14, create an isolated environment outside the checkout, install the exact wheel, and run its interpreter on `tools/installed_smoke.py 0.1.0`. It must import `xplane_fdau` outside the checkout, load the nested schema, parse minimal v3/v4 fixtures, round-trip canonical v4, and resolve `xplane-fdau` from that environment's scripts directory.
+For Python 3.12, create an isolated environment outside the checkout, install the exact wheel, and run its interpreter on `tools/installed_smoke.py 0.1.0`. It must import `xplane_fdau` outside the checkout, load the nested schema, parse minimal v3/v4 fixtures, round-trip canonical v4, and resolve `xplane-fdau` from that environment's scripts directory.
 
 ## Authorization Gate
 

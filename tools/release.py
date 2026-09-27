@@ -44,7 +44,7 @@ class ReleaseArtifacts:
 def _project_python() -> str:
     project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
     expected_python = project.get("requires-python")
-    if not isinstance(expected_python, str) or expected_python != ">=3.12,<3.15":
+    if not isinstance(expected_python, str) or expected_python != ">=3.12,<3.13":
         raise ReleaseError("unexpected Requires-Python policy")
     return expected_python
 

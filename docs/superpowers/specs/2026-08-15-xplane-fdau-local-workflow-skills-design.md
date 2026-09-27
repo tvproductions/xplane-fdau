@@ -6,7 +6,7 @@
 - **Decision owner:** Jeff / tvproductions
 - **Roadmap epic:** `T2`
 - **Roadmap children:** `T2.1`, `T2.2`, `T3.1`
-- **Approval:** 2026-08-15 — Jeff / tvproductions; canonical workflow amendment approved 2026-09-05 by Jeff / tvproductions; single-pass verification correction approved 2026-09-19 by Jeff / tvproductions; B1.1 sequencing correction approved 2026-09-19 by Jeff / tvproductions; local development-cadence correction approved 2026-09-20 by Jeff / tvproductions
+- **Approval:** 2026-08-15 — Jeff / tvproductions; canonical workflow amendment approved 2026-09-05 by Jeff / tvproductions; single-pass verification correction approved 2026-09-19 by Jeff / tvproductions; B1.1 sequencing correction approved 2026-09-19 by Jeff / tvproductions; local development-cadence correction approved 2026-09-20 by Jeff / tvproductions; uv minimum-version correction approved 2026-09-27 by Jeff / tvproductions
 
 ## Authority and purpose
 
@@ -28,7 +28,7 @@ supersedes the earlier copied-catalog and lock delivery mechanism; the pinned
 `gz-skills@gz-skills` Codex plugin owns portable workflow behavior. This
 design still owns
 the project-specific commands, distribution artifacts, roadmap, release
-boundary, standard-library boundary, 3.12-3.14 compatibility matrix, and
+boundary, standard-library boundary, Python 3.12 compatibility gate, and
 `unittest` requirement. q4xpcc remains review input, not a code source or
 runtime/tooling dependency.
 
@@ -121,7 +121,7 @@ This increment will not:
 - inspect, compare, update, or otherwise manage the external Superpowers
   checkout through the dependency adapter or `gzs-update-dependencies`;
 - change the xplane-fdau runtime API or native FDR behavior;
-- run the Python 3.12-3.14 installed-wheel matrix during routine hygiene;
+- run the Python 3.12 installed-wheel check during routine hygiene;
 - make routine hygiene depend on network access;
 - infer Git-sync permission from implementation, installation, handoff, or any
   request other than explicit synchronization; permit a tag, package
@@ -192,7 +192,7 @@ remains a standalone full-suite command.
 
 `T2.2` supplies the deterministic project-owned command adapter used by
 canonical `gzs-update-dependencies` to inquire about and update repository
-dependency declarations, the lock, and the pinned `uv` tool version. It is
+dependency declarations, the lock, and the installed `uv` tool version. It is
 explicit and network-aware; routine hygiene remains offline. It does not create
 a competing canonical/local workflow skill.
 
@@ -201,26 +201,26 @@ status for:
 
 - the installed `uv` executable and repository `required-version`;
 - the newest stable `uv` release available from an official source;
-- the supported Python range `>=3.12,<3.15` and required 3.12, 3.13, and 3.14
-  verification matrix;
+- the supported Python range `>=3.12,<3.13` and required 3.12 source and
+  installed-wheel verification;
 - direct development constraints, locked direct and transitive versions,
   outdated classifications, yanked releases, and published vulnerability
   findings; and
 - the exact files and commands an apply would change or run.
 
 The live report, not a version captured while designing the skill, supplies the
-candidate `uv` target. Stable releases are preferred so the exact pin follows
-new releases without silently accepting prereleases. If the newest stable
-release is incompatible with the repository, the workflow retains the current
-verified pin and reports a blocker with evidence; it never weakens gates merely
+candidate `uv` target. Stable releases are preferred, while the project
+declares a minimum supported uv version and CI uses setup-uv without an exact
+version override. If the newest stable release is incompatible with the
+repository, the workflow retains the current verified executable and reports a blocker with evidence; it never weakens gates merely
 to advance the version.
 
 Apply mode requires a clean or fully scope-reviewed dependency surface and
 revalidates the status immediately before mutation. It then:
 
 1. verifies or updates the executable through its owning package manager;
-2. sets the project `uv.required-version` to the exact verified stable version;
-3. aligns `requires-python` to `>=3.12,<3.15`, the 3.12-3.14 classifiers, and
+2. preserves the project `uv.required-version` minimum, or replaces a legacy exact pin with a verified minimum;
+3. aligns `requires-python` to `>=3.12,<3.13`, the 3.12 classifier, and
    the required source/installed-wheel matrix;
 4. keeps ordinary development declarations compatible rather than exact-pins
    every package, unless a documented incompatibility requires a bound;
@@ -228,7 +228,7 @@ revalidates the status immediately before mutation. It then:
 6. synchronizes and checks the selected environment;
 7. reports unresolved outdated, yanked, vulnerability, and constraint findings;
 8. runs targeted dependency-policy and skill tests using `unittest`;
-9. runs full `repo-hygiene` and the 3.12-3.14 source/installed-wheel matrix; and
+9. runs full `repo-hygiene` and the 3.12 source/installed-wheel check; and
 10. proves dependency and refresh tooling is absent from wheel and sdist
    runtime payloads.
 
@@ -318,7 +318,7 @@ Tests inject official-source responses, command runners, and temporary project
 surfaces. They cover current, newer-stable, prerelease-only, incompatible,
 yanked, vulnerable, constrained, dirty, stale-plan, resolver-failure, and
 artifact-leak cases. They prove dry-run immutability, deterministic JSON, exact
-`uv` pinning, compatible ordinary declarations, full-lock refresh, 3.12-3.14
+`uv` minimum policy, compatible ordinary declarations, full-lock refresh, 3.12
 verification, and the absence of any Superpowers or release mutation path.
 
 ### T3.1
@@ -335,7 +335,7 @@ Tests never use the real repository or network.
 
 Complete verification runs the repository quality gate, strict documentation,
 pre-commit, fresh artifact validation, and independent review. The installed
-Python 3.12-3.14 matrix runs at the applicable child closeout, not inside every
+Python 3.12 source/installed-wheel check runs at the applicable child closeout, not inside every
 routine hygiene invocation.
 
 ## Documentation and session integration
@@ -373,13 +373,17 @@ After the implementation children are verified:
 
 ### T2.2 — Governed dependency and toolchain refresh
 
+The acceptance gates below record the completed 2026-09-19 delivery as
+verified then. The current refresh policy above supersedes its Python range
+and exact-`uv` pin for future runs.
+
 - Read-only human and JSON status discover the newest stable `uv`, supported
   Python matrix, locked graph, outdated releases, yanks, vulnerabilities, and
   constraints from official sources without mutation.
 - Apply pins the exact verified stable `uv`, aligns package metadata to
-  `>=3.12,<3.15`, retains compatible ordinary development constraints,
-  refreshes the complete lock, and fails closed on stale scope, incompatible
-  resolution, or unexplained security findings.
+  `>=3.12,<3.15`, retains compatible ordinary development constraints, refreshes the
+  complete lock, and fails closed on stale scope, incompatible resolution, or
+  unexplained security findings.
 - Targeted `unittest`, full repo hygiene, Python 3.12-3.14 source and
   installed-wheel verification, and exact wheel/sdist inventory all pass.
 - Superpowers, X-Plane deployment, staging, commit, push, tag, publication, and

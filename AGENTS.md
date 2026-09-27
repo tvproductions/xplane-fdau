@@ -49,10 +49,10 @@
   shipped resources, distribution metadata, lockfiles, build rules, or artifact
   validation changes; hygiene supplies that full gate, so do not run it
   separately on the same unchanged candidate. For documentation or governance
-  edits, run their focused checks. Do not add a full 3.12–3.14 source and
-  installed-wheel matrix to routine feature closeout. Use CI for broad
-  compatibility coverage; run a local version matrix only for
-  version-sensitive changes or an explicit release-readiness requirement.
+  edits, run their focused checks. Python 3.12 is the sole supported minor
+  version for now; use it for source and installed-wheel verification. Reserve
+  the local external wheel check for version-sensitive changes and release
+  readiness. Do not add unsupported Python minors to routine feature closeout.
 
 ### Exact local fast-forward verification
 
@@ -79,7 +79,7 @@ verification passes. This does not authorize remote sync, a tag, or release.
 
 - The `gz-skills@gz-skills` Codex plugin is the sole portable workflow authority.
   The trusted project `.codex/config.toml` pins marketplace `gz-skills` to
-  `https://github.com/tvproductions/gz-skills.git` at reviewed tag `v0.4.0`
+  `https://github.com/tvproductions/gz-skills.git` at reviewed tag `v0.5.0`
   and enables the plugin. Install through `codex plugin add gz-skills@gz-skills`
   if absent; verify ID, version, enabled state, and source with
   `codex plugin list --json` and `codex plugin marketplace list --json`.

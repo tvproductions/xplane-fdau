@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
 
-PYTHONS = ("3.12", "3.13", "3.14")
+PYTHONS = ("3.12",)
 PACKAGE = "xplane_fdau"
 Runner = Callable[[tuple[str, ...], Path], int]
 
@@ -45,7 +45,7 @@ class MatrixCommand:
 
 @dataclass(frozen=True, slots=True)
 class MatrixResult:
-    """Evidence from one build and the three supported interpreters."""
+    """Evidence from one build and the supported interpreter."""
 
     success: bool
     commands: tuple[MatrixCommand, ...]
@@ -125,13 +125,17 @@ def _inspect_payload(wheel: Path, sdist: Path, version: str) -> None:
             if parts[0] not in wheel_roots:
                 raise ValueError(f"wheel contains repository tooling or unexpected member: {name}")
     sdist_root = f"{PACKAGE}-{version}"
-    allowed_sdist = {PACKAGE, "PKG-INFO", "pyproject.toml", "pyproject.toml.orig", "README.md", "LICENSE"}
+    allowed_sdist = {"PKG-INFO", "pyproject.toml", "pyproject.toml.orig", "README.md", "LICENSE"}
     with tarfile.open(sdist, "r:gz") as archive:
         for member in archive.getmembers():
             parts = _member_parts(member.name.rstrip("/"), label="sdist")
             if parts == (sdist_root,) and member.isdir():
                 continue
-            if parts[0] != sdist_root or len(parts) < 2 or parts[1] not in allowed_sdist:
+            if parts[0] != sdist_root or len(parts) < 2:
+                raise ValueError(f"sdist contains repository tooling or unexpected member: {member.name}")
+            if parts[1] == "src" and ((len(parts) == 2 and member.isdir()) or (len(parts) >= 3 and parts[2] == PACKAGE)):
+                continue
+            if len(parts) != 2 or parts[1] not in allowed_sdist:
                 raise ValueError(f"sdist contains repository tooling or unexpected member: {member.name}")
 
 

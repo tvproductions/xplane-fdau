@@ -65,7 +65,7 @@ class UpdateError(RuntimeError):
         self.report = report
 
 
-SUPPORTED_PYTHON = (Version("3.12"), Version("3.13"), Version("3.14"))
+SUPPORTED_PYTHON = (Version("3.12"),)
 MANAGED_FILES = (
     ".python-version",
     ".github/workflows/ci.yml",
@@ -294,8 +294,8 @@ def collect_status(root: Path, runner: Runner, opener: Opener) -> dict[str, Any]
     if installed is None:
         blockers.append({"kind": "source", "reason": f"unverified installed uv: {error.strip()}"})
     required = project.get("tool", {}).get("uv", {}).get("required-version")
-    if required is not None and (not isinstance(required, str) or not re.fullmatch(r"==\d+\.\d+\.\d+", required)):
-        blockers.append({"kind": "source", "reason": "invalid exact uv requirement"})
+    if required is not None and (not isinstance(required, str) or not re.fullmatch(r"(?:==|>=)\d+\.\d+\.\d+", required)):
+        blockers.append({"kind": "source", "reason": "invalid uv requirement"})
     tree_value = _json_result(runner, TREE_COMMAND, root, blockers)
     metadata_value = _json_result(runner, METADATA_COMMAND, root, blockers)
     tree = _preview_resolution(tree_value, TREE_COMMAND, blockers) if tree_value is not None else {}
@@ -392,9 +392,6 @@ def collect_status(root: Path, runner: Runner, opener: Opener) -> dict[str, Any]
             build_requirements.append((value, parsed))
     if len(build_requirements) != 1:
         blockers.append({"kind": "source", "reason": "expected one uv_build build requirement"})
-    elif candidate is not None and candidate not in build_requirements[0][1].specifier:
-        blockers.append({"kind": "incompatible-uv-build", "version": candidate, "requirement": build_requirements[0][0]})
-        candidate = installed
     branch, reviewed_paths = _scope(root, runner, blockers)
     proposed_files = list(MANAGED_FILES)
     proposed_commands = [["uv", "lock", "--upgrade"], ["uv", "sync", "--all-groups", "--locked"], ["uv", "lock", "--check"]]
@@ -449,7 +446,7 @@ def replace_exact(source: str, old: str, new: str) -> str:
     return source.replace(old, new)
 
 
-def _workflow_edit(source: str, allowed_current: set[str], candidate: str) -> str:
+def _workflow_edit(source: str, allowed_current: set[str]) -> str:
     lines = source.splitlines(keepends=True)
     starts = [i for i, line in enumerate(lines) if "- uses: astral-sh/setup-uv@" in line]
     if not starts:
@@ -460,14 +457,18 @@ def _workflow_edit(source: str, allowed_current: set[str], candidate: str) -> st
             (i for i in range(start + 1, len(lines)) if len(lines[i]) - len(lines[i].lstrip()) == indent and lines[i].lstrip().startswith("- ")),
             len(lines),
         )
-        matches = [i for i in range(start + 1, end) if re.fullmatch(r'\s*version: ["\']\d+\.\d+\.\d+["\']\s*', lines[i])]
+        matches = [i for i in range(start + 1, end) if re.match(r"\s*version:", lines[i])]
+        if not matches:
+            continue
         if len(matches) != 1:
-            raise ScopeError("setup-uv requires one exact version anchor")
+            raise ScopeError("setup-uv has multiple version anchors")
         index = matches[0]
-        version = re.search(r"version: [\"'](\d+\.\d+\.\d+)[\"']", lines[index])
-        if version is None or version.group(1) not in allowed_current:
+        version = re.fullmatch(r'\s*version: ["\']([^"\']+)["\']\s*', lines[index])
+        if version is None or version.group(1) not in allowed_current | {"latest", "latest-known"}:
             raise ScopeError("setup-uv version differs from reviewed uv pins")
-        lines[index] = lines[index].replace(version.group(1), candidate)
+        lines.pop(index)
+        if lines[index - 1].strip() == "with:" and (index == len(lines) or len(lines[index]) - len(lines[index].lstrip()) <= indent + 2):
+            lines.pop(index - 1)
     return "".join(lines)
 
 
@@ -484,33 +485,32 @@ def _prepare_edits(root: Path, report: dict[str, Any]) -> dict[Path, bytes]:
     except tomllib.TOMLDecodeError as error:
         raise ScopeError(f"invalid project TOML: {error}") from error
     python_policy = project.get("project", {}).get("requires-python")
-    if python_policy not in {">=3.12", ">=3.12,<3.15"}:
+    if python_policy not in {">=3.12", ">=3.12,<3.15", ">=3.12,<3.13"}:
         raise ScopeError("unexpected Python policy")
     if source.count(f'requires-python = "{python_policy}"') != 1:
         raise ScopeError("duplicate or missing Python policy anchor")
-    if python_policy != ">=3.12,<3.15":
-        source = replace_exact(source, 'requires-python = ">=3.12"', 'requires-python = ">=3.12,<3.15"')
+    if python_policy != ">=3.12,<3.13":
+        source = replace_exact(source, f'requires-python = "{python_policy}"', 'requires-python = ">=3.12,<3.13"')
     uv_section = project.get("tool", {}).get("uv", {})
     required = uv_section.get("required-version")
     if required is None:
-        source = replace_exact(source, "[tool.uv.build-backend]", f'[tool.uv]\nrequired-version = "=={candidate}"\n\n[tool.uv.build-backend]')
+        source = replace_exact(source, "[tool.uv.build-backend]", f'[tool.uv]\nrequired-version = ">={candidate}"\n\n[tool.uv.build-backend]')
     elif isinstance(required, str) and required == report["uv"]["required"] and re.fullmatch(r"==\d+\.\d+\.\d+", required):
-        if required != f"=={candidate}":
-            source = replace_exact(source, f'required-version = "{required}"', f'required-version = "=={candidate}"')
+        source = replace_exact(source, f'required-version = "{required}"', f'required-version = ">={candidate}"')
+    elif isinstance(required, str) and re.fullmatch(r">=\d+\.\d+\.\d+", required):
+        pass
     else:
         raise ScopeError("unexpected uv required-version anchor")
     build_reqs = project.get("build-system", {}).get("requires", [])
-    if not isinstance(build_reqs, list) or not any(
-        isinstance(item, str) and Requirement(item).name == "uv_build" and candidate in Requirement(item).specifier for item in build_reqs
-    ):
-        raise ScopeError("candidate incompatible with uv_build requirement")
+    if not isinstance(build_reqs, list) or not any(isinstance(item, str) and Requirement(item).name == "uv_build" for item in build_reqs):
+        raise ScopeError("uv_build requirement missing")
     prepared = {project_path: source.encode("utf-8")}
     current_pins = {installed}
     if isinstance(required, str) and re.fullmatch(r"==\d+\.\d+\.\d+", required):
         current_pins.add(required.removeprefix("=="))
     for relative in (".github/workflows/ci.yml", ".github/workflows/release-readiness.yml"):
         path = root / relative
-        prepared[path] = _workflow_edit(path.read_bytes().decode("utf-8"), current_pins, candidate).encode("utf-8")
+        prepared[path] = _workflow_edit(path.read_bytes().decode("utf-8"), current_pins).encode("utf-8")
     return prepared
 
 
@@ -599,7 +599,11 @@ def apply_status(
             f"refreshed graph has unresolved evidence: {after['pre_apply_blockers']} {adverse} {unresolved}",
             result,
         )
-    if after["python"]["declared"] != ">=3.12,<3.15" or after["uv"]["required"] != f"=={candidate}":
+    if (
+        after["python"]["declared"] != ">=3.12,<3.13"
+        or not isinstance(after["uv"]["required"], str)
+        or not re.fullmatch(r">=\d+\.\d+\.\d+", after["uv"]["required"])
+    ):
         result["status"] = "failed"
         raise UpdateError("refreshed project policy differs from reviewed target", result)
     run(

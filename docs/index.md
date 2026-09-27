@@ -6,9 +6,8 @@ and domain behavior, but this project never connects to X-Plane itself. It is
 provider-neutral among X-Plane access paths, not simulator-neutral.
 
 Version `0.1.0` is unreleased and has no runtime dependencies. The tested
-compatibility range is Python 3.12 through 3.14. Python 3.12 is the core's
-minimum syntax and API discipline so it can be composed into a compatible
-XPPython3 client; an exact embedded-interpreter pin belongs to that client.
+compatibility target is the Python 3.12 minor line, matching XPPython3's
+embedded interpreter. An exact patch-version pin belongs to the client.
 The project does not import a Web API client, XPPython3, `xp`, or XPLM.
 
 ## Core boundary

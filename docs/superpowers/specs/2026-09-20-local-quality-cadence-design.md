@@ -40,9 +40,9 @@ and release-readiness work.
    `uv run python tools/quality.py check` once at closeout without full
    hygiene. Run strict MkDocs for documentation changes and the strict backlog
    audit for governance changes.
-5. Run the local Python 3.12-3.14 source/installed-wheel matrix only for
-   version-sensitive changes or explicit release readiness. CI continues
-   broad compatibility verification.
+5. Run the Python 3.12 source/installed-wheel check only for
+   version-sensitive changes or explicit release readiness. CI verifies
+   the supported minor version.
 
 The full `quality.py check` command and its thresholds are unchanged. Hygiene
 continues to fail closed, preserve failed artifacts, and avoid network access

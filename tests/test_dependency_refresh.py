@@ -220,15 +220,15 @@ class DependencyStatusTests(unittest.TestCase):
         report = collect_status(self.fixture.root, self.fixture.runner, self.fixture.opener)
         self.assertIn("source", {item["kind"] for item in report["pre_apply_blockers"]})
 
-    def test_uv_candidate_outside_build_backend_bound_is_status_blocker(self) -> None:
+    def test_newer_uv_can_use_compatible_separately_resolved_build_backend(self) -> None:
         self.fixture.indexes["uv"] = _index("uv", ("0.12.17", "0.13.0"))
         report = collect_status(self.fixture.root, self.fixture.runner, self.fixture.opener)
         self.assertEqual(report["uv"]["newest_stable"], "0.13.0")
-        self.assertEqual(report["uv"]["candidate"], "0.12.17")
-        self.assertIn("incompatible-uv-build", {item["kind"] for item in report["pre_apply_blockers"]})
+        self.assertEqual(report["uv"]["candidate"], "0.13.0")
+        self.assertNotIn("incompatible-uv-build", {item["kind"] for item in report["pre_apply_blockers"]})
 
     def test_incompatible_uv_release_is_blocker_and_retains_installed_version(self) -> None:
-        self.fixture.indexes["uv"]["files"][1]["requires-python"] = ">=3.12,<3.14"
+        self.fixture.indexes["uv"]["files"][1]["requires-python"] = ">=3.13"
         report = collect_status(self.fixture.root, self.fixture.runner, self.fixture.opener)
         self.assertEqual(report["uv"]["candidate"], "0.12.17")
         self.assertIn("incompatible-uv", {item["kind"] for item in report["pre_apply_blockers"]})
@@ -282,8 +282,6 @@ class DependencyStatusTests(unittest.TestCase):
         rendered = output.getvalue()
         for expected in (
             "3.12",
-            "3.13",
-            "3.14",
             "dev",
             "foo>=1",
             "universal-only",
@@ -470,7 +468,7 @@ class DependencyApplyTests(unittest.TestCase):
         self.assertTrue(remaining[0]["explained"])
         constraints = remaining[0]["constraints"]
         assert isinstance(constraints, list) and isinstance(constraints[0], dict)
-        self.assertEqual(constraints[0]["applies_python"], ["3.12", "3.13", "3.14"])
+        self.assertEqual(constraints[0]["applies_python"], ["3.12"])
         self.assertEqual(constraints[0]["applies_platforms"], ["linux"])
 
     def test_candidate_python_requirement_explains_unavailable_newest_release(self) -> None:
@@ -482,14 +480,14 @@ class DependencyApplyTests(unittest.TestCase):
         constraints = remaining[0]["constraints"]
         assert isinstance(constraints, list) and isinstance(constraints[0], dict)
         self.assertEqual(constraints[0]["kind"], "candidate-python")
-        self.assertEqual(constraints[0]["applies_python"], ["3.12", "3.13", "3.14"])
+        self.assertEqual(constraints[0]["applies_python"], ["3.12"])
 
     def _clean_after(self, before: dict[str, Any]) -> dict[str, Any]:
         after = copy.deepcopy(before)
         after["current_findings"] = []
         after["pre_apply_blockers"] = []
-        after["python"]["declared"] = ">=3.12,<3.15"
-        after["uv"]["required"] = "==0.12.17"
+        after["python"]["declared"] = ">=3.12,<3.13"
+        after["uv"]["required"] = ">=0.12.17"
         for dependency in after["dependencies"]:
             dependency["outdated"] = False
             dependency["newest_stable"] = dependency["version"]
@@ -524,13 +522,29 @@ class DependencyApplyTests(unittest.TestCase):
         updated = project.read_text(encoding="utf-8")
         self.assertEqual(
             updated,
-            original.replace('requires-python = ">=3.12"', 'requires-python = ">=3.12,<3.15"').replace(
-                'required-version = "==0.12.16"', 'required-version = "==0.12.17"'
+            original.replace('requires-python = ">=3.12"', 'requires-python = ">=3.12,<3.13"').replace(
+                'required-version = "==0.12.16"', 'required-version = ">=0.12.17"'
             ),
         )
         for relative in ("ci.yml", "release-readiness.yml"):
             workflow = (self.fixture.root / ".github/workflows" / relative).read_text(encoding="utf-8")
-            self.assertIn('version: "0.12.17"', workflow)
+            self.assertNotRegex(workflow, r"(?m)^\s+version: [\"']\d+\.\d+\.\d+[\"']$")
+
+    def test_refresh_preserves_existing_uv_minimum_and_unpinned_workflows(self) -> None:
+        project = self.fixture.root / "pyproject.toml"
+        project.write_text(
+            project.read_text(encoding="utf-8").replace('required-version = "==0.12.16"', 'required-version = ">=0.12.16"'),
+            encoding="utf-8",
+        )
+        for relative in ("ci.yml", "release-readiness.yml"):
+            path = self.fixture.root / ".github/workflows" / relative
+            path.write_text("- uses: astral-sh/setup-uv@v10.1.0\n", encoding="utf-8")
+        report = collect_status(self.fixture.root, self.fixture.runner, self.fixture.opener)
+        prepared = refresh._prepare_edits(self.fixture.root, report)
+        self.assertEqual(prepared[project], project.read_bytes().replace(b'>=3.12"', b'>=3.12,<3.13"'))
+        for relative in ("ci.yml", "release-readiness.yml"):
+            path = self.fixture.root / ".github/workflows" / relative
+            self.assertEqual(prepared[path], path.read_bytes())
 
     def test_standalone_update_probes_then_verifies_before_edit(self) -> None:
         base_runner = self.fixture.runner

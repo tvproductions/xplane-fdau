@@ -564,7 +564,13 @@ class BacklogAuthorityTests(unittest.TestCase):
                     "[design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md)",
                     spec,
                 )
-                self.assertEqual("—", plan)
+                if identity(child) == "C1.1":
+                    self.assertEqual(
+                        "[draft plan](docs/superpowers/plans/2026-09-27-c1-1-canonical-json-number-encoding.md)",
+                        plan,
+                    )
+                else:
+                    self.assertEqual("—", plan)
                 self.assertIn(gates, {"0/4", "0/5"})
                 self.assertEqual(("—", "—", "—"), (review, resume, reason))
                 body = section_body(BACKLOG, f"{identity(row[0])} — {row[1]}", level=3)
@@ -931,6 +937,7 @@ class GovernanceArtifactTests(unittest.TestCase):
                 "2026-09-07-t1-6-skill-session-hygiene-artifact-closure.md",
                 "2026-09-19-t2-1-repository-hygiene-artifact-verification.md",
                 "2026-09-19-t2-2-dependency-toolchain-refresh.md",
+                "2026-09-27-c1-1-canonical-json-number-encoding.md",
             },
             set(active_plans),
         )
@@ -949,6 +956,11 @@ class GovernanceArtifactTests(unittest.TestCase):
         self.assertEqual("`T2.1`", active_plans["2026-09-19-t2-1-repository-hygiene-artifact-verification.md"]["Roadmap child"])
         self.assertEqual("`T2.2`", active_plans["2026-09-19-t2-2-dependency-toolchain-refresh.md"]["Roadmap child"])
         self.assertEqual("completed", active_plans["2026-09-19-t2-2-dependency-toolchain-refresh.md"]["Status"])
+        c1_plan = active_plans["2026-09-27-c1-1-canonical-json-number-encoding.md"]
+        self.assertEqual("`C1.1`", c1_plan["Roadmap child"])
+        self.assertEqual("draft", c1_plan["Status"])
+        self.assertEqual("—", c1_plan["Approval"])
+        self.assertEqual("—", c1_plan["Completion evidence"])
         self.assertEqual(
             "`.superpowers/sdd/2026-09-19-t2-2-dependency-toolchain-refresh/completion.md`",
             active_plans["2026-09-19-t2-2-dependency-toolchain-refresh.md"]["Completion evidence"],

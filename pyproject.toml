@@ -8,12 +8,10 @@ license-files = ["LICENSE"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent",
     "Topic :: Games/Entertainment :: Simulation",
 ]
-requires-python = ">=3.12,<3.15"
+requires-python = ">=3.12,<3.13"
 dependencies = []
 
 [project.scripts]
@@ -54,7 +52,7 @@ requires = ["uv_build>=0.12.17,<0.13"]
 build-backend = "uv_build"
 
 [tool.uv]
-required-version = "==0.12.17"
+required-version = ">=0.12.17"
 
 [tool.uv.build-backend]
 module-root = "src"

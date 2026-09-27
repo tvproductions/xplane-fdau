@@ -68,9 +68,9 @@ immediately before deleting that exact directory. On any artifact or final
 status failure, the directory is preserved and its path is reported. The gate
 does not format, update, stage, commit, or remove user-authored files.
 
-The local 3.12, 3.13, and 3.14 source and installed-wheel matrix is reserved
-for version-sensitive changes and release readiness, outside routine hygiene.
-CI supplies broad compatibility coverage. Use the `code-quality`,
+The Python 3.12 source and installed-wheel check is reserved for
+version-sensitive changes and release readiness, outside routine hygiene.
+CI verifies the supported minor version. Use the `code-quality`,
 `documentation`, and `release` project skills for their focused commands.
 Use `unittest` only.
 

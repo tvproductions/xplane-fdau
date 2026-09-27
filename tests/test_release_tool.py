@@ -62,7 +62,7 @@ class ReleaseToolTests(unittest.TestCase):
         tar_remove: set[str] | None = None,
         tar_link: tuple[str, str] | None = None,
     ) -> None:
-        metadata = wheel_metadata or b"Metadata-Version: 2.4\nName: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.12,<3.15\n"
+        metadata = wheel_metadata or b"Metadata-Version: 2.4\nName: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.12,<3.13\n"
         record_name = "xplane_fdau-0.1.0.dist-info/RECORD"
         wheel_files = self._package_files()
         wheel_files.update(
@@ -178,7 +178,7 @@ class ReleaseToolTests(unittest.TestCase):
         self.assertEqual("xplane_fdau-0.1.0.tar.gz", artifacts.sdist.name)
 
     def test_check_dist_accepts_build_backend_requires_python_spacing(self) -> None:
-        metadata = b"Metadata-Version: 2.4\nName: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.12, <3.15\n"
+        metadata = b"Metadata-Version: 2.4\nName: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.12, <3.13\n"
         with tempfile.TemporaryDirectory() as raw:
             directory = Path(raw)
             self._make_dist(directory, wheel_metadata=metadata)
@@ -244,11 +244,11 @@ class ReleaseToolTests(unittest.TestCase):
 
     def test_check_dist_rejects_hostile_metadata_and_internal_wheel_tag(self) -> None:
         cases = {
-            "x-name": b"Metadata-Version: 2.4\nX-Name: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.12,<3.15\n",
-            "dev-version": b"Metadata-Version: 2.4\nName: xplane-fdau\nVersion: 0.1.0.dev1\nRequires-Python: >=3.12,<3.15\n",
+            "x-name": b"Metadata-Version: 2.4\nX-Name: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.12,<3.13\n",
+            "dev-version": b"Metadata-Version: 2.4\nName: xplane-fdau\nVersion: 0.1.0.dev1\nRequires-Python: >=3.12,<3.13\n",
             "broadened-python": b"Metadata-Version: 2.4\nName: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.11\n",
             "unbounded-python": b"Metadata-Version: 2.4\nName: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.12\n",
-            "lowercase-requires-dist": b"Metadata-Version: 2.4\nName: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.12,<3.15\nrequires-dist: hostile\n",
+            "lowercase-requires-dist": b"Metadata-Version: 2.4\nName: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.12,<3.13\nrequires-dist: hostile\n",
         }
         for name, metadata in cases.items():
             with self.subTest(name=name), tempfile.TemporaryDirectory() as raw:
@@ -280,8 +280,8 @@ class ReleaseToolTests(unittest.TestCase):
 
     def test_release_version_is_pinned_and_metadata_defects_are_rejected(self) -> None:
         malformed = {
-            "space-before-colon": b"Metadata-Version: 2.4\nName: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.12,<3.15\nRequires-Dist : hostile\n",
-            "non-header": b"Metadata-Version: 2.4\nName: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.12,<3.15\nthis is not a header\n",
+            "space-before-colon": b"Metadata-Version: 2.4\nName: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.12,<3.13\nRequires-Dist : hostile\n",
+            "non-header": b"Metadata-Version: 2.4\nName: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.12,<3.13\nthis is not a header\n",
         }
         for name, metadata in malformed.items():
             with self.subTest(name=name), tempfile.TemporaryDirectory() as raw:
@@ -384,7 +384,7 @@ class ReleaseToolTests(unittest.TestCase):
                 release.check_dist(Path(raw))
 
     def test_check_dist_rejects_metadata_duplicates_with_mixed_case(self) -> None:
-        metadata = b"Metadata-Version: 2.4\nName: xplane-fdau\nname: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.12,<3.15\n"
+        metadata = b"Metadata-Version: 2.4\nName: xplane-fdau\nname: xplane-fdau\nVersion: 0.1.0\nRequires-Python: >=3.12,<3.13\n"
         with tempfile.TemporaryDirectory() as raw:
             self._make_dist(Path(raw), wheel_metadata=metadata)
             with self.assertRaisesRegex(release.ReleaseError, "Name"):

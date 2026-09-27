@@ -20,7 +20,7 @@ from tools.dependency_matrix import (
 )
 
 
-PYTHONS = ("3.12", "3.13", "3.14")
+PYTHONS = ("3.12",)
 VERSION = "0.1.0"
 WHEEL_NAME = "xplane_fdau-0.1.0-py3-none-any.whl"
 SDIST_NAME = "xplane_fdau-0.1.0.tar.gz"
@@ -72,7 +72,10 @@ class MatrixRunTests(unittest.TestCase):
             root_member = tarfile.TarInfo("xplane_fdau-0.1.0")
             root_member.type = tarfile.DIRTYPE
             archive.addfile(root_member)
-            for name in ("xplane_fdau-0.1.0/xplane_fdau/__init__.py", *(["xplane_fdau-0.1.0/tools/dependency_refresh.py"] if sdist_leak else [])):
+            src_member = tarfile.TarInfo("xplane_fdau-0.1.0/src")
+            src_member.type = tarfile.DIRTYPE
+            archive.addfile(src_member)
+            for name in ("xplane_fdau-0.1.0/src/xplane_fdau/__init__.py", *(["xplane_fdau-0.1.0/src/tools/dependency_refresh.py"] if sdist_leak else [])):
                 payload = b"test payload"
                 member = tarfile.TarInfo(name)
                 member.size = len(payload)
@@ -173,7 +176,7 @@ class MatrixRunTests(unittest.TestCase):
         self.assertTrue(result.success, result.error)
         assert self.artifact_dir is not None
         wheel = self.artifact_dir / WHEEL_NAME
-        self.assertEqual(len(self.calls), 25)
+        self.assertEqual(len(self.calls), 11)
         export = self.calls[3][0]
         self.assertEqual(export[:3], ("uv", "--quiet", "export"))
         self.assertEqual(export[-1], str(self.artifact_dir / "source-requirements.txt"))
@@ -199,7 +202,7 @@ class MatrixRunTests(unittest.TestCase):
         def runner(command: tuple[str, ...], cwd: Path) -> int:
             result = self.runner(command, cwd)
             if self.artifact_dir is not None and command == source_test_command(
-                installed_interpreter(self.artifact_dir / "source-3.13", __import__("os").name)
+                installed_interpreter(self.artifact_dir / "source-3.12", __import__("os").name)
             ):
                 return 7
             return result
@@ -207,7 +210,7 @@ class MatrixRunTests(unittest.TestCase):
         result = run_matrix(self.root, runner, self.make_temp)
         self.assertFalse(result.success)
         assert self.artifact_dir is not None
-        self.assertEqual(result.commands[-1].command, source_test_command(installed_interpreter(self.artifact_dir / "source-3.13", __import__("os").name)))
+        self.assertEqual(result.commands[-1].command, source_test_command(installed_interpreter(self.artifact_dir / "source-3.12", __import__("os").name)))
         self.assertEqual(result.commands[-1].exit_code, 7)
         self.assertEqual(result.preserved_failure_paths, (self.artifact_dir,))
         assert self.artifact_dir is not None
@@ -217,7 +220,7 @@ class MatrixRunTests(unittest.TestCase):
         def runner(command: tuple[str, ...], cwd: Path) -> int:
             self.runner(command, cwd)
             if command[0].endswith("python.exe") or command[0].endswith("/python"):
-                if command[-1] == VERSION and "venv-3.14" in command[0]:
+                if command[-1] == VERSION and "venv-3.12" in command[0]:
                     assert self.artifact_dir is not None
                     self.artifact_dir.rename(self.external / "preserved-original")
                     self.artifact_dir.mkdir()

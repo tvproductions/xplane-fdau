@@ -1,7 +1,7 @@
 # xplane-fdau Backlog
 
 - **Status:** Active delivery ledger and Superpowers entry point
-- **Updated:** 2026-09-20
+- **Updated:** 2026-09-27
 
 Read `ROADMAP.md` for architecture order and dependencies. Then use this file to
 select one primary child slice whose prerequisites are verified. Each child
@@ -54,7 +54,7 @@ The child slices below refine this sequence without weakening or reordering it.
 | Child | Outcome | Status | Depends on | Spec | Plan | Gates | Review | Resume | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `B1.1` | Source-layout migration and installed-import isolation | `verified` | `T2.2` | [design](docs/superpowers/specs/2026-08-09-src-layout-migration-design.md) | [plan](docs/superpowers/plans/2026-08-09-src-layout-migration.md) | 5/5 | [review](.superpowers/sdd/2026-08-09-src-layout-migration/review.md) | — | — |
-| `C1.1` | Canonical JSON and binary64/integer encoding | `specified` | `B1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C1.1` | Canonical JSON and binary64/integer encoding | `specified` | `B1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [draft plan](docs/superpowers/plans/2026-09-27-c1-1-canonical-json-number-encoding.md) | 0/4 | — | — | — |
 | `C1.2` | Identity, hashing, references, authority, and provenance | `specified` | `C1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C1.3` | Typed values and content-addressed payload references | `specified` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C1.4` | Clock domains, UTC instants, anchors, and simulator timing | `specified` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
@@ -287,7 +287,7 @@ The child slices below refine this sequence without weakening or reordering it.
 - [ ] Complete `unittest` and repository quality gates pass.
 - [ ] Fresh wheel/sdist contain exact schemas, fixtures/resources, and no runtime
       dependency or provider content.
-- [ ] Installed-wheel smoke passes on Python 3.12, 3.13, and 3.14 outside the
+- [ ] Installed-wheel smoke passes on supported Python 3.12 outside the
       checkout.
 - [ ] Independent review has no unresolved load-bearing finding.
 - [ ] Version `0.1.0` remains unreleased and no release tag or package
@@ -363,7 +363,7 @@ The child slices below refine this sequence without weakening or reordering it.
 - [ ] Acquisition quality and operational findings are distinct types with
       explicit provenance and no simulator or host imports.
 - [ ] Schema, API, fixture, installed-wheel, and independent-review evidence
-      passes on Python 3.12, 3.13, and 3.14.
+      passes on supported Python 3.12.
 
 ### F1.2 — Evidence qualification, flight/phase segmentation, and derived-parameter provenance
 
@@ -385,7 +385,7 @@ The child slices below refine this sequence without weakening or reordering it.
 - [ ] Detection and severity classification are deterministic for live-fed and
       replayed canonical evidence with identical inputs.
 - [ ] Boundary, missing-evidence, derived-value, and conformance fixtures plus
-      independent review pass across Python 3.12-3.14.
+      independent review pass on supported Python 3.12.
 
 ### F1.4 — Candidate/validated finding lifecycle and auditable review records
 
@@ -417,7 +417,7 @@ The child slices below refine this sequence without weakening or reordering it.
       ports that leave enforcement and organizational authority to clients.
 - [ ] End-to-end canonical evidence through findings, review, aggregation, and
       reports is deterministic and preserves all version boundaries.
-- [ ] Security, privacy, artifact-exclusion, Python 3.12-3.14, documentation,
+- [ ] Security, privacy, artifact-exclusion, Python 3.12, documentation,
       and independent-review gates pass without regulatory claims.
 
 ### T1.1 — Markdown authority contract and explicit inventory normalization

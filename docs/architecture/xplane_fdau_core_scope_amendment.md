@@ -229,33 +229,31 @@ instead of reconstructing or guessing it in each client.
 
 ## Python compatibility policy
 
-An exact project-wide Python `3.12.x` pin would unnecessarily constrain the
-transport-free core and external `xplane-webapi` compositions. The core instead
-uses a compatibility floor and a tested version range:
+For now the core supports the Python 3.12 minor line. XPPython3 embeds Python
+3.12, making that the practical interpreter target for the primary X-Plane
+composition. This is a minor-version compatibility policy, not an exact
+`3.12.x` patch pin:
 
-- Python 3.12 is the minimum compatibility floor and the syntax/API discipline
-  for code that may be composed into an XPPython3 client;
-- Python 3.12 is a mandatory source and installed-wheel verification target;
-- Python 3.13 and 3.14 are also source and installed-wheel verification targets;
-  and
-- support for a later minor version is added deliberately through a reviewed
-  metadata, CI, lockfile, and installed-artifact update.
+- Python 3.12 is the syntax/API discipline for code composed into an XPPython3
+  client and the mandatory source and installed-wheel verification target;
+- Python 3.13 and newer are outside the declared support range for now; and
+- support for another minor version requires a reviewed metadata, CI, lockfile,
+  and installed-artifact update when a concrete client need warrants it.
 
 Until that next compatibility review, distribution metadata should express
-`>=3.12,<3.15`. The upper bound marks the end of the verified range; it is not
+`>=3.12,<3.13`. The upper bound marks the end of the supported range; it is not
 an assertion that later Python versions are intrinsically incompatible.
 
 The distribution must not require every consumer to run the same interpreter.
 Code imported into an XPPython3 process necessarily runs on, and must be
 compatible with, that process's embedded interpreter. An external
-`xplane-webapi` client may use any Python version supported by both projects.
+`xplane-webapi` client may use Python 3.12 when composing with this core.
 The concrete XPPython3 client owns any exact interpreter pin needed for its
 deployable plugin artifact.
 
-This compatibility policy is separate from pinning the repository's `uv` CLI
-version for reproducible maintenance. The `uv` pin should be refreshed toward
-new stable releases through the governed dependency-refresh workflow rather
-than allowed to become permanent infrastructure drift.
+This compatibility policy is separate from the repository's minimum `uv` CLI
+version. The minimum should not hard-pin an old release or impede the governed
+dependency-refresh workflow.
 
 ## Roadmap consequences
 
@@ -271,7 +269,7 @@ The roadmap and backlog implement this decision as follows:
 - retain external organizational governance as a boundary on regulatory and
   program claims, not as ownership of the reusable analysis code;
 - keep q4xpcc and `xplane-webapi` integrations as external client/adapter work;
-- record the multi-version Python compatibility and installed-wheel gates; and
+- record the Python 3.12 source and installed-wheel gates; and
 - add the approved dependency-refresh skill parity work without comparing or
   vendoring the external Superpowers checkout.
 

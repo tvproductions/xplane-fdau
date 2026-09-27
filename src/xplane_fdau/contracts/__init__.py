@@ -1,5 +1,7 @@
 """Shared FDAU contract primitives."""
 
+from .canonical_json import canonical_bytes
+
 from .errors import (
     CanonicalJSONError,
     ContractHashError,
@@ -18,4 +20,5 @@ __all__ = [
     "CanonicalJSONError",
     "UnsupportedContractVersionError",
     "ContractHashError",
+    "canonical_bytes",
 ]

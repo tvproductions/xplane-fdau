@@ -1,6 +1,49 @@
 # Project Handoff
 
-## Resume point — 2026-09-27
+## Resume point — 2026-09-27, after C1.1
+
+Observed 2026-09-27 23:28 UTC, before this handoff and Git-sync commit: `main`
+was clean at `93a04156d460e920e2711ae97e514ca53f6bac3b`, one commit ahead
+of `origin/main`. Only the main worktree existed. Recheck Git and backlog state
+on return because the requested ordinary sync will create a later commit.
+
+**Current objective:** `C1.2` identity, hashing, references, authority, and
+provenance is the first dependency-ready local child. It is `specified`, has
+0/4 delivery gates, and has no implementation plan. The governing
+[canonical-contract design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md)
+is approved. `BACKLOG.md` remains the delivery-state authority; no child is
+currently selected.
+
+**Latest result:** `C1.1` canonical JSON and binary64/integer encoding is
+`verified` with 4/4 gates and accepted independent review. Its
+[completed plan](docs/superpowers/plans/2026-09-27-c1-1-canonical-json-number-encoding.md),
+[completion record](.superpowers/sdd/2026-09-27-c1-1-canonical-json-number-encoding/completion.md),
+and [review](.superpowers/sdd/2026-09-27-c1-1-canonical-json-number-encoding/review.md)
+are committed. The completed C1.1 selection was cleared in `93a0415`; this
+local commit is the one pending sync at observation time. Strict backlog
+`audit` and `next` on 2026-09-27 found no findings and recommended
+`action=write_plan child=C1.2`.
+
+**First permissible action on return:** Read `AGENTS.md` and its linked
+authorities; run backlog `audit` and `next`. Use
+`superpowers:writing-plans` to create a single-child C1.2 implementation plan
+from the approved design. Expected result: a reviewable plan with exact files,
+test-first steps, verification, and commit boundaries. Obtain plan approval
+before selecting C1.2 or starting implementation. Stop on an audit finding,
+changed authority, or missing approval.
+
+**Maintenance and boundaries:** The explicit 2026-09-27 dependency refresh
+passed its guarded apply, focused `unittest`, full offline hygiene, and external
+Python 3.12 source and installed-wheel checks. `uv lock --upgrade` changed no
+tracked files. Four older transitive packages remain explained by Wily/Radon
+version constraints. The project supports only Python 3.12
+(`>=3.12,<3.13`); the local virtual environment uses 3.12.13. The installed
+`gz-skills@gz-skills` plugin remains verified at the project pin v0.5.0.
+Temporary refresh artifacts under the system temp directory are local-only.
+No tag, package publication, GitHub release, or q4xpcc edit was authorized.
+Release gate `G1` remains waiting.
+
+## Prior resume point — 2026-09-27, before C1.1
 
 Observed 2026-09-27 20:58 UTC, before this handoff commit: `main` was clean at
 `b6f55eb92ede85df07fe8125d0cd419d00ae59ac` and matched `origin/main`.

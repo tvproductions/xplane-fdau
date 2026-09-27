@@ -46,11 +46,11 @@ def _parse_json_document(data: str | bytes, *, source: str = "<memory>") -> obje
         try:
             document = data.decode("utf-8")
         except UnicodeDecodeError as error:
-            raise ContractParseError("invalid UTF-8", source=source, line=1, column=error.start + 1) from error
+            raise ContractParseError("invalid UTF-8", source=source) from error
     else:
         document = data
     if document.startswith("\ufeff"):
-        raise ContractParseError("UTF-8 BOM is prohibited", source=source, line=1, column=1)
+        raise ContractParseError("UTF-8 BOM is prohibited", source=source)
     try:
         value = json.loads(
             document,
@@ -86,6 +86,7 @@ def _materialize_number(token: _NumberToken, *, source: str = "<memory>", path: 
         raise CanonicalJSONError("invalid binary64 number", source=source, path=path) from error
     if not math.isfinite(value):
         raise CanonicalJSONError("binary64 overflow", source=source, path=path)
-    if value == 0.0 and any(character in "123456789" for character in token.text):
+    mantissa = token.text.lower().split("e", 1)[0]
+    if value == 0.0 and any(character in "123456789" for character in mantissa):
         raise CanonicalJSONError("nonzero binary64 underflow", source=source, path=path)
     return value

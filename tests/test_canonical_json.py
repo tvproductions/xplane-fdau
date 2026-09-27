@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+from typing import override
 import unittest
 
 import xplane_fdau
@@ -74,6 +75,35 @@ class CanonicalJSONTests(unittest.TestCase):
             with self.subTest(value=repr(value)), self.assertRaises(CanonicalJSONError) as caught:
                 canonical_bytes(value)
             self.assertEqual(path, caught.exception.path)
+
+    def test_scalar_subclasses_cannot_control_emitted_number_text(self) -> None:
+        class LabeledInteger(int):
+            @override
+            def __str__(self) -> str:
+                return "not a number"
+
+        class LabeledReal(float):
+            @override
+            def as_integer_ratio(self) -> tuple[int, int]:
+                return 0, 1
+
+        for value in (LabeledInteger(1), LabeledReal(1.5)):
+            with self.subTest(value=type(value).__name__), self.assertRaises(CanonicalJSONError) as caught:
+                canonical_bytes({"test.x": value})
+            self.assertEqual("/test.x", caught.exception.path)
+
+    def test_parameter_errors_follow_canonical_key_order(self) -> None:
+        for value in (
+            {"z": 1, "test.a": None},
+            {"test.a": None, "z": 1},
+        ):
+            with self.subTest(keys=list(value)), self.assertRaises(CanonicalJSONError) as caught:
+                canonical_bytes(value)
+            self.assertEqual("/test.a", caught.exception.path)
+        for value in ({"z": 1, "bad": 1}, {"bad": 1, "z": 1}):
+            with self.subTest(keys=list(value)), self.assertRaises(CanonicalJSONError) as caught:
+                canonical_bytes(value)
+            self.assertEqual("/bad", caught.exception.path)
 
     def test_escaped_surrogate_pair_becomes_one_scalar(self) -> None:
         self.assertEqual('"😀"\n'.encode(), _encode_document(_parse_json_document('"\\ud83d\\ude00"')))

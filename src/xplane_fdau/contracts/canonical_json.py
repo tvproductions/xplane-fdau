@@ -46,7 +46,7 @@ def _quoted(value: str) -> str:
 def _members(value: object) -> tuple[tuple[object, object], ...]:
     if isinstance(value, _ObjectPairs):
         return value.pairs
-    if isinstance(value, dict):
+    if type(value) is dict:
         return tuple(value.items())
     raise TypeError("not an object")
 
@@ -54,7 +54,7 @@ def _members(value: object) -> tuple[tuple[object, object], ...]:
 def _encode(value: object, *, path: str, depth: int, parameter: bool, parts: list[str]) -> None:
     if isinstance(value, _NumberToken):
         value = _materialize_number(value, path=path)
-    if isinstance(value, (_ObjectPairs, dict)):
+    if isinstance(value, _ObjectPairs) or type(value) is dict:
         if depth > (32 if parameter else 64):
             raise CanonicalJSONError("JSON nesting depth exceeded", path=path)
         members = _members(value)
@@ -62,22 +62,22 @@ def _encode(value: object, *, path: str, depth: int, parameter: bool, parts: lis
             raise CanonicalJSONError("object member limit exceeded", path=path)
         keyed: list[tuple[str, object]] = []
         for key, child in members:
-            if not isinstance(key, str):
+            if type(key) is not str:
                 raise CanonicalJSONError("object property must be text", path=path)
+            keyed.append((key, child))
+        parts.append("{")
+        for index, (key, child) in enumerate(sorted(keyed, key=lambda item: item[0])):
             child_path = _pointer(path, key)
             _checked_text(key, path=child_path, parameter=False)
             if parameter and (len(key) > 255 or _IDENTIFIER.fullmatch(key) is None):
                 raise CanonicalJSONError("invalid parameter identifier", path=child_path)
-            keyed.append((key, child))
-        parts.append("{")
-        for index, (key, child) in enumerate(sorted(keyed, key=lambda item: item[0])):
             if index:
                 parts.append(",")
             parts.extend((_quoted(key), ":"))
-            _encode(child, path=_pointer(path, key), depth=depth + 1, parameter=parameter, parts=parts)
+            _encode(child, path=child_path, depth=depth + 1, parameter=parameter, parts=parts)
         parts.append("}")
         return
-    if isinstance(value, (list, tuple)):
+    if isinstance(value, (list, tuple)) and type(value) in (list, tuple):
         if depth > (32 if parameter else 64):
             raise CanonicalJSONError("JSON nesting depth exceeded", path=path)
         if len(value) > 65535:
@@ -89,18 +89,18 @@ def _encode(value: object, *, path: str, depth: int, parameter: bool, parts: lis
             _encode(child, path=f"{path}/{index}", depth=depth + 1, parameter=parameter, parts=parts)
         parts.append("]")
         return
-    if isinstance(value, str):
+    if type(value) is str:
         parts.append(_quoted(_checked_text(value, path=path, parameter=parameter)))
         return
-    if isinstance(value, bool):
+    if type(value) is bool:
         parts.append("true" if value else "false")
         return
-    if isinstance(value, int):
+    if type(value) is int:
         if not -(2**63) <= value <= 2**63 - 1:
             raise CanonicalJSONError("integer outside Int64 range", path=path)
         parts.append(str(value))
         return
-    if isinstance(value, float):
+    if type(value) is float:
         if not math.isfinite(value):
             raise CanonicalJSONError("nonfinite binary64", path=path)
         token = _ecmascript_number_token(value)
@@ -117,7 +117,7 @@ def _encode_bytes(value: object, *, parameter: bool) -> bytes:
 
 def canonical_bytes(value: object) -> bytes:
     """Encode a data-only parameter object."""
-    if not isinstance(value, dict):
+    if type(value) is not dict:
         raise CanonicalJSONError("parameter root must be an object")
     return _encode_bytes(value, parameter=True)
 

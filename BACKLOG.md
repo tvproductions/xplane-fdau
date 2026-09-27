@@ -27,10 +27,11 @@ slice receives one focused plan and one independently reviewable outcome.
   for the deterministic next action.
 - D1 is design-handoff readiness, not implementation or release readiness.
 - `B1.1` source-layout migration: `verified` with 5/5 gates and accepted
-  independent review. The next canonical child is `C1.1`, which is specified
-  and requires a single-child implementation plan. `T3.1` remains independent.
-- Canonical contract design: approved with accepted independent review; `C1.1`
-  through `C4.4` are specified with zero delivery gates satisfied.
+  independent review. `C1.1` canonical JSON and number encoding is `verified`
+  with 4/4 gates and accepted independent review. `C1.2` is the next canonical
+  dependency-ready child; `T3.1` remains independent.
+- Canonical contract design: approved with accepted independent review; `C1.2`
+  through `C4.4` remain specified with zero delivery gates satisfied.
 - Release, tag, and package publication: prohibited pending their separate
   gates and authorization.
 - Ordinary Git synchronization may commit and push only through an explicit
@@ -54,7 +55,7 @@ The child slices below refine this sequence without weakening or reordering it.
 | Child | Outcome | Status | Depends on | Spec | Plan | Gates | Review | Resume | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `B1.1` | Source-layout migration and installed-import isolation | `verified` | `T2.2` | [design](docs/superpowers/specs/2026-08-09-src-layout-migration-design.md) | [plan](docs/superpowers/plans/2026-08-09-src-layout-migration.md) | 5/5 | [review](.superpowers/sdd/2026-08-09-src-layout-migration/review.md) | — | — |
-| `C1.1` | Canonical JSON and binary64/integer encoding | `in_progress` | `B1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-09-27-c1-1-canonical-json-number-encoding.md) | 0/4 | — | — | — |
+| `C1.1` | Canonical JSON and binary64/integer encoding | `verified` | `B1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-09-27-c1-1-canonical-json-number-encoding.md) | 4/4 | [review](.superpowers/sdd/2026-09-27-c1-1-canonical-json-number-encoding/review.md) | — | — |
 | `C1.2` | Identity, hashing, references, authority, and provenance | `specified` | `C1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C1.3` | Typed values and content-addressed payload references | `specified` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C1.4` | Clock domains, UTC instants, anchors, and simulator timing | `specified` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
@@ -135,13 +136,13 @@ The child slices below refine this sequence without weakening or reordering it.
 
 ### C1.1 — Canonical JSON and binary64/integer encoding
 
-- [ ] Exact UTF-8, Unicode, object-key, array, string-escaping, and final-LF
-      vectors pass.
-- [ ] Signed 64-bit integer and finite binary64 canonical lexical vectors pass.
-- [ ] Duplicate keys, non-NFC/surrogate text, overflow, and non-finite values
-      fail with exact error context.
-- [ ] Canonical bytes and SHA-256 results are deterministic without relying on
-      incidental `json.dumps()` float spelling.
+- [x] Exact UTF-8, Unicode, object-key, array, string-escaping, and final-LF
+      vectors pass. — Evidence: [verification](.superpowers/sdd/2026-09-27-c1-1-canonical-json-number-encoding/gate-1.md)
+- [x] Signed 64-bit integer and finite binary64 canonical lexical vectors pass. — Evidence: [verification](.superpowers/sdd/2026-09-27-c1-1-canonical-json-number-encoding/gate-2.md)
+- [x] Duplicate keys, non-NFC/surrogate text, overflow, and non-finite values
+      fail with exact error context. — Evidence: [verification](.superpowers/sdd/2026-09-27-c1-1-canonical-json-number-encoding/gate-3.md)
+- [x] Canonical bytes and SHA-256 results are deterministic without relying on
+      incidental `json.dumps()` float spelling. — Evidence: [verification](.superpowers/sdd/2026-09-27-c1-1-canonical-json-number-encoding/gate-4.md)
 
 ### C1.2 — Identity, hashing, references, authority, and provenance
 

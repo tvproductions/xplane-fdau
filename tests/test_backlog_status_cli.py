@@ -302,7 +302,10 @@ class BacklogStatusCliTests(unittest.TestCase):
         self.assertTrue(selected is None or selected in child_ids)
         self.assertIn(f"Active child: {selected if selected is not None else '—'}", human.stdout)
         self.assertIsInstance(payload["recommendation"]["action"], str)
-        self.assertTrue(payload["recommendation"]["command"])
+        if payload["recommendation"]["action"] == "wait":
+            self.assertIsNone(payload["recommendation"]["command"])
+        else:
+            self.assertTrue(payload["recommendation"]["command"])
         self.assertEqual(64, len(payload["roadmap"]["local_children"]))
         self.assertEqual(64, len(payload["backlog"]["children"]))
         d1_children = {child["id"]: child for child in payload["backlog"]["children"] if child["id"].startswith("D1.")}

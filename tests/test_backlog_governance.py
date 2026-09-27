@@ -552,24 +552,28 @@ class BacklogAuthorityTests(unittest.TestCase):
                 else:
                     self.assertEqual(("`queued`", "—", "—"), (status, resume, reason))
 
-    def test_c1_through_c4_are_specified_without_delivery_evidence(self) -> None:
+    def test_canonical_successors_remain_specified_during_c1_1_delivery(self) -> None:
         inventory = table_rows(read_text(BACKLOG), INVENTORY_HEADER)
         c_rows = [row for row in inventory if re.fullmatch(r"C[1-4]\.\d+", identity(row[0]))]
         self.assertEqual(18, len(c_rows))
         for row in c_rows:
             child, _outcome, status, _dependencies, spec, plan, gates, review, resume, reason = row
             with self.subTest(child=child):
-                self.assertEqual("`specified`", status)
                 self.assertEqual(
                     "[design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md)",
                     spec,
                 )
                 if identity(child) == "C1.1":
+                    self.assertIn(status, {"`in_progress`", "`implemented`", "`reviewed`", "`verified`"})
                     self.assertEqual(
-                        "[draft plan](docs/superpowers/plans/2026-09-27-c1-1-canonical-json-number-encoding.md)",
+                        "[plan](docs/superpowers/plans/2026-09-27-c1-1-canonical-json-number-encoding.md)",
                         plan,
                     )
+                    self.assertRegex(gates, r"^[0-4]/4$")
+                    self.assertEqual(("—", "—"), (resume, reason))
+                    continue
                 else:
+                    self.assertEqual("`specified`", status)
                     self.assertEqual("—", plan)
                 self.assertIn(gates, {"0/4", "0/5"})
                 self.assertEqual(("—", "—", "—"), (review, resume, reason))
@@ -958,9 +962,8 @@ class GovernanceArtifactTests(unittest.TestCase):
         self.assertEqual("completed", active_plans["2026-09-19-t2-2-dependency-toolchain-refresh.md"]["Status"])
         c1_plan = active_plans["2026-09-27-c1-1-canonical-json-number-encoding.md"]
         self.assertEqual("`C1.1`", c1_plan["Roadmap child"])
-        self.assertEqual("draft", c1_plan["Status"])
-        self.assertEqual("—", c1_plan["Approval"])
-        self.assertEqual("—", c1_plan["Completion evidence"])
+        self.assertIn(c1_plan["Status"], {"in_progress", "completed"})
+        self.assertEqual("2026-09-27 — Jeff / tvproductions", c1_plan["Approval"])
         self.assertEqual(
             "`.superpowers/sdd/2026-09-19-t2-2-dependency-toolchain-refresh/completion.md`",
             active_plans["2026-09-19-t2-2-dependency-toolchain-refresh.md"]["Completion evidence"],

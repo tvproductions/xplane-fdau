@@ -84,6 +84,7 @@ def _run(command: list[str]) -> None:
 def smoke(version: str, *, checkout: Path) -> None:
     """Exercise the installed public API, schema, FDR files, and CLI commands."""
     import xplane_fdau
+    import xplane_fdau.contracts as contracts
     import xplane_fdau.formats.xplane_fdr as native_fdr
 
     location = Path(xplane_fdau.__file__ or "")
@@ -96,6 +97,8 @@ def smoke(version: str, *, checkout: Path) -> None:
     import_all_modules(xplane_fdau)
     for name in xplane_fdau.__all__:
         getattr(xplane_fdau, name)
+    if contracts.canonical_bytes({"test.x": 1.0}) != b'{"test.x":1.0}\n':
+        raise SmokeError("installed canonical JSON bytes differ from the C1.1 contract")
     schema = importlib.resources.files("xplane_fdau.formats.xplane_fdr").joinpath("schemas/fdr-record-config-v1.schema.json")
     if not schema.is_file() or '"$schema"' not in schema.read_text(encoding="utf-8"):
         raise SmokeError("installed schema resource is unavailable or invalid")

@@ -111,6 +111,16 @@ class InstalledSmokeTests(unittest.TestCase):
         self.assertEqual("fdr", commands[-1][1])
         self.assertEqual("to-geojson", commands[-1][2])
 
+    def test_smoke_rejects_wrong_installed_canonical_bytes(self) -> None:
+        with (
+            mock.patch.object(installed_smoke, "ensure_outside_checkout"),
+            mock.patch.object(installed_smoke, "_command_path", return_value=Path("xplane-fdau")),
+            mock.patch.object(installed_smoke, "_run"),
+            mock.patch("xplane_fdau.contracts.canonical_bytes", return_value=b"incorrect\n"),
+            self.assertRaises(installed_smoke.SmokeError),
+        ):
+            installed_smoke.smoke("0.1.0", checkout=Path("checkout"))
+
 
 if __name__ == "__main__":
     unittest.main()

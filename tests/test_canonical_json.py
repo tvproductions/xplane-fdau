@@ -2,14 +2,40 @@
 
 from __future__ import annotations
 
+import hashlib
 import unittest
 
+import xplane_fdau
+import xplane_fdau.contracts as contracts
 from xplane_fdau.contracts import CanonicalJSONError, canonical_bytes
 from xplane_fdau.contracts._json_parse import _parse_json_document
 from xplane_fdau.contracts.canonical_json import _encode_document
 
 
 class CanonicalJSONTests(unittest.TestCase):
+    def test_parse_canonical_convergence_and_digest(self) -> None:
+        expected = b'{"test.x":1}\n'
+        self.assertEqual(expected, canonical_bytes({"test.x": 1}))
+        self.assertEqual(expected, _encode_document(_parse_json_document(' { "test.x" : 1 } ')))
+        self.assertEqual(expected, _encode_document(_parse_json_document('{"test.x":1}')))
+        self.assertEqual("c7a95602104d7db4d2fca0e277f6e064854c886d32328a57cb4d28ab10467424", hashlib.sha256(canonical_bytes({"test.x": 1})).hexdigest())
+
+    def test_public_contract_exports_leave_root_unchanged(self) -> None:
+        self.assertEqual(["__version__"], xplane_fdau.__all__)
+        self.assertEqual(
+            {
+                "FDAUContractError",
+                "ContractParseError",
+                "ContractShapeError",
+                "ContractValidationError",
+                "CanonicalJSONError",
+                "UnsupportedContractVersionError",
+                "ContractHashError",
+                "canonical_bytes",
+            },
+            set(contracts.__all__),
+        )
+
     def test_empty_parameter_object_and_root_rejection(self) -> None:
         self.assertEqual(b"{}\n", canonical_bytes({}))
         for value in (0, [], "text"):

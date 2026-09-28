@@ -1,6 +1,63 @@
 # Project Handoff
 
-## Resume point — 2026-09-27, after C1.1
+## Resume point — 2026-09-28, Python tooling survey
+
+Observed 2026-09-28 00:45 UTC, before this handoff and requested ordinary Git
+sync: `main` was clean at `d1d1cadf778e2f614a877fa13c5d124af97a137e`
+and matched `origin/main`; only the main worktree existed. Recheck Git state on
+return because this handoff's sync will create a later commit.
+
+**Current objective:** `C1.2` identity, hashing, references, authority, and
+provenance is `specified`, dependency-ready, and at 0/4 gates with no plan. No
+child is selected. Its approved
+[canonical-contract design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md)
+governs planning; `BACKLOG.md` owns current delivery state. `C1.1` is verified
+at 4/4 gates with accepted review; see its
+[completed plan](docs/superpowers/plans/2026-09-27-c1-1-canonical-json-number-encoding.md)
+and [completion evidence](.superpowers/sdd/2026-09-27-c1-1-canonical-json-number-encoding/completion.md).
+
+**Latest result:** This checkout's uv-managed `.venv` now uses CPython 3.12.14
+through ordinary `uv run python`; `.python-version` intentionally selects the
+3.12 minor line and `pyproject.toml` requires `>=3.12,<3.13`. The complete
+quality gate passed 554 `unittest` tests with 94% coverage on 3.12.14. A fresh
+external wheel/sdist passed strict metadata and inventory checks, and the wheel
+passed installed smoke in a separate uv-managed 3.12.14 environment. The
+temporary artifact directory was removed on success. No tracked file changed
+for the interpreter switch, and no Python-version Git commit was needed.
+
+**Cross-project survey:** Five of the ten local repositories under the sibling
+`xp` directory have Python manifests. `q4xpcc` is the direct XPPython3 plugin;
+this repository is the future canonical core. XPPython3 4.x includes its own
+private Python 3.12 runtime, independent of uv's local development interpreter
+([upstream documentation](https://xppython3.readthedocs.io/en/latest/)).
+`xplane-webapi` supplies a separate Web API client consumed by q4xpcc's local
+supervisor; Ortho4XP is a scenery generator; xpcl is an NNG/PySide6 telemetry
+client. Read-only file and existing-environment observations:
+
+| Repository | `.python-version` | `requires-python` | Existing `.venv` |
+| --- | --- | --- | --- |
+| `q4xpcc` | `3.12.13` | `==3.12.*` | 3.12.14 |
+| `xplane-fdau` | `3.12` | `>=3.12,<3.13` | 3.12.14 |
+| `xplane-webapi` | `3.13` | `>=3.12,<3.14` | 3.13.14 |
+| `Ortho4XP` | `3.13.14` | `>=3.13,<3.14` | 3.13.15 |
+| `xpcl` | absent | `>=3.9` | 3.13.14 |
+
+The exact local selectors for q4xpcc and Ortho4XP trail their observed
+interpreters; their `pyproject.toml` ranges admit those patches. No sibling
+repository was edited. `xplane-webapi` already had a modified `BACKLOG.md`
+when inspected; preserve that unrelated work. All observations above are
+local-only and must be rechecked before a cross-repository change.
+
+**First permissible action on return:** Read `AGENTS.md` and its linked
+authorities; run backlog `audit` and `next`. Use `superpowers:writing-plans` to
+draft one reviewable C1.2 implementation plan from the approved design. Obtain
+plan approval before selecting C1.2 or implementing it. If the next request is
+to align other repositories' exact Python selectors, inspect each repository's
+own instructions and state first; this handoff grants no cross-repository edit
+authority. Stop on an audit finding or changed authority. Release gate `G1`
+remains waiting; no tag or publication was authorized.
+
+## Prior resume point — 2026-09-27, after C1.1
 
 Observed 2026-09-27 23:28 UTC, before this handoff and Git-sync commit: `main`
 was clean at `93a04156d460e920e2711ae97e514ca53f6bac3b`, one commit ahead

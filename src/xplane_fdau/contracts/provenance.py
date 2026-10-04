@@ -149,8 +149,7 @@ def _catalog_provenance(value: Sequence[ProvenanceSource], *, path: str) -> tupl
         if source.source_revision is not None:
             key = (source.source_id, "revision", source.source_revision)
         else:
-            assert source.source_version is not None
-            key = (source.source_id, "version", source.source_version)
+            key = (source.source_id, "version", _version_text(source.source_version, path=f"{item_path}/source_version"))
         if key in seen:
             raise ContractValidationError("duplicate provenance identity", path=item_path)
         seen.add(key)

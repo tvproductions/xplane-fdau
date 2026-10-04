@@ -48,6 +48,8 @@ def _plain(value: object, *, depth: int = 1) -> object:
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class DefinitionRef:
+    """Pin a definition's semantic identity, revision, and canonical hash."""
+
     definition_id: str
     definition_revision: int
     definition_hash: str
@@ -65,6 +67,8 @@ class DefinitionRef:
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class RecordRef:
+    """Pin a record's UUID, family, schema version, and canonical hash."""
+
     record_id: str
     contract_family: str
     schema_version: int
@@ -91,6 +95,8 @@ class RecordRef:
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class AlgorithmRef:
+    """Pin an algorithm definition together with immutable data-only parameters."""
+
     definition_id: str
     definition_revision: int
     definition_hash: str

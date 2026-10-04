@@ -13,6 +13,8 @@ __all__ = ["Authority", "ProvenanceSource", "ProducerIdentity", "ProviderIdentit
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class Authority:
+    """Identify the authority contract and its revision."""
+
     authority_id: str
     authority_revision: int
 
@@ -24,6 +26,8 @@ class Authority:
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class ProvenanceSource:
+    """Identify one scoped source by revision or version with optional evidence."""
+
     source_id: str
     scope: str
     source_revision: int | None = None
@@ -59,6 +63,8 @@ class ProvenanceSource:
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class ProducerIdentity:
+    """Identify an implementation and the producer instance emitting records."""
+
     implementation_id: str
     implementation_version: str
     producer_instance_id: str
@@ -81,6 +87,8 @@ class ProducerIdentity:
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class ProviderIdentity:
+    """Identify the provider family and version behind an acquisition source."""
+
     provider_family_id: str
     provider_version: str
 
@@ -92,6 +100,8 @@ class ProviderIdentity:
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class AdapterIdentity:
+    """Identify the adapter family and version translating an acquisition source."""
+
     adapter_family_id: str
     adapter_version: str
 

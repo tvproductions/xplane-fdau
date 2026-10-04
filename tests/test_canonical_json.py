@@ -38,6 +38,9 @@ class CanonicalJSONTests(unittest.TestCase):
                 "UnsupportedContractVersionError",
                 "ContractHashError",
                 "canonical_bytes",
+                "DefinitionRef",
+                "RecordRef",
+                "AlgorithmRef",
             },
             set(contracts.__all__),
         )

@@ -106,3 +106,12 @@ class ContentHashTests(unittest.TestCase):
         with self.assertRaises(ContractValidationError) as caught:
             _definition_content_hash("https://tvproductions.github.io/xplane-fdau/contracts/raw-observation", self.definition())
         self.assertEqual(caught.exception.path, "/contract_family")
+
+    def test_array_order_remains_part_of_both_hashes(self) -> None:
+        record = self.record() | {"values": [1, 2]}
+        self.assertNotEqual(_record_content_hash(record), _record_content_hash(record | {"values": [2, 1]}))
+        definition = self.definition() | {"values": [1, 2]}
+        self.assertNotEqual(
+            _definition_content_hash(FAMILY, definition),
+            _definition_content_hash(FAMILY, definition | {"values": [2, 1]}),
+        )

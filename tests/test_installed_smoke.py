@@ -125,6 +125,22 @@ class InstalledSmokeTests(unittest.TestCase):
         ):
             installed_smoke.smoke("0.1.0", checkout=Path("checkout"))
 
+    def test_smoke_rejects_wrong_installed_reference_or_hash(self) -> None:
+        for target, wrong in (
+            ("xplane_fdau.contracts.identity._definition_ref_wire", {"definition_id": "wrong.id"}),
+            ("xplane_fdau.contracts._content_hash._record_content_hash", "0" * 64),
+            ("xplane_fdau.contracts._content_hash._definition_preimage", b"incorrect\n"),
+        ):
+            with self.subTest(target=target):
+                with (
+                    mock.patch.object(installed_smoke, "ensure_outside_checkout"),
+                    mock.patch.object(installed_smoke, "_command_path", return_value=Path("xplane-fdau")),
+                    mock.patch.object(installed_smoke, "_run"),
+                    mock.patch(target, return_value=wrong),
+                    self.assertRaises(installed_smoke.SmokeError),
+                ):
+                    installed_smoke.smoke("0.1.0", checkout=Path("checkout"))
+
 
 if __name__ == "__main__":
     unittest.main()

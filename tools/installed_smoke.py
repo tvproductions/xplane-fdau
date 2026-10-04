@@ -81,6 +81,63 @@ def _run(command: list[str]) -> None:
         raise SmokeError(f"command failed ({' '.join(command)}): {result.stderr.strip()}")
 
 
+def _canonical_identity_smoke() -> None:
+    """Pin the installed C1.2 reference, provenance, and self-hash behavior."""
+    from xplane_fdau.contracts import DefinitionRef, ProvenanceSource
+    from xplane_fdau.contracts._content_hash import (
+        _definition_content_hash,
+        _definition_preimage,
+        _record_content_hash,
+        _record_preimage,
+    )
+    from xplane_fdau.contracts.identity import _definition_ref_wire
+    from xplane_fdau.contracts.provenance import _provenance_source_wire
+
+    reference = DefinitionRef(definition_id="test.altitude", definition_revision=2, definition_hash="a" * 64)
+    if _definition_ref_wire(reference) != {
+        "definition_id": "test.altitude",
+        "definition_revision": 2,
+        "definition_hash": "a" * 64,
+    }:
+        raise SmokeError("installed definition reference differs from the C1.2 contract")
+    source = ProvenanceSource(source_id="test.manual", scope="manual", source_revision=1)
+    if _provenance_source_wire(source) != {"scope": "manual", "source_id": "test.manual", "source_revision": 1}:
+        raise SmokeError("installed provenance differs from the C1.2 contract")
+    record: dict[str, object] = {
+        "content_hash": "a" * 64,
+        "nested": {"content_hash": "b" * 64},
+        "record_id": "12345678-1234-1234-8234-123456789abc",
+        "value": 1.0,
+    }
+    record_bytes = (
+        b'{"nested":{"content_hash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},'
+        b'"record_id":"12345678-1234-1234-8234-123456789abc","value":1.0}\n'
+    )
+    if _record_preimage(record) != record_bytes or _record_content_hash(record) != "d1bcf9869ac210446527b4ce344db5256a0420a70a4bcc432d73023ac0c9fa3e":
+        raise SmokeError("installed record hashing differs from the C1.2 contract")
+    family = "https://tvproductions.github.io/xplane-fdau/contracts/measurement-catalog"
+    definition: dict[str, object] = {
+        "content_hash": "a" * 64,
+        "authority": {"authority_id": "test.owner", "authority_revision": 1},
+        "definition_id": "test.altitude",
+        "definition_revision": 2,
+        "provenance": [_provenance_source_wire(source)],
+        "quantity_id": "test.pressure_altitude",
+    }
+    definition_bytes = (
+        b'{"contract_family":"https://tvproductions.github.io/xplane-fdau/contracts/measurement-catalog",'
+        b'"definition":{"authority":{"authority_id":"test.owner","authority_revision":1},'
+        b'"definition_id":"test.altitude","definition_revision":2,"provenance":'
+        b'[{"scope":"manual","source_id":"test.manual","source_revision":1}],'
+        b'"quantity_id":"test.pressure_altitude"},"schema_version":1}\n'
+    )
+    if (
+        _definition_preimage(family, definition) != definition_bytes
+        or _definition_content_hash(family, definition) != "4645ff5b3d74719279bd5492047f14355361214f13d8f4ec794ed5145d5f97dd"
+    ):
+        raise SmokeError("installed definition hashing differs from the C1.2 contract")
+
+
 def smoke(version: str, *, checkout: Path) -> None:
     """Exercise the installed public API, schema, FDR files, and CLI commands."""
     import xplane_fdau
@@ -99,6 +156,7 @@ def smoke(version: str, *, checkout: Path) -> None:
         getattr(xplane_fdau, name)
     if contracts.canonical_bytes({"test.x": 1.0}) != b'{"test.x":1.0}\n':
         raise SmokeError("installed canonical JSON bytes differ from the C1.1 contract")
+    _canonical_identity_smoke()
     schema = importlib.resources.files("xplane_fdau.formats.xplane_fdr").joinpath("schemas/fdr-record-config-v1.schema.json")
     if not schema.is_file() or '"$schema"' not in schema.read_text(encoding="utf-8"):
         raise SmokeError("installed schema resource is unavailable or invalid")

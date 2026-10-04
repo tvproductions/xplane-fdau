@@ -82,6 +82,14 @@ class PublicAPITests(unittest.TestCase):
         for name in contract_provenance.__all__:
             self.assertIs(getattr(contracts, name), getattr(contract_provenance, name))
 
+    def test_later_contract_apis_and_resources_are_absent(self) -> None:
+        for name in ("definition_ref", "record_ref", "compute_content_hash", "MeasurementCatalog", "RawObservation", "MeasurementFrame", "load_record"):
+            with self.subTest(name=name):
+                self.assertFalse(hasattr(contracts, name))
+        root = Path(__file__).parents[1] / "src/xplane_fdau/contracts"
+        self.assertFalse((root / "schemas").exists())
+        self.assertFalse((root / "fixtures").exists())
+
     def test_formats_do_not_depend_on_sinks_and_sink_imports_only_format_or_stdlib(self) -> None:
         """A format-to-sink edge would invert the native boundary."""
         project_root = Path(__file__).parents[1]

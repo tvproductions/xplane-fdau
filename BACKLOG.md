@@ -56,7 +56,7 @@ The child slices below refine this sequence without weakening or reordering it.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `B1.1` | Source-layout migration and installed-import isolation | `verified` | `T2.2` | [design](docs/superpowers/specs/2026-08-09-src-layout-migration-design.md) | [plan](docs/superpowers/plans/2026-08-09-src-layout-migration.md) | 5/5 | [review](.superpowers/sdd/2026-08-09-src-layout-migration/review.md) | — | — |
 | `C1.1` | Canonical JSON and binary64/integer encoding | `verified` | `B1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-09-27-c1-1-canonical-json-number-encoding.md) | 4/4 | [review](.superpowers/sdd/2026-09-27-c1-1-canonical-json-number-encoding/review.md) | — | — |
-| `C1.2` | Identity, hashing, references, authority, and provenance | `in_progress` | `C1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-10-04-c1-2-identity-hashing-references-provenance.md) | 0/4 | — | — | — |
+| `C1.2` | Identity, hashing, references, authority, and provenance | `verified` | `C1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-10-04-c1-2-identity-hashing-references-provenance.md) | 4/4 | [review](.superpowers/sdd/2026-10-04-c1-2-identity-hashing-references-provenance/review.md) | — | — |
 | `C1.3` | Typed values and content-addressed payload references | `specified` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C1.4` | Clock domains, UTC instants, anchors, and simulator timing | `specified` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C1.5` | Validity states and acquisition-quality vocabulary | `specified` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
@@ -146,11 +146,11 @@ The child slices below refine this sequence without weakening or reordering it.
 
 ### C1.2 — Identity, hashing, references, authority, and provenance
 
-- [ ] Semantic IDs, revisions, UUIDs, generations, and sequences enforce exact
-      syntax and range.
-- [ ] Definition and record self-hashes use the specified canonical preimages.
-- [ ] Definition/record references pin identity, revision/version, and hash.
-- [ ] Authority, provenance, and producer values are immutable and round-trip.
+- [x] Semantic IDs, revisions, UUIDs, generations, and sequences enforce exact
+      syntax and range. — Evidence: [verification](.superpowers/sdd/2026-10-04-c1-2-identity-hashing-references-provenance/gate-1.md)
+- [x] Definition and record self-hashes use the specified canonical preimages. — Evidence: [verification](.superpowers/sdd/2026-10-04-c1-2-identity-hashing-references-provenance/gate-2.md)
+- [x] Definition/record references pin identity, revision/version, and hash. — Evidence: [verification](.superpowers/sdd/2026-10-04-c1-2-identity-hashing-references-provenance/gate-3.md)
+- [x] Authority, provenance, and producer values are immutable and round-trip. — Evidence: [verification](.superpowers/sdd/2026-10-04-c1-2-identity-hashing-references-provenance/gate-4.md)
 
 ### C1.3 — Typed values and content-addressed payload references
 

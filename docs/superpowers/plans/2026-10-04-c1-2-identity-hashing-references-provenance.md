@@ -149,5 +149,5 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Installed-wheel smoke failed" }
 } finally { Pop-Location }
 ```
-- [ ] **Step 8: Record accepted review and all four gates** using the backlog adapter's dry-run then hash-guarded apply. Receipts must separately prove exact ID/revision/UUID/counter validation; record/definition canonical preimages and SHA-256; pinned definition/record references; and immutable authority/provenance/producer round-trip. Advance C1.2 to `verified` only when all four receipts and independent review pass. Keep G1 waiting.
-- [ ] **Step 9: Commit the verified C1.2 evidence and present local integration options.** Do not merge, push, tag, publish, or release without the separately required user decision and checks.
+- [x] **Step 8: Record accepted review and all four gates** using the backlog adapter's dry-run then hash-guarded apply. Receipts must separately prove exact ID/revision/UUID/counter validation; record/definition canonical preimages and SHA-256; pinned definition/record references; and immutable authority/provenance/producer round-trip. Advance C1.2 to `verified` only when all four receipts and independent review pass. Keep G1 waiting.
+- [x] **Step 9: Commit the verified C1.2 evidence and present local integration options.** Do not merge, push, tag, publish, or release without the separately required user decision and checks.

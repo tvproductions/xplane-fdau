@@ -30,3 +30,4 @@ Final: fixed canonical reference equality — test_algorithm_equality_preserves_
 Final: fixed model-wide error tiers — test_constructor_error_tiers_precede_earlier_semantics and test_shape_then_canonical_failures_precede_semantics RED→GREEN, suite 581/581.
 Final: fixed integer overflow classification — test_revisions_and_counters_reject_bool_and_out_of_range and model error-tier assertions RED→GREEN, suite 581/581.
 Final: complete offline hygiene passed on 127eaa4; 581 tests, 95% coverage; external Python 3.12.14 installed smoke passed; artifact digests match the hygiene build. No deferred minors.
+Task 5: C1.2 advanced in_progress → implemented → reviewed → verified through dry-run and original-SHA-256 guarded applies; each mutation audit passed; four HEAD-backed gate receipts and review recorded. G1 remains waiting; integration pending.

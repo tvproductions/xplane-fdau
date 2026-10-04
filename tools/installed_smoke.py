@@ -113,9 +113,8 @@ def _canonical_identity_smoke() -> None:
         b'{"nested":{"content_hash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},'
         b'"record_id":"12345678-1234-1234-8234-123456789abc","value":1.0}\n'
     )
-    if (
-        _record_preimage(record) != record_bytes or _record_content_hash(record) != "d1bcf9869ac210446527b4ce344db5256a0420a70a4bcc432d73023ac0c9fa3e"
-    ):  # pragma: allowlist secret
+    record_digest = "d1bcf9869ac210446527b4ce344db5256a0420a70a4bcc432d73023ac0c9fa3e"  # pragma: allowlist secret
+    if _record_preimage(record) != record_bytes or _record_content_hash(record) != record_digest:
         raise SmokeError("installed record hashing differs from the C1.2 contract")
     family = "https://tvproductions.github.io/xplane-fdau/contracts/measurement-catalog"
     definition: dict[str, object] = {

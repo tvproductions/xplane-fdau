@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Mapping
+from typing import Mapping, override
 
-from ._identity_validation import _identifier, _revision, _sha256, _uuid
+from ._identity_validation import _field_domains, _identifier, _revision, _sha256, _uuid
 from .canonical_json import canonical_bytes
 from .errors import CanonicalJSONError, ContractShapeError, ContractValidationError
 
@@ -33,11 +33,16 @@ def _immutable(value: object) -> object:
     return value
 
 
-def _plain(value: object) -> object:
+def _plain(value: object, *, depth: int = 1) -> object:
+    """Copy containers without descending beyond the parameter domain.
+
+    Keep a container at depth 33 so the canonical encoder reports that overflow
+    in canonical property order, before it could inspect any children there.
+    """
     if isinstance(value, Mapping):
-        return {key: _plain(child) for key, child in value.items()}
-    if type(value) is tuple:
-        return [_plain(child) for child in value]
+        return {} if depth > 32 else {key: _plain(child, depth=depth + 1) for key, child in value.items()}
+    if isinstance(value, (list, tuple)) and type(value) in (list, tuple):
+        return [] if depth > 32 else [_plain(child, depth=depth + 1) for child in value]
     return value
 
 
@@ -48,6 +53,11 @@ class DefinitionRef:
     definition_hash: str
 
     def __post_init__(self) -> None:
+        _field_domains(
+            ("/definition_id", self.definition_id, "text"),
+            ("/definition_revision", self.definition_revision, "integer"),
+            ("/definition_hash", self.definition_hash, "text"),
+        )
         _identifier(self.definition_id, path="/definition_id")
         _revision(self.definition_revision, path="/definition_revision")
         _sha256(self.definition_hash, path="/definition_hash")
@@ -61,6 +71,12 @@ class RecordRef:
     content_hash: str
 
     def __post_init__(self) -> None:
+        _field_domains(
+            ("/record_id", self.record_id, "text"),
+            ("/contract_family", self.contract_family, "text"),
+            ("/schema_version", self.schema_version, "integer"),
+            ("/content_hash", self.content_hash, "text"),
+        )
         _uuid(self.record_id, path="/record_id")
         if type(self.contract_family) is not str:
             raise ContractShapeError("expected family URI", path="/contract_family")
@@ -81,17 +97,29 @@ class AlgorithmRef:
     parameters: Mapping[str, object]
 
     def __post_init__(self) -> None:
-        _identifier(self.definition_id, path="/definition_id")
-        _revision(self.definition_revision, path="/definition_revision")
-        _sha256(self.definition_hash, path="/definition_hash")
-        if not isinstance(self.parameters, Mapping):
-            raise ContractShapeError("expected parameter object", path="/parameters")
+        _field_domains(
+            ("/definition_id", self.definition_id, "text"),
+            ("/definition_revision", self.definition_revision, "integer"),
+            ("/definition_hash", self.definition_hash, "text"),
+            ("/parameters", self.parameters, "object"),
+        )
         plain = _plain(self.parameters)
         try:
             canonical_bytes(plain)
         except CanonicalJSONError as error:
             raise CanonicalJSONError(str(error), path="/parameters" + error.path) from error
+        _identifier(self.definition_id, path="/definition_id")
+        _revision(self.definition_revision, path="/definition_revision")
+        _sha256(self.definition_hash, path="/definition_hash")
         object.__setattr__(self, "parameters", _immutable(plain))
+
+    @override
+    def __eq__(self, other: object) -> bool:
+        if type(other) is not type(self):
+            return NotImplemented
+        return _definition_ref_wire(self) == _definition_ref_wire(other) and canonical_bytes(_plain(self.parameters)) == canonical_bytes(
+            _plain(other.parameters)
+        )
 
 
 def _definition_ref_wire(value: DefinitionRef | AlgorithmRef) -> dict[str, object]:

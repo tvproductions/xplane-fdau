@@ -6,7 +6,7 @@ import unittest
 from dataclasses import fields
 from typing import Any, cast
 
-from xplane_fdau.contracts.errors import CanonicalJSONError, ContractValidationError
+from xplane_fdau.contracts.errors import CanonicalJSONError, ContractShapeError, ContractValidationError
 from xplane_fdau.contracts.provenance import (
     AdapterIdentity,
     Authority,
@@ -23,6 +23,36 @@ from xplane_fdau.contracts.provenance import (
 
 
 class ProvenanceTests(unittest.TestCase):
+    def test_constructor_error_tiers_precede_earlier_semantics(self) -> None:
+        cases = (
+            (Authority, {"authority_id": "bad", "authority_revision": True}, ContractShapeError, "/authority_revision"),
+            (Authority, {"authority_id": "bad", "authority_revision": 2**63}, CanonicalJSONError, "/authority_revision"),
+            (ProvenanceSource, {"source_id": "test.manual", "scope": "source", "sha256": 1}, ContractShapeError, "/sha256"),
+            (ProvenanceSource, {"source_id": "test.manual", "scope": "source", "locator": "e\u0301"}, CanonicalJSONError, "/locator"),
+            (
+                ProducerIdentity,
+                {
+                    "implementation_id": "bad",
+                    "implementation_version": "1",
+                    "producer_instance_id": "12345678-1234-1234-8234-123456789abc",
+                    "source_revision": "e\u0301",
+                },
+                CanonicalJSONError,
+                "/source_revision",
+            ),
+            (ProviderIdentity, {"provider_family_id": "bad", "provider_version": 1}, ContractShapeError, "/provider_version"),
+            (AdapterIdentity, {"adapter_family_id": "bad", "adapter_version": "e\u0301"}, CanonicalJSONError, "/adapter_version"),
+        )
+        for constructor, values, expected, path in cases:
+            with self.subTest(model=constructor.__name__, path=path):
+                try:
+                    cast(Any, constructor)(**values)
+                except Exception as error:
+                    self.assertIs(type(error), expected)
+                    self.assertEqual(cast(Any, error).path, path)
+                else:
+                    self.fail("invalid model was accepted")
+
     def test_all_provenance_models_have_exact_immutable_keyword_fields(self) -> None:
         cases = (
             (Authority(authority_id="test.owner", authority_revision=1), ("authority_id", "authority_revision")),

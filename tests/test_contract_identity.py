@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import unittest
 from typing import Any, Mapping, Protocol, cast
+from types import MappingProxyType
 
 from xplane_fdau.contracts import _identity_validation as identity
 from xplane_fdau.contracts.identity import AlgorithmRef, DefinitionRef, RecordRef, _algorithm_ref_wire, _definition_ref_wire, _record_ref_wire
@@ -36,10 +37,12 @@ class IdentityValidationTests(unittest.TestCase):
         for operation, bad, error, path in (
             (identity._revision, True, ContractShapeError, "/revision"),
             (identity._revision, 0, ContractValidationError, "/revision"),
-            (identity._revision, 2**63, ContractValidationError, "/revision"),
+            (identity._revision, 2**63, CanonicalJSONError, "/revision"),
+            (identity._revision, -(2**63) - 1, CanonicalJSONError, "/revision"),
             (identity._counter, False, ContractShapeError, "/generation"),
             (identity._counter, -1, ContractValidationError, "/sequence"),
-            (identity._counter, 2**63, ContractValidationError, "/sequence"),
+            (identity._counter, 2**63, CanonicalJSONError, "/sequence"),
+            (identity._counter, -(2**63) - 1, CanonicalJSONError, "/sequence"),
         ):
             with self.subTest(value=bad, path=path):
                 self.assert_rejected(operation, bad, error, path)
@@ -87,6 +90,93 @@ if __name__ == "__main__":
 
 
 class ReferenceTests(unittest.TestCase):
+    def test_shape_then_canonical_failures_precede_semantics(self) -> None:
+        base = {"definition_id": "bad", "definition_revision": 1, "definition_hash": "a" * 64}
+        for changes, error, path in (
+            ({"definition_revision": True}, ContractShapeError, "/definition_revision"),
+            ({"definition_hash": "e\u0301"}, CanonicalJSONError, "/definition_hash"),
+            ({"definition_revision": 2**63}, CanonicalJSONError, "/definition_revision"),
+        ):
+            with self.subTest(changes=changes):
+                try:
+                    cast(Any, DefinitionRef)(**(base | changes))
+                except Exception as caught:
+                    self.assertIs(type(caught), error)
+                    self.assertEqual(cast(Any, caught).path, path)
+                else:
+                    self.fail("invalid reference was accepted")
+
+        for constructor, values, expected, path in (
+            (
+                RecordRef,
+                {"record_id": "bad", "contract_family": "bad", "schema_version": True, "content_hash": "a" * 64},
+                ContractShapeError,
+                "/schema_version",
+            ),
+            (
+                RecordRef,
+                {"record_id": "bad", "contract_family": "e\u0301", "schema_version": 1, "content_hash": "a" * 64},
+                CanonicalJSONError,
+                "/contract_family",
+            ),
+            (AlgorithmRef, base | {"parameters": []}, ContractShapeError, "/parameters"),
+            (AlgorithmRef, base | {"parameters": {"test.value": None}}, CanonicalJSONError, "/parameters/test.value"),
+        ):
+            with self.subTest(model=constructor.__name__, path=path):
+                with self.assertRaises(expected) as caught:
+                    cast(Any, constructor)(**values)
+                self.assertEqual(caught.exception.path, path)
+
+    def test_bounded_copy_preserves_canonical_key_error_order_and_pointer_escaping(self) -> None:
+        cyclic: dict[str, object] = {}
+        cyclic["test.next"] = cyclic
+        params = {"test.z": cyclic, "test.a": None}
+        with self.assertRaises(CanonicalJSONError) as caught:
+            AlgorithmRef(definition_id="test.filter", definition_revision=1, definition_hash="c" * 64, parameters=params)
+        self.assertEqual(caught.exception.path, "/parameters/test.a")
+        with self.assertRaises(CanonicalJSONError) as caught:
+            AlgorithmRef(definition_id="test.filter", definition_revision=1, definition_hash="c" * 64, parameters={"test/a~b": 1})
+        self.assertEqual(caught.exception.path, "/parameters/test~1a~0b")
+
+    def test_parameter_copy_bounds_cycles_and_deep_inputs(self) -> None:
+        cyclic: dict[str, object] = {}
+        cyclic["test.next"] = cyclic
+        nested: object = 1
+        for _ in range(1200):
+            nested = {"test.next": nested}
+        for params in (cyclic, nested):
+            with self.subTest(cyclic=params is cyclic):
+                try:
+                    AlgorithmRef(definition_id="test.filter", definition_revision=1, definition_hash="c" * 64, parameters=cast("Mapping[str, object]", params))
+                except Exception as caught:
+                    self.assertIs(type(caught), CanonicalJSONError)
+                    self.assertEqual(cast(Any, caught).path, "/parameters" + "/test.next" * 32)
+                else:
+                    self.fail("excessive parameter depth was accepted")
+
+    def test_parameter_mapping_copy_is_independent_of_array_container(self) -> None:
+        nested = MappingProxyType({"test.leaf": 1.0})
+        for array in ([nested], (nested,)):
+            with self.subTest(array=type(array).__name__):
+                try:
+                    ref = AlgorithmRef(definition_id="test.filter", definition_revision=1, definition_hash="c" * 64, parameters={"test.array": array})
+                except FDAUContractError as error:
+                    self.fail(f"valid nested mapping was rejected: {error.path}")
+                self.assertEqual(_algorithm_ref_wire(ref)["parameters"], {"test.array": [{"test.leaf": 1.0}]})
+
+    def test_algorithm_equality_preserves_nested_primitive_types(self) -> None:
+        refs = [
+            AlgorithmRef(definition_id="test.filter", definition_revision=1, definition_hash="c" * 64, parameters={"test.array": [{"test.value": value}]})
+            for value in (True, 1, 1.0)
+        ]
+        for index, left in enumerate(refs):
+            for right in refs[index + 1 :]:
+                self.assertNotEqual(left, right)
+        self.assertEqual(
+            refs[0],
+            AlgorithmRef(definition_id="test.filter", definition_revision=1, definition_hash="c" * 64, parameters={"test.array": ({"test.value": True},)}),
+        )
+
     def test_definition_reference_pins_three_fields(self) -> None:
         value = DefinitionRef(definition_id="test.altitude", definition_revision=7, definition_hash="a" * 64)
         self.assertEqual(

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from typing import Mapping
 
 from .errors import CanonicalJSONError, ContractShapeError, ContractValidationError
 
@@ -11,6 +12,27 @@ _IDENTIFIER = re.compile(r"[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)+\Z")
 _UUID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\Z")
 _SHA256 = re.compile(r"[0-9a-f]{64}\Z")
 _MAX_U63 = 2**63 - 1
+
+
+def _integer_domain(value: object, *, path: str) -> None:
+    if type(value) is not int:
+        raise ContractShapeError("expected integer", path=path)
+    if not -(2**63) <= value <= _MAX_U63:
+        raise CanonicalJSONError("integer outside Int64 range", path=path)
+
+
+def _field_domains(*fields: tuple[str, object, str], optional: tuple[str, ...] = ()) -> None:
+    """Check all field shapes, then canonical domains, in semantic order."""
+    present = tuple(field for field in fields if not (field[0] in optional and field[1] is None))
+    for path, value, kind in present:
+        valid = isinstance(value, Mapping) if kind == "object" else type(value) is (int if kind == "integer" else str)
+        if not valid:
+            raise ContractShapeError("unexpected field type", path=path)
+    for path, value, kind in present:
+        if kind == "text":
+            _text(value, path=path)
+        elif kind == "integer":
+            _integer_domain(value, path=path)
 
 
 def _text(value: object, *, path: str) -> str:
@@ -33,6 +55,7 @@ def _identifier(value: object, *, path: str) -> str:
 def _revision(value: object, *, path: str) -> int:
     if type(value) is not int:
         raise ContractShapeError("expected integer revision", path=path)
+    _integer_domain(value, path=path)
     if not 1 <= value <= _MAX_U63:
         raise ContractValidationError("revision outside range", path=path)
     return value
@@ -41,6 +64,7 @@ def _revision(value: object, *, path: str) -> int:
 def _counter(value: object, *, path: str) -> int:
     if type(value) is not int:
         raise ContractShapeError("expected integer counter", path=path)
+    _integer_domain(value, path=path)
     if not 0 <= value <= _MAX_U63:
         raise ContractValidationError("counter outside range", path=path)
     return value

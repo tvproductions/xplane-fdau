@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Sequence
 
-from ._identity_validation import _identifier, _nfc_text, _revision, _sha256, _uuid, _version_text
+from ._identity_validation import _field_domains, _identifier, _nfc_text, _revision, _sha256, _uuid, _version_text
 from .errors import ContractShapeError, ContractValidationError
 
 __all__ = ["Authority", "ProvenanceSource", "ProducerIdentity", "ProviderIdentity", "AdapterIdentity"]
@@ -17,6 +17,7 @@ class Authority:
     authority_revision: int
 
     def __post_init__(self) -> None:
+        _field_domains(("/authority_id", self.authority_id, "text"), ("/authority_revision", self.authority_revision, "integer"))
         _identifier(self.authority_id, path="/authority_id")
         _revision(self.authority_revision, path="/authority_revision")
 
@@ -31,6 +32,15 @@ class ProvenanceSource:
     sha256: str | None = None
 
     def __post_init__(self) -> None:
+        _field_domains(
+            ("/source_id", self.source_id, "text"),
+            ("/scope", self.scope, "text"),
+            ("/source_revision", self.source_revision, "integer"),
+            ("/source_version", self.source_version, "text"),
+            ("/locator", self.locator, "text"),
+            ("/sha256", self.sha256, "text"),
+            optional=("/source_revision", "/source_version", "/locator", "/sha256"),
+        )
         _identifier(self.source_id, path="/source_id")
         _nfc_text(self.scope, path="/scope", maximum=1024)
         if self.source_revision is None and self.source_version is None:
@@ -55,6 +65,13 @@ class ProducerIdentity:
     source_revision: str | None = None
 
     def __post_init__(self) -> None:
+        _field_domains(
+            ("/implementation_id", self.implementation_id, "text"),
+            ("/implementation_version", self.implementation_version, "text"),
+            ("/producer_instance_id", self.producer_instance_id, "text"),
+            ("/source_revision", self.source_revision, "text"),
+            optional=("/source_revision",),
+        )
         _identifier(self.implementation_id, path="/implementation_id")
         _version_text(self.implementation_version, path="/implementation_version")
         _uuid(self.producer_instance_id, path="/producer_instance_id")
@@ -68,6 +85,7 @@ class ProviderIdentity:
     provider_version: str
 
     def __post_init__(self) -> None:
+        _field_domains(("/provider_family_id", self.provider_family_id, "text"), ("/provider_version", self.provider_version, "text"))
         _identifier(self.provider_family_id, path="/provider_family_id")
         _version_text(self.provider_version, path="/provider_version")
 
@@ -78,6 +96,7 @@ class AdapterIdentity:
     adapter_version: str
 
     def __post_init__(self) -> None:
+        _field_domains(("/adapter_family_id", self.adapter_family_id, "text"), ("/adapter_version", self.adapter_version, "text"))
         _identifier(self.adapter_family_id, path="/adapter_family_id")
         _version_text(self.adapter_version, path="/adapter_version")
 

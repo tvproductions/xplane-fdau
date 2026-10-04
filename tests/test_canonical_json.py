@@ -41,6 +41,11 @@ class CanonicalJSONTests(unittest.TestCase):
                 "DefinitionRef",
                 "RecordRef",
                 "AlgorithmRef",
+                "Authority",
+                "ProvenanceSource",
+                "ProducerIdentity",
+                "ProviderIdentity",
+                "AdapterIdentity",
             },
             set(contracts.__all__),
         )

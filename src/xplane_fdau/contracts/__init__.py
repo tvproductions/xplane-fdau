@@ -12,6 +12,7 @@ from .errors import (
     UnsupportedContractVersionError,
 )
 from .identity import AlgorithmRef, DefinitionRef, RecordRef
+from .provenance import AdapterIdentity, Authority, ProducerIdentity, ProvenanceSource, ProviderIdentity
 
 __all__ = [
     "FDAUContractError",
@@ -21,8 +22,13 @@ __all__ = [
     "CanonicalJSONError",
     "UnsupportedContractVersionError",
     "ContractHashError",
-    "canonical_bytes",
     "DefinitionRef",
     "RecordRef",
     "AlgorithmRef",
+    "Authority",
+    "ProvenanceSource",
+    "ProducerIdentity",
+    "ProviderIdentity",
+    "AdapterIdentity",
+    "canonical_bytes",
 ]

@@ -9,6 +9,7 @@ import unittest
 import xplane_fdau
 import xplane_fdau.contracts as contracts
 import xplane_fdau.contracts.identity as contract_identity
+import xplane_fdau.contracts.provenance as contract_provenance
 import xplane_fdau.formats.xplane_fdr as native_fdr
 import xplane_fdau.sinks.xplane_fdr as native_sink
 
@@ -72,6 +73,14 @@ class PublicAPITests(unittest.TestCase):
         for name in contract_identity.__all__:
             self.assertIs(getattr(contracts, name), getattr(contract_identity, name))
         self.assertEqual(["__version__"], xplane_fdau.__all__)
+
+    def test_c1_2_provenance_exports(self) -> None:
+        self.assertEqual(
+            ["Authority", "ProvenanceSource", "ProducerIdentity", "ProviderIdentity", "AdapterIdentity"],
+            contract_provenance.__all__,
+        )
+        for name in contract_provenance.__all__:
+            self.assertIs(getattr(contracts, name), getattr(contract_provenance, name))
 
     def test_formats_do_not_depend_on_sinks_and_sink_imports_only_format_or_stdlib(self) -> None:
         """A format-to-sink edge would invert the native boundary."""

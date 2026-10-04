@@ -28,6 +28,7 @@ class InstalledSmokeTests(unittest.TestCase):
             "xplane_fdau.contracts._identity_validation",
             "xplane_fdau.contracts._content_hash",
             "xplane_fdau.contracts.identity",
+            "xplane_fdau.contracts.provenance",
             "xplane_fdau.contracts.canonical_json",
             "xplane_fdau.formats",
             "xplane_fdau.formats.xplane_fdr",

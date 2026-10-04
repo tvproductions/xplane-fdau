@@ -552,7 +552,7 @@ class BacklogAuthorityTests(unittest.TestCase):
                 else:
                     self.assertEqual(("`queued`", "—", "—"), (status, resume, reason))
 
-    def test_canonical_successors_remain_specified_during_c1_1_delivery(self) -> None:
+    def test_canonical_successors_remain_specified_during_c1_2_delivery(self) -> None:
         inventory = table_rows(read_text(BACKLOG), INVENTORY_HEADER)
         c_rows = [row for row in inventory if re.fullmatch(r"C[1-4]\.\d+", identity(row[0]))]
         self.assertEqual(18, len(c_rows))
@@ -563,10 +563,14 @@ class BacklogAuthorityTests(unittest.TestCase):
                     "[design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md)",
                     spec,
                 )
-                if identity(child) == "C1.1":
+                delivered_plans = {
+                    "C1.1": "2026-09-27-c1-1-canonical-json-number-encoding.md",
+                    "C1.2": "2026-10-04-c1-2-identity-hashing-references-provenance.md",
+                }
+                if identity(child) in delivered_plans:
                     self.assertIn(status, {"`in_progress`", "`implemented`", "`reviewed`", "`verified`"})
                     self.assertEqual(
-                        "[plan](docs/superpowers/plans/2026-09-27-c1-1-canonical-json-number-encoding.md)",
+                        f"[plan](docs/superpowers/plans/{delivered_plans[identity(child)]})",
                         plan,
                     )
                     self.assertRegex(gates, r"^[0-4]/4$")
@@ -942,6 +946,7 @@ class GovernanceArtifactTests(unittest.TestCase):
                 "2026-09-19-t2-1-repository-hygiene-artifact-verification.md",
                 "2026-09-19-t2-2-dependency-toolchain-refresh.md",
                 "2026-09-27-c1-1-canonical-json-number-encoding.md",
+                "2026-10-04-c1-2-identity-hashing-references-provenance.md",
             },
             set(active_plans),
         )
@@ -963,6 +968,9 @@ class GovernanceArtifactTests(unittest.TestCase):
         c1_plan = active_plans["2026-09-27-c1-1-canonical-json-number-encoding.md"]
         self.assertEqual("`C1.1`", c1_plan["Roadmap child"])
         self.assertIn(c1_plan["Status"], {"in_progress", "completed"})
+        c1_2_plan = active_plans["2026-10-04-c1-2-identity-hashing-references-provenance.md"]
+        self.assertEqual("`C1.2`", c1_2_plan["Roadmap child"])
+        self.assertIn(c1_2_plan["Status"], {"in_progress", "completed"})
         self.assertEqual("2026-09-27 — Jeff / tvproductions", c1_plan["Approval"])
         self.assertEqual(
             "`.superpowers/sdd/2026-09-19-t2-2-dependency-toolchain-refresh/completion.md`",

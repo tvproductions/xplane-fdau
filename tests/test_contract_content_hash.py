@@ -19,7 +19,7 @@ RECORD_PREIMAGE = (
     b'{"nested":{"content_hash":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},'
     b'"record_id":"12345678-1234-1234-8234-123456789abc","value":1.0}\n'
 )
-RECORD_DIGEST = "d1bcf9869ac210446527b4ce344db5256a0420a70a4bcc432d73023ac0c9fa3e"
+RECORD_DIGEST = "d1bcf9869ac210446527b4ce344db5256a0420a70a4bcc432d73023ac0c9fa3e"  # pragma: allowlist secret
 DEFINITION_PREIMAGE = (
     b'{"contract_family":"https://tvproductions.github.io/xplane-fdau/contracts/measurement-catalog",'
     b'"definition":{"authority":{"authority_id":"test.owner","authority_revision":1},'
@@ -27,7 +27,7 @@ DEFINITION_PREIMAGE = (
     b'[{"scope":"manual","source_id":"test.manual","source_revision":1}],'
     b'"quantity_id":"test.pressure_altitude"},"schema_version":1}\n'
 )
-DEFINITION_DIGEST = "4645ff5b3d74719279bd5492047f14355361214f13d8f4ec794ed5145d5f97dd"
+DEFINITION_DIGEST = "4645ff5b3d74719279bd5492047f14355361214f13d8f4ec794ed5145d5f97dd"  # pragma: allowlist secret
 
 
 class ContentHashTests(unittest.TestCase):

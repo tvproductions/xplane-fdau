@@ -7,6 +7,8 @@ from pathlib import Path
 import unittest
 
 import xplane_fdau
+import xplane_fdau.contracts as contracts
+import xplane_fdau.contracts.identity as contract_identity
 import xplane_fdau.formats.xplane_fdr as native_fdr
 import xplane_fdau.sinks.xplane_fdr as native_sink
 
@@ -64,6 +66,12 @@ class PublicAPITests(unittest.TestCase):
             self.assertIsNotNone(getattr(native_fdr, name))
         for name in SINK_NAMES:
             self.assertIsNotNone(getattr(native_sink, name))
+
+    def test_c1_2_reference_exports(self) -> None:
+        self.assertEqual(["DefinitionRef", "RecordRef", "AlgorithmRef"], contract_identity.__all__)
+        for name in contract_identity.__all__:
+            self.assertIs(getattr(contracts, name), getattr(contract_identity, name))
+        self.assertEqual(["__version__"], xplane_fdau.__all__)
 
     def test_formats_do_not_depend_on_sinks_and_sink_imports_only_format_or_stdlib(self) -> None:
         """A format-to-sink edge would invert the native boundary."""

@@ -26,6 +26,7 @@ class InstalledSmokeTests(unittest.TestCase):
             "xplane_fdau.contracts._json_parse",
             "xplane_fdau.contracts._binary64",
             "xplane_fdau.contracts._identity_validation",
+            "xplane_fdau.contracts.identity",
             "xplane_fdau.contracts.canonical_json",
             "xplane_fdau.formats",
             "xplane_fdau.formats.xplane_fdr",

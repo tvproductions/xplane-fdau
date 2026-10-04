@@ -11,6 +11,7 @@ from .errors import (
     FDAUContractError,
     UnsupportedContractVersionError,
 )
+from .identity import AlgorithmRef, DefinitionRef, RecordRef
 
 __all__ = [
     "FDAUContractError",
@@ -21,4 +22,7 @@ __all__ = [
     "UnsupportedContractVersionError",
     "ContractHashError",
     "canonical_bytes",
+    "DefinitionRef",
+    "RecordRef",
+    "AlgorithmRef",
 ]

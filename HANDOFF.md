@@ -61,14 +61,24 @@ gate was not required for this documentation/governance-only save point.
 Explicit checkpoint hooks passed Ruff lint/format and detect-secrets after
 removing optional source-file checksum fields from the audit report. Those
 generated hashes were verified false positives; the secret baseline was not
-changed. No dependency refresh is implied. `uv.lock` was already modified at
-session entry and contains dependency changes of unestablished origin. Preserve
-it untouched and exclude it from this save point; its validation and disposition
-remain open. The temporary audit copy under Jeff's system temp directory is
+changed. The initial checkpoint excluded the pre-existing `uv.lock` changes.
+Jeff subsequently requested that they also be handled and synced. Their origin
+remains unestablished, but their contents were reviewed and validated unchanged:
+lock revision 3 to 5, ten development/transitive version updates, no packages
+added or removed, and one new `virtualenv` dependency edge to the already-locked
+`packaging` package. Runtime dependencies remain empty. Offline lock check and
+frozen sync passed with uv 0.12.23 and Python 3.12.15. The complete offline hygiene
+gate passed all 581 tests with 95% coverage, code/documentation/backlog checks,
+and fresh wheel/sdist metadata and inventory checks. This validates the retained
+lock update; it does not resolve the test-quality findings above or establish a
+complete dependency refresh. The follow-up save point includes `uv.lock` and
+this handoff update. Recheck its final Git state on return. The temporary audit
+copy under Jeff's system temp directory is
 local-only; the linked repository copy is the durable report.
 
 **Authorization:** Jeff explicitly requested this handoff and ordinary Git sync.
-That authorizes a checkpoint commit/push, not test remediation completion,
+He also explicitly requested handling the remaining lockfile. That authorizes
+its reviewed, verified follow-up commit/push, not test remediation completion,
 C1.3 implementation, dependency refresh, tags, publication, release, or edits
 to another repository. Release gate G1 remains waiting.
 

@@ -58,7 +58,10 @@ and ty. Backlog audit/next found no findings and recommend `write_plan C1.3`.
 The project-skill tests emit intentional failure messages from injected runners;
 they did not execute a real full hygiene gate. The complete quality/hygiene
 gate was not required for this documentation/governance-only save point.
-No dependency refresh is implied. `uv.lock` was already modified at
+Explicit checkpoint hooks passed Ruff lint/format and detect-secrets after
+removing optional source-file checksum fields from the audit report. Those
+generated hashes were verified false positives; the secret baseline was not
+changed. No dependency refresh is implied. `uv.lock` was already modified at
 session entry and contains dependency changes of unestablished origin. Preserve
 it untouched and exclude it from this save point; its validation and disposition
 remain open. The temporary audit copy under Jeff's system temp directory is

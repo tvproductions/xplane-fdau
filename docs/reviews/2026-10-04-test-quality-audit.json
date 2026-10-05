@@ -214,208 +214,168 @@
   "inventory": [
     {
       "path": "tests/test_backlog_governance.py",
-      "sha256": "c0a9bc22611c8a2b4339a5d2248abbca8029c00b60926896b92bae97a8949c05",
       "test_methods": 32
     },
     {
       "path": "tests/test_backlog_status_adherence.py",
-      "sha256": "c448721eadb6de601596a85613a98e3598f0c0a3a8fb71d5d7e77af460280249",
       "test_methods": 29
     },
     {
       "path": "tests/test_backlog_status_audit.py",
-      "sha256": "fe0c9ffabe9d2397ac10754661dcedef304d19d757a67ea0249478d10053d95e",
       "test_methods": 9
     },
     {
       "path": "tests/test_backlog_status_cli.py",
-      "sha256": "90090e599b70112d18272237a56adbfe70678ec40f0e45489da1385ab4740616",
       "test_methods": 26
     },
     {
       "path": "tests/test_backlog_status_edit.py",
-      "sha256": "1b31305489c5bb42f404fe0acbed5a5d78949b066a4396c0160b5606ec7be18f",
       "test_methods": 48
     },
     {
       "path": "tests/test_backlog_status_evidence.py",
-      "sha256": "2e9f05e9703489e5b28bec4e9b5528f9863c76278a62152e6138eadcbaa0eef6",
       "test_methods": 9
     },
     {
       "path": "tests/test_backlog_status_lifecycle.py",
-      "sha256": "2133c581ed3cc99dbbbab8d4ce252f0739bae09e994fe384448359312fcd78b0",
       "test_methods": 20
     },
     {
       "path": "tests/test_backlog_status_model.py",
-      "sha256": "94486d82fcf43164504349f59814d046d3c215937c6c52df00018dd500ecdc7f",
       "test_methods": 3
     },
     {
       "path": "tests/test_backlog_status_next_action.py",
-      "sha256": "eece3b4188037cd65b219901ad85b9e01aab883f67097846faa25d03e49410fe",
       "test_methods": 7
     },
     {
       "path": "tests/test_backlog_status_parse.py",
-      "sha256": "b2cd0e885de30cae73f1de1d20e1c95cb757760a6beef7a53fbe9e4b6395adf3",
       "test_methods": 31
     },
     {
       "path": "tests/test_backlog_status_policy.py",
-      "sha256": "1a9a99081f105f996d09bcf41893cece69058641c17f1208fc8e08e184ab674a",
       "test_methods": 9
     },
     {
       "path": "tests/test_backlog_status_report.py",
-      "sha256": "fcf6d8ce92352cedefeda29e3a4935ac5b60cf9569783713e7e031d3c2d1ad3c",
       "test_methods": 9
     },
     {
       "path": "tests/test_backlog_status_rules.py",
-      "sha256": "42504888d4bc9031d3ea01120810c73f6b8013f8dfaa3430c5e6dce2a2be07b9",
       "test_methods": 10
     },
     {
       "path": "tests/test_canonical_json.py",
-      "sha256": "caa56293855352303262b8a5f81c516e3f94b2fe387ecdfd3eda417465885b53",
       "test_methods": 14
     },
     {
       "path": "tests/test_contract_binary64.py",
-      "sha256": "55fe9731202ff4bfd3a2d3cbdd4859a8212e865790d1595456ee835631b20a85",
       "test_methods": 4
     },
     {
       "path": "tests/test_contract_content_hash.py",
-      "sha256": "06bf9fd0a4a4d368c43317a3291ddfa3486d12fb19c1281ae7a2334b9f7b1375",
       "test_methods": 4
     },
     {
       "path": "tests/test_contract_identity.py",
-      "sha256": "84792d2c630cf284debd24fd89272ec11b0f53cb58736fb5448009e41514e86b",
       "test_methods": 12
     },
     {
       "path": "tests/test_contract_json_parse.py",
-      "sha256": "285aca6e9c3764e33c60e8c80fc57f0fcfa01097f98364d4cab4bf4d5b0cd815",
       "test_methods": 11
     },
     {
       "path": "tests/test_contract_provenance.py",
-      "sha256": "13f2a733cfd73874e2e3ac055a573b35e5b61779081ec42a38086a4d2bacce6e",
       "test_methods": 7
     },
     {
       "path": "tests/test_dependency_matrix.py",
-      "sha256": "37d370ca5d1ceb0389f8d90b2ef2da1b4d135bca630019faccfbb96481ae936a",
       "test_methods": 12
     },
     {
       "path": "tests/test_dependency_refresh.py",
-      "sha256": "b70a796015f577c63fd92d80e2781ff13b36a64f62f611545687cafb67e776dd",
       "test_methods": 25
     },
     {
       "path": "tests/test_dependency_sources.py",
-      "sha256": "7c40744929bdc5e135050842c52eaf85047be1a1b1baefbc61e63828a9ae2470",
       "test_methods": 10
     },
     {
       "path": "tests/test_documentation.py",
-      "sha256": "c469775e7fe9c2b696f8df093ff4fef8e7baf015e2fd203faf61d6f8f69a3b39",
       "test_methods": 13
     },
     {
       "path": "tests/test_fdr_cli.py",
-      "sha256": "54cf15f8c8f424720ef5ce76d4c2bb89fcf265ba0784a7f2a7ada43fc9d5e52b",
       "test_methods": 26
     },
     {
       "path": "tests/test_fdr_config.py",
-      "sha256": "f263fdd8cfc377ce9e1f2a025f50e93e57127b5e96337a848a4a19b409376ffc",
       "test_methods": 18
     },
     {
       "path": "tests/test_fdr_fixtures.py",
-      "sha256": "b502299f78be995ec0ed72144b309a110b83350cdd5c6c4a29f38ce392389887",
       "test_methods": 1
     },
     {
       "path": "tests/test_fdr_geojson.py",
-      "sha256": "a35343e04adae2916e0f768499715e2190c0098e4869368883c68a949836cdaf",
       "test_methods": 5
     },
     {
       "path": "tests/test_fdr_models.py",
-      "sha256": "40d6cccd74b39a1bbd7cf18ebda9cc954d0371d8c3c39db53e30688d24506c45",
       "test_methods": 31
     },
     {
       "path": "tests/test_fdr_profiles.py",
-      "sha256": "a475e9bf78700a44dc360cf9e50447eea2a3595c64c27ef00e2bb169313d1a58",
       "test_methods": 4
     },
     {
       "path": "tests/test_fdr_reader.py",
-      "sha256": "720d57a5c4de48b89559a392bd48eb64b0e3d15707825af0f04c28fdbf9ebb5d",
       "test_methods": 30
     },
     {
       "path": "tests/test_fdr_recording.py",
-      "sha256": "2df204bbea0e45722e1088b1be12042a40a9c41d7daf81ed3e62bb971f3fa017",
       "test_methods": 20
     },
     {
       "path": "tests/test_fdr_writer.py",
-      "sha256": "327a36ba91a4a0dd8614cd12c2595f1df43881ae1ef15ba4078a601bd9ee9297",
       "test_methods": 19
     },
     {
       "path": "tests/test_hygiene_tool.py",
-      "sha256": "34356f514115c09d784e57e97067cb60f01aed7cb99c1448f05f109490836abb",
       "test_methods": 12
     },
     {
       "path": "tests/test_installed_smoke.py",
-      "sha256": "16000edc66e648ce4c6d407bb9cc04076ab64ec0c394df09edf1be7ff106bd99",
       "test_methods": 9
     },
     {
       "path": "tests/test_project_metadata.py",
-      "sha256": "28be94e466068b0d036b151c35bb976ef3c63b3d49cafa44ce63f7014dce244f",
       "test_methods": 4
     },
     {
       "path": "tests/test_project_skills.py",
-      "sha256": "25860aaa02b355a8475ff44f374d83a4b2f9ed3d3a2c0b82570e8a2198af3209",
       "test_methods": 13
     },
     {
       "path": "tests/test_public_api.py",
-      "sha256": "3fc5513ea4490fa42e933168df4c77c69068a1e0a3377f55c58298c2bc7e026b",
       "test_methods": 5
     },
     {
       "path": "tests/test_quality_tool.py",
-      "sha256": "d2d8680876f4e2f4226610527797867c2efdfbf55922d6181b7faa5602ebdb32",
       "test_methods": 3
     },
     {
       "path": "tests/test_release_tool.py",
-      "sha256": "975edb18ce97d80f8e7d4314f096a5fd556df67437f959ef94c5018d0ec0cb3f",
       "test_methods": 19
     },
     {
       "path": "tests/test_release_workflows.py",
-      "sha256": "f92867dd6cdaf8d1d8c6fb0103117f35c5ca87e0acd07bfb69455f0227131d70",
       "test_methods": 4
     },
     {
       "path": "tests/test_runtime_import_boundary.py",
-      "sha256": "4cb323f04d700848a883d302e0458b5a2d1600fd34e9511b76c9fd385c535913",
       "test_methods": 4
     }
-  ]
+  ],
+  "inventory_identity": "Paths and method counts describe the working tree at pre-checkpoint HEAD e56e6a9, including the uncommitted C1.3 governance assertions. Source bytes are preserved by the checkpoint Git history. Optional per-file hex hashes were removed after the secret scanner reported them as high-entropy strings."
 }

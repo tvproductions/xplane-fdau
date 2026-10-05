@@ -1,7 +1,7 @@
 # xplane-fdau Backlog
 
 - **Status:** Active delivery ledger and Superpowers entry point
-- **Updated:** 2026-09-27
+- **Updated:** 2026-10-04
 
 Read `ROADMAP.md` for architecture order and dependencies. Then use this file to
 select one primary child slice whose prerequisites are verified. Each child
@@ -14,7 +14,7 @@ slice receives one focused plan and one independently reviewable outcome.
   FDAU, native FDR, ARINC, and FDM/FOQA-support behavior while external clients
   own all simulator I/O.
 - Active design: repository-local backlog governance and status reporting.
-- Active child: `C1.2`.
+- Active child: —.
 - `D1.1`, `D1.2`, and `D1.3` are verified. The statusless external `I1.0`
   handoff condition is eligible for q4xpcc Phase 24A planning reconciliation;
   `T1.3` is verified with 4/4 gates under its approved audit policy
@@ -28,9 +28,11 @@ slice receives one focused plan and one independently reviewable outcome.
 - D1 is design-handoff readiness, not implementation or release readiness.
 - `B1.1` source-layout migration: `verified` with 5/5 gates and accepted
   independent review. `C1.1` canonical JSON and number encoding is `verified`
-  with 4/4 gates and accepted independent review. `C1.2` is the next canonical
-  dependency-ready child; `T3.1` remains independent.
-- Canonical contract design: approved with accepted independent review; `C1.2`
+  with 4/4 gates and accepted independent review. `C1.2` identity, hashing,
+  references, authority, and provenance is `verified` with 4/4 gates and
+  accepted independent review. `C1.3` is the next canonical dependency-ready
+  child; `T3.1` remains independent.
+- Canonical contract design: approved with accepted independent review; `C1.3`
   through `C4.4` remain specified with zero delivery gates satisfied.
 - Release, tag, and package publication: prohibited pending their separate
   gates and authorization.

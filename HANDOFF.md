@@ -1,6 +1,66 @@
 # Project Handoff
 
-## Resume point — 2026-09-28, Python tooling survey
+## Resume point — 2026-10-04, after C1.2 local integration
+
+Observed 2026-10-05 00:01 UTC, before this handoff and requested ordinary Git
+sync: `main` was clean at `c7785870e74c16966794352527fb6a28b8a4fa17`,
+15 commits ahead of the freshly fetched `origin/main`, with no remote
+divergence. Only the main worktree exists. Recheck Git on return because this
+handoff's sync creates a later commit.
+
+**Current objective:** C1.2 identity, hashing, references, authority, and
+provenance is complete, `verified` at 4/4 gates, and integrated into `main`.
+Its [completed plan](docs/superpowers/plans/2026-10-04-c1-2-identity-hashing-references-provenance.md),
+[completion record](.superpowers/sdd/2026-10-04-c1-2-identity-hashing-references-provenance/completion.md),
+and [review disposition](.superpowers/sdd/2026-10-04-c1-2-identity-hashing-references-provenance/review.md)
+are durable evidence. The completed selection was cleared through the guarded
+backlog adapter; no child is selected. The resulting audit has no findings and
+reports `action=write_plan child=C1.3`. C1.3 typed values and content-addressed
+payload references remains `specified`, at 0/4 gates, with no plan.
+
+**Latest result:** The independent whole-branch review identified five
+Important findings; all were reproduced and resolved with regression tests.
+The final complete offline hygiene gate passed 581 `unittest` tests with 95%
+coverage on Python 3.12.14, strict documentation and code checks, and fresh
+wheel/sdist metadata and inventory checks. After the user chose local
+integration, main fast-forwarded to the exact reviewed branch HEAD. Frozen
+offline sync, lock check, backlog audit, two live-state tests, a fresh external
+artifact pair, and external installed-wheel smoke all passed on main. Its
+artifact hashes match the branch gate. The temporary feature worktree and
+branch were then removed. The complete gate was not repeated on the identical
+merged tree, following the repository's exact fast-forward verification rule.
+
+**Local-only evidence:** The verified main artifact pair and isolated Python
+3.12.14 environment remain at
+`C:\Users\Jeff\AppData\Local\Temp\xplane-fdau-merge-8cc468f4616f4b34910d0a58a8198793`.
+Its `main-verification.json` records the main HEAD and artifact digests. The
+ignored receipt at
+`.superpowers/sdd/2026-10-04-c1-2-identity-hashing-references-provenance/local-integration.json`
+adds focused main-check results. These paths were verified locally and are
+not available from a fresh clone; the tracked completion and gate receipts
+remain the portable evidence. The completion record's pending-integration
+sentence describes its earlier observation and is superseded by this handoff.
+
+**First permissible action on return:** Read `AGENTS.md` and its linked
+authorities, then run backlog `audit` and `next`. Use
+`superpowers:writing-plans` to draft one reviewable C1.3 implementation plan
+under the approved
+[canonical-contract design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md).
+Expected result: exact files, test-first `unittest` steps, verification commands,
+and commit boundaries for C1.3. Obtain plan approval before selecting C1.3 or
+implementing it. Stop on an audit finding, changed authority, or missing
+approval.
+
+**Decisions and boundaries:** The user approved native implementation followed
+by one independent whole-branch review, selected local integration, and then
+explicitly requested this handoff and ordinary Git sync. These approvals cover
+the completed C1.2 work and its save point. Later model factories, public model
+hash dispatch, family loaders, schemas, and corpus resources retain their
+approved later-child ownership. Python 3.12 is the sole supported minor;
+runtime remains pure Python and standard-library-only. Release gate `G1`
+remains waiting, with tags and publication separately gated.
+
+## Prior resume point — 2026-09-28, Python tooling survey
 
 Observed 2026-09-28 00:45 UTC, before this handoff and requested ordinary Git
 sync: `main` was clean at `d1d1cadf778e2f614a877fa13c5d124af97a137e`

@@ -947,6 +947,7 @@ class GovernanceArtifactTests(unittest.TestCase):
                 "2026-09-19-t2-2-dependency-toolchain-refresh.md",
                 "2026-09-27-c1-1-canonical-json-number-encoding.md",
                 "2026-10-04-c1-2-identity-hashing-references-provenance.md",
+                "2026-10-04-c1-3-typed-values-payload-references.md",
             },
             set(active_plans),
         )
@@ -971,6 +972,11 @@ class GovernanceArtifactTests(unittest.TestCase):
         c1_2_plan = active_plans["2026-10-04-c1-2-identity-hashing-references-provenance.md"]
         self.assertEqual("`C1.2`", c1_2_plan["Roadmap child"])
         self.assertIn(c1_2_plan["Status"], {"in_progress", "completed"})
+        c1_3_plan = active_plans["2026-10-04-c1-3-typed-values-payload-references.md"]
+        self.assertEqual("`C1.3`", c1_3_plan["Roadmap child"])
+        self.assertEqual("draft", c1_3_plan["Status"])
+        self.assertEqual("—", c1_3_plan["Approval"])
+        self.assertEqual("—", c1_3_plan["Completion evidence"])
         self.assertEqual("2026-09-27 — Jeff / tvproductions", c1_plan["Approval"])
         self.assertEqual(
             "`.superpowers/sdd/2026-09-19-t2-2-dependency-toolchain-refresh/completion.md`",

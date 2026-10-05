@@ -1,6 +1,75 @@
 # Project Handoff
 
-## Resume point — 2026-10-04, after C1.2 local integration
+## Resume point — 2026-10-04, C1.3 draft review and test-quality concern
+
+Observed 2026-10-05 01:02 UTC before this checkpoint: `main` at
+`e56e6a9de3ba961315f2d60d5ba22c5daca1ddc0`, with only the primary worktree.
+The fetched remote and final save-point state must be rechecked on return.
+
+**Current objective:** Preserve the unapproved
+[C1.3 draft plan](docs/superpowers/plans/2026-10-04-c1-3-typed-values-payload-references.md)
+and the unresolved test-quality/workflow reliability concern. C1.3 remains
+`specified`, unselected, at 0/4 gates. No C1.3 implementation or plan approval
+occurred. C1.2 remains verified and locally integrated as recorded below.
+
+**Latest result and correction:** Review initially treated the assertions in
+`tests/test_backlog_governance.py:977` requiring C1.3 to remain draft, without
+approval or completion evidence, as a plan-maintenance obligation. Jeff
+challenged that recommendation. The agent withdrew it: those assertions freeze
+temporary state rather than test approval/evidence rules. They remain in the
+checkpoint's existing draft-related test edits; they are unresolved, not an
+accepted enduring test requirement. The draft's self-review PASS does not close
+this finding or grant execution authority.
+
+The durable [test-quality audit](docs/reviews/2026-10-04-test-quality-audit.json)
+inventories 581 methods in 41 test modules and identifies a conservative lower
+bound of 19 additional weak methods: ten documentation wording/metadata checks,
+six skill-guidance phrase checks, and three delivery-state/handoff snapshots.
+It lists exact locations, correction shapes, other candidates, and exclusions.
+This was static screening with candidate inspection, not an exhaustive mutation
+audit or certification of unflagged tests. Two in-memory demonstrations showed
+a keyword-only document passing an explanatory-documentation check and approved
+C1.3 metadata failing the draft snapshot. Neither modified repository files.
+
+**User concern:** Jeff questioned how repeated Superpowers use can coexist with
+these failures. Current `writing-good-tests.md` explicitly prohibits change
+detectors and replacing behavior checks with text presence. Older plans
+prescribed some of the offending assertions; later implementation and review
+preserved the pattern. The agent acknowledged that procedural checkpoints did
+not enforce substantive test quality here. No upstream skill defect, historical
+skill-version explanation, or approved workflow redesign was established.
+Do not treat another declaration of skill compliance or a passing suite as
+resolution. Trace proposed tests to requirements, observable failure, a realistic
+defect they detect, and legitimate changes they must allow.
+
+**First permissible action on return:** Read project authorities and run backlog
+`audit`/`next`, then address the test-quality finding with Jeff before treating
+the C1.3 draft as ready for execution. Inspect the audit's cited assertions and
+distinguish stable contracts from temporary-state or prose snapshots. A corrected
+test must exercise the consuming behavior; deleting every governance test is
+not the proposed correction. Test remediation and any workflow change still
+need their appropriate authorized scope. C1.3 selection and implementation
+require explicit plan approval. Stop on audit findings or changed authority.
+
+**Verification and local state:** Checkpoint verification passed 63 focused
+documentation/governance/public-API/project-skill tests, strict MkDocs build,
+the documentation coverage gate (41.6% against 40%), focused Ruff lint/format,
+and ty. Backlog audit/next found no findings and recommend `write_plan C1.3`.
+The project-skill tests emit intentional failure messages from injected runners;
+they did not execute a real full hygiene gate. The complete quality/hygiene
+gate was not required for this documentation/governance-only save point.
+No dependency refresh is implied. `uv.lock` was already modified at
+session entry and contains dependency changes of unestablished origin. Preserve
+it untouched and exclude it from this save point; its validation and disposition
+remain open. The temporary audit copy under Jeff's system temp directory is
+local-only; the linked repository copy is the durable report.
+
+**Authorization:** Jeff explicitly requested this handoff and ordinary Git sync.
+That authorizes a checkpoint commit/push, not test remediation completion,
+C1.3 implementation, dependency refresh, tags, publication, release, or edits
+to another repository. Release gate G1 remains waiting.
+
+## Prior resume point — 2026-10-04, after C1.2 local integration
 
 Observed 2026-10-05 00:01 UTC, before this handoff and requested ordinary Git
 sync: `main` was clean at `c7785870e74c16966794352527fb6a28b8a4fa17`,

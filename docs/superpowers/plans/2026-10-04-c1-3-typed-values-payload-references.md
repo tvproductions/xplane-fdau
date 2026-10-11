@@ -1,12 +1,12 @@
 # C1.3 Typed Values and Content-Addressed Payload References Implementation Plan
 
 - **Governance:** active
-- **Status:** in_progress
+- **Status:** completed
 - **Date:** 2026-10-04
 - **Roadmap child:** `C1.3`
 - **Source specification:** `docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md`
 - **Approval:** 2026-10-11 — Jeff / tvproductions
-- **Completion evidence:** —
+- **Completion evidence:** `.superpowers/sdd/2026-10-04-c1-3-typed-values-payload-references/completion.md`
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -148,13 +148,13 @@ For RepresentationSpec, field order is `kind`, `element_representation`, `length
 
 **Interfaces:** Installed smoke constructs an inline real array, a referenced-byte declaration, and one payload claim; checks frozen order and literal canonical bytes; verifies byte-only data cannot be inline. Existing native FDR, C1.1, and C1.2 checks remain.
 
-- [ ] **Step 1: Write failing smoke tests** injecting an incorrect canonical value projection and an altered payload field; prove smoke raises `SmokeError`. Verify every new runtime module is discovered/imported. Run storage access mocks around the C1.3 portion of the smoke (the rest of smoke legitimately uses files).
-- [ ] **Step 2: Verify RED** with `uv run --offline --frozen python -m unittest tests.test_contract_values tests.test_canonical_json tests.test_public_api tests.test_installed_smoke tests.test_runtime_import_boundary -v`.
-- [ ] **Step 3: Implement minimal installed checks** and fix evidenced integration defects without adding later-child resources or behavior.
-- [ ] **Step 4: Verify focused GREEN** with Step 2, focused Ruff check/format, and ty; commit with `test: verify installed canonical value primitives`.
-- [ ] **Step 5: Obtain independent whole-branch review** against all four gates, staged precedence/path parity, exact wire bytes, immutability, declaration bounds, storage isolation, and the explicit public API. Resolve load-bearing findings with failing `unittest` assertions before fixes.
-- [ ] **Step 6: Run one stable-candidate complete offline hygiene gate** on Python 3.12: `uv run --offline --frozen python .codex/skills/hygiene/scripts/hygiene.py`. This supplies full quality, strict docs, hooks, backlog audit, and fresh wheel/sdist inventory verification; do not run a duplicate full quality gate on the unchanged candidate.
-- [ ] **Step 7: Verify a fresh external installed wheel** using the guarded commands below. Preserve failed artifacts with their exact path; successful cleanup follows the hygiene skill's resolved-path checks.
+- [x] **Step 1: Write failing smoke tests** injecting an incorrect canonical value projection and an altered payload field; prove smoke raises `SmokeError`. Verify every new runtime module is discovered/imported. Run storage access mocks around the C1.3 portion of the smoke (the rest of smoke legitimately uses files).
+- [x] **Step 2: Verify RED** with `uv run --offline --frozen python -m unittest tests.test_contract_values tests.test_canonical_json tests.test_public_api tests.test_installed_smoke tests.test_runtime_import_boundary -v`.
+- [x] **Step 3: Implement minimal installed checks** and fix evidenced integration defects without adding later-child resources or behavior.
+- [x] **Step 4: Verify focused GREEN** with Step 2, focused Ruff check/format, and ty; commit with `test: verify installed canonical value primitives`.
+- [x] **Step 5: Obtain independent whole-branch review** against all four gates, staged precedence/path parity, exact wire bytes, immutability, declaration bounds, storage isolation, and the explicit public API. Resolve load-bearing findings with failing `unittest` assertions before fixes.
+- [x] **Step 6: Run one stable-candidate complete offline hygiene gate** on Python 3.12: `uv run --offline --frozen python .codex/skills/hygiene/scripts/hygiene.py`. This supplies full quality, strict docs, hooks, backlog audit, and fresh wheel/sdist inventory verification; do not run a duplicate full quality gate on the unchanged candidate.
+- [x] **Step 7: Verify a fresh external installed wheel** using the guarded commands below. Preserve failed artifacts with their exact path; successful cleanup follows the hygiene skill's resolved-path checks.
 
   ```powershell
   $c13ArtifactDir = Join-Path ([System.IO.Path]::GetTempPath()) ("xplane-fdau-c1-3-" + [guid]::NewGuid().ToString("N"))
@@ -182,8 +182,8 @@ For RepresentationSpec, field order is `kind`, `element_representation`, `length
   } finally { Pop-Location }
   ```
 
-- [ ] **Step 8: Record committed review, completion, and gate receipts** with observed commands/results and artifact digests. Transition `implemented`, `reviewed`, and `verified` only when their prerequisites hold; record each gate through guarded dry-run/apply. Commit evidence with the corresponding gate ledger changes; do not claim completion before all four pass. Run focused backlog/live-state and documentation checks after governance edits.
-- [ ] **Step 9: Use finishing-a-development-branch** after verification. Local integration requires the user's choice and the repository's exact-fast-forward main checks before removing the worktree/branch. No remote sync or release follows automatically.
+- [x] **Step 8: Record committed review, completion, and gate receipts** with observed commands/results and artifact digests. Transition `implemented`, `reviewed`, and `verified` only when their prerequisites hold; record each gate through guarded dry-run/apply. Commit evidence with the corresponding gate ledger changes; do not claim completion before all four pass. Run focused backlog/live-state and documentation checks after governance edits.
+- [x] **Step 9: Use finishing-a-development-branch** after verification. Local integration requires the user's choice and the repository's exact-fast-forward main checks before removing the worktree/branch. No remote sync or release follows automatically.
 
 ## Acceptance trace and planning audit
 

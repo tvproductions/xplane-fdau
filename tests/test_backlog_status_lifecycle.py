@@ -46,9 +46,9 @@ class LifecycleTests(unittest.TestCase):
         child = replace(snapshot.backlog.children[0], status=status, resume_state=resume, reason=reason)
         backlog = replace(snapshot.backlog, children=(child, *snapshot.backlog.children[1:]), active_child=child.id if selected else None)
         artifacts = snapshot.artifacts
-        if plan_status:
+        if bool(plan_status):
             artifacts = replace(artifacts, plans=tuple(replace(plan, status=plan_status) for plan in artifacts.plans))
-        if design_status:
+        if bool(design_status):
             artifacts = replace(artifacts, specifications=tuple(replace(spec, status=design_status) for spec in artifacts.specifications))
             if design_status == "draft":
                 backlog = replace(backlog, children=(child, replace(backlog.children[1], status="queued")))

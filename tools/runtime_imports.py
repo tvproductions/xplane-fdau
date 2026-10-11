@@ -95,7 +95,7 @@ def _bindings(tree: ast.AST) -> dict[str, str]:
         if isinstance(node, ast.Import):
             for alias in node.names:
                 local = alias.asname or alias.name.split(".", 1)[0]
-                bindings[local] = alias.name if alias.asname else local
+                bindings[local] = alias.name if bool(alias.asname) else local
         elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module is not None:
             for alias in node.names:
                 if alias.name != "*":

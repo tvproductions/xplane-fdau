@@ -332,7 +332,7 @@ def collect_status(root: Path, runner: Runner, opener: Opener) -> dict[str, Any]
             yanked = any(release_is_yanked(index, version, digest) for _, digest in artifacts)
             if yanked:
                 findings.append({"kind": "yanked", "name": name, "version": version, "source": f"https://pypi.org/simple/{name}/"})
-            latest = node.get("latest_version") if node else None
+            latest = node.get("latest_version") if bool(node) else None
             if latest is not None and not isinstance(latest, str):
                 raise SourceError("invalid uv latest_version")
             outdated = latest is not None and Version(latest) > Version(version)

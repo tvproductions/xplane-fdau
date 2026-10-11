@@ -73,7 +73,7 @@ class ReleaseToolTests(unittest.TestCase):
                 "xplane_fdau-0.1.0.dist-info/licenses/LICENSE": Path("LICENSE").read_bytes(),
             }
         )
-        if wheel_updates:
+        if bool(wheel_updates):
             wheel_files.update(wheel_updates)
         for name in wheel_remove or ():
             wheel_files.pop(name, None)
@@ -120,7 +120,7 @@ class ReleaseToolTests(unittest.TestCase):
                 "xplane_fdau-0.1.0/README.md": Path("README.md").read_bytes(),
             }
         )
-        if tar_updates:
+        if bool(tar_updates):
             tar_files.update(tar_updates)
         for name in tar_remove or ():
             tar_files.pop(name, None)

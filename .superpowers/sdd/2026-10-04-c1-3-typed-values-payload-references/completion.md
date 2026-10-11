@@ -25,3 +25,11 @@ The broader pre-existing weak-test audit remains unresolved. C1.3-specific stale
 The installed pair and environment are retained at `C:\Users\Jeff\AppData\Local\Temp\xplane-fdau-c1-3-594b38b861cd48de8c10d4b816ab7a9e`. Hygiene cleaned its own successful artifact directory using guarded cleanup. Only plan/backlog/evidence changes follow the complete gate; source and artifacts remain unchanged. Local integration awaits the user's finishing choice. No remote sync, tag or release is authorized.
 
 Final governance/documentation/live-state command passed 46 tests in 17.853 seconds after the guarded verified transition; strict MkDocs rebuilt successfully. The four receipts and completed plan were committed with the gate ledger in abb31fd. Runtime files remain identical to the fully verified 0b25c7c candidate.
+
+## Local integration — 2026-10-11
+
+Jeff selected option 1, local integration. Both checkouts were clean before `git merge --ff-only feature/c1-3-typed-values`; no pull was run. Main HEAD equaled the recorded branch HEAD `f77394170eb9b5eefc04c9e5fdc08555b8fa6a64`. Its runtime, tests, tools and dependency inputs match the complete gate candidate.
+
+Focused main verification passed: frozen offline sync, offline lock check, strict backlog audit, two live-state tests (17.037 seconds), a fresh external wheel/sdist with strict metadata and exact inventory validation, and external installed-wheel smoke on Python 3.12.15. Both artifact hashes equal the branch gate values above. The successful pair/environment and `main-verification.json` remain locally at `C:\Users\Jeff\AppData\Local\Temp\xplane-fdau-merge-ce3aaad457f24ef3843829685315bb31`; the ignored local-integration.json is a local-only receipt. The completed child selection was cleared through guarded dry-run/hash/apply. This supersedes the earlier pending-integration observation. The complete gate was not repeated on the identical merged source.
+
+Four unrelated untracked Windows cache databases under a literal `%SystemDrive%` directory were recoverably moved before the clean-tree check to `C:\Users\Jeff\AppData\Local\Temp\xplane-fdau-preserved-caches-44f930958b1942d4bb15ff2ae0df1532`. All four preserved SHA-256 values match the original files; preservation.json records original and saved paths. No file content was deleted or changed.

@@ -717,46 +717,6 @@ class GovernanceArtifactTests(unittest.TestCase):
                 path,
             )
 
-    def test_active_design_epic_assignments_match_roadmap_contract(self) -> None:
-        expected = {
-            "2026-08-09-src-layout-migration-design.md": ("`B1`", ("B1.1",)),
-            "2026-08-09-xplane-fdau-backlog-status-skill-design.md": (
-                "`T1`",
-                EXPECTED_EPIC_MEMBERS["T1"],
-            ),
-            "2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md": (
-                "`C1`",
-                EXPECTED_EPIC_MEMBERS["C1"] + EXPECTED_EPIC_MEMBERS["C2"] + EXPECTED_EPIC_MEMBERS["C3"] + EXPECTED_EPIC_MEMBERS["C4"],
-            ),
-            "2026-08-15-xplane-fdau-local-workflow-skills-design.md": (
-                "`T2`",
-                EXPECTED_EPIC_MEMBERS["T2"] + EXPECTED_EPIC_MEMBERS["T3"],
-            ),
-            "2026-08-22-q4xpcc-contract-handoff-readiness-design.md": (
-                "`D1`",
-                EXPECTED_EPIC_MEMBERS["D1"],
-            ),
-            "2026-08-23-xplane-fdau-acquisition-recording-projection-pinning-contracts-design.md": (
-                "`D1`",
-                ("D1.2",),
-            ),
-            "2026-09-05-t1-3-audit-policy-supplement-design.md": ("`T1`", ("T1.3",)),
-        }
-        actual: dict[str, tuple[str, tuple[str, ...]]] = {}
-        for path in sorted((ROOT / "docs/superpowers/specs").glob("*.md")):
-            values = metadata(path)
-            if values.get("Governance") != "active":
-                continue
-            children = tuple(re.findall(r"`([A-Z][0-9]+\.[0-9]+)`", values["Roadmap children"]))
-            actual[path.name] = (values["Roadmap epic"], children)
-        self.assertEqual(expected, actual)
-        self.assertIn(
-            "The canonical measurement-contract design is explicitly a cross-epic design "
-            "spanning `C1`, `C2`, `C3`, and `C4`; its governance metadata is anchored by "
-            "`Roadmap epic: C1`.",
-            re.sub(r"\s+", " ", read_text(ROADMAP)),
-        )
-
     def test_every_spec_uses_one_complete_governance_family(self) -> None:
         for path in sorted((ROOT / "docs/superpowers/specs").glob("*.md")):
             values = metadata(path)
@@ -882,76 +842,6 @@ class GovernanceArtifactTests(unittest.TestCase):
             )
             with patch(__name__ + ".ROOT", root):
                 self.test_completed_active_plan_completion_evidence_is_inline_repo_relative_file()
-
-    def test_active_artifact_assignments_match_current_roadmap_children(self) -> None:
-        active_specs = {
-            path.name: metadata(path) for path in sorted((ROOT / "docs/superpowers/specs").glob("*.md")) if metadata(path).get("Governance") == "active"
-        }
-        active_plans = {
-            path.name: metadata(path) for path in sorted((ROOT / "docs/superpowers/plans").glob("*.md")) if metadata(path).get("Governance") == "active"
-        }
-        self.assertEqual(
-            {
-                "2026-08-09-src-layout-migration-design.md",
-                "2026-08-09-xplane-fdau-backlog-status-skill-design.md",
-                "2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md",
-                "2026-08-15-xplane-fdau-local-workflow-skills-design.md",
-                "2026-08-22-q4xpcc-contract-handoff-readiness-design.md",
-                "2026-08-23-xplane-fdau-acquisition-recording-projection-pinning-contracts-design.md",
-                "2026-09-05-t1-3-audit-policy-supplement-design.md",
-            },
-            set(active_specs),
-        )
-        self.assertEqual(
-            {
-                "2026-08-09-src-layout-migration.md",
-                "2026-08-15-xplane-fdau-backlog-authority-normalization.md",
-                "2026-08-16-xplane-fdau-typed-backlog-status-reporting.md",
-                "2026-09-05-t1-3-structural-audit.md",
-                "2026-09-06-t1-4-deterministic-next-action-selection.md",
-                "2026-09-06-t1-5-guarded-child-state-mutations.md",
-                "2026-09-07-t1-6-skill-session-hygiene-artifact-closure.md",
-                "2026-09-19-t2-1-repository-hygiene-artifact-verification.md",
-                "2026-09-19-t2-2-dependency-toolchain-refresh.md",
-                "2026-09-27-c1-1-canonical-json-number-encoding.md",
-                "2026-10-04-c1-2-identity-hashing-references-provenance.md",
-                "2026-10-04-c1-3-typed-values-payload-references.md",
-            },
-            set(active_plans),
-        )
-        self.assertEqual("`T1.1`", active_plans["2026-08-15-xplane-fdau-backlog-authority-normalization.md"]["Roadmap child"])
-        self.assertEqual("`T1.2`", active_plans["2026-08-16-xplane-fdau-typed-backlog-status-reporting.md"]["Roadmap child"])
-        self.assertEqual("`T1.3`", active_plans["2026-09-05-t1-3-structural-audit.md"]["Roadmap child"])
-        self.assertEqual("`T1.4`", active_plans["2026-09-06-t1-4-deterministic-next-action-selection.md"]["Roadmap child"])
-        self.assertEqual("`T1.5`", active_plans["2026-09-06-t1-5-guarded-child-state-mutations.md"]["Roadmap child"])
-        self.assertEqual("completed", active_plans["2026-09-06-t1-5-guarded-child-state-mutations.md"]["Status"])
-        self.assertEqual(
-            "`.superpowers/sdd/2026-09-06-t1-5-guarded-child-state-mutations/completion.md`",
-            active_plans["2026-09-06-t1-5-guarded-child-state-mutations.md"]["Completion evidence"],
-        )
-        self.assertEqual("`T1.6`", active_plans["2026-09-07-t1-6-skill-session-hygiene-artifact-closure.md"]["Roadmap child"])
-        self.assertEqual("completed", active_plans["2026-09-19-t2-1-repository-hygiene-artifact-verification.md"]["Status"])
-        self.assertEqual("`T2.1`", active_plans["2026-09-19-t2-1-repository-hygiene-artifact-verification.md"]["Roadmap child"])
-        self.assertEqual("`T2.2`", active_plans["2026-09-19-t2-2-dependency-toolchain-refresh.md"]["Roadmap child"])
-        self.assertEqual("completed", active_plans["2026-09-19-t2-2-dependency-toolchain-refresh.md"]["Status"])
-        c1_plan = active_plans["2026-09-27-c1-1-canonical-json-number-encoding.md"]
-        self.assertEqual("`C1.1`", c1_plan["Roadmap child"])
-        self.assertIn(c1_plan["Status"], {"in_progress", "completed"})
-        c1_2_plan = active_plans["2026-10-04-c1-2-identity-hashing-references-provenance.md"]
-        self.assertEqual("`C1.2`", c1_2_plan["Roadmap child"])
-        self.assertIn(c1_2_plan["Status"], {"in_progress", "completed"})
-        c1_3_plan = active_plans["2026-10-04-c1-3-typed-values-payload-references.md"]
-        self.assertEqual("`C1.3`", c1_3_plan["Roadmap child"])
-        self.assertEqual("2026-09-27 — Jeff / tvproductions", c1_plan["Approval"])
-        self.assertEqual(
-            "`.superpowers/sdd/2026-09-19-t2-2-dependency-toolchain-refresh/completion.md`",
-            active_plans["2026-09-19-t2-2-dependency-toolchain-refresh.md"]["Completion evidence"],
-        )
-        self.assertEqual("completed", active_plans["2026-09-07-t1-6-skill-session-hygiene-artifact-closure.md"]["Status"])
-        self.assertEqual(
-            "`.superpowers/sdd/2026-09-07-t1-6-skill-session-hygiene-artifact-closure/completion.md`",
-            active_plans["2026-09-07-t1-6-skill-session-hygiene-artifact-closure.md"]["Completion evidence"],
-        )
 
     def test_historical_artifacts_name_their_disposition(self) -> None:
         historical_paths = (

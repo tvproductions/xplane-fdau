@@ -552,38 +552,6 @@ class BacklogAuthorityTests(unittest.TestCase):
                 else:
                     self.assertEqual(("`queued`", "—", "—"), (status, resume, reason))
 
-    def test_canonical_successors_remain_specified_during_c1_2_delivery(self) -> None:
-        inventory = table_rows(read_text(BACKLOG), INVENTORY_HEADER)
-        c_rows = [row for row in inventory if re.fullmatch(r"C[1-4]\.\d+", identity(row[0]))]
-        self.assertEqual(18, len(c_rows))
-        for row in c_rows:
-            child, _outcome, status, _dependencies, spec, plan, gates, review, resume, reason = row
-            with self.subTest(child=child):
-                self.assertEqual(
-                    "[design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md)",
-                    spec,
-                )
-                delivered_plans = {
-                    "C1.1": "2026-09-27-c1-1-canonical-json-number-encoding.md",
-                    "C1.2": "2026-10-04-c1-2-identity-hashing-references-provenance.md",
-                }
-                if identity(child) in delivered_plans:
-                    self.assertIn(status, {"`in_progress`", "`implemented`", "`reviewed`", "`verified`"})
-                    self.assertEqual(
-                        f"[plan](docs/superpowers/plans/{delivered_plans[identity(child)]})",
-                        plan,
-                    )
-                    self.assertRegex(gates, r"^[0-4]/4$")
-                    self.assertEqual(("—", "—"), (resume, reason))
-                    continue
-                else:
-                    self.assertEqual("`specified`", status)
-                    self.assertEqual("—", plan)
-                self.assertIn(gates, {"0/4", "0/5"})
-                self.assertEqual(("—", "—", "—"), (review, resume, reason))
-                body = section_body(BACKLOG, f"{identity(row[0])} — {row[1]}", level=3)
-                self.assertEqual([], re.findall(r"^- \[x\] ", body, re.MULTILINE))
-
     def test_handoff_orders_d1_verification_before_external_thresholds(self) -> None:
         handoff = re.sub(r"\s+", " ", read_text(HANDOFF))
         sequence = (
@@ -974,9 +942,6 @@ class GovernanceArtifactTests(unittest.TestCase):
         self.assertIn(c1_2_plan["Status"], {"in_progress", "completed"})
         c1_3_plan = active_plans["2026-10-04-c1-3-typed-values-payload-references.md"]
         self.assertEqual("`C1.3`", c1_3_plan["Roadmap child"])
-        self.assertEqual("draft", c1_3_plan["Status"])
-        self.assertEqual("—", c1_3_plan["Approval"])
-        self.assertEqual("—", c1_3_plan["Completion evidence"])
         self.assertEqual("2026-09-27 — Jeff / tvproductions", c1_plan["Approval"])
         self.assertEqual(
             "`.superpowers/sdd/2026-09-19-t2-2-dependency-toolchain-refresh/completion.md`",

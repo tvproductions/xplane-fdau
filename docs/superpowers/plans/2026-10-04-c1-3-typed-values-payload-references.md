@@ -1,11 +1,11 @@
 # C1.3 Typed Values and Content-Addressed Payload References Implementation Plan
 
 - **Governance:** active
-- **Status:** draft
+- **Status:** in_progress
 - **Date:** 2026-10-04
 - **Roadmap child:** `C1.3`
 - **Source specification:** `docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md`
-- **Approval:** —
+- **Approval:** 2026-10-11 — Jeff / tvproductions
 - **Completion evidence:** —
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -202,4 +202,4 @@ For RepresentationSpec, field order is `kind`, `element_representation`, `length
 | Gate 4: construction/loaded property-path equivalence | Aligned | This plan line 129; private parsed nested readers, lexical-token and mixed-invalid tests |
 | Public ownership, artifact and installed-import closure | Aligned | This plan lines 129, 145; exact exports, module inventory, offline hygiene and external Python 3.12 smoke |
 
-Self-review/planning audit verdict: PASS for intent/scope/plan alignment, with no drifted or missing scoped requirement. No gap or correction remains after clarifying raw enumeration-code preservation. This is a planning verdict, not an implementation or independent code-review result. Final execution approval is pending. Before approval, verify the draft with backlog audit, a whitespace check including this untracked file, and focused documentation/governance checks. This draft introduces no delivery gate evidence.
+Self-review/planning audit verdict: PASS for intent/scope/plan alignment, with no drifted or missing scoped requirement. No gap or correction remains after clarifying raw enumeration-code preservation. This is a planning verdict, not an implementation or independent code-review result. Jeff approved execution on 2026-10-11: "let's proceed with C1.3". Before approval, verify the draft with backlog audit, a whitespace check including this untracked file, and focused documentation/governance checks. This draft introduces no delivery gate evidence.

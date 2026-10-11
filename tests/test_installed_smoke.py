@@ -17,6 +17,38 @@ from xplane_fdau.formats.xplane_fdr import FDRReader
 
 
 class InstalledSmokeTests(unittest.TestCase):
+    def test_value_smoke_rejects_incorrect_canonical_projection(self) -> None:
+        import xplane_fdau.contracts as contracts
+
+        original = contracts.canonical_bytes
+
+        def broken(value: object) -> bytes:
+            if type(value) is contracts.InlineValue:
+                return b'{"element_representation":"real","representation":"fixed_array","value":[1.0,2.0]}\n'
+            return original(value)
+
+        with mock.patch.object(contracts, "canonical_bytes", side_effect=broken), self.assertRaises(installed_smoke.SmokeError):
+            installed_smoke._canonical_values_smoke()
+
+    def test_value_smoke_rejects_altered_payload_metadata(self) -> None:
+        from xplane_fdau.contracts import values
+
+        original = values._payload_reference_wire
+
+        def broken(value: values.PayloadReference) -> dict[str, object]:
+            return original(value) | {"byte_length": 999}
+
+        with mock.patch("xplane_fdau.contracts.canonical_json._payload_reference_wire", side_effect=broken), self.assertRaises(installed_smoke.SmokeError):
+            installed_smoke._canonical_values_smoke()
+
+    def test_value_smoke_runs_without_payload_storage_access(self) -> None:
+        with (
+            mock.patch("builtins.open", side_effect=AssertionError("unexpected payload access")),
+            mock.patch("pathlib.Path.open", side_effect=AssertionError("unexpected payload access")),
+            mock.patch("pathlib.Path.read_bytes", side_effect=AssertionError("unexpected payload access")),
+        ):
+            installed_smoke._canonical_values_smoke()
+
     def test_all_installed_runtime_modules_are_discovered_and_imported(self) -> None:
         expected = {
             "xplane_fdau",
@@ -30,6 +62,8 @@ class InstalledSmokeTests(unittest.TestCase):
             "xplane_fdau.contracts.identity",
             "xplane_fdau.contracts.provenance",
             "xplane_fdau.contracts.canonical_json",
+            "xplane_fdau.contracts.values",
+            "xplane_fdau.contracts._value_io",
             "xplane_fdau.formats",
             "xplane_fdau.formats.xplane_fdr",
             "xplane_fdau.formats.xplane_fdr.config",

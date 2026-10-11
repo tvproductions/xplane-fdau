@@ -13,6 +13,17 @@ from .errors import (
 )
 from .identity import AlgorithmRef, DefinitionRef, RecordRef
 from .provenance import AdapterIdentity, Authority, ProducerIdentity, ProvenanceSource, ProviderIdentity
+from .values import (
+    ValueRepresentation,
+    ScalarRepresentation,
+    RetentionStatus,
+    InlineValue,
+    PayloadReference,
+    PayloadSpec,
+    RepresentationSpec,
+    ShapeSpec,
+    UnitSpec,
+)
 
 __all__ = [
     "FDAUContractError",
@@ -30,5 +41,14 @@ __all__ = [
     "ProducerIdentity",
     "ProviderIdentity",
     "AdapterIdentity",
+    "ValueRepresentation",
+    "ScalarRepresentation",
+    "RetentionStatus",
+    "InlineValue",
+    "PayloadReference",
+    "PayloadSpec",
+    "RepresentationSpec",
+    "ShapeSpec",
+    "UnitSpec",
     "canonical_bytes",
 ]

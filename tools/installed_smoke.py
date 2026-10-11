@@ -139,6 +139,32 @@ def _canonical_identity_smoke() -> None:
         raise SmokeError("installed definition hashing differs from the C1.2 contract")
 
 
+def _canonical_values_smoke() -> None:
+    """Pin installed typed values, payload declarations, and storage isolation."""
+    from xplane_fdau.contracts import ContractShapeError, InlineValue, PayloadReference, PayloadSpec, RepresentationSpec, canonical_bytes
+
+    original = [2.0, 1.0]
+    inline = InlineValue(representation="fixed_array", element_representation="real", value=original)
+    original.reverse()
+    if inline.value != (2.0, 1.0) or canonical_bytes(inline) != b'{"element_representation":"real","representation":"fixed_array","value":[2.0,1.0]}\n':
+        raise SmokeError("installed inline value type or order differs from the C1.3 contract")
+    declaration = RepresentationSpec(kind="referenced_bytes", payload=PayloadSpec(allowed_media_types=["a/b"], allowed_storage_roles=["test.raw"]))
+    if canonical_bytes(declaration) != b'{"kind":"referenced_bytes","payload":{"allowed_media_types":["a/b"],"allowed_storage_roles":["test.raw"]}}\n':
+        raise SmokeError("installed payload declaration differs from the C1.3 contract")
+    claim = PayloadReference(media_type="a/b", byte_length=2, sha256="a" * 64, storage_role="test.raw", retention_status="missing")
+    expected = (
+        b'{"byte_length":2,"media_type":"a/b","retention_status":"missing",'
+        b'"sha256":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","storage_role":"test.raw"}\n'
+    )
+    if canonical_bytes(claim) != expected:
+        raise SmokeError("installed original payload claim differs from the C1.3 contract")
+    try:
+        InlineValue(representation="referenced_bytes", value=b"bytes")
+    except ContractShapeError:
+        return
+    raise SmokeError("installed byte-only value was accepted inline")
+
+
 def smoke(version: str, *, checkout: Path) -> None:
     """Exercise the installed public API, schema, FDR files, and CLI commands."""
     import xplane_fdau
@@ -158,6 +184,7 @@ def smoke(version: str, *, checkout: Path) -> None:
     if contracts.canonical_bytes({"test.x": 1.0}) != b'{"test.x":1.0}\n':
         raise SmokeError("installed canonical JSON bytes differ from the C1.1 contract")
     _canonical_identity_smoke()
+    _canonical_values_smoke()
     schema = importlib.resources.files("xplane_fdau.formats.xplane_fdr").joinpath("schemas/fdr-record-config-v1.schema.json")
     if not schema.is_file() or '"$schema"' not in schema.read_text(encoding="utf-8"):
         raise SmokeError("installed schema resource is unavailable or invalid")

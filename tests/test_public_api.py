@@ -82,6 +82,24 @@ class PublicAPITests(unittest.TestCase):
         for name in contract_provenance.__all__:
             self.assertIs(getattr(contracts, name), getattr(contract_provenance, name))
 
+    def test_value_exports_are_importable_through_the_semantic_package(self) -> None:
+        from xplane_fdau.contracts import values
+
+        names = [
+            "ValueRepresentation",
+            "ScalarRepresentation",
+            "RetentionStatus",
+            "InlineValue",
+            "PayloadReference",
+            "PayloadSpec",
+            "RepresentationSpec",
+            "ShapeSpec",
+            "UnitSpec",
+        ]
+        self.assertEqual(names, values.__all__)
+        for name in names:
+            self.assertIs(getattr(values, name), getattr(contracts, name))
+
     def test_later_contract_apis_and_resources_are_absent(self) -> None:
         for name in ("definition_ref", "record_ref", "compute_content_hash", "MeasurementCatalog", "RawObservation", "MeasurementFrame", "load_record"):
             with self.subTest(name=name):

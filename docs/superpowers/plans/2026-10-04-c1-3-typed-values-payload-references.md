@@ -58,10 +58,10 @@ Reuse `_identity_validation` scalar helpers, `_json_parse._parse_json_document`,
 
 ## Execution entry — after approval
 
-- [ ] Recheck authorities, backlog audit/next, branch, HEAD, clean status, and worktrees. Stop on changed authority or audit findings.
-- [ ] Use `superpowers:using-git-worktrees` to establish a temporary C1.3 feature worktree from the clean baseline; drafting this plan does not create one.
-- [ ] Record explicit plan approval. Link this plan, select C1.3, and transition through `planned` to `in_progress` using the backlog adapter's dry-run, target SHA-256, and apply workflow. Inspect each diff and rerun audit. Commit only the approved plan and C1.3 lifecycle changes.
-- [ ] Follow the user's chosen execution method. Recommend native execution followed by one independent whole-branch review: the tasks share validators and wire paths, making a single implementer economical. Earlier C1.2 execution approval is not approval of this plan.
+- [x] Recheck authorities, backlog audit/next, branch, HEAD, clean status, and worktrees. Stop on changed authority or audit findings.
+- [x] Use `superpowers:using-git-worktrees` to establish a temporary C1.3 feature worktree from the clean baseline; drafting this plan does not create one.
+- [x] Record explicit plan approval. Link this plan, select C1.3, and transition through `planned` to `in_progress` using the backlog adapter's dry-run, target SHA-256, and apply workflow. Inspect each diff and rerun audit. Commit only the approved plan and C1.3 lifecycle changes.
+- [x] Follow the user's chosen execution method. Recommend native execution followed by one independent whole-branch review: the tasks share validators and wire paths, making a single implementer economical. Earlier C1.2 execution approval is not approval of this plan.
 
 ---
 
@@ -71,7 +71,7 @@ Reuse `_identity_validation` scalar helpers, `_json_parse._parse_json_document`,
 
 **Interfaces:** Produce `ValueRepresentation` with `boolean`, `integer`, `real`, `string`, `enumeration`, `vector`, `fixed_array`, `variable_array`, `referenced_bytes`; `ScalarRepresentation` with the first five only. Produce `InlineValue` with fields in semantic order `representation`, variant-only `element_representation`, `value`. Primitive values have their exact spec domain; vector values and arrays are defensively copied tuples. Private `_inline_value_wire(value: InlineValue) -> dict[str, object]` emits only the selected variant's properties and plain ordered arrays. Shared private validation must support an enclosing pointer without changing public constructors.
 
-- [ ] **Step 1: Write behavior-specific failing tests.** Establish an importable surface before collecting RED; missing imports alone are not evidence. Use `unittest` assertions equivalent to:
+- [x] **Step 1: Write behavior-specific failing tests.** Establish an importable surface before collecting RED; missing imports alone are not evidence. Use `unittest` assertions equivalent to:
 
   ```python
   integer = InlineValue(representation="integer", value=1)
@@ -88,10 +88,10 @@ Reuse `_identity_validation` scalar helpers, `_json_parse._parse_json_document`,
   ```
 
   Cover signed integer endpoints/overflow; real integer rejection, negative zero, subnormal/max-finite, NaN/infinity; string length 1/16384 and empty/16385/non-NFC/surrogate rejection; enumeration dotted-Identifier syntax and a display label such as `Reserved` rejected as an identifier. Preserve syntactically valid `test.unknown` and `test.reserved`. Cover vector empty/65535/65536, scalar array types, heterogeneous/nested arrays, Boolean elements in numeric arrays, empty fixed/variable inline arrays (length constraints belong to the representation declaration), and preserved array order. Reject `referenced_bytes` inline, unknown tags, missing array element tag, scalar element tag outside its vocabulary, and irrelevant properties. Assert dataclass freezing, slots, keyword-only fields, and exact error class/path.
-- [ ] **Step 2: Verify RED** with `uv run --offline --frozen python -m unittest tests.test_contract_values tests.test_installed_smoke -v`; capture a domain/order assertion failure.
-- [ ] **Step 3: Implement the two vocabularies, InlineValue, and wire projection.** Validate all shapes before canonical domains and semantics. Accept enum members or their exact string spellings, store the corresponding enum, and never accept general string-like or numeric coercion. Use the common 65535 collection bound; vector's declared maximum 1024 is imposed by RepresentationSpec, not the raw InlineValue alone.
-- [ ] **Step 4: Verify GREEN** with Step 2, focused Ruff check/format on the changed files, and `uv run --offline --frozen ty check`.
-- [ ] **Step 5: Commit the scoped files** with `feat: preserve exact inline value domains`.
+- [x] **Step 2: Verify RED** with `uv run --offline --frozen python -m unittest tests.test_contract_values tests.test_installed_smoke -v`; capture a domain/order assertion failure.
+- [x] **Step 3: Implement the two vocabularies, InlineValue, and wire projection.** Validate all shapes before canonical domains and semantics. Accept enum members or their exact string spellings, store the corresponding enum, and never accept general string-like or numeric coercion. Use the common 65535 collection bound; vector's declared maximum 1024 is imposed by RepresentationSpec, not the raw InlineValue alone.
+- [x] **Step 4: Verify GREEN** with Step 2, focused Ruff check/format on the changed files, and `uv run --offline --frozen ty check`.
+- [x] **Step 5: Commit the scoped files** with `feat: preserve exact inline value domains`.
 
 ### Task 2: Metadata-only payload references
 
@@ -99,11 +99,11 @@ Reuse `_identity_validation` scalar helpers, `_json_parse._parse_json_document`,
 
 **Interfaces:** Produce `RetentionStatus` with `retained`, `intentionally_omitted`, `missing`, `unverified`; `PayloadReference(*, media_type: str, byte_length: int, sha256: str, storage_role: str, retention_status: RetentionStatus)`; and private `_payload_reference_wire(value: PayloadReference) -> dict[str, object]`. Constructor field order is exactly the signature above.
 
-- [ ] **Step 1: Write failing tests.** For each retention status, assert a claim `application/octet-stream`, length `0` or `2**63-1`, hash `"a" * 64`, role `test.raw_payload` retains all five fields. Patch storage-opening functions while constructing and projecting references; assert no calls. Reject Boolean/negative/overflow length, uppercase/short hash, unqualified role, and unknown status at the corresponding property path. Media type is NFC length 1..127 and full-matches `[a-z0-9][a-z0-9!#$&^_.+-]{0,126}/[a-z0-9][a-z0-9!#$&^_.+-]{0,126}`; reject uppercase, parameters, whitespace, malformed separators, and total length 128. Do not require nonempty payload bytes or a locator.
-- [ ] **Step 2: Verify RED** with `uv run --offline --frozen python -m unittest tests.test_contract_values -v`.
-- [ ] **Step 3: Implement the vocabulary, reference, and projection** using existing UInt63, Identifier, Sha256, and NFC helpers; enforce the total media-type length as well as regex syntax. Preserve original metadata for every status without looking up storage.
-- [ ] **Step 4: Verify GREEN** with Step 2, focused Ruff check/format, and ty.
-- [ ] **Step 5: Commit** with `feat: describe content-addressed payload claims`.
+- [x] **Step 1: Write failing tests.** For each retention status, assert a claim `application/octet-stream`, length `0` or `2**63-1`, hash `"a" * 64`, role `test.raw_payload` retains all five fields. Patch storage-opening functions while constructing and projecting references; assert no calls. Reject Boolean/negative/overflow length, uppercase/short hash, unqualified role, and unknown status at the corresponding property path. Media type is NFC length 1..127 and full-matches `[a-z0-9][a-z0-9!#$&^_.+-]{0,126}/[a-z0-9][a-z0-9!#$&^_.+-]{0,126}`; reject uppercase, parameters, whitespace, malformed separators, and total length 128. Do not require nonempty payload bytes or a locator.
+- [x] **Step 2: Verify RED** with `uv run --offline --frozen python -m unittest tests.test_contract_values -v`.
+- [x] **Step 3: Implement the vocabulary, reference, and projection** using existing UInt63, Identifier, Sha256, and NFC helpers; enforce the total media-type length as well as regex syntax. Preserve original metadata for every status without looking up storage.
+- [x] **Step 4: Verify GREEN** with Step 2, focused Ruff check/format, and ty.
+- [x] **Step 5: Commit** with `feat: describe content-addressed payload claims`.
 
 ### Task 3: Representation, shape, payload, and unit declarations
 
@@ -120,11 +120,11 @@ Reuse `_identity_validation` scalar helpers, `_json_parse._parse_json_document`,
 
 For RepresentationSpec, field order is `kind`, `element_representation`, `length`, `minimum_length`, `maximum_length`, `payload`. For ShapeSpec it is `kind`, `length`, `minimum_length`, `maximum_length`; UnitSpec is `kind`, `quantity_id`, `unit_id`. Use private omitted sentinels as needed to enforce exact variants. Private per-model `_payload_spec_wire`, `_representation_spec_wire`, `_shape_spec_wire`, `_unit_spec_wire` return exact-property dictionaries.
 
-- [ ] **Step 1: Write failing assertions** for every row/variant, minimum/maximum boundaries, zero-length variable declarations, min > max, overflow, Boolean counts, invalid element representation, and irrelevant or missing variant fields. Assert vector 1024 accepted/1025 rejected, fixed 65535 accepted/65536 rejected. Assert duplicate/unsorted allow-lists fail rather than being rewritten; caller list mutation does not change either tuple. Cover optional-property omission, invalid nested PayloadSpec type, bad unit identifiers, and absence of fabricated unitless semantics. Defer quantity matching and unit-versus-representation compatibility to C2.1/C2.4.
-- [ ] **Step 2: Verify RED** with `uv run --offline --frozen python -m unittest tests.test_contract_values -v`.
-- [ ] **Step 3: Implement the four dataclasses and projections.** Use explicit variant inventories, shared scalar domains, and defensive copies. Do not couple a raw value to a catalog or invent a public value-vs-definition validator in this child.
-- [ ] **Step 4: Verify GREEN** with Step 2, focused Ruff check/format, and ty.
-- [ ] **Step 5: Commit** with `feat: declare canonical value shapes and units`.
+- [x] **Step 1: Write failing assertions** for every row/variant, minimum/maximum boundaries, zero-length variable declarations, min > max, overflow, Boolean counts, invalid element representation, and irrelevant or missing variant fields. Assert vector 1024 accepted/1025 rejected, fixed 65535 accepted/65536 rejected. Assert duplicate/unsorted allow-lists fail rather than being rewritten; caller list mutation does not change either tuple. Cover optional-property omission, invalid nested PayloadSpec type, bad unit identifiers, and absence of fabricated unitless semantics. Defer quantity matching and unit-versus-representation compatibility to C2.1/C2.4.
+- [x] **Step 2: Verify RED** with `uv run --offline --frozen python -m unittest tests.test_contract_values -v`.
+- [x] **Step 3: Implement the four dataclasses and projections.** Use explicit variant inventories, shared scalar domains, and defensive copies. Do not couple a raw value to a catalog or invent a public value-vs-definition validator in this child.
+- [x] **Step 4: Verify GREEN** with Step 2, focused Ruff check/format, and ty.
+- [x] **Step 5: Commit** with `feat: declare canonical value shapes and units`.
 
 ### Task 4: Parsed wire validation and canonical model serialization
 
@@ -132,15 +132,15 @@ For RepresentationSpec, field order is `kind`, `element_representation`, `length
 
 **Interfaces:** Produce private `_inline_value_from_wire`, `_payload_reference_from_wire`, `_payload_spec_from_wire`, `_representation_spec_from_wire`, `_shape_spec_from_wire`, `_unit_spec_from_wire`, each `(value: object, *, path: str = "", source: str = "<memory>") ->` its named model. Accept parser-preserved objects as well as materialized wire dictionaries. Share staged validation and reuse constructors after shape/domain checks; do not add public loads/dumps functions. The spec's exact `values.__all__` is `ValueRepresentation`, `ScalarRepresentation`, `RetentionStatus`, `InlineValue`, `PayloadReference`, `PayloadSpec`, `RepresentationSpec`, `ShapeSpec`, `UnitSpec`. Re-export these in contracts after provenance and before canonical_json exports.
 
-- [ ] **Step 1: Write failing round-trip/parity tests.** Pin exact canonical bytes for integer `1` versus real `1.0`, vector `[2.0,1.0]`, ordered scalar arrays, payload metadata, and every declaration variant. Parse with `_parse_json_document`, decode with the private reader, and assert equal model/canonical bytes. Use literal expected bytes including final LF, rather than constructing expectations with the serializer under test. Assert constructors and wire readers report the same local pointer for each invalid domain, and a nested reader prefixes paths correctly (e.g. `/test.value/value/1`). Unknown/missing properties are shape errors; duplicate properties across JSON are parse errors; null never becomes omission.
+- [x] **Step 1: Write failing round-trip/parity tests.** Pin exact canonical bytes for integer `1` versus real `1.0`, vector `[2.0,1.0]`, ordered scalar arrays, payload metadata, and every declaration variant. Parse with `_parse_json_document`, decode with the private reader, and assert equal model/canonical bytes. Use literal expected bytes including final LF, rather than constructing expectations with the serializer under test. Assert constructors and wire readers report the same local pointer for each invalid domain, and a nested reader prefixes paths correctly (e.g. `/test.value/value/1`). Unknown/missing properties are shape errors; duplicate properties across JSON are parse errors; null never becomes omission.
 
   Add mixed-invalid cases: earlier bad media-type syntax plus later Boolean byte length yields `ContractShapeError` at `/byte_length`; earlier non-NFC media text plus later missing role yields shape first; earlier negative length plus later non-NFC role yields canonical-domain first. Cover real token `1` versus `1.0`/`1e0`, integer overflow before materialization, array index paths, nested payload paths, and source labels without invented line/column context.
 
   Assert canonical_bytes still accepts an empty parameter object and rejects standalone scalar/array roots, arbitrary dataclasses, mappings containing unqualified parameter keys, unsupported host objects, and unowned model subclasses. Existing C1.1/C1.2 regression vectors remain identical.
-- [ ] **Step 2: Verify RED** with `uv run --offline --frozen python -m unittest tests.test_contract_values tests.test_canonical_json tests.test_contract_json_parse tests.test_contract_identity tests.test_contract_provenance tests.test_public_api tests.test_installed_smoke -v`.
-- [ ] **Step 3: Implement strict private readers and explicit dispatch.** Preserve number tokens until representation-aware shape checks complete, then materialize with existing helpers. Prefix/recontextualize errors without echoing value contents. Canonical dispatch uses exact owned classes and explicit wire converters, not reflection, a registry, or caller-code hooks. Keep values independent of canonical_json to avoid an import cycle. No standalone value gains a self-hash or family/version envelope.
-- [ ] **Step 4: Verify GREEN** with Step 2, focused Ruff check/format, and ty. Confirm exact public exports and no root exports, family loaders, or model-only hash/reference factories appear.
-- [ ] **Step 5: Commit** with `feat: validate and serialize canonical value primitives`.
+- [x] **Step 2: Verify RED** with `uv run --offline --frozen python -m unittest tests.test_contract_values tests.test_canonical_json tests.test_contract_json_parse tests.test_contract_identity tests.test_contract_provenance tests.test_public_api tests.test_installed_smoke -v`.
+- [x] **Step 3: Implement strict private readers and explicit dispatch.** Preserve number tokens until representation-aware shape checks complete, then materialize with existing helpers. Prefix/recontextualize errors without echoing value contents. Canonical dispatch uses exact owned classes and explicit wire converters, not reflection, a registry, or caller-code hooks. Keep values independent of canonical_json to avoid an import cycle. No standalone value gains a self-hash or family/version envelope.
+- [x] **Step 4: Verify GREEN** with Step 2, focused Ruff check/format, and ty. Confirm exact public exports and no root exports, family loaders, or model-only hash/reference factories appear.
+- [x] **Step 5: Commit** with `feat: validate and serialize canonical value primitives`.
 
 ### Task 5: Installed closure, review, and four-gate evidence
 

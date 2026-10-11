@@ -9,6 +9,20 @@ import unicodedata
 from ._json_parse import _NumberToken, _ObjectPairs, _materialize_number, _pointer
 from ._binary64 import _ecmascript_number_token
 from .errors import CanonicalJSONError
+from .values import (
+    InlineValue,
+    PayloadReference,
+    PayloadSpec,
+    RepresentationSpec,
+    ShapeSpec,
+    UnitSpec,
+    _inline_value_wire,
+    _payload_reference_wire,
+    _payload_spec_wire,
+    _representation_spec_wire,
+    _shape_spec_wire,
+    _unit_spec_wire,
+)
 
 __all__ = ["canonical_bytes"]
 
@@ -127,7 +141,19 @@ def _encode_bytes(value: object, *, parameter: bool) -> bytes:
 
 
 def canonical_bytes(value: object) -> bytes:
-    """Encode a data-only parameter object."""
+    """Encode an owned value model or a data-only parameter object."""
+    if type(value) is InlineValue:
+        return _encode_document(_inline_value_wire(value))
+    if type(value) is PayloadReference:
+        return _encode_document(_payload_reference_wire(value))
+    if type(value) is PayloadSpec:
+        return _encode_document(_payload_spec_wire(value))
+    if type(value) is RepresentationSpec:
+        return _encode_document(_representation_spec_wire(value))
+    if type(value) is ShapeSpec:
+        return _encode_document(_shape_spec_wire(value))
+    if type(value) is UnitSpec:
+        return _encode_document(_unit_spec_wire(value))
     if type(value) is not dict:
         raise CanonicalJSONError("parameter root must be an object")
     return _encode_bytes(value, parameter=True)

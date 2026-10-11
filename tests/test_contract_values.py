@@ -1,6 +1,9 @@
 """Behavioral contracts for exact values and metadata-only payload claims."""
 
 from dataclasses import FrozenInstanceError
+import copy
+import json
+import pickle
 import math
 import unittest
 from unittest import mock
@@ -221,6 +224,55 @@ class DeclarationTests(unittest.TestCase):
 
 
 class WireValueTests(unittest.TestCase):
+    def test_deepcopy_preserves_omitted_variant_fields_and_canonical_bytes(self) -> None:
+        cases = (
+            (InlineValue(representation="integer", value=1), b'{"representation":"integer","value":1}\n'),
+            (RepresentationSpec(kind="boolean"), b'{"kind":"boolean"}\n'),
+            (RepresentationSpec(kind="vector", length=2), b'{"kind":"vector","length":2}\n'),
+            (ShapeSpec(kind="scalar"), b'{"kind":"scalar"}\n'),
+            (UnitSpec(kind="unitless"), b'{"kind":"unitless"}\n'),
+        )
+        for model, expected in cases:
+            with self.subTest(model=model):
+                for restored in (copy.deepcopy(model), pickle.loads(pickle.dumps(model))):
+                    self.assertEqual(expected, canonical_bytes(restored))
+                    self.assertEqual(model, restored)
+
+    def test_mixed_invalid_variants_share_semantic_shape_precedence(self) -> None:
+        cases = (
+            (
+                InlineValue,
+                _value_io._inline_value_from_wire,
+                {"representation": "integer", "element_representation": None, "value": True},
+                "/element_representation",
+            ),
+            (
+                InlineValue,
+                _value_io._inline_value_from_wire,
+                {"representation": "vector", "element_representation": None, "value": [True]},
+                "/element_representation",
+            ),
+            (
+                RepresentationSpec,
+                _value_io._representation_spec_from_wire,
+                {"kind": "vector", "element_representation": False, "length": True},
+                "/element_representation",
+            ),
+            (
+                RepresentationSpec,
+                _value_io._representation_spec_from_wire,
+                {"kind": "fixed_array", "element_representation": None, "length": True},
+                "/element_representation",
+            ),
+            (ShapeSpec, _value_io._shape_spec_from_wire, {"kind": "variable", "length": None, "minimum_length": False, "maximum_length": 1}, "/length"),
+        )
+        for cls, reader, fields, path in cases:
+            with self.subTest(fields=fields):
+                for build in (lambda: cls(**fields), lambda: reader(fields), lambda: reader(_parse_json_document(json.dumps(fields)))):  # ty: ignore[invalid-argument-type]
+                    with self.assertRaises(ContractShapeError) as caught:
+                        build()
+                    self.assertEqual(path, caught.exception.path)
+
     def test_null_is_rejected_consistently_for_every_required_value_field(self) -> None:
         cases = (
             (InlineValue, _value_io._inline_value_from_wire, {"representation": "vector", "value": None}, "/value"),

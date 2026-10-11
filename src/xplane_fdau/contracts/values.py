@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import StrEnum
+from enum import Enum, StrEnum
 import math
 import re
+from typing import cast
 
 from ._identity_validation import _counter, _identifier, _integer_domain, _nfc_text, _sha256, _text
 from .errors import CanonicalJSONError, ContractShapeError, ContractValidationError
@@ -47,7 +48,13 @@ class ScalarRepresentation(StrEnum):
     ENUMERATION = "enumeration"
 
 
-_OMITTED = object()
+class _Missing(Enum):
+    """Preserve omitted-field identity through copying and reconstruction."""
+
+    OMITTED = "omitted"
+
+
+_OMITTED = _Missing.OMITTED
 
 
 def _tag(value: object, vocabulary: type[StrEnum], *, path: str) -> StrEnum:
@@ -98,7 +105,7 @@ def _inline_check(representation: object, element: object, value: object, phase:
     if array or tag == ValueRepresentation.VECTOR:
         if type(value) not in (list, tuple):
             raise ContractShapeError("expected ordered array", path="/value")
-        assert isinstance(value, (list, tuple))
+        value = cast(list[object] | tuple[object, ...], value)
         scalar = str(element) if array else "real"
         for index, item in enumerate(value):
             _scalar_check(item, scalar, phase, path=f"/value/{index}")
@@ -209,8 +216,7 @@ class PayloadSpec:
             for path, value in fields:
                 _array_set_check(value, phase, path=path, media=path == "/allowed_media_types")
         for path, value in fields:
-            assert isinstance(value, (list, tuple))
-            object.__setattr__(self, path[1:], tuple(value))
+            object.__setattr__(self, path[1:], tuple(cast(list[object] | tuple[object, ...], value)))
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -297,10 +303,12 @@ def _variant_fields(fields: dict[str, object], selected: tuple[str, ...]) -> Non
     for name, value in fields.items():
         if (name in selected) == (value is _OMITTED):
             raise ContractShapeError("missing or irrelevant variant property", path="/" + name)
-        if name not in selected or value is None:
+        if name not in selected:
             continue
         if name == "element_representation":
             _tag(value, ScalarRepresentation, path="/" + name)
+        elif value is None:
+            continue
         elif name == "payload":
             if type(value) is not PayloadSpec:
                 raise ContractShapeError("expected payload declaration", path="/payload")
@@ -318,8 +326,7 @@ def _length_fields(fields: dict[str, object], selected: tuple[str, ...], *, maxi
     if "minimum_length" in names:
         minimum = fields["minimum_length"]
         maximum_value = fields["maximum_length"]
-        assert isinstance(minimum, int) and isinstance(maximum_value, int)
-        if minimum > maximum_value:
+        if cast(int, minimum) > cast(int, maximum_value):
             raise ContractValidationError("minimum exceeds maximum length", path="/minimum_length")
 
 
@@ -330,7 +337,7 @@ def _array_set_check(value: object, phase: int, *, path: str, media: bool) -> No
         raise CanonicalJSONError("null is prohibited", path=path)
     if type(value) not in (list, tuple):
         raise ContractShapeError("expected ordered array", path=path)
-    assert isinstance(value, (list, tuple))
+    value = cast(list[object] | tuple[object, ...], value)
     for index, item in enumerate(value):
         _scalar_check(item, "string", min(phase, 1), path=f"{path}/{index}")
     if phase == 2:
@@ -352,8 +359,10 @@ def _basic_domains(*fields: tuple[str, object, str]) -> None:
 
 
 def _payload_spec_wire(value: PayloadSpec) -> dict[str, object]:
-    assert isinstance(value.allowed_media_types, tuple) and isinstance(value.allowed_storage_roles, tuple)
-    return {"allowed_media_types": list(value.allowed_media_types), "allowed_storage_roles": list(value.allowed_storage_roles)}
+    return {
+        "allowed_media_types": list(cast(tuple[str, ...], value.allowed_media_types)),
+        "allowed_storage_roles": list(cast(tuple[str, ...], value.allowed_storage_roles)),
+    }
 
 
 def _representation_spec_wire(value: RepresentationSpec) -> dict[str, object]:

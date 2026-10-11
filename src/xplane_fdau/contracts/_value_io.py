@@ -92,10 +92,17 @@ def _shape(value: object, stem: str, *, path: str = "") -> None:
         layout = _layout(stem, fields)
     except FDAUContractError as error:
         raise type(error)(str(error), path=path + error.path) from None
-    for name, domain in layout:
+    domains = dict(layout)
+    inventory = _inventory(stem, layout)
+    for name in inventory:
         child_path = _pointer(path, name)
+        if name not in domains:
+            if name in fields:
+                raise ContractShapeError("irrelevant variant property", path=child_path)
+            continue
         if name not in fields:
             raise ContractShapeError("missing value property", path=child_path)
+        domain = domains[name]
         child = fields[name]
         if domain == "payload_spec":
             if child is not None:
@@ -105,7 +112,7 @@ def _shape(value: object, stem: str, *, path: str = "") -> None:
                 continue
             if type(child) not in (list, tuple):
                 raise ContractShapeError("expected ordered array", path=child_path)
-            assert isinstance(child, (list, tuple))
+            child = cast(list[object] | tuple[object, ...], child)
             for index, item in enumerate(child):
                 _primitive_shape(item, domain[6:], path=f"{child_path}/{index}")
         else:
@@ -114,6 +121,18 @@ def _shape(value: object, stem: str, *, path: str = "") -> None:
     for name in sorted(fields):
         if name not in allowed:
             raise ContractShapeError("unknown value property", path=_pointer(path, name))
+
+
+def _inventory(stem: str, layout: tuple[tuple[str, str], ...]) -> tuple[str, ...]:
+    if stem == "inline_value":
+        return ("representation", "element_representation", "value")
+    if stem == "representation_spec":
+        return ("kind", "element_representation", "length", "minimum_length", "maximum_length", "payload")
+    if stem == "shape_spec":
+        return ("kind", "length", "minimum_length", "maximum_length")
+    if stem == "unit_spec":
+        return ("kind", "quantity_id", "unit_id")
+    return tuple(name for name, _ in layout)
 
 
 def _primitive_domain(value: object, domain: str, *, path: str) -> object:
@@ -139,7 +158,7 @@ def _domains(value: object, stem: str, *, path: str = "") -> dict[str, object]:
         if domain == "payload_spec":
             result[name] = _domains(child, domain, path=child_path)
         elif domain.startswith("array:"):
-            assert isinstance(child, (list, tuple))
+            child = cast(list[object] | tuple[object, ...], child)
             result[name] = tuple(_primitive_domain(item, domain[6:], path=f"{child_path}/{index}") for index, item in enumerate(child))
         else:
             result[name] = _primitive_domain(child, domain, path=child_path)
@@ -175,24 +194,30 @@ def _read(value: object, stem: str, *, path: str, source: str) -> object:
 
 
 def _inline_value_from_wire(value: object, *, path: str = "", source: str = "<memory>") -> InlineValue:
+    """Read an exact typed value with source and enclosing-pointer context."""
     return cast(InlineValue, _read(value, "inline_value", path=path, source=source))
 
 
 def _payload_reference_from_wire(value: object, *, path: str = "", source: str = "<memory>") -> PayloadReference:
+    """Read an original payload claim without accessing its storage."""
     return cast(PayloadReference, _read(value, "payload_reference", path=path, source=source))
 
 
 def _payload_spec_from_wire(value: object, *, path: str = "", source: str = "<memory>") -> PayloadSpec:
+    """Read ordered payload media and role allow-lists."""
     return cast(PayloadSpec, _read(value, "payload_spec", path=path, source=source))
 
 
 def _representation_spec_from_wire(value: object, *, path: str = "", source: str = "<memory>") -> RepresentationSpec:
+    """Read a representation's exact selected variant and constraints."""
     return cast(RepresentationSpec, _read(value, "representation_spec", path=path, source=source))
 
 
 def _shape_spec_from_wire(value: object, *, path: str = "", source: str = "<memory>") -> ShapeSpec:
+    """Read scalar, fixed, or variable shape without inferring dimensions."""
     return cast(ShapeSpec, _read(value, "shape_spec", path=path, source=source))
 
 
 def _unit_spec_from_wire(value: object, *, path: str = "", source: str = "<memory>") -> UnitSpec:
+    """Read explicit unitless status or qualified quantity/unit identities."""
     return cast(UnitSpec, _read(value, "unit_spec", path=path, source=source))

@@ -29,11 +29,11 @@ implementation is changed. This FDAU save point does not edit or publish the
 starter repository.
 
 Success means one selected native source for each enabled upstream component,
-accurate immutable provenance, a discoverable project entry, and fresh-session
+accurate immutable provenance, direct project instruction routing, and fresh-session
 evidence of the selected sources. Configuration presence is not proof of
 installation or agent behavior.
 
-## Reviewed baseline
+## Historical baseline — October 11
 
 - FDAU main: `f4ffb465c1d66633f829ed957886f096df12efb2`, clean before design.
 - Starter: `4acc41595b673faabdbe9be8d38b62755048ab93`, publicly resolved and
@@ -50,6 +50,49 @@ installation or agent behavior.
 - Backlog audit has no findings; no child is selected; next product action is
   drafting the C1.4 plan. This migration does not implement C1.4.
 
+## Current assessment — October 18
+
+FDAU is clean on `main` at `94109c1373953898ce780bc7a94c659d3c6bdc08`.
+The strict backlog audit reports no findings and recommends `write_plan C1.4`;
+no child is selected. The ledger records C1.3 verified at 4/4 gates. HANDOFF and
+the BACKLOG introduction still describe its earlier draft state; reconcile these
+current summaries during implementation without altering historical evidence.
+
+The separately maintained starter checkout is clean at
+`88928b2c6c663e37f739c80376dae42b5d8e5b4e`. GitHub's commit endpoint resolved
+that full SHA and current repository HEAD to the same published commit. Its
+declared template version is **0.3.2, unreleased**. The latest published release
+is v0.3.0 at `a7550a6e29b88349041e70e3dbba4778be4b8235`; that release still
+selects SP v6.4.1, so it is unsuitable for the agreed SP v7 selection. Published
+commit availability does not make the 0.3.2 development template a tagged release.
+
+The current starter authors and distributes **zero skills**. Its `bundle.json`,
+both native catalogs, adoption/migration guidance and generated instruction
+fragment were inspected. `starter.py validate` passes on its existing Python
+3.14.8 interpreter. FDAU's Python 3.12 interpreter is not the starter helper's
+acceptance runtime. Read-only configuration preview refuses the existing
+Superpowers discovery junction; status reports `not configured` and runtime
+readiness `unverified`. No adoption files or native installations were changed.
+
+Native inventory reports `gz-skills@gz-skills` installed/enabled at **0.8.0**,
+while FDAU configuration still requests **v0.5.0**. Other projects' plugin
+identities are installed but disabled here; the shared `skills-first-starter`
+identity is absent. This is source drift, not successful adoption.
+
+Official GitHub queries returned SP v7.0.0 and gz-skills v0.8.0 as latest
+releases. The latter resolves to `75bcd11ee9371ecff1a7b3432d2af29d4bdbb788`.
+Its change from 0.7.0 adds the explicit-only release primitive and router release
+guidance; it does not supply a missing stage-one installation capability. This
+proposal retains the shared catalog's 0.7.0 selection to avoid a separate starter
+publication or a per-project catalog. Revisit that choice when the shared catalog
+adopts 0.8.0, or through an explicitly reviewed shared-catalog update. Record the
+effective transition from installed 0.8.0 separately from the configured 0.5.0 pin.
+
+Backplane has no published release. Its current upstream HEAD resolves to
+`c6f0b4a518e3742053618a613d8d858f0e37e9cd`, newer than the catalog's disabled
+pin. Retain the disabled catalog pin; reconsider only with the separate readiness
+and FDAU requirements decision. A newer commit does not establish readiness.
+
 ## Shared plugin catalog decision
 
 During review Jeff selected one shared starter plugin catalog, rather than an
@@ -58,13 +101,13 @@ uses that term only for required native command/configuration names. A catalog
 lists upstream sources and selected commits; it is not a store or copied skill
 implementation.
 
-Update the shared starter's bundle and both native catalogs together to the
-reviewed SP v7.0.0 selection below, retain gz-skills v0.5.0, and keep Backplane
-disabled. Follow the starter's own governance and verification before publishing
-that change. FDAU subsequently configures from that reviewed published starter
-revision through preview/apply. Record the actual resulting full starter SHA;
-never use a moving branch, fabricated SHA, or the old starter SHA with new pins.
-The initially reviewed starter revision remains historical assessment evidence.
+Configure FDAU through preview/apply from the reviewed published starter commit
+`88928b2c6c663e37f739c80376dae42b5d8e5b4e`, with its existing SP v7.0.0 and
+gz-skills v0.7.0 selections and Backplane disabled. Record template version 0.3.2
+as an unreleased development snapshot, with its exact full SHA. This adoption
+does not edit or publish the shared starter. Never use a moving branch,
+fabricated SHA, or an old starter SHA with new component pins. The initially
+reviewed starter revision remains historical assessment evidence.
 
 FDAU uses the shared `skills-first-starter` catalog and plugin identities. It
 creates no project-specific catalog, custom lock extension, installer or status
@@ -74,23 +117,29 @@ verification remains a separate acceptance dimension.
 An unmodified older starter would downgrade SP to v6.4.1 and is rejected. A local
 FDAU-specific catalog was initially proposed but withdrawn during user review:
 it would introduce per-project catalog maintenance instead of the desired shared
-baseline. Until the shared candidate is reviewed and available, FDAU installation
-remains pending. An ordinary Git sync of FDAU does not publish the starter.
+baseline. The shared SP v7 candidate is now publicly available at the exact
+commit above; FDAU installation remains pending this specification's approval,
+an approved implementation plan and native acceptance. An ordinary Git sync of
+FDAU does not publish the starter.
 
 ## Source selection
 
 | Component | Selected release/revision | Enablement |
 | --- | --- | --- |
 | Superpowers | v7.0.0 / `bb92a77741419a4ab5f06e711a283343f1ada0c3` | enabled |
-| gz-skills | v0.5.0 / `5c3b327fc238a740062d366f03a4b443ab28834f` | enabled |
+| gz-skills | v0.7.0 / `6ebf803e4a2775d3742c84984a03548275b7c926` | enabled |
 | Superpowers Backplane | pre-release / `d0eeee829c491da02351e793544aa16ad96461bf` | disabled; not installed by this migration |
 
 SP v7.0.0 was published 2026-10-10. Its release notes, Codex manifest and entry
 skill were inspected. It changes brainstorming and fixes Windows/ledger behavior;
 the implementation plan must review the remaining workflow differences before
 enablement. The Codex manifest declares the skills tree and an empty hooks object.
-No upstream bootstrap script is executed or cache edited. gz-skills v0.5.0 is
-unchanged. These are selected releases, not a perpetual claim of latest.
+No upstream bootstrap script is executed or cache edited. gz-skills v0.7.0 adds
+project-version-aware Python guidance; the starter's tagged-install receipt
+separates installation from fresh-session workflow acceptance. Review the
+0.5-to-0.7 workflow changes in the implementation plan, preserving FDAU's
+runtime, gate and profile policies. These are selected releases, not a perpetual
+claim of latest.
 
 `.codex/config.toml` enables only `superpowers@skills-first-starter` and
 `gz-skills@skills-first-starter` among selected upstream sources, explicitly
@@ -109,16 +158,21 @@ Review the helper's generated source URL against the canonical renamed starter
 repository; reconcile stale aliases in the shared starter rather than inventing
 a local provenance workaround.
 
-Add the starter-owned `.agents/skills/skills-first-start/SKILL.md` from the reviewed
-starter revision with attribution and provenance. This is the only copied starter
-entry; upstream SP/gz-skills trees are never copied. Add `AGENTS.skills-first.md`
+Create no starter skill or skill-discovery directory. The current starter
+retired `skills-first-start` and moved routing into ordinary instructions;
+upstream SP/gz-skills trees are never copied. Generate `AGENTS.skills-first.md`
 with FDAU's selected identities and a pointer from AGENTS. Provide
 `docs/agents/skills-first.md` for ownership, installation, verification, rollback,
-and the Python binding source. Read the Python engineering skill from the pinned
-reviewed starter checkout when needed; do not claim it is natively discoverable
-or duplicate its evolving engineering catalog in the project entry.
+and the Python binding source. Read `docs/engineering/python.md`,
+`docs/baseline-policy.md` and `docs/gz-skills-python.md` in the pinned reviewed
+starter checkout when needed. Those are policy documents, not discoverable
+skills. Reconcile the generated fragment's immediate Python/tool obligations
+with FDAU's explicitly deferred second stage: clearly state that the existing
+cadence and minor-line Python selector govern until that stage is approved.
+Preserve the provenance of any adapted fragment and report the deferred policy
+requirements as adoption gaps rather than claiming full engineering parity.
 
-The entry routes project operations to existing project skills, engineering
+The instructions route project operations to existing project skills, engineering
 selection to gzs-router, and feature design/implementation to Superpowers.
 It adds no lifecycle, profile selection, autonomous job, or Backplane operation.
 No lite/heavy or gzkit profile is inferred.
@@ -136,7 +190,9 @@ No lite/heavy or gzkit profile is inferred.
    as a nondiscoverable rollback source until acceptance; do not delete its target
    through the junction or remove another project's checkout.
 4. Start a fresh session in the candidate checkout. Confirm exactly one selected
-   source and the expected entry skills. Installation output is not enough.
+   source and the expected upstream entry skills (`using-superpowers` and
+   `gzs-router`). No starter entry skill is expected. Installation output is not
+   enough.
 5. Record acceptance evidence, complete repository checks, obtain independent
    review, and use the ordinary finishing choice before integration.
 
@@ -187,7 +243,7 @@ rollback has been observed; a documented procedure is not an executed test.
 | Shared starter bundle and both native catalogs; FDAU `.codex/config.toml` and `.skills-first/bundle.lock.json` | Shared source selection; exact SHA agreement; disabled Backplane; preservation of unrelated entries |
 | `AGENTS.md`, `AGENTS.skills-first.md`, `docs/agents/skills-first.md` | Current source authority, installation/fresh-session procedure, routing and rollback |
 | `docs/architecture/gz_skills_plugin_only_specification.md` | Amend current ID/marketplace contract without rewriting dated evidence |
-| `.agents/skills/skills-first-start/SKILL.md` | Discoverable starter entry with accurate provenance and project paths |
+| Project instructions and skill discovery roots | Direct routing; no starter-owned skill copies, duplicate upstream discovery or retired entry expectations |
 | `tests/test_project_skills.py` and focused metadata tests | Reject mismatched pins, duplicate active sources and accidental Backplane enablement using realistic altered fixtures; allow legitimate reviewed version changes |
 | `pyproject.toml`, `tools/release.py`, artifact tests | Exclude new governance paths from distributions and reject synthetic archive leakage; preserve installed runtime inventory |
 | Stage-one evidence | Exact sources, host version, native registration/install results, fresh-session entry identities, review findings and verification outcomes |
@@ -236,8 +292,8 @@ they do not replace the completed BACKLOG gate statements or reopen the children
 
 - The provenance record inventories the starter and every selected component;
   native managers retain cache ownership and updates remain explicit.
-- The reviewed SP update is published in the shared starter bundle and selected
-  by FDAU using that exact starter revision.
+- The reviewed published shared starter commit selects SP v7.0.0 and gz-skills
+  v0.7.0; FDAU records its exact SHA and unreleased template version accurately.
 - Installation and recovery preserve sources used by other projects; fresh
   acceptance and unresolved host limitations are reported honestly.
 - Application Python support, runtime dependencies, release authority, and the
@@ -245,15 +301,17 @@ they do not replace the completed BACKLOG gate statements or reopen the children
 
 ## Sources and design review
 
-- [Starter adoption](https://github.com/tvproductions/gz-skills-first-starter/blob/4acc41595b673faabdbe9be8d38b62755048ab93/docs/adoption.md)
-- [Starter backport guidance](https://github.com/tvproductions/gz-skills-first-starter/blob/4acc41595b673faabdbe9be8d38b62755048ab93/docs/backport.md)
-- [Python binding](https://github.com/tvproductions/gz-skills-first-starter/blob/4acc41595b673faabdbe9be8d38b62755048ab93/skills/python-engineering/SKILL.md)
+- [Starter adoption](https://github.com/tvproductions/gz-skills-first-starter/blob/88928b2c6c663e37f739c80376dae42b5d8e5b4e/docs/adoption.md)
+- [Starter migration contract](https://github.com/tvproductions/gz-skills-first-starter/blob/88928b2c6c663e37f739c80376dae42b5d8e5b4e/docs/migration-0.3.md)
+- [Starter backport guidance](https://github.com/tvproductions/gz-skills-first-starter/blob/88928b2c6c663e37f739c80376dae42b5d8e5b4e/docs/backport.md)
+- [Python binding](https://github.com/tvproductions/gz-skills-first-starter/blob/88928b2c6c663e37f739c80376dae42b5d8e5b4e/docs/engineering/python.md)
+- [gz-skills 0.8.0 changes](https://github.com/tvproductions/gz-skills/blob/75bcd11ee9371ecff1a7b3432d2af29d4bdbb788/CHANGELOG.md)
 - [SP v7.0.0](https://github.com/obra/superpowers/releases/tag/v7.0.0)
 - [Codex marketplace and project enablement](https://developers.openai.com/plugins/build/plugins)
 
 Self-review: the first stage is independently verifiable; no source/gate change
 has been implemented or marked approved by this draft. Shared source selection
-and the separately authorized starter publication boundary are explicit;
+and the exclusion of starter publication are explicit;
 fresh-session discovery is an acceptance gate. The FDAU/SP-BP requirements
 exception is explicit. Stage-two tools and cadence are excluded from stage-one
 implementation. This draft requires written-spec review before the
@@ -269,3 +327,12 @@ and negative controls for known/unique/ordered children, epic assignments,
 cross-epic declarations, plan ownership, required approvals and completion
 evidence. The broader weak-test audit remains unresolved. This correction does
 not implement native adoption or approve this specification.
+
+October 18 reassessment verification: the strict backlog audit reports no
+findings after the revision; 42 focused governance/documentation unittest tests,
+strict MkDocs build and `git diff --check` pass. The starter's bundle/both-catalog
+validation passes on its existing Python 3.14.8 interpreter. Temporary-directory
+access initially prevented two fixture tests in the sandbox; the same focused
+suite passed with temporary-directory access. Native installation, candidate
+configuration and fresh-session discovery remain pending. No approval, product
+child transition, engineering-policy implementation or publication is implied.

@@ -2,19 +2,18 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import date
 import json
 import math
 import os
+from dataclasses import dataclass, field
+from datetime import date
 from pathlib import Path, PureWindowsPath
 from typing import Literal, NoReturn, Protocol, cast
 
+from .definition import FDRRecordingDefinition, FDRSamplingPolicy, FDRStoragePolicy
 from .errors import FDRConfigError
 from .models import FDRDataref, FDRHeader, FDRMetadata
 from .profiles import compose_profiles, list_profiles
-from .definition import FDRRecordingDefinition, FDRSamplingPolicy, FDRStoragePolicy
-
 
 _DEFAULT_STORAGE_DIRECTORY = Path("Output/FDR files")
 _ROOT_PROPERTIES = frozenset({"$schema", "schema_version", "profiles", "sampling", "metadata", "datarefs", "storage"})

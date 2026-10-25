@@ -91,8 +91,7 @@ class ProvenanceTests(unittest.TestCase):
             with self.subTest(model=type(model).__name__):
                 self.assertEqual(model, cast(Any, type(model))(**cast(Any, wire)(model)))
                 self.assertFalse(hasattr(model, "__dict__"))
-                with self.assertRaises((AttributeError, TypeError)):
-                    setattr(model, "extra", "changed")
+                self.assertRaises((AttributeError, TypeError), setattr, model, "extra", "changed")
         with self.assertRaises(TypeError):
             cast(Any, Authority)("test.owner", 1)
         with self.assertRaises(ContractValidationError) as caught:

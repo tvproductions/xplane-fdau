@@ -5,13 +5,12 @@ from __future__ import annotations
 import importlib
 import importlib.resources
 import importlib.util
-from pathlib import Path
 import pkgutil
 import subprocess
 import sys
 import tempfile
+from pathlib import Path
 from types import ModuleType
-
 
 MINIMAL_V3 = (
     b"A\n3\nTIME, 18:30:00\nDATE, 08/09/2026\n"

@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import json
-from html.parser import HTMLParser
-from pathlib import Path
 import re
 from collections.abc import Callable
+from html.parser import HTMLParser
+from pathlib import Path
 from typing import Any, cast, override
 from urllib.parse import parse_qs, quote, unquote, urlparse
 from urllib.request import Request, urlopen
@@ -16,7 +16,7 @@ from packaging.utils import InvalidSdistFilename, InvalidWheelFilename, canonica
 from packaging.version import InvalidVersion, Version
 
 INDEX_MEDIA_TYPE = "application/vnd.pypi.simple.v1+json"
-INDEX_CEILING = 5 * 1024 * 1024
+INDEX_CEILING = 8 * 1024 * 1024
 Opener = Callable[[Request, int, int], tuple[bytes, str, str]]
 Runner = Callable[[tuple[str, ...], Path], tuple[int, str, str]]
 
@@ -27,7 +27,7 @@ class SourceError(ValueError):
 
 def open_index(request: Request, timeout: int, ceiling: int) -> tuple[bytes, str, str]:
     """Retrieve one bounded Index JSON response."""
-    with urlopen(request, timeout=timeout) as response:  # noqa: S310 - the caller fixes the official HTTPS origin
+    with urlopen(request, timeout=timeout) as response:
         body = response.read(ceiling + 1)
         final_url = response.geturl()
         content_type = response.headers.get("Content-Type", "")

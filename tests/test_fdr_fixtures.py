@@ -1,6 +1,5 @@
-from pathlib import Path
 import unittest
-
+from pathlib import Path
 
 FIXTURE_ROOT = Path(__file__).parent / "fixtures" / "fdr"
 

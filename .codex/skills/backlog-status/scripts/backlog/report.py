@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import replace
 import json
-from pathlib import Path
 import subprocess
+from dataclasses import replace
+from pathlib import Path
 
 from backlog.findings import finding_key
-from backlog.next_action import recommend_next
-
 from backlog.model import (
     Artifacts,
     Backlog,
@@ -24,14 +22,14 @@ from backlog.model import (
     PlanArtifact,
     RecentCommit,
     Recommendation,
-    RepositorySnapshot,
     ReleaseGate,
+    RepositorySnapshot,
     Roadmap,
     RoadmapChild,
     SpecificationArtifact,
     StatusReport,
 )
-
+from backlog.next_action import recommend_next
 
 _MISSING = "—"
 
@@ -52,8 +50,7 @@ def _git(root: Path, *arguments: str) -> str:
     completed = subprocess.run(
         ("git", "--no-optional-locks", "-C", str(root), *arguments),
         check=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         text=True,
         encoding="utf-8",
     )

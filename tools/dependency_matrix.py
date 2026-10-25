@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import re
 import shutil
 import stat
 import subprocess
@@ -14,7 +15,6 @@ import zipfile
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
-
 
 PYTHONS = ("3.12",)
 PACKAGE = "xplane_fdau"
@@ -177,6 +177,9 @@ def run_matrix(root: Path, runner: Runner = _default_runner, make_temp: TempFact
             raise RuntimeError(f"command exited {exit_code}: {command}")
 
     try:
+        python_pin = (root / ".python-version").read_text(encoding="utf-8").strip()
+        if re.fullmatch(r"3\.12\.[0-9]+", python_pin) is None:
+            raise ValueError("matrix requires an exact supported Python 3.12 patch")
         version = _project_version(root)
         owned = make_temp(root)
         artifact_dir = owned.path
@@ -206,7 +209,7 @@ def run_matrix(root: Path, runner: Runner = _default_runner, make_temp: TempFact
         )
         if requirements.is_symlink() or not requirements.is_file() or not 0 < requirements.stat().st_size <= 1024 * 1024:
             raise ValueError(f"matrix lock export is missing or invalid: {requirements}")
-        for python_version in PYTHONS:
+        for python_version in (python_pin,):
             source_dir = artifact_dir / f"source-{python_version}"
             run(("uv", "venv", str(source_dir), "--python", python_version), root)
             source_interpreter = installed_interpreter(source_dir, os.name)

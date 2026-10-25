@@ -1,29 +1,29 @@
 from __future__ import annotations
 
-from contextlib import nullcontext
-from dataclasses import dataclass, replace
-import importlib.util
 import hashlib
-from io import BytesIO, StringIO, TextIOWrapper
+import importlib.util
 import json
 import os
 import subprocess
-from pathlib import Path
 import sys
 import tempfile
-from types import ModuleType
 import unittest
+from contextlib import nullcontext
+from dataclasses import dataclass, replace
+from io import BytesIO, StringIO, TextIOWrapper
+from pathlib import Path
+from types import ModuleType
 from unittest.mock import patch
-
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / ".codex/skills/backlog-status/scripts"
 FIXTURE = ROOT / "tests/fixtures/backlog_status/valid"
 sys.path.insert(0, str(SCRIPTS))
 
-from tests.backlog_audit_support import audit_fixture, replace_text, reviewed_gate_fixture, run_git, write_active_plan, write_evidence  # noqa: E402
 from backlog.audit import audit_repository, load_audit  # noqa: E402  # ty: ignore[unresolved-import]
 from backlog.model import Finding, GitState  # noqa: E402  # ty: ignore[unresolved-import]
+
+from tests.backlog_audit_support import audit_fixture, replace_text, reviewed_gate_fixture, run_git, write_active_plan, write_evidence  # noqa: E402
 
 
 @dataclass(frozen=True, slots=True)
@@ -190,9 +190,11 @@ class BacklogStatusCliTests(unittest.TestCase):
                 raise OSError("final audit failed after replacement")
             return audit_repository(root, backlog_text=backlog_text)
 
-        with patch("backlog.edit.audit_repository", side_effect=failed_final_audit):
-            with patch.object(output, "write", side_effect=BrokenPipeError("stdout unavailable")):
-                code = module.main(["select", "T1.2", "--expect-current", "none", "--apply"], root=root, stdout=output, stderr=errors)
+        with (
+            patch("backlog.edit.audit_repository", side_effect=failed_final_audit),
+            patch.object(output, "write", side_effect=BrokenPipeError("stdout unavailable")),
+        ):
+            code = module.main(["select", "T1.2", "--expect-current", "none", "--apply"], root=root, stdout=output, stderr=errors)
         self.assertEqual(1, code)
         self.assertIn("mutation.published", errors.getvalue())
         self.assertIn("do not retry", errors.getvalue())

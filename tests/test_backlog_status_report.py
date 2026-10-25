@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import replace
 import json
-from pathlib import Path
 import subprocess
-from unittest.mock import patch
 import sys
 import unittest
-
+from dataclasses import replace
+from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / ".codex/skills/backlog-status/scripts"
@@ -19,8 +18,8 @@ from backlog.parse import parse_repository  # noqa: E402  # ty: ignore[unresolve
 from backlog.report import (  # noqa: E402  # ty: ignore[unresolved-import]
     build_report,
     observe_git,
-    render_json,
     render_human,
+    render_json,
     with_dependency_readiness,
 )
 

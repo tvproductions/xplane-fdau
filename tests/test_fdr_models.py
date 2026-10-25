@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import dataclasses
-from datetime import UTC, date, datetime, time, timedelta, timezone
 import math
+import unittest
+from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
 from typing import Any, cast
-import unittest
 
 from xplane_fdau.formats.xplane_fdr import (
     FDRConfigError,
@@ -301,7 +301,7 @@ class FDRLeafModelTests(unittest.TestCase):
                 dataclasses.replace(make_sample(), **{field_name: bad_value})
 
     def test_sample_time_must_be_unzoned_time(self) -> None:
-        for bad_value in (datetime(2026, 8, 9, 12), time(12, tzinfo=timezone.utc)):
+        for bad_value in (datetime(2026, 8, 9, 12), time(12, tzinfo=UTC)):
             with self.subTest(value=bad_value), self.assertRaises(FDRValidationError):
                 dataclasses.replace(make_sample(), time_utc=cast(time, bad_value))
 

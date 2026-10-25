@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
-from datetime import date, time
 import io
-from pathlib import Path
 import tempfile
+import unittest
+from datetime import date, time
+from pathlib import Path
 from typing import Any, override
 from unittest import mock
-import unittest
 
 from xplane_fdau.formats.xplane_fdr import FDRParseError, FDRReader, FDRSampleStream, FDRValidationError
-
 
 FIXTURE_ROOT = Path(__file__).parent / "fixtures" / "fdr"
 
@@ -558,15 +557,13 @@ class FDRReaderOwnershipTests(unittest.TestCase):
 
     def test_path_opened_stream_is_closed_on_context_exit_and_header_failure(self) -> None:
         good_stream = NamedStringIO(fdr_text("12:00:00, 1, 2, 3, 4, 5, 6"), "good.fdr")
-        with mock.patch("pathlib.Path.open", return_value=good_stream):
-            with FDRReader().open(Path("good.fdr")) as samples:
-                self.assertEqual(1, next(samples).longitude)
+        with mock.patch("pathlib.Path.open", return_value=good_stream), FDRReader().open(Path("good.fdr")) as samples:
+            self.assertEqual(1, next(samples).longitude)
         self.assertTrue(good_stream.closed)
 
         bad_stream = NamedStringIO("X\n4\n", "bad.fdr")
-        with mock.patch("pathlib.Path.open", return_value=bad_stream):
-            with self.assertRaises(FDRParseError):
-                FDRReader().open(Path("bad.fdr"))
+        with mock.patch("pathlib.Path.open", return_value=bad_stream), self.assertRaises(FDRParseError):
+            FDRReader().open(Path("bad.fdr"))
         self.assertTrue(bad_stream.closed)
 
     def test_path_opened_stream_is_closed_when_lazy_sample_parsing_fails(self) -> None:

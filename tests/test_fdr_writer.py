@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-from dataclasses import replace
-from datetime import time
 import io
 import os
-from pathlib import Path
 import tempfile
-from typing import cast, Literal, override
-from unittest import mock
 import unittest
+from dataclasses import replace
+from datetime import time
+from pathlib import Path
+from typing import Literal, cast, override
+from unittest import mock
 
 from xplane_fdau.formats.xplane_fdr import (
     FDRDataref,
@@ -26,7 +26,6 @@ from xplane_fdau.formats.xplane_fdr import (
     FDRValidationError,
     FDRWriter,
 )
-
 
 FIXTURE_ROOT = Path(__file__).parent / "fixtures" / "fdr"
 
@@ -262,9 +261,8 @@ class FDRStreamWriterOwnershipTests(unittest.TestCase):
     def test_body_and_abort_cleanup_failures_are_grouped_primary_first(self) -> None:
         stream = BodyAndCleanupFailureStream()
 
-        with self.assertRaises(BaseExceptionGroup) as caught:
-            with FDRWriter().open(make_header(), stream) as sink:
-                sink.write_sample(make_sample())
+        with self.assertRaises(BaseExceptionGroup) as caught, FDRWriter().open(make_header(), stream) as sink:
+            sink.write_sample(make_sample())
 
         primary, cleanup = caught.exception.exceptions
         self.assertIsInstance(primary, FDROutputError)
@@ -341,12 +339,14 @@ class FDRWriterPathPublicationTests(unittest.TestCase):
                     raise OSError("partial unlink failed")
                 real_unlink(path)
 
-            with mock.patch("xplane_fdau.formats.xplane_fdr.writer.os.unlink", side_effect=fail_partial_unlink):
-                with FDRWriter().open(make_header(), destination) as sink:
-                    sink.write_sample(make_sample())
-                    partial = cast(Path, sink.partial_path)
-                    with self.assertRaises(FDROutputError) as caught:
-                        sink.commit()
+            with (
+                mock.patch("xplane_fdau.formats.xplane_fdr.writer.os.unlink", side_effect=fail_partial_unlink),
+                FDRWriter().open(make_header(), destination) as sink,
+            ):
+                sink.write_sample(make_sample())
+                partial = cast(Path, sink.partial_path)
+                with self.assertRaises(FDROutputError) as caught:
+                    sink.commit()
 
             self.assertIn("publication succeeded but partial cleanup failed", caught.exception.message)
             self.assertEqual(partial, caught.exception.artifact_path)
@@ -402,9 +402,11 @@ class FDRWriterPathPublicationTests(unittest.TestCase):
             sink.write_sample(make_sample())
             partial = cast(Path, sink.partial_path)
 
-            with mock.patch("xplane_fdau.formats.xplane_fdr.writer.os.fsync", side_effect=OSError("sync failed")):
-                with self.assertRaises(FDROutputError) as caught:
-                    sink.commit()
+            with (
+                mock.patch("xplane_fdau.formats.xplane_fdr.writer.os.fsync", side_effect=OSError("sync failed")),
+                self.assertRaises(FDROutputError) as caught,
+            ):
+                sink.commit()
 
             self.assertEqual(partial, caught.exception.artifact_path)
             self.assertEqual("sync failed", str(caught.exception.__cause__))

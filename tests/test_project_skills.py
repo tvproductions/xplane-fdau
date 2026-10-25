@@ -4,15 +4,14 @@ from __future__ import annotations
 
 import importlib.util
 import json
-from pathlib import Path
 import subprocess
 import sys
 import tomllib
 import unittest
+from pathlib import Path
 
-from pre_commit.clientlib import load_config
 import yaml
-
+from pre_commit.clientlib import load_config
 
 PROJECT_SKILL_DIRECTORIES = {
     "backlog-status",

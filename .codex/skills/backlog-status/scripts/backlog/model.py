@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal, TypeAlias
+from typing import Literal
 
-
-NodeKind: TypeAlias = Literal["milestone", "epic", "local_child", "release_gate", "external_boundary"]
-ChildStatus: TypeAlias = Literal[
+type NodeKind = Literal["milestone", "epic", "local_child", "release_gate", "external_boundary"]
+type ChildStatus = Literal[
     "queued",
     "designing",
     "specified",
@@ -19,9 +18,9 @@ ChildStatus: TypeAlias = Literal[
     "deferred",
     "released",
 ]
-GateState: TypeAlias = Literal["waiting", "ready", "satisfied"]
-Severity: TypeAlias = Literal["error", "warning"]
-Action: TypeAlias = Literal[
+type GateState = Literal["waiting", "ready", "satisfied"]
+type Severity = Literal["error", "warning"]
+type Action = Literal[
     "refine_spec",
     "request_spec_review",
     "write_plan",

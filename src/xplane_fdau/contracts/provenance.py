@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence
 
 from ._identity_validation import _field_domains, _identifier, _nfc_text, _revision, _sha256, _uuid, _version_text
 from .errors import ContractShapeError, ContractValidationError
 
-__all__ = ["Authority", "ProvenanceSource", "ProducerIdentity", "ProviderIdentity", "AdapterIdentity"]
+__all__ = ["AdapterIdentity", "Authority", "ProducerIdentity", "ProvenanceSource", "ProviderIdentity"]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)

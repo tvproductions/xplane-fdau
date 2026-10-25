@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import replace
-from pathlib import Path
 import sys
 import tempfile
 import unittest
+from dataclasses import replace
+from pathlib import Path
 
 from tests.backlog_audit_support import copy_fixture, replace_text
-
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / ".codex/skills/backlog-status/scripts"
@@ -15,7 +14,6 @@ sys.path.insert(0, str(SCRIPTS))
 
 from backlog.audit import load_audit  # noqa: E402  # ty: ignore[unresolved-import]
 from backlog.rules import structural_findings  # noqa: E402  # ty: ignore[unresolved-import]
-
 
 T11 = "| `T1.1` | Markdown authority contract and explicit inventory normalization |"
 T12 = "| `T1.2` | Typed parser, status report, and versioned JSON |"

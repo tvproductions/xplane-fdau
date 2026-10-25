@@ -1,12 +1,20 @@
-from pathlib import Path
 import importlib.util
 import subprocess
 import sys
 import tomllib
 import unittest
+from pathlib import Path
 
 
 class ProjectMetadataTests(unittest.TestCase):
+    def test_python_execution_and_analyzer_targets_match_supported_family(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        pin = (root / ".python-version").read_text(encoding="utf-8").strip()
+        project = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+        self.assertRegex(pin, r"^3\.12\.[0-9]+$")
+        self.assertEqual("py312", project["tool"]["ruff"].get("target-version"))
+        self.assertEqual("3.12", project["tool"]["ty"].get("environment", {}).get("python-version"))
+
     def test_distribution_contract_is_dependency_free_fdau(self) -> None:
         project = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]
         self.assertEqual("xplane-fdau", project["name"])

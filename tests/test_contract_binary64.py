@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import struct
 import unittest
+from pathlib import Path
 
 from xplane_fdau.contracts import CanonicalJSONError, canonical_bytes
 from xplane_fdau.contracts._binary64 import _ecmascript_number_token

@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import unittest
-from typing import Any, Mapping, Protocol, cast
+from collections.abc import Mapping
 from types import MappingProxyType
+from typing import Any, Protocol, cast
 
 from xplane_fdau.contracts import _identity_validation as identity
+from xplane_fdau.contracts.errors import CanonicalJSONError, ContractShapeError, ContractValidationError, FDAUContractError
 from xplane_fdau.contracts.identity import AlgorithmRef, DefinitionRef, RecordRef, _algorithm_ref_wire, _definition_ref_wire, _record_ref_wire
-from xplane_fdau.contracts.errors import FDAUContractError, CanonicalJSONError, ContractShapeError, ContractValidationError
 
 
 class _Validator(Protocol):
@@ -186,10 +187,8 @@ class ReferenceTests(unittest.TestCase):
         self.assertEqual(value, DefinitionRef(definition_id="test.altitude", definition_revision=7, definition_hash="a" * 64))
         with self.assertRaises(TypeError):
             cast(Any, DefinitionRef)("test.altitude", 7, "a" * 64)
-        with self.assertRaises(AttributeError):
-            setattr(value, "definition_revision", 8)
-        with self.assertRaises((AttributeError, TypeError)):
-            setattr(value, "extra", 1)
+        self.assertRaises(AttributeError, setattr, value, "definition_revision", 8)
+        self.assertRaises((AttributeError, TypeError), setattr, value, "extra", 1)
         with self.assertRaises(ContractValidationError) as caught:
             DefinitionRef(definition_id="test.altitude", definition_revision=0, definition_hash="a" * 64)
         self.assertEqual(caught.exception.path, "/definition_revision")

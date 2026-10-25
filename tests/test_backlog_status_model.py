@@ -1,29 +1,28 @@
 from __future__ import annotations
 
-from dataclasses import FrozenInstanceError
-from pathlib import Path
 import sys
 import unittest
-
+from dataclasses import FrozenInstanceError
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / ".codex/skills/backlog-status/scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 from backlog.model import (  # noqa: E402  # ty: ignore[unresolved-import]
-    AuditLoad,
-    AuditPolicy,
-    AuditSources,
     CHILD_STATUSES,
     GATE_STATES,
     NODE_KINDS,
+    Artifacts,
+    AuditLoad,
+    AuditPolicy,
+    AuditSources,
+    Backlog,
     BacklogChild,
     GateSummary,
     HistoricalAdmission,
     RepositorySnapshot,
     Roadmap,
-    Backlog,
-    Artifacts,
     RoadmapChild,
     SourceLocation,
 )

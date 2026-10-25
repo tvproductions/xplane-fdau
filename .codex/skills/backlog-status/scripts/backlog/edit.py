@@ -1,18 +1,17 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import difflib
 import hashlib
 import os
-from pathlib import Path
 import re
 import stat
 import tempfile
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Literal, NoReturn
 
 from backlog.audit import audit_repository
 from backlog.model import AuditLoad, BacklogChild, ChildStatus, GateItem
-
 
 _TRANSITIONS = frozenset(
     {
@@ -304,7 +303,7 @@ def _gate_edit(text: str, item: GateItem, *, close: bool, suffix: str = "") -> s
     end = start + 1
     while end < len(lines):
         content, _ = split_terminator(lines[end])
-        if _GATE_MARKER.match(content) is not None or content.startswith("#") or content and not content[:1].isspace():
+        if _GATE_MARKER.match(content) is not None or content.startswith("#") or (content and not content[:1].isspace()):
             break
         end += 1
     content_indexes = [index for index in range(start, end) if split_terminator(lines[index])[0].strip()]

@@ -2,17 +2,16 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 import math
 import os
-from pathlib import Path
 import re
 import secrets
+from datetime import datetime
+from pathlib import Path
 from typing import NoReturn, TextIO, cast
 
 from .errors import FDROutputError, FDRRecordingStateError, FDRValidationError
 from .models import FDRHeader, FDRNormalizationResult, FDRRecording, FDRSample
-
 
 _METADATA_PATTERN = re.compile(r"^[A-Z0-9]{4}$")
 _RESERVED_METADATA_KEYS = frozenset({"COMM", "DREF"})
@@ -210,7 +209,7 @@ class FDRStreamWriter:
         except FileNotFoundError:
             return
         except OSError as cleanup:
-            raise _published_cleanup_error(cleanup, partial_path)
+            raise _published_cleanup_error(cleanup, partial_path) from cleanup
 
     def abort(self) -> None:
         """Stop writing while preserving any path partial for diagnosis."""
@@ -223,13 +222,13 @@ class FDRStreamWriter:
             else:
                 self._stream.close()
         except OSError as error:
-            raise _wrapped_output_error(error, self._artifact_path())
+            raise _wrapped_output_error(error, self._artifact_path()) from error
 
     def _write_text(self, value: str) -> None:
         try:
             written = self._stream.write(value)
         except OSError as error:
-            raise _wrapped_output_error(error, self._artifact_path())
+            raise _wrapped_output_error(error, self._artifact_path()) from error
         if written != len(value):
             raise FDROutputError("FDR output stream performed a short write", artifact_path=self._artifact_path())
 
@@ -283,7 +282,7 @@ class FDRWriter:
             try:
                 partial_path, stream = _create_partial(path)
             except OSError as error:
-                raise _wrapped_output_error(error, path)
+                raise _wrapped_output_error(error, path) from error
             return FDRStreamWriter(
                 header,
                 stream,

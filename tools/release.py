@@ -6,19 +6,18 @@ import argparse
 import ast
 import base64
 import csv
-from dataclasses import dataclass
-from email.parser import BytesParser
 import hashlib
 import io
 import json
-from pathlib import Path, PurePosixPath
 import re
 import stat
 import tarfile
 import tomllib
-from typing import Callable
 import zipfile
-
+from collections.abc import Callable
+from dataclasses import dataclass
+from email.parser import BytesParser
+from pathlib import Path, PurePosixPath
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = "xplane_fdau"

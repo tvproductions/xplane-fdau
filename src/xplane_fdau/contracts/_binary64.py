@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from fractions import Fraction
 import math
 import struct
+from fractions import Fraction
 
 from .errors import CanonicalJSONError
 

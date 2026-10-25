@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from backlog.model import Action, BacklogChild, ChildStatus, Finding, Recommendation, RepositorySnapshot
 
-
 _AUDIT_COMMAND = "uv run python .codex/skills/backlog-status/scripts/backlog_status.py audit"
 _STATUS_ACTIONS: dict[ChildStatus, tuple[Action, str, str | None]] = {
     "queued": (

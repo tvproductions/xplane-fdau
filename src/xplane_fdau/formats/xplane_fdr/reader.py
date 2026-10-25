@@ -2,18 +2,17 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
-from dataclasses import dataclass, field
-from datetime import date, datetime, time, timedelta
 import math
 import os
-from pathlib import Path
 import re
-from typing import Callable, NoReturn, override, Protocol, TypeVar, cast
+from collections.abc import Callable, Iterator
+from dataclasses import dataclass, field
+from datetime import date, datetime, time, timedelta
+from pathlib import Path
+from typing import NoReturn, Protocol, TypeVar, cast, override
 
 from .errors import FDRParseError, FDRValidationError
 from .models import FDRDataref, FDRHeader, FDRLegacyColumn, FDRMetadata, FDRRecording, FDRSample
-
 
 _VERSION_PATTERN = re.compile(r"^([0-9]+)(?:\s+.*)?$")
 _METADATA_PATTERN = re.compile(r"^[A-Z0-9]{4}$")

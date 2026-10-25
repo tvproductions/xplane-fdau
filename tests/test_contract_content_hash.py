@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from copy import deepcopy
 import unittest
+from copy import deepcopy
 
 from xplane_fdau.contracts._content_hash import (
     _definition_content_hash,
@@ -12,7 +12,6 @@ from xplane_fdau.contracts._content_hash import (
     _record_preimage,
 )
 from xplane_fdau.contracts.errors import ContractValidationError
-
 
 FAMILY = "https://tvproductions.github.io/xplane-fdau/contracts/measurement-catalog"
 RECORD_PREIMAGE = (

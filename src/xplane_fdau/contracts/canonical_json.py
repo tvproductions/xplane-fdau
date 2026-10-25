@@ -6,8 +6,8 @@ import math
 import re
 import unicodedata
 
-from ._json_parse import _NumberToken, _ObjectPairs, _materialize_number, _pointer
 from ._binary64 import _ecmascript_number_token
+from ._json_parse import _materialize_number, _NumberToken, _ObjectPairs, _pointer
 from .errors import CanonicalJSONError
 from .values import (
     InlineValue,

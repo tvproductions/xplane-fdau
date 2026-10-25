@@ -2,23 +2,22 @@
 
 from __future__ import annotations
 
-from contextlib import redirect_stderr, redirect_stdout
 import errno
 import io
 import json
 import os
-from pathlib import Path
 import re
 import subprocess
 import sys
 import tempfile
+import unittest
+from contextlib import redirect_stderr, redirect_stdout
+from pathlib import Path
 from typing import override
 from unittest import mock
-import unittest
 
-from xplane_fdau.formats.xplane_fdr import FDROutputError
 from xplane_fdau.cli import _write_atomic_json, build_parser, main
-
+from xplane_fdau.formats.xplane_fdr import FDROutputError
 
 VALID_FDR = """A
 4
@@ -367,7 +366,7 @@ class FDRCliAtomicOutputTests(unittest.TestCase):
                 output = self.root / f"{stage}.geojson"
                 partial = self.root / f".{output.name}.injected.partial"
 
-                def create_partial(_destination: Path) -> tuple[Path, FailingAtomicStream]:
+                def create_partial(_destination: Path, stage: str = stage, partial: Path = partial) -> tuple[Path, FailingAtomicStream]:
                     failure = stage if stage in {"write", "flush"} else "none"
                     return partial, FailingAtomicStream(partial, failure=failure)
 
@@ -539,9 +538,11 @@ class FDRCliAtomicOutputTests(unittest.TestCase):
         output = self.root / "flight.geojson"
         output.write_text("existing\n", encoding="utf-8")
 
-        with mock.patch("xplane_fdau.cli.os.replace", side_effect=OSError("injected replace failure")):
-            with self.assertRaisesRegex(ValueError, "injected replace failure"):
-                _write_atomic_json({"type": "FeatureCollection"}, output, overwrite=True)
+        with (
+            mock.patch("xplane_fdau.cli.os.replace", side_effect=OSError("injected replace failure")),
+            self.assertRaisesRegex(ValueError, "injected replace failure"),
+        ):
+            _write_atomic_json({"type": "FeatureCollection"}, output, overwrite=True)
 
         self.assertEqual("existing\n", output.read_text(encoding="utf-8"))
         self.assertEqual([], list(self.root.glob(f".{output.name}.*.partial")))

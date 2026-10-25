@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import date, time
 import json
-from typing import cast
 import unittest
+from datetime import date, time
+from typing import cast
 
 from xplane_fdau.formats.xplane_fdr import (
     FDRDataref,

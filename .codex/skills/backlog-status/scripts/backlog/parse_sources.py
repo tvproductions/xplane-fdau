@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from pathlib import Path
-import re
 from typing import cast
 
 from backlog.model import (
@@ -25,7 +25,6 @@ from backlog.model import (
     StatementSource,
 )
 from backlog.parse import MarkdownParseError
-
 
 _GATE_HEADING = re.compile(r"^### ([A-Z][0-9]+\.[0-9]+) — (.+)$")
 _CHILD_SECTION_HEADING = re.compile(r"^## ([A-Z][0-9]+\.[0-9]+) — .+$")

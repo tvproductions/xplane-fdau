@@ -25,7 +25,6 @@ from .models import (
     FDRRecording,
     FDRSample,
 )
-from .reader import FDRReader, FDRSampleStream
 from .profiles import (
     FDRRecordingProfile,
     FDRTrajectorySource,
@@ -34,6 +33,7 @@ from .profiles import (
     list_profiles,
     mandatory_trajectory_sources,
 )
+from .reader import FDRReader, FDRSampleStream
 from .writer import FDRStreamWriter, FDRWriter
 
 __all__ = [
@@ -48,11 +48,11 @@ __all__ = [
     "FDRNormalizationResult",
     "FDROutputError",
     "FDRParseError",
+    "FDRReader",
+    "FDRRecordConfig",
     "FDRRecording",
     "FDRRecordingProfile",
     "FDRRecordingStateError",
-    "FDRRecordConfig",
-    "FDRReader",
     "FDRSample",
     "FDRSampleStream",
     "FDRStreamWriter",
@@ -64,6 +64,6 @@ __all__ = [
     "list_profiles",
     "load_record_config",
     "mandatory_trajectory_sources",
-    "resolve_recording_definition",
     "recording_to_geojson",
+    "resolve_recording_definition",
 ]

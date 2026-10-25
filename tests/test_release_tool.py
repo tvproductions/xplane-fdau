@@ -6,7 +6,6 @@ import base64
 import csv
 import hashlib
 import io
-from pathlib import Path
 import stat
 import tarfile
 import tempfile
@@ -15,6 +14,7 @@ import warnings
 import zipfile
 from collections.abc import Callable
 from contextlib import redirect_stderr
+from pathlib import Path
 
 from tools import release
 

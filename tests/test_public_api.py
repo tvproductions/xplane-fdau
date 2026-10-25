@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import ast
-from pathlib import Path
 import unittest
+from pathlib import Path
 
 import xplane_fdau
 import xplane_fdau.contracts as contracts
@@ -12,7 +12,6 @@ import xplane_fdau.contracts.identity as contract_identity
 import xplane_fdau.contracts.provenance as contract_provenance
 import xplane_fdau.formats.xplane_fdr as native_fdr
 import xplane_fdau.sinks.xplane_fdr as native_sink
-
 
 FORMAT_NAMES = {
     "FDRConfigError",

@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Mapping, override
+from typing import override
 
 from ._identity_validation import _field_domains, _identifier, _revision, _sha256, _uuid
 from .canonical_json import canonical_bytes
 from .errors import CanonicalJSONError, ContractShapeError, ContractValidationError
 
-__all__ = ["DefinitionRef", "RecordRef", "AlgorithmRef"]
+__all__ = ["AlgorithmRef", "DefinitionRef", "RecordRef"]
 
 _FAMILY_PREFIX = "https://tvproductions.github.io/xplane-fdau/contracts/"
 _FAMILIES = frozenset(

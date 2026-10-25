@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-from dataclasses import FrozenInstanceError
-from datetime import date
 import io
-from importlib.resources import files
 import json
 import math
-from pathlib import Path
 import re
 import tempfile
-from typing import Any, cast
 import unittest
+from dataclasses import FrozenInstanceError
+from datetime import date
+from importlib.resources import files
+from pathlib import Path
+from typing import Any, cast
 
 from xplane_fdau.formats.xplane_fdr import (
     FDRConfigError,
@@ -172,9 +172,9 @@ class FDRConfigValidationTests(unittest.TestCase):
         with self.assertRaises(FDRConfigError) as caught:
             load_record_config(stream)
 
-        self.assertEqual("flight.json", getattr(caught.exception, "source"))
-        self.assertEqual(4, getattr(caught.exception, "line"))
-        self.assertGreater(getattr(caught.exception, "column"), 0)
+        self.assertEqual("flight.json", vars(caught.exception)["source"])
+        self.assertEqual(4, vars(caught.exception)["line"])
+        self.assertGreater(vars(caught.exception)["column"], 0)
         self.assertIn("flight.json:4:", str(caught.exception))
 
     def test_semantic_error_reports_path_source_and_property_path(self) -> None:
@@ -184,7 +184,7 @@ class FDRConfigValidationTests(unittest.TestCase):
         with self.assertRaises(FDRConfigError) as caught:
             load_record_config(stream)
 
-        self.assertEqual("flight.json", getattr(caught.exception, "source"))
+        self.assertEqual("flight.json", vars(caught.exception)["source"])
         self.assertEqual("$.sampling.interval_seconds", caught.exception.property_path)
         self.assertIn("flight.json: $.sampling.interval_seconds", str(caught.exception))
 
@@ -332,7 +332,7 @@ class FDRConfigValidationTests(unittest.TestCase):
                         load_record_config(stream)
                 except OverflowError as error:
                     self.fail(f"sampling overflow must be contextual: {error}")
-                self.assertEqual("huge.json", getattr(caught.exception, "source"))
+                self.assertEqual("huge.json", vars(caught.exception)["source"])
                 self.assertEqual(f"$.sampling.{name}", caught.exception.property_path)
 
 

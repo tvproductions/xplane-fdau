@@ -2,25 +2,25 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from enum import Enum, StrEnum
 import math
 import re
+from dataclasses import dataclass
+from enum import Enum, StrEnum
 from typing import cast
 
 from ._identity_validation import _counter, _identifier, _integer_domain, _nfc_text, _sha256, _text
 from .errors import CanonicalJSONError, ContractShapeError, ContractValidationError
 
 __all__ = [
-    "ValueRepresentation",
-    "ScalarRepresentation",
-    "RetentionStatus",
     "InlineValue",
     "PayloadReference",
     "PayloadSpec",
     "RepresentationSpec",
+    "RetentionStatus",
+    "ScalarRepresentation",
     "ShapeSpec",
     "UnitSpec",
+    "ValueRepresentation",
 ]
 
 
@@ -109,7 +109,7 @@ def _inline_check(representation: object, element: object, value: object, phase:
         scalar = str(element) if array else "real"
         for index, item in enumerate(value):
             _scalar_check(item, scalar, phase, path=f"/value/{index}")
-        if phase == 2 and (len(value) > 65535 or tag == ValueRepresentation.VECTOR and not value):
+        if phase == 2 and (len(value) > 65535 or (tag == ValueRepresentation.VECTOR and not value)):
             raise ContractValidationError("value count outside range", path="/value")
         value = tuple(value)
     else:

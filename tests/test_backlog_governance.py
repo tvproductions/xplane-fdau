@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 import re
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
-
 
 ROOT = Path(__file__).resolve().parents[1]
 ROADMAP = ROOT / "ROADMAP.md"
@@ -57,14 +56,14 @@ D1_2_REVIEW = "[review](.superpowers/sdd/2026-08-23-d1-2-acquisition-recording-p
 D1_3_PLAN = "[plan](docs/superpowers/plans/2026-09-05-d1-3-q4xpcc-handoff.md)"
 D1_3_REVIEW = "[review](.superpowers/sdd/2026-09-05-d1-3-q4xpcc-handoff/review.md)"
 D1_OUTCOMES = {
-    "D1.1": "Canonical C1–C4 design approval",
+    "D1.1": "Canonical C1\u2013C4 design approval",
     "D1.2": "Acquisition, recording, projection, and pinning contract design",
     "D1.3": "Reviewed q4xpcc Phase 24A handoff",
 }
 D1_INVENTORY_ROWS = (
     (
         "`D1.1`",
-        "Canonical C1–C4 design approval",
+        "Canonical C1\u2013C4 design approval",
         "`verified`",
         "`T1.2`",
         D1_SPECIFICATION,
@@ -311,7 +310,7 @@ class RoadmapAuthorityTests(unittest.TestCase):
         rows = roadmap_child_rows()
         for row in rows:
             dependency_cell = row[2]
-            self.assertNotRegex(dependency_cell, r"[–—-]`[A-Z]")
+            self.assertNotRegex(dependency_cell, r"[\u2013—-]`[A-Z]")
             for dependency in dependency_cell.split(", "):
                 self.assertRegex(dependency, r"^`(?:M0|[A-Z][0-9]+\.[0-9]+)`$")
 
@@ -583,7 +582,7 @@ class BacklogAuthorityTests(unittest.TestCase):
         excluded = {"M0", "G1", "I1.0", "I1.1", "I1.2", "I2.1", "F2.1"}
         self.assertFalse(set(inventory_ids) & excluded)
         self.assertEqual(len(inventory_ids), len(set(inventory_ids)))
-        self.assertNotRegex("\n".join(row[0] for row in inventory), r"[–—]")
+        self.assertNotRegex("\n".join(row[0] for row in inventory), r"[\u2013—]")
 
     def test_inventory_owns_complete_mutable_state_cells(self) -> None:
         inventory = table_rows(read_text(BACKLOG), INVENTORY_HEADER)
@@ -817,9 +816,8 @@ class GovernanceArtifactTests(unittest.TestCase):
                     f"- **Completion evidence:** `{value}`\n",
                     encoding="utf-8",
                 )
-                with patch(__name__ + ".ROOT", root):
-                    with self.assertRaises(AssertionError):
-                        self.test_completed_active_plan_completion_evidence_is_inline_repo_relative_file()
+                with patch(__name__ + ".ROOT", root), self.assertRaises(AssertionError):
+                    self.test_completed_active_plan_completion_evidence_is_inline_repo_relative_file()
 
     def test_completion_evidence_permits_markdown_link_inside_docs_tree(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:

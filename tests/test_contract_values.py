@@ -1,18 +1,17 @@
 """Behavioral contracts for exact values and metadata-only payload claims."""
 
-from dataclasses import FrozenInstanceError
 import copy
 import json
-import pickle
 import math
+import pickle
 import unittest
+from dataclasses import FrozenInstanceError
 from unittest import mock
 
-from xplane_fdau.contracts.errors import CanonicalJSONError, ContractShapeError, ContractValidationError
-from xplane_fdau.contracts import canonical_bytes
+from xplane_fdau.contracts import _value_io, canonical_bytes
 from xplane_fdau.contracts._json_parse import _parse_json_document
-from xplane_fdau.contracts import _value_io
-from xplane_fdau.contracts.values import InlineValue, PayloadReference, RetentionStatus, PayloadSpec, RepresentationSpec, ShapeSpec, UnitSpec
+from xplane_fdau.contracts.errors import CanonicalJSONError, ContractShapeError, ContractValidationError
+from xplane_fdau.contracts.values import InlineValue, PayloadReference, PayloadSpec, RepresentationSpec, RetentionStatus, ShapeSpec, UnitSpec
 
 
 class InlineValueTests(unittest.TestCase):
@@ -268,7 +267,11 @@ class WireValueTests(unittest.TestCase):
         )
         for cls, reader, fields, path in cases:
             with self.subTest(fields=fields):
-                for build in (lambda: cls(**fields), lambda: reader(fields), lambda: reader(_parse_json_document(json.dumps(fields)))):  # ty: ignore[invalid-argument-type]
+                for build in (
+                    lambda cls=cls, fields=fields: cls(**fields),  # ty: ignore[invalid-argument-type]  # intentionally invalid constructor input
+                    lambda reader=reader, fields=fields: reader(fields),
+                    lambda reader=reader, fields=fields: reader(_parse_json_document(json.dumps(fields))),
+                ):
                     with self.assertRaises(ContractShapeError) as caught:
                         build()
                     self.assertEqual(path, caught.exception.path)
@@ -290,7 +293,7 @@ class WireValueTests(unittest.TestCase):
         )
         for cls, reader, fields, path in cases:
             with self.subTest(model=cls):
-                for build in (lambda: cls(**fields), lambda: reader(fields)):  # ty: ignore[invalid-argument-type]
+                for build in (lambda cls=cls, fields=fields: cls(**fields), lambda reader=reader, fields=fields: reader(fields)):  # ty: ignore[invalid-argument-type]
                     with self.assertRaises(CanonicalJSONError) as caught:
                         build()
                     self.assertEqual(path, caught.exception.path)
@@ -302,7 +305,7 @@ class WireValueTests(unittest.TestCase):
             if representation == "fixed_array":
                 fields["element_representation"] = "integer"
             with self.subTest(representation=representation):
-                for build in (lambda: InlineValue(**fields), lambda: _value_io._inline_value_from_wire(fields)):  # ty: ignore[invalid-argument-type]
+                for build in (lambda fields=fields: InlineValue(**fields), lambda fields=fields: _value_io._inline_value_from_wire(fields)):  # ty: ignore[invalid-argument-type]
                     with self.assertRaises(CanonicalJSONError) as caught:
                         build()
                     self.assertEqual(path, caught.exception.path)
@@ -320,7 +323,7 @@ class WireValueTests(unittest.TestCase):
         )
         for cls, reader, fields, path in cases:
             with self.subTest(fields=fields):
-                for build in (lambda: cls(**fields), lambda: reader(fields)):  # ty: ignore[invalid-argument-type]
+                for build in (lambda cls=cls, fields=fields: cls(**fields), lambda reader=reader, fields=fields: reader(fields)):  # ty: ignore[invalid-argument-type]
                     with self.assertRaises(ContractShapeError) as caught:
                         build()
                     self.assertEqual(path, caught.exception.path)

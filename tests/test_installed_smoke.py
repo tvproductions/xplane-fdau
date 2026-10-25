@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-import io
 import importlib.util
+import io
 import os
-from pathlib import Path
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
-from tools import installed_smoke
 import xplane_fdau
+from tools import installed_smoke
 from xplane_fdau.formats.xplane_fdr import FDRReader
 
 
@@ -165,15 +165,15 @@ class InstalledSmokeTests(unittest.TestCase):
             ("xplane_fdau.contracts._content_hash._record_content_hash", "0" * 64),
             ("xplane_fdau.contracts._content_hash._definition_preimage", b"incorrect\n"),
         ):
-            with self.subTest(target=target):
-                with (
-                    mock.patch.object(installed_smoke, "ensure_outside_checkout"),
-                    mock.patch.object(installed_smoke, "_command_path", return_value=Path("xplane-fdau")),
-                    mock.patch.object(installed_smoke, "_run"),
-                    mock.patch(target, return_value=wrong),
-                    self.assertRaises(installed_smoke.SmokeError),
-                ):
-                    installed_smoke.smoke("0.1.0", checkout=Path("checkout"))
+            with (
+                self.subTest(target=target),
+                mock.patch.object(installed_smoke, "ensure_outside_checkout"),
+                mock.patch.object(installed_smoke, "_command_path", return_value=Path("xplane-fdau")),
+                mock.patch.object(installed_smoke, "_run"),
+                mock.patch(target, return_value=wrong),
+                self.assertRaises(installed_smoke.SmokeError),
+            ):
+                installed_smoke.smoke("0.1.0", checkout=Path("checkout"))
 
 
 if __name__ == "__main__":

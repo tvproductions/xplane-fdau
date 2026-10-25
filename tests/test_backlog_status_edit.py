@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from dataclasses import FrozenInstanceError, is_dataclass, replace
 import hashlib
-from pathlib import Path
 import os
 import stat
 import sys
 import tempfile
-from typing import override
 import unittest
+from dataclasses import FrozenInstanceError, is_dataclass, replace
+from pathlib import Path
+from typing import override
 from unittest.mock import patch
 
 from tests.backlog_audit_support import (
@@ -25,21 +25,21 @@ from tests.backlog_audit_support import (
 SCRIPTS = Path(__file__).resolve().parents[1] / ".codex" / "skills" / "backlog-status" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
+from backlog import edit  # noqa: E402  # ty: ignore[unresolved-import]
 from backlog.audit import audit_repository  # noqa: E402  # ty: ignore[unresolved-import]
 from backlog.edit import (  # noqa: E402  # ty: ignore[unresolved-import]
+    _NONSUSPENDED,
+    _TRANSITIONS,
     MutationPlan,
     MutationRefusal,
-    plan_resume,
     plan_record_gate,
     plan_reopen_gate,
+    plan_resume,
     plan_selection,
     plan_suspend,
     plan_transition,
-    _NONSUSPENDED,
-    _TRANSITIONS,
 )
 from backlog.model import Finding  # noqa: E402  # ty: ignore[unresolved-import]
-from backlog import edit  # noqa: E402  # ty: ignore[unresolved-import]
 
 
 class PublicationTests(unittest.TestCase):
@@ -82,9 +82,8 @@ class PublicationTests(unittest.TestCase):
     def test_initial_stale_target_refuses_before_creating_a_partial(self) -> None:
         changed = self.plan.original + b"\n"
         self.plan.target.write_bytes(changed)
-        with patch("tempfile.mkstemp", side_effect=AssertionError("stale plan created a partial")):
-            with self.assertRaises(MutationRefusal) as raised:
-                self.publish()
+        with patch("tempfile.mkstemp", side_effect=AssertionError("stale plan created a partial")), self.assertRaises(MutationRefusal) as raised:
+            self.publish()
         self.assertEqual("mutation.stale", raised.exception.code)
         self.assertEqual(changed, self.plan.target.read_bytes())
 
@@ -105,9 +104,8 @@ class PublicationTests(unittest.TestCase):
                 self.plan.target.write_bytes(changed)
             return loaded
 
-        with patch("backlog.edit.audit_repository", side_effect=concurrent_audit):
-            with self.assertRaises(MutationRefusal) as raised:
-                self.publish()
+        with patch("backlog.edit.audit_repository", side_effect=concurrent_audit), self.assertRaises(MutationRefusal) as raised:
+            self.publish()
         self.assertEqual("mutation.stale", raised.exception.code)
         self.assertEqual(changed, self.plan.target.read_bytes())
         self.assertEqual([], list(self.root.glob(".BACKLOG.md.*.tmp")))
@@ -120,9 +118,8 @@ class PublicationTests(unittest.TestCase):
                 partial.write_bytes(self.plan.original)
             return loaded
 
-        with patch("backlog.edit.audit_repository", side_effect=corrupt_partial):
-            with self.assertRaises(MutationRefusal) as raised:
-                self.publish()
+        with patch("backlog.edit.audit_repository", side_effect=corrupt_partial), self.assertRaises(MutationRefusal) as raised:
+            self.publish()
 
         self.assertEqual("mutation.candidate", raised.exception.code)
         self.assertIn("partial bytes differ", str(raised.exception))
@@ -136,9 +133,8 @@ class PublicationTests(unittest.TestCase):
                 partial.write_bytes(b"not a backlog\n")
             return loaded
 
-        with patch("backlog.edit.audit_repository", side_effect=corrupt_partial):
-            with self.assertRaises(MutationRefusal) as raised:
-                self.publish()
+        with patch("backlog.edit.audit_repository", side_effect=corrupt_partial), self.assertRaises(MutationRefusal) as raised:
+            self.publish()
 
         self.assertEqual("mutation.candidate", raised.exception.code)
         self.assertIn("partial bytes differ", str(raised.exception))
@@ -148,9 +144,8 @@ class PublicationTests(unittest.TestCase):
         for seam in ("mkstemp", "fsync", "chmod", "replace"):
             with self.subTest(seam=seam):
                 module = "tempfile" if seam == "mkstemp" else "os"
-                with patch(f"{module}.{seam}", side_effect=OSError(f"{seam} failed")):
-                    with self.assertRaises(MutationRefusal) as raised:
-                        self.publish()
+                with patch(f"{module}.{seam}", side_effect=OSError(f"{seam} failed")), self.assertRaises(MutationRefusal) as raised:
+                    self.publish()
                 self.assertEqual("mutation.publish", raised.exception.code)
                 self.assertIn(f"{seam} failed", str(raised.exception))
                 self.assert_unpublished()
@@ -163,17 +158,18 @@ class PublicationTests(unittest.TestCase):
                 raise OSError("target stat failed")
             return original_stat(path, *args, **kwargs)
 
-        with patch.object(Path, "stat", failing_stat):
-            with self.assertRaises(MutationRefusal) as raised:
-                self.publish()
+        with patch.object(Path, "stat", failing_stat), self.assertRaises(MutationRefusal) as raised:
+            self.publish()
         self.assertIn("target stat failed", str(raised.exception))
         self.assert_unpublished()
 
     def test_cleanup_failure_keeps_primary_first_and_names_owned_partial(self) -> None:
-        with patch("os.replace", side_effect=OSError("primary replace failed")):
-            with patch.object(Path, "unlink", side_effect=OSError("cleanup failed")):
-                with self.assertRaises(MutationRefusal) as raised:
-                    self.publish()
+        with (
+            patch("os.replace", side_effect=OSError("primary replace failed")),
+            patch.object(Path, "unlink", side_effect=OSError("cleanup failed")),
+            self.assertRaises(MutationRefusal) as raised,
+        ):
+            self.publish()
         partials = list(self.root.glob(".BACKLOG.md.*.tmp"))
         self.assertEqual(1, len(partials))
         message = str(raised.exception)
@@ -188,9 +184,12 @@ class PublicationTests(unittest.TestCase):
             real_close(fd)
             raise OSError("descriptor cleanup failed")
 
-        with patch("os.fdopen", side_effect=OSError("opening partial failed")), patch("os.close", side_effect=close_then_fail):
-            with self.assertRaises(MutationRefusal) as raised:
-                self.publish()
+        with (
+            patch("os.fdopen", side_effect=OSError("opening partial failed")),
+            patch("os.close", side_effect=close_then_fail),
+            self.assertRaises(MutationRefusal) as raised,
+        ):
+            self.publish()
         message = str(raised.exception)
         self.assertIn("opening partial failed", message)
         self.assertLess(message.index("opening partial failed"), message.index("descriptor cleanup failed"))
@@ -199,9 +198,8 @@ class PublicationTests(unittest.TestCase):
     def test_failure_cleans_only_owned_partial_and_leaves_other_siblings(self) -> None:
         other = self.root / ".BACKLOG.md.other-owner.tmp"
         other.write_bytes(b"another writer")
-        with patch("os.fsync", side_effect=OSError("fsync failed")):
-            with self.assertRaises(MutationRefusal):
-                self.publish()
+        with patch("os.fsync", side_effect=OSError("fsync failed")), self.assertRaises(MutationRefusal):
+            self.publish()
         self.assertEqual(b"another writer", other.read_bytes())
         self.assertEqual([other], list(self.root.glob(".BACKLOG.md.*.tmp")))
         self.assertEqual(self.plan.original, self.plan.target.read_bytes())
@@ -220,9 +218,8 @@ class PublicationTests(unittest.TestCase):
             partials.append(self.replace_partial_with_foreign_file())
             raise OSError("primary audit failure")
 
-        with patch("backlog.edit.audit_repository", side_effect=replaced_partial_audit):
-            with self.assertRaises(MutationRefusal) as raised:
-                self.publish()
+        with patch("backlog.edit.audit_repository", side_effect=replaced_partial_audit), self.assertRaises(MutationRefusal) as raised:
+            self.publish()
         self.assertTrue(partials[0].exists(), "cleanup deleted another owner's replacement file")
         self.assertEqual(b"another owner's file", partials[0].read_bytes())
         self.assertEqual(self.plan.original, self.plan.target.read_bytes())
@@ -239,9 +236,8 @@ class PublicationTests(unittest.TestCase):
                 partials.append(self.replace_partial_with_foreign_file())
             return loaded
 
-        with patch("backlog.edit.audit_repository", side_effect=replaced_partial_audit):
-            with self.assertRaises(MutationRefusal) as raised:
-                self.publish()
+        with patch("backlog.edit.audit_repository", side_effect=replaced_partial_audit), self.assertRaises(MutationRefusal) as raised:
+            self.publish()
         self.assertEqual(self.plan.original, self.plan.target.read_bytes(), "publication replaced BACKLOG.md with another owner's file")
         self.assertEqual("mutation.ownership", raised.exception.code)
         self.assertEqual(b"another owner's file", partials[0].read_bytes())
@@ -253,9 +249,8 @@ class PublicationTests(unittest.TestCase):
                 raise OSError("final audit failed")
             return audit_repository(root, backlog_text=backlog_text)
 
-        with patch("backlog.edit.audit_repository", side_effect=fail_final):
-            with self.assertRaises(MutationRefusal) as raised:
-                self.publish()
+        with patch("backlog.edit.audit_repository", side_effect=fail_final), self.assertRaises(MutationRefusal) as raised:
+            self.publish()
         self.assertEqual("mutation.published", raised.exception.code)
         self.assertIn("do not retry", str(raised.exception).lower())
         self.assertEqual(self.plan.candidate, self.plan.target.read_bytes())
@@ -267,18 +262,19 @@ class PublicationTests(unittest.TestCase):
             with self.subTest(stage=stage):
 
                 class FaultyStream:
-                    def __init__(self, fd, mode):
+                    def __init__(self, fd, mode, stage=stage):
+                        self.stage = stage
                         self.stream = real_fdopen(fd, mode)
 
                     def write(self, data):
-                        if stage == "write":
+                        if self.stage == "write":
                             raise OSError("write failed")
-                        if stage == "short-write":
+                        if self.stage == "short-write":
                             return self.stream.write(data[:-1])
                         return self.stream.write(data)
 
                     def flush(self):
-                        if stage == "flush":
+                        if self.stage == "flush":
                             raise OSError("flush failed")
                         return self.stream.flush()
 
@@ -287,7 +283,7 @@ class PublicationTests(unittest.TestCase):
 
                     def close(self):
                         self.stream.close()
-                        if stage == "close":
+                        if self.stage == "close":
                             raise OSError("close failed")
 
                     def __enter__(self):
@@ -296,9 +292,8 @@ class PublicationTests(unittest.TestCase):
                     def __exit__(self, *args):
                         self.close()
 
-                with patch("os.fdopen", side_effect=FaultyStream):
-                    with self.assertRaises(MutationRefusal) as raised:
-                        self.publish()
+                with patch("os.fdopen", side_effect=FaultyStream), self.assertRaises(MutationRefusal) as raised:
+                    self.publish()
                 self.assertEqual("mutation.publish", raised.exception.code)
                 self.assert_unpublished()
 
@@ -365,11 +360,17 @@ class PublicationTests(unittest.TestCase):
             events.append("replace")
             return real_replace(source, target)
 
-        with patch.object(Path, "stat", observed_stat), patch.object(Path, "read_bytes", observed_read):
-            with patch("tempfile.mkstemp", side_effect=create), patch("os.fdopen", side_effect=ObservedStream):
-                with patch("os.fsync", side_effect=fsync), patch("os.chmod", side_effect=chmod), patch("os.replace", side_effect=publish_replace):
-                    with patch("backlog.edit.audit_repository", side_effect=audit):
-                        loaded = self.publish()
+        with (
+            patch.object(Path, "stat", observed_stat),
+            patch.object(Path, "read_bytes", observed_read),
+            patch("tempfile.mkstemp", side_effect=create),
+            patch("os.fdopen", side_effect=ObservedStream),
+            patch("os.fsync", side_effect=fsync),
+            patch("os.chmod", side_effect=chmod),
+            patch("os.replace", side_effect=publish_replace),
+            patch("backlog.edit.audit_repository", side_effect=audit),
+        ):
+            loaded = self.publish()
         self.assertEqual((), loaded.findings)
         self.assertEqual(
             [
@@ -404,9 +405,8 @@ class PublicationTests(unittest.TestCase):
                     return self.plan.original + b"changed"
             return original_read(path)
 
-        with patch.object(Path, "read_bytes", fail_second_read):
-            with self.assertRaises(MutationRefusal) as raised:
-                self.publish()
+        with patch.object(Path, "read_bytes", fail_second_read), self.assertRaises(MutationRefusal) as raised:
+            self.publish()
         self.assertEqual("mutation.stale", raised.exception.code)
         self.assert_unpublished()
 
@@ -417,9 +417,8 @@ class PublicationTests(unittest.TestCase):
             loaded = audit_repository(root, backlog_text=backlog_text)
             return replace(loaded, findings=(failure,)) if backlog_text is None else loaded
 
-        with patch("backlog.edit.audit_repository", side_effect=audit):
-            with self.assertRaises(MutationRefusal) as raised:
-                self.publish()
+        with patch("backlog.edit.audit_repository", side_effect=audit), self.assertRaises(MutationRefusal) as raised:
+            self.publish()
         self.assertEqual("mutation.published", raised.exception.code)
         self.assertIn("do not retry", str(raised.exception).lower())
         self.assertEqual(self.plan.candidate, self.plan.target.read_bytes())
@@ -546,7 +545,7 @@ class SelectionBytePreservationTests(unittest.TestCase):
 
                 original_lines = original.splitlines(keepends=True)
                 candidate_lines = plan.candidate.splitlines(keepends=True)
-                changed = [index for index, (before, after) in enumerate(zip(original_lines, candidate_lines)) if before != after]
+                changed = [index for index, (before, after) in enumerate(zip(original_lines, candidate_lines, strict=False)) if before != after]
                 self.assertEqual([4], changed)
                 self.assertEqual(len(original_lines), len(candidate_lines))
                 self.assertTrue(candidate_lines[4].endswith(newline))
@@ -1138,7 +1137,7 @@ class GatePlanningTests(unittest.TestCase):
                 recorded = plan_record_gate(root, "T1.2", 1, expect_open=True, evidence=(evidence,))
                 recorded_lines = recorded.candidate.splitlines(keepends=True)
                 original_lines = original.splitlines(keepends=True)
-                changed = [index for index, pair in enumerate(zip(original_lines, recorded_lines)) if pair[0] != pair[1]]
+                changed = [index for index, pair in enumerate(zip(original_lines, recorded_lines, strict=False)) if pair[0] != pair[1]]
                 self.assertEqual(3, len(changed))
                 self.assertTrue(recorded_lines[changed[0]].endswith(newline) or not final_newline)
                 self.assertEqual(original_lines[: changed[0]], recorded_lines[: changed[0]])

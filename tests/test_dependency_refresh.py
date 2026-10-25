@@ -11,8 +11,8 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any, override
 from unittest.mock import patch
-from urllib.request import Request
 from urllib.parse import urlparse
+from urllib.request import Request
 
 from tools import dependency_refresh as refresh
 from tools.dependency_matrix import MatrixResult
@@ -149,13 +149,13 @@ class StatusFixture:
         self.calls.append(args)
         if args == ("uv", "--version"):
             return 0, "uv 0.12.17 (test)\n", ""
-        if args[:3] == ("uv", "--no-config", "tree"):
+        if args[:2] == ("uv", "tree"):
             return 0, json.dumps(self.tree), ""
-        if args[:4] == ("uv", "--no-config", "workspace", "metadata"):
+        if args[:3] == ("uv", "workspace", "metadata"):
             metadata = dict(self.metadata)
             metadata["requires_python"] = ">=3.12"
             return 0, json.dumps(metadata), ""
-        if args[:3] == ("uv", "--no-config", "audit"):
+        if args[:2] == ("uv", "audit"):
             return self.audit_exit, json.dumps(self.audit), ""
         if args == ("git", "branch", "--show-current"):
             return 0, "feature\n", ""
@@ -172,13 +172,25 @@ class StatusFixture:
 
 
 class DependencyStatusTests(unittest.TestCase):
+    def test_named_project_sources_are_not_discarded_by_status_commands(self) -> None:
+        project = self.fixture.root / "pyproject.toml"
+        project.write_text(
+            project.read_text(encoding="utf-8") + '\n[[tool.uv.index]]\nname = "reviewed"\nurl = "https://packages.example/simple"\nexplicit = true\n',
+            encoding="utf-8",
+        )
+        report = collect_status(self.fixture.root, self.fixture.runner, self.fixture.opener)
+        self.assertEqual([], report["pre_apply_blockers"])
+        for command in (refresh.TREE_COMMAND, refresh.METADATA_COMMAND, refresh.AUDIT_COMMAND):
+            self.assertIn(command, self.fixture.calls)
+            self.assertNotIn("--no-config", command)
+
     @override
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
         self.fixture = StatusFixture(Path(self.temporary.name))
 
-    def test_status_enumerates_universal_lock_and_uses_no_config_after_uv_mismatch(self) -> None:
+    def test_status_enumerates_universal_lock_with_project_configuration(self) -> None:
         report = collect_status(self.fixture.root, self.fixture.runner, self.fixture.opener)
         self.assertEqual(
             set(report),
@@ -199,7 +211,7 @@ class DependencyStatusTests(unittest.TestCase):
         self.assertEqual({item["name"] for item in report["dependencies"] if item["outdated"]}, {"foo", "universal-only"})
         self.assertEqual(report["uv"]["installed"], "0.12.17")
         self.assertEqual(report["uv"]["required"], "==0.12.16")
-        self.assertIn(("uv", "--no-config", "tree", "--outdated", "--all-groups", "--universal", "--locked", "--format", "json"), self.fixture.calls)
+        self.assertIn(("uv", "tree", "--outdated", "--all-groups", "--universal", "--locked", "--format", "json"), self.fixture.calls)
         self.assertTrue(all(isinstance(command, list) for command in report["proposed_commands"]))
 
     def test_current_advisory_and_yank_are_remediation_findings(self) -> None:
@@ -214,6 +226,14 @@ class DependencyStatusTests(unittest.TestCase):
         report = collect_status(self.fixture.root, self.fixture.runner, self.fixture.opener)
         self.assertEqual({item["kind"] for item in report["current_findings"]}, {"advisory", "yanked"})
         self.assertEqual(report["pre_apply_blockers"], [])
+
+    def test_current_uv_dependency_advisory_preserves_identity_and_fixed_versions(self) -> None:
+        self.fixture.audit["vulnerabilities"] = [{"dependency": {"name": "foo", "version": "1.0"}, "id": "GHSA-observed", "fix_versions": ["2.0"]}]
+        self.fixture.audit_exit = 1
+        report = collect_status(self.fixture.root, self.fixture.runner, self.fixture.opener)
+        self.assertEqual([], report["pre_apply_blockers"])
+        finding = next(item for item in report["current_findings"] if item["kind"] == "advisory")
+        self.assertEqual(("foo", "1.0", "GHSA-observed", "2.0"), (finding["name"], finding["version"], finding["id"], finding["fixed_version"]))
 
     def test_malformed_advisory_is_source_blocker(self) -> None:
         self.fixture.audit = {"bad": []}
@@ -302,6 +322,33 @@ class DependencyStatusTests(unittest.TestCase):
 
 
 class DependencyApplyTests(unittest.TestCase):
+    def test_reviewed_update_preserves_exact_uv_backend_and_workflow_inputs(self) -> None:
+        project = self.fixture.root / "pyproject.toml"
+        original = project.read_text(encoding="utf-8").replace("uv_build>=0.12,<0.13", "uv_build==0.12.16")
+        project.write_text(original, encoding="utf-8")
+        workflow = '- uses: astral-sh/setup-uv@v10.1.0\n  with:\n    version: "0.12.16"\n    enable-cache: true  # preserve\n'
+        for name in ("ci.yml", "release-readiness.yml"):
+            (self.fixture.root / ".github/workflows" / name).write_text(workflow, encoding="utf-8")
+        report = collect_status(self.fixture.root, self.fixture.runner, self.fixture.opener)
+
+        prepared = refresh._prepare_edits(self.fixture.root, report)
+
+        self.assertIn(b'required-version = "==0.12.17"', prepared[project])
+        self.assertIn(b"uv_build==0.12.16", prepared[project])
+        for name in ("ci.yml", "release-readiness.yml"):
+            path = self.fixture.root / ".github/workflows" / name
+            self.assertEqual(path.read_bytes().replace(b'"0.12.16"', b'"0.12.17"'), prepared[path])
+
+    def test_unreviewed_workflow_pin_refuses_before_project_writes(self) -> None:
+        project = self.fixture.root / "pyproject.toml"
+        original = project.read_bytes()
+        path = self.fixture.root / ".github/workflows/ci.yml"
+        path.write_text('- uses: astral-sh/setup-uv@v10.1.0\n  with:\n    version: "99.0.0"\n', encoding="utf-8")
+        report = collect_status(self.fixture.root, self.fixture.runner, self.fixture.opener)
+        with self.assertRaises(refresh.ScopeError):
+            refresh._prepare_edits(self.fixture.root, report)
+        self.assertEqual(original, project.read_bytes())
+
     @override
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
@@ -487,7 +534,7 @@ class DependencyApplyTests(unittest.TestCase):
         after["current_findings"] = []
         after["pre_apply_blockers"] = []
         after["python"]["declared"] = ">=3.12,<3.13"
-        after["uv"]["required"] = ">=0.12.17"
+        after["uv"]["required"] = "==0.12.17"
         for dependency in after["dependencies"]:
             dependency["outdated"] = False
             dependency["newest_stable"] = dependency["version"]
@@ -523,14 +570,14 @@ class DependencyApplyTests(unittest.TestCase):
         self.assertEqual(
             updated,
             original.replace('requires-python = ">=3.12"', 'requires-python = ">=3.12,<3.13"').replace(
-                'required-version = "==0.12.16"', 'required-version = ">=0.12.17"'
+                'required-version = "==0.12.16"', 'required-version = "==0.12.17"'
             ),
         )
         for relative in ("ci.yml", "release-readiness.yml"):
             workflow = (self.fixture.root / ".github/workflows" / relative).read_text(encoding="utf-8")
-            self.assertNotRegex(workflow, r"(?m)^\s+version: [\"']\d+\.\d+\.\d+[\"']$")
+            self.assertIn('version: "0.12.17"', workflow)
 
-    def test_refresh_preserves_existing_uv_minimum_and_unpinned_workflows(self) -> None:
+    def test_refresh_reconciles_legacy_floor_and_unpinned_workflow_to_exact_inputs(self) -> None:
         project = self.fixture.root / "pyproject.toml"
         project.write_text(
             project.read_text(encoding="utf-8").replace('required-version = "==0.12.16"', 'required-version = ">=0.12.16"'),
@@ -541,10 +588,11 @@ class DependencyApplyTests(unittest.TestCase):
             path.write_text("- uses: astral-sh/setup-uv@v10.1.0\n", encoding="utf-8")
         report = collect_status(self.fixture.root, self.fixture.runner, self.fixture.opener)
         prepared = refresh._prepare_edits(self.fixture.root, report)
-        self.assertEqual(prepared[project], project.read_bytes().replace(b'>=3.12"', b'>=3.12,<3.13"'))
+        expected = project.read_bytes().replace(b'>=3.12"', b'>=3.12,<3.13"').replace(b'required-version = ">=0.12.16"', b'required-version = "==0.12.17"')
+        self.assertEqual(prepared[project], expected)
         for relative in ("ci.yml", "release-readiness.yml"):
             path = self.fixture.root / ".github/workflows" / relative
-            self.assertEqual(prepared[path], path.read_bytes())
+            self.assertIn(b'version: "0.12.17"', prepared[path])
 
     def test_standalone_update_probes_then_verifies_before_edit(self) -> None:
         base_runner = self.fixture.runner
@@ -580,9 +628,8 @@ class DependencyApplyTests(unittest.TestCase):
         def runner(args: tuple[str, ...], cwd: Path) -> tuple[int, str, str]:
             return (7, "", "resolver failed") if args == ("uv", "lock", "--upgrade") else (0, "", "")
 
-        with patch.object(refresh, "collect_status", return_value=before):
-            with self.assertRaises(refresh.UpdateError) as caught:
-                refresh.apply_status(self.fixture.root, before["plan_sha256"], (), runner, self.fixture.opener, uv_owner="standalone")
+        with patch.object(refresh, "collect_status", return_value=before), self.assertRaises(refresh.UpdateError) as caught:
+            refresh.apply_status(self.fixture.root, before["plan_sha256"], (), runner, self.fixture.opener, uv_owner="standalone")
         self.assertEqual(caught.exception.report["before"]["plan_sha256"], before["plan_sha256"])
         self.assertEqual(caught.exception.report["commands"][-1]["command"], ["uv", "lock", "--upgrade"])
         self.assertEqual(caught.exception.report["commands"][-1]["exit_code"], 7)
@@ -597,9 +644,8 @@ class DependencyApplyTests(unittest.TestCase):
             calls.append(args)
             return 0, "", ""
 
-        with patch.object(refresh, "collect_status", side_effect=[before, after]):
-            with self.assertRaises(refresh.UpdateError) as caught:
-                refresh.apply_status(self.fixture.root, before["plan_sha256"], (), runner, self.fixture.opener, uv_owner="standalone")
+        with patch.object(refresh, "collect_status", side_effect=[before, after]), self.assertRaises(refresh.UpdateError) as caught:
+            refresh.apply_status(self.fixture.root, before["plan_sha256"], (), runner, self.fixture.opener, uv_owner="standalone")
         self.assertIn("GHSA-still", str(caught.exception))
         self.assertEqual(calls, [("uv", "lock", "--upgrade"), ("uv", "sync", "--all-groups", "--locked"), ("uv", "lock", "--check")])
         self.assertEqual(caught.exception.report["after"]["current_findings"], after["current_findings"])

@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from pathlib import Path
 import shutil
 import sys
 import tempfile
 import unittest
-
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / ".codex/skills/backlog-status/scripts"
@@ -14,8 +13,8 @@ sys.path.insert(0, str(SCRIPTS))
 
 from backlog.parse import (  # noqa: E402  # ty: ignore[unresolved-import]
     MarkdownParseError,
-    parse_artifacts,
     parse_artifact,
+    parse_artifacts,
     parse_backlog,
     parse_repository,
     parse_roadmap,
@@ -174,10 +173,7 @@ class ManagedMarkdownParseTests(unittest.TestCase):
                     root = self.copy_fixture_root()
                     path = root / relative
                     text = path.read_text(encoding="utf-8")
-                    if label == "release evidence link":
-                        replacement = original[:-3] + f"[{link_label}]({target}) |"
-                    else:
-                        replacement = f"[{link_label}]({target})"
+                    replacement = original[:-3] + f"[{link_label}]({target}) |" if label == "release evidence link" else f"[{link_label}]({target})"
                     path.write_text(text.replace(original, replacement, 1), encoding="utf-8")
                     with self.assertRaisesRegex(MarkdownParseError, "repository-relative"):
                         parse_repository(root)

@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
 import dataclasses
-from datetime import UTC, datetime, time, timedelta, timezone
 import io
 import math
-from pathlib import Path
 import tempfile
-from typing import Any, cast, override
 import unittest
+from collections.abc import Iterator
+from datetime import UTC, datetime, time, timedelta, timezone
+from pathlib import Path
+from typing import Any, cast, override
 
 from xplane_fdau.formats.xplane_fdr import (
     FDRDataref,
@@ -276,9 +276,8 @@ class FDRRecordingSessionTests(unittest.TestCase):
 
     def test_double_commit_and_empty_commit_are_state_errors(self) -> None:
         session = FDRRecordingSession.open(OwnershipStream(), make_definition())
-        with self.assertRaises(FDRRecordingStateError):
-            with session:
-                pass
+        with self.assertRaises(FDRRecordingStateError), session:
+            pass
 
         committed = FDRRecordingSession.open(OwnershipStream(), make_definition())
         with committed:
@@ -332,10 +331,9 @@ class FDRRecordingSessionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             destination = Path(directory) / "flight.fdr"
             session = FDRRecordingSession.open(destination, make_definition())
-            with self.assertRaisesRegex(RuntimeError, "capture failed"):
-                with session:
-                    session.record(make_sample())
-                    raise RuntimeError("capture failed")
+            with self.assertRaisesRegex(RuntimeError, "capture failed"), session:
+                session.record(make_sample())
+                raise RuntimeError("capture failed")
 
             self.assertFalse(destination.exists())
             self.assertIsNotNone(session.partial_path)

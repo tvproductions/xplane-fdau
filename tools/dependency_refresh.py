@@ -6,8 +6,8 @@ import argparse
 import hashlib
 import json
 import os
-import shutil
 import re
+import shutil
 import subprocess
 import sys
 import tomllib
@@ -24,6 +24,7 @@ from packaging.utils import canonicalize_name
 from packaging.version import InvalidVersion, Version
 
 try:
+    from .dependency_matrix import MatrixResult, run_matrix
     from .dependency_sources import (
         Opener,
         Runner,
@@ -35,8 +36,8 @@ try:
         release_is_yanked,
         release_python_exclusions,
     )
-    from .dependency_matrix import MatrixResult, run_matrix
 except ImportError:  # Direct script execution puts tools/ on sys.path.
+    from dependency_matrix import MatrixResult, run_matrix
     from dependency_sources import (
         Opener,
         Runner,
@@ -48,7 +49,6 @@ except ImportError:  # Direct script execution puts tools/ on sys.path.
         release_is_yanked,
         release_python_exclusions,
     )
-    from dependency_matrix import MatrixResult, run_matrix
 
 SCHEMA_VERSION = 1
 
@@ -73,9 +73,9 @@ MANAGED_FILES = (
     "pyproject.toml",
     "uv.lock",
 )
-TREE_COMMAND = ("uv", "--no-config", "tree", "--outdated", "--all-groups", "--universal", "--locked", "--format", "json")
-METADATA_COMMAND = ("uv", "--no-config", "workspace", "metadata", "--locked")
-AUDIT_COMMAND = ("uv", "--no-config", "audit", "--locked", "--output-format", "json")
+TREE_COMMAND = ("uv", "tree", "--outdated", "--all-groups", "--universal", "--locked", "--format", "json")
+METADATA_COMMAND = ("uv", "workspace", "metadata", "--locked")
+AUDIT_COMMAND = ("uv", "audit", "--locked", "--output-format", "json")
 
 
 def canonical_json(report: dict[str, Any]) -> str:
@@ -205,7 +205,7 @@ def _audit_findings(value: dict[str, Any], locked_versions: dict[str, set[str]],
         if not isinstance(item, dict):
             blockers.append({"kind": "source", "reason": "malformed uv advisory"})
             continue
-        package = item.get("package") if isinstance(item.get("package"), dict) else item
+        package = next((item[key] for key in ("dependency", "package") if isinstance(item.get(key), dict)), item)
         name, version = package.get("name"), package.get("version")
         advisory = item.get("vulnerability") if isinstance(item.get("vulnerability"), dict) else item
         advisory_id = advisory.get("id")
@@ -218,8 +218,9 @@ def _audit_findings(value: dict[str, Any], locked_versions: dict[str, set[str]],
             blockers.append({"kind": "source", "reason": "advisory does not identify a locked package/version"})
             continue
         fixed = advisory.get("fixed_version", advisory.get("fix_version"))
-        if fixed is None and isinstance(advisory.get("fixed_versions"), list):
-            fixed = advisory["fixed_versions"][0] if advisory["fixed_versions"] else None
+        versions = advisory.get("fix_versions", advisory.get("fixed_versions"))
+        if fixed is None and isinstance(versions, list):
+            fixed = versions[0] if versions else None
         findings.append(
             {"kind": "advisory", "name": canonicalize_name(name), "version": version, "id": advisory_id, "fixed_version": fixed, "source": "uv audit / OSV"}
         )
@@ -446,7 +447,7 @@ def replace_exact(source: str, old: str, new: str) -> str:
     return source.replace(old, new)
 
 
-def _workflow_edit(source: str, allowed_current: set[str]) -> str:
+def _workflow_edit(source: str, allowed_current: set[str], *, candidate: str) -> str:
     lines = source.splitlines(keepends=True)
     starts = [i for i, line in enumerate(lines) if "- uses: astral-sh/setup-uv@" in line]
     if not starts:
@@ -459,16 +460,22 @@ def _workflow_edit(source: str, allowed_current: set[str]) -> str:
         )
         matches = [i for i in range(start + 1, end) if re.match(r"\s*version:", lines[i])]
         if not matches:
+            with_lines = [i for i in range(start + 1, end) if lines[i].strip() == "with:"]
+            newline = "\r\n" if lines[start].endswith("\r\n") else "\n"
+            if len(with_lines) > 1:
+                raise ScopeError("setup-uv has multiple input blocks")
+            if with_lines:
+                lines.insert(with_lines[0] + 1, " " * (indent + 4) + f'version: "{candidate}"{newline}')
+            else:
+                lines[start + 1 : start + 1] = [" " * (indent + 2) + f"with:{newline}", " " * (indent + 4) + f'version: "{candidate}"{newline}']
             continue
         if len(matches) != 1:
             raise ScopeError("setup-uv has multiple version anchors")
         index = matches[0]
-        version = re.fullmatch(r'\s*version: ["\']([^"\']+)["\']\s*', lines[index])
-        if version is None or version.group(1) not in allowed_current | {"latest", "latest-known"}:
+        version = re.fullmatch(r'(\s*version:\s*["\'])([^"\']+)(["\'][ \t]*(?:#[^\r\n]*)?(?:\r?\n)?)', lines[index])
+        if version is None or version.group(2) not in allowed_current:
             raise ScopeError("setup-uv version differs from reviewed uv pins")
-        lines.pop(index)
-        if lines[index - 1].strip() == "with:" and (index == len(lines) or len(lines[index]) - len(lines[index].lstrip()) <= indent + 2):
-            lines.pop(index - 1)
+        lines[index] = version.group(1) + candidate + version.group(3)
     return "".join(lines)
 
 
@@ -494,11 +501,9 @@ def _prepare_edits(root: Path, report: dict[str, Any]) -> dict[Path, bytes]:
     uv_section = project.get("tool", {}).get("uv", {})
     required = uv_section.get("required-version")
     if required is None:
-        source = replace_exact(source, "[tool.uv.build-backend]", f'[tool.uv]\nrequired-version = ">={candidate}"\n\n[tool.uv.build-backend]')
-    elif isinstance(required, str) and required == report["uv"]["required"] and re.fullmatch(r"==\d+\.\d+\.\d+", required):
-        source = replace_exact(source, f'required-version = "{required}"', f'required-version = ">={candidate}"')
-    elif isinstance(required, str) and re.fullmatch(r">=\d+\.\d+\.\d+", required):
-        pass
+        source = replace_exact(source, "[tool.uv.build-backend]", f'[tool.uv]\nrequired-version = "=={candidate}"\n\n[tool.uv.build-backend]')
+    elif isinstance(required, str) and required == report["uv"]["required"] and re.fullmatch(r"(?:==|>=)\d+\.\d+\.\d+", required):
+        source = replace_exact(source, f'required-version = "{required}"', f'required-version = "=={candidate}"')
     else:
         raise ScopeError("unexpected uv required-version anchor")
     build_reqs = project.get("build-system", {}).get("requires", [])
@@ -510,7 +515,7 @@ def _prepare_edits(root: Path, report: dict[str, Any]) -> dict[Path, bytes]:
         current_pins.add(required.removeprefix("=="))
     for relative in (".github/workflows/ci.yml", ".github/workflows/release-readiness.yml"):
         path = root / relative
-        prepared[path] = _workflow_edit(path.read_bytes().decode("utf-8"), current_pins).encode("utf-8")
+        prepared[path] = _workflow_edit(path.read_bytes().decode("utf-8"), current_pins, candidate=candidate).encode("utf-8")
     return prepared
 
 
@@ -599,11 +604,7 @@ def apply_status(
             f"refreshed graph has unresolved evidence: {after['pre_apply_blockers']} {adverse} {unresolved}",
             result,
         )
-    if (
-        after["python"]["declared"] != ">=3.12,<3.13"
-        or not isinstance(after["uv"]["required"], str)
-        or not re.fullmatch(r">=\d+\.\d+\.\d+", after["uv"]["required"])
-    ):
+    if after["python"]["declared"] != ">=3.12,<3.13" or not isinstance(after["uv"]["required"], str) or after["uv"]["required"] != f"=={candidate}":
         result["status"] = "failed"
         raise UpdateError("refreshed project policy differs from reviewed target", result)
     run(

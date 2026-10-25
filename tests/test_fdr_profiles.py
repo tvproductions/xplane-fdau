@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import FrozenInstanceError
 import unittest
+from dataclasses import FrozenInstanceError
 
 import xplane_fdau.formats.xplane_fdr.profiles as profile_module
 from xplane_fdau.formats.xplane_fdr import (
@@ -12,7 +12,6 @@ from xplane_fdau.formats.xplane_fdr import (
     list_profiles,
     mandatory_trajectory_sources,
 )
-
 
 STANDARD_PATHS = (
     "sim/cockpit2/gauges/indicators/airspeed_kts_pilot",
@@ -118,19 +117,14 @@ class FDRProfilesTests(unittest.TestCase):
         """Mutating a returned profile must be impossible or leave future reads unchanged."""
         profile = get_profile("standard")
         self.assertIsInstance(profile.datarefs, tuple)
-        with self.assertRaises(FrozenInstanceError):
-            setattr(profile, "name", "changed")
-        with self.assertRaises(AttributeError):
-            getattr(profile.datarefs, "append")(profile.datarefs[0])
-        with self.assertRaises(FrozenInstanceError):
-            setattr(profile.datarefs[0], "path", "changed")
+        self.assertRaises(FrozenInstanceError, setattr, profile, "name", "changed")
+        self.assertRaises(AttributeError, getattr, profile.datarefs, "append")
+        self.assertRaises(FrozenInstanceError, setattr, profile.datarefs[0], "path", "changed")
         self.assertEqual(STANDARD_PATHS, tuple(dataref.path for dataref in get_profile("standard").datarefs))
         self.assertIsInstance(profile_module._STANDARD_DATAREFS, tuple)
-        with self.assertRaises(AttributeError):
-            getattr(profile_module._STANDARD_DATAREFS, "append")(profile.datarefs[0])
+        self.assertRaises(AttributeError, getattr, profile_module._STANDARD_DATAREFS, "append")
         self.assertEqual(STANDARD_PATHS, tuple(dataref.path for dataref in profile_module._STANDARD_DATAREFS))
-        with self.assertRaises(FrozenInstanceError):
-            setattr(mandatory_trajectory_sources()[0], "field_name", "changed")
+        self.assertRaises(FrozenInstanceError, setattr, mandatory_trajectory_sources()[0], "field_name", "changed")
 
     def test_composition_preserves_first_appearance_and_rejects_unknown_profiles(self) -> None:
         """Changing composition order or accepting misspellings would corrupt capture schemas."""

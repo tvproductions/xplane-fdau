@@ -1,16 +1,15 @@
 from __future__ import annotations
 
-from datetime import date
-from pathlib import Path
 import re
 import subprocess
-from typing import Literal, TypeAlias
+from datetime import date
+from pathlib import Path
+from typing import Literal
 
 from backlog.model import AuditPolicy, HistoricalAdmission, SpecificationArtifact
 from backlog.parse import MarkdownParseError, parse_artifact
 
-
-EvidenceSlot: TypeAlias = Literal["gate", "review", "completion", "release"]
+type EvidenceSlot = Literal["gate", "review", "completion", "release"]
 
 POLICY_PATH = "docs/superpowers/specs/2026-09-05-t1-3-audit-policy-supplement-design.md"
 _TABLE_HEADER = "| Child | Historical plan | SHA-256 |"

@@ -5,21 +5,21 @@ from __future__ import annotations
 from typing import cast
 
 from ._identity_validation import _text
-from ._json_parse import _NumberToken, _ObjectPairs, _check_duplicates, _materialize_number, _pointer
+from ._json_parse import _check_duplicates, _materialize_number, _NumberToken, _ObjectPairs, _pointer
 from .errors import CanonicalJSONError, ContractShapeError, FDAUContractError
 from .values import (
     InlineValue,
     PayloadReference,
     PayloadSpec,
     RepresentationSpec,
+    RetentionStatus,
+    ScalarRepresentation,
     ShapeSpec,
     UnitSpec,
     ValueRepresentation,
-    ScalarRepresentation,
-    RetentionStatus,
+    _choice,
     _scalar_check,
     _tag,
-    _choice,
 )
 
 
@@ -54,21 +54,21 @@ def _layout(stem: str, fields: dict[str, object]) -> tuple[tuple[str, str], ...]
             if "element_representation" not in fields:
                 raise ContractShapeError("missing element tag", path="/element_representation")
             element = str(_tag(fields["element_representation"], ScalarRepresentation, path="/element_representation"))
-            return result + (("element_representation", "string"), ("value", "array:" + element))
-        return result + (("value", "array:real" if tag == "vector" else tag),)
+            return (*result, ("element_representation", "string"), ("value", "array:" + element))
+        return (*result, ("value", "array:real" if tag == "vector" else tag))
     if stem == "representation_spec":
         if tag == "vector":
-            return result + (("length", "integer"),)
+            return (*result, ("length", "integer"))
         if tag == "referenced_bytes":
-            return result + (("payload", "payload_spec"),)
+            return (*result, ("payload", "payload_spec"))
         if tag in ("fixed_array", "variable_array"):
             result += (("element_representation", "scalar_tag"),)
     if tag in ("fixed", "fixed_array"):
-        return result + (("length", "integer"),)
+        return (*result, ("length", "integer"))
     if tag in ("variable", "variable_array"):
-        return result + (("minimum_length", "integer"), ("maximum_length", "integer"))
+        return (*result, ("minimum_length", "integer"), ("maximum_length", "integer"))
     if tag == "unit":
-        return result + (("quantity_id", "string"), ("unit_id", "string"))
+        return (*result, ("quantity_id", "string"), ("unit_id", "string"))
     return result
 
 

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import TypeAlias
-
 from backlog.findings import finding_key
 from backlog.model import (
     AuditLoad,
@@ -15,8 +13,7 @@ from backlog.model import (
     SourceLocation,
 )
 
-
-RoadmapNode: TypeAlias = Milestone | Epic | RoadmapChild | ReleaseGate | ExternalBoundary
+type RoadmapNode = Milestone | Epic | RoadmapChild | ReleaseGate | ExternalBoundary
 
 
 def _finding(code: str, path: str, line: int | None, node: str | None, message: str) -> Finding:
@@ -274,7 +271,7 @@ def _backlog_findings(loaded: AuditLoad) -> list[Finding]:
             )
 
     selection_entries = all_nodes.get(backlog.active_child, []) if backlog.active_child is not None else []
-    if backlog.active_child is not None and (not selection_entries or len(selection_entries) == 1 and selection_entries[0].kind != "local_child"):
+    if backlog.active_child is not None and (not selection_entries or (len(selection_entries) == 1 and selection_entries[0].kind != "local_child")):
         source = loaded.sources.selection.source if loaded.sources.selection is not None else None
         findings.append(
             _finding(

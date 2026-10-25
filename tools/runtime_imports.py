@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import ast
-from collections.abc import Mapping
 import sys
-
+from collections.abc import Mapping
 
 _HOST_OR_LEGACY_ROOTS = frozenset({"XPLM", "XPPython3", "q4xpcc", "xp", "xpwebapi", "xplane_fdr"})
 _NETWORK_ROOTS = frozenset(

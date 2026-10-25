@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
-import re
 from typing import Literal, cast
 
 from backlog.model import (
@@ -20,17 +20,16 @@ from backlog.model import (
     GateItem,
     GateState,
     GateSummary,
-    Milestone,
     HistoricalArtifact,
+    Milestone,
     PlanArtifact,
-    RepositorySnapshot,
     ReleaseGate,
+    RepositorySnapshot,
     Roadmap,
     RoadmapChild,
     SourceLocation,
     SpecificationArtifact,
 )
-
 
 _IDENTITY = re.compile(r"`([A-Z][0-9]+(?:\.[0-9]+)?)`")
 _EPIC_IDENTITY = re.compile(r"`([A-Z][0-9]*)`")

@@ -6,6 +6,7 @@ import importlib
 import json
 import unittest
 from typing import Any
+from urllib.request import Request
 
 from packaging.version import Version
 
@@ -42,6 +43,20 @@ def index_fixture() -> dict[str, object]:
 
 
 class SourceSelectionTests(unittest.TestCase):
+    def test_accepts_bounded_large_official_index_without_losing_releases(self) -> None:
+        sources = _sources()
+        document = index_fixture() | {"padding": " " * (6 * 1024 * 1024)}
+        payload = json.dumps(document).encode()
+
+        def opener(request: Request, timeout: int, ceiling: int) -> tuple[bytes, str, str]:
+            return payload[: ceiling + 1], request.full_url, "application/vnd.pypi.simple.v1+json"
+
+        try:
+            result = sources.fetch_index("uv", opener)
+        except sources.SourceError as error:
+            self.fail(f"bounded official index rejected: {error}")
+        self.assertEqual("0.12.18", sources.newest_stable_release(result))
+
     def test_selects_newest_stable_release_with_non_yanked_file(self) -> None:
         sources = _sources()
         self.assertEqual("0.12.18", sources.newest_stable_release(index_fixture()))
@@ -108,7 +123,7 @@ class SourceSelectionTests(unittest.TestCase):
         def opener(request: Any, timeout: int, ceiling: int) -> tuple[bytes, str, str]:
             requested_urls.append(request.full_url)
             self.assertEqual(15, timeout)
-            self.assertEqual(5 * 1024 * 1024, ceiling)
+            self.assertEqual(8 * 1024 * 1024, ceiling)
             return (
                 json.dumps({"meta": {"api-version": "1.4"}, "name": "my-package", "versions": [], "files": []}).encode("utf-8"),
                 "https://pypi.org/simple/my-package/",
@@ -127,14 +142,16 @@ class SourceFailureTests(unittest.TestCase):
             (b"[]", "https://pypi.org/simple/uv/", "application/vnd.pypi.simple.v1+json", "root"),
             (json.dumps({"name": "uv", "files": []}).encode("utf-8"), "https://pypi.org/simple/uv/", "application/vnd.pypi.simple.v1+json", "versions"),
             (json.dumps({"name": "uv", "versions": []}).encode("utf-8"), "https://pypi.org/simple/uv/", "application/vnd.pypi.simple.v1+json", "files"),
-            (b"{}" * (3 * 1024 * 1024), "https://pypi.org/simple/uv/", "application/vnd.pypi.simple.v1+json", "oversized"),
+            (b" " * (sources.INDEX_CEILING + 1), "https://pypi.org/simple/uv/", "application/vnd.pypi.simple.v1+json", "oversized"),
             (b"{}", "https://example.org/simple/uv/", "application/vnd.pypi.simple.v1+json", "untrusted"),
             (b"{}", "https://pypi.org/simple/uv/", "application/json", "content type"),
         )
         for body, final_url, content_type, reason in cases:
             with self.subTest(reason=reason):
 
-                def opener(request: Any, timeout: int, ceiling: int) -> tuple[bytes, str, str]:
+                def opener(
+                    request: Any, timeout: int, ceiling: int, body: bytes = body, final_url: str = final_url, content_type: str = content_type
+                ) -> tuple[bytes, str, str]:
                     return body, final_url, content_type
 
                 with self.assertRaisesRegex(sources.SourceError, f"uv: .*{reason}"):
@@ -149,9 +166,8 @@ class SourceFailureTests(unittest.TestCase):
             ({"name": "uv", "versions": ["1.0"], "files": [{"filename": "bad.whl"}]}, "invalid artifact filename"),
         )
         for index, reason in cases:
-            with self.subTest(reason=reason):
-                with self.assertRaisesRegex(sources.SourceError, f"uv: .*{reason}"):
-                    sources.newest_stable_release(index)
+            with self.subTest(reason=reason), self.assertRaisesRegex(sources.SourceError, f"uv: .*{reason}"):
+                sources.newest_stable_release(index)
 
     def test_fetches_bounded_official_release_requirements(self) -> None:
         sources = _sources()
@@ -159,7 +175,7 @@ class SourceFailureTests(unittest.TestCase):
 
         def opener(request: Any, timeout: int, ceiling: int) -> tuple[bytes, str, str]:
             self.assertEqual(request.full_url, "https://pypi.org/pypi/wily/1.25.0/json")
-            self.assertEqual((timeout, ceiling), (15, 5 * 1024 * 1024))
+            self.assertEqual((timeout, ceiling), (15, 8 * 1024 * 1024))
             return json.dumps(payload).encode(), "https://pypi.org/pypi/wily/1.25.0/json", "application/json"
 
         self.assertEqual(sources.fetch_release_requirements("wily", "1.25.0", opener), ["radon>=5.1,<5.2", "plotly>=4,<6"])

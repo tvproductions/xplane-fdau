@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 __all__ = [
-    "FDAUContractError",
+    "CanonicalJSONError",
+    "ContractHashError",
     "ContractParseError",
     "ContractShapeError",
     "ContractValidationError",
-    "CanonicalJSONError",
+    "FDAUContractError",
     "UnsupportedContractVersionError",
-    "ContractHashError",
 ]
 
 

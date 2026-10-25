@@ -6,17 +6,16 @@ import importlib.util
 import io
 import os
 import shutil
-import tempfile
-import tomllib
-from contextlib import redirect_stderr
-from pathlib import Path
 import subprocess
 import sys
+import tempfile
+import tomllib
+import unittest
+from contextlib import redirect_stderr
+from pathlib import Path
 from types import ModuleType
 from typing import Protocol, cast, override
-import unittest
 from unittest.mock import patch
-
 
 SCRIPT = Path(".codex/skills/hygiene/scripts/hygiene.py")
 EXPECTED_PREFIX = [
@@ -175,58 +174,58 @@ class HygieneArtifactTests(unittest.TestCase):
     def test_artifact_and_final_status_failures_preserve_exact_directory(self) -> None:
         for phase in ("build", "twine", "release", "final-normal", "final-ignored"):
             for mode in ("exit", "launch"):
-                with self.subTest(phase=phase, mode=mode):
-                    with tempfile.TemporaryDirectory(prefix="hygiene-test-parent-") as temporary:
-                        parent = Path(temporary)
-                        owned = self.owned_fixture(parent)
-                        commands: list[tuple[str, ...]] = []
-                        cleanup_calls: list[Path] = []
-                        failed_at = len(EXPECTED_PREFIX) + {"build": 0, "twine": 1, "release": 2, "final-normal": 3, "final-ignored": 4}[phase]
+                with self.subTest(phase=phase, mode=mode), tempfile.TemporaryDirectory(prefix="hygiene-test-parent-") as temporary:
+                    parent = Path(temporary)
+                    owned = self.owned_fixture(parent)
+                    commands: list[tuple[str, ...]] = []
+                    cleanup_calls: list[Path] = []
+                    failed_at = len(EXPECTED_PREFIX) + {"build": 0, "twine": 1, "release": 2, "final-normal": 3, "final-ignored": 4}[phase]
 
-                        def runner(command: tuple[str, ...], **kwargs: object) -> subprocess.CompletedProcess[str]:
-                            commands.append(command)
-                            if len(commands) - 1 == failed_at:
-                                if mode == "launch":
-                                    raise OSError("injected launch error")
-                                return subprocess.CompletedProcess(command, 7)
-                            return subprocess.CompletedProcess(command, 0)
+                    def runner(
+                        command: tuple[str, ...], commands=commands, failed_at=failed_at, mode=mode, **kwargs: object
+                    ) -> subprocess.CompletedProcess[str]:
+                        commands.append(command)
+                        if len(commands) - 1 == failed_at:
+                            if mode == "launch":
+                                raise OSError("injected launch error")
+                            return subprocess.CompletedProcess(command, 7)
+                        return subprocess.CompletedProcess(command, 0)
 
-                        stderr = io.StringIO()
-                        with redirect_stderr(stderr):
-                            code = self.module.run_local_hygiene(
-                                runner,
-                                create_directory=lambda: owned,
-                                cleanup=cleanup_calls.append,
-                            )
-                        self.assertNotEqual(0, code)
-                        self.assertEqual(failed_at + 1, len(commands))
-                        self.assertIn(" ".join(commands[-1]), stderr.getvalue())
-                        self.assertIn("injected launch error" if mode == "launch" else "exit 7", stderr.getvalue())
-                        self.assertIn(str(owned.path), stderr.getvalue())
-                        self.assertEqual([], cleanup_calls)
-                        self.assertTrue(owned.path.is_dir())
+                    stderr = io.StringIO()
+                    with redirect_stderr(stderr):
+                        code = self.module.run_local_hygiene(
+                            runner,
+                            create_directory=lambda owned=owned: owned,
+                            cleanup=cleanup_calls.append,
+                        )
+                    self.assertNotEqual(0, code)
+                    self.assertEqual(failed_at + 1, len(commands))
+                    self.assertIn(" ".join(commands[-1]), stderr.getvalue())
+                    self.assertIn("injected launch error" if mode == "launch" else "exit 7", stderr.getvalue())
+                    self.assertIn(str(owned.path), stderr.getvalue())
+                    self.assertEqual([], cleanup_calls)
+                    self.assertTrue(owned.path.is_dir())
 
     def test_cleanup_refuses_replaced_child_and_parent(self) -> None:
         for replacement in ("child", "parent"):
-            with self.subTest(replacement=replacement):
-                with tempfile.TemporaryDirectory(prefix="hygiene-test-top-") as temporary:
-                    top = Path(temporary)
-                    parent = top / "parent"
+            with self.subTest(replacement=replacement), tempfile.TemporaryDirectory(prefix="hygiene-test-top-") as temporary:
+                top = Path(temporary)
+                parent = top / "parent"
+                parent.mkdir()
+                owned = self.owned_fixture(parent)
+                if replacement == "child":
+                    moved = parent / "moved-child"
+                    owned.path.rename(moved)
+                    owned.path.mkdir()
+                else:
+                    moved = top / "moved-parent"
+                    parent.rename(moved)
                     parent.mkdir()
-                    owned = self.owned_fixture(parent)
-                    if replacement == "child":
-                        moved = parent / "moved-child"
-                        owned.path.rename(moved)
-                        owned.path.mkdir()
-                    else:
-                        moved = top / "moved-parent"
-                        parent.rename(moved)
-                        parent.mkdir()
-                        owned.path.mkdir()
-                    with self.assertRaises((ValueError, OSError)):
-                        self.module.verified_cleanup_target(owned)
-                    self.assertTrue(moved.exists())
-                    self.assertTrue(owned.path.exists())
+                    owned.path.mkdir()
+                with self.assertRaises((ValueError, OSError)):
+                    self.module.verified_cleanup_target(owned)
+                self.assertTrue(moved.exists())
+                self.assertTrue(owned.path.exists())
 
     def test_cleanup_refuses_links_and_checkout_containment(self) -> None:
         with tempfile.TemporaryDirectory(prefix="hygiene-test-top-") as temporary:
@@ -234,15 +233,12 @@ class HygieneArtifactTests(unittest.TestCase):
             parent = top / "parent"
             parent.mkdir()
             owned = self.owned_fixture(parent)
-            with patch.object(self.module, "ROOT", top):
-                with self.assertRaises(ValueError):
-                    self.module.verified_cleanup_target(owned)
-            with patch.object(Path, "is_symlink", return_value=True):
-                with self.assertRaises(ValueError):
-                    self.module.verified_cleanup_target(owned)
-            with patch.object(Path, "is_junction", return_value=True):
-                with self.assertRaises(ValueError):
-                    self.module.verified_cleanup_target(owned)
+            with patch.object(self.module, "ROOT", top), self.assertRaises(ValueError):
+                self.module.verified_cleanup_target(owned)
+            with patch.object(Path, "is_symlink", return_value=True), self.assertRaises(ValueError):
+                self.module.verified_cleanup_target(owned)
+            with patch.object(Path, "is_junction", return_value=True), self.assertRaises(ValueError):
+                self.module.verified_cleanup_target(owned)
             self.assertTrue(owned.path.is_dir())
 
     def test_cleanup_refuses_renamed_child_and_changed_parent_resolution(self) -> None:
@@ -269,9 +265,8 @@ class HygieneArtifactTests(unittest.TestCase):
                     return top / "different-parent"
                 return original_resolve(path, strict=strict)
 
-            with patch.object(Path, "resolve", changed_parent):
-                with self.assertRaises(ValueError):
-                    self.module.verified_cleanup_target(owned)
+            with patch.object(Path, "resolve", changed_parent), self.assertRaises(ValueError):
+                self.module.verified_cleanup_target(owned)
             self.assertTrue(owned.path.is_dir())
 
     def test_creation_identity_capture_error_reports_created_path(self) -> None:

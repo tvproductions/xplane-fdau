@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import unittest
 import subprocess
+import unittest
 
 from tools import quality
 

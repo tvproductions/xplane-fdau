@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import hashlib
-from typing import override
 import unittest
+from typing import override
 
 import xplane_fdau
 import xplane_fdau.contracts as contracts

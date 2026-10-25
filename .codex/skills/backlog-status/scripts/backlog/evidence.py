@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from pathlib import Path
 import re
 import stat
 import subprocess
+from pathlib import Path
 
 from backlog.findings import finding_key
 from backlog.model import Finding

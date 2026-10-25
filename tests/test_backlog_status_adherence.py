@@ -1,18 +1,18 @@
 from __future__ import annotations
 
-from pathlib import Path
 import sys
 import tempfile
 import unittest
-
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / ".codex/skills/backlog-status/scripts"
 sys.path.insert(0, str(SCRIPTS))
 
-from backlog.audit import load_audit  # noqa: E402  # ty: ignore[unresolved-import]
 from backlog.adherence import adherence_findings  # noqa: E402  # ty: ignore[unresolved-import]
+from backlog.audit import load_audit  # noqa: E402  # ty: ignore[unresolved-import]
 from backlog.parse_sources import parse_roadmap_sources  # noqa: E402  # ty: ignore[unresolved-import]
+
 from tests.backlog_audit_support import (  # noqa: E402
     AUDIT_VALID_DESIGN_ACCEPTANCE,
     copy_fixture,

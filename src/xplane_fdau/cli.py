@@ -3,19 +3,18 @@
 from __future__ import annotations
 
 import argparse
-from datetime import date, datetime
 import json
 import os
-from pathlib import Path
 import secrets
 import sys
-from typing import cast, NoReturn, override, TextIO
+from datetime import date, datetime
+from pathlib import Path
+from typing import NoReturn, TextIO, cast, override
 
 from xplane_fdau.formats.xplane_fdr.errors import FDRError, FDROutputError
 from xplane_fdau.formats.xplane_fdr.geojson import recording_to_geojson
 from xplane_fdau.formats.xplane_fdr.models import FDRRecording
 from xplane_fdau.formats.xplane_fdr.reader import FDRReader
-
 
 _MANDATORY_FIELDS = (
     "time_utc",
@@ -231,7 +230,7 @@ def _write_atomic_json(document: object, destination: Path, *, overwrite: bool) 
     try:
         partial, stream = _create_partial(destination)
     except OSError as error:
-        raise _output_error(error, destination)
+        raise _output_error(error, destination) from error
     try:
         written = stream.write(payload)
         if written != len(payload):
@@ -263,7 +262,7 @@ def _write_atomic_json(document: object, destination: Path, *, overwrite: bool) 
     except FileNotFoundError:
         return
     except OSError as cleanup:
-        raise _published_cleanup_error(cleanup, partial)
+        raise _published_cleanup_error(cleanup, partial) from cleanup
 
 
 def _format_error(error: BaseException) -> str:

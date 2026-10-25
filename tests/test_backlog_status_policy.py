@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 import os
-from pathlib import Path
 import sys
 import tempfile
 import unittest
+from collections.abc import Callable
+from pathlib import Path
 from unittest.mock import patch
-
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / ".codex/skills/backlog-status/scripts"
@@ -15,6 +14,7 @@ POLICY_PATH = "docs/superpowers/specs/2026-09-05-t1-3-audit-policy-supplement-de
 sys.path.insert(0, str(SCRIPTS))
 
 from backlog.policy import PolicyError, allowed_kinds, load_policy  # noqa: E402  # ty: ignore[unresolved-import]
+
 from tests.backlog_audit_support import initialize_git, run_git  # noqa: E402
 
 
@@ -80,9 +80,8 @@ class AuditPolicyTests(unittest.TestCase):
     def test_git_launch_failure_is_chained_as_policy_unavailable(self) -> None:
         failure = OSError("git unavailable")
 
-        with patch("backlog.policy.subprocess.run", side_effect=failure):
-            with self.assertRaises(PolicyError) as raised:
-                load_policy(ROOT)
+        with patch("backlog.policy.subprocess.run", side_effect=failure), self.assertRaises(PolicyError) as raised:
+            load_policy(ROOT)
 
         self.assertEqual("policy.unavailable", raised.exception.code)
         self.assertEqual(POLICY_PATH, raised.exception.path)

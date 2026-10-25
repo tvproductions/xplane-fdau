@@ -5,7 +5,7 @@ from __future__ import annotations
 import unittest
 
 from xplane_fdau.contracts import CanonicalJSONError, ContractParseError, FDAUContractError
-from xplane_fdau.contracts._json_parse import _NumberToken, _materialize_number, _parse_json_document
+from xplane_fdau.contracts._json_parse import _materialize_number, _NumberToken, _parse_json_document
 
 
 class ContractJSONParseTests(unittest.TestCase):
@@ -72,8 +72,7 @@ class ContractJSONParseTests(unittest.TestCase):
     def test_error_context_is_read_only(self) -> None:
         error = FDAUContractError("bad", source="sample.json", path="/x", contract_family="test.family", identity="id")
         self.assertEqual(("sample.json", "/x", "test.family", "id"), (error.source, error.path, error.contract_family, error.identity))
-        with self.assertRaises(AttributeError):
-            setattr(error, "path", "/other")
+        self.assertRaises(AttributeError, setattr, error, "path", "/other")
 
 
 if __name__ == "__main__":

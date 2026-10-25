@@ -25,34 +25,41 @@ Repository = "https://github.com/tvproductions/xplane-fdau"
 
 [dependency-groups]
 dev = [
-    "bandit>=1.9.4",
-    "cohesion>=1.2.0",
-    "coverage>=7.14.1",
-    "detect-secrets>=1.5.0",
-    "interrogate>=1.7.0",
-    "lizard>=1.23.0",
     "mkdocs",
     "mkdocs-git-revision-date-localized-plugin",
     "mkdocs-material",
     "mkdocstrings",
     "mkdocstrings-python",
     "packaging>=25",
-    "pre-commit>=4.5.1",
+    "pre-commit==4.7.0",
     "pyyaml>=6.0.3",
-    "ruff>=0.15.17",
+    "ruff==0.17.2",
     "twine>=7.0.0",
-    "ty>=0.0.82",
-    "vulture>=2.16",
+    "ty==0.0.91",
     "wily>=1.12.2",
     "xenon>=0.9.3",
 ]
+hygiene = [
+    "bandit==1.9.4",
+    "cohesion==1.2.0",
+    "cosmic-ray==8.7.0",
+    "coverage==7.17.0",
+    "deptry==0.25.1",
+    "detect-secrets==1.5.0",
+    "import-linter==2.15",
+    "interrogate==1.7.0",
+    "lizard==1.24.3",
+    "pip-audit==2.10.1",
+    "vulture==2.16",
+]
 
 [build-system]
-requires = ["uv_build>=0.12.17,<0.13"]
+requires = ["uv_build==0.13.5"]
 build-backend = "uv_build"
 
 [tool.uv]
-required-version = ">=0.12.17"
+required-version = "==0.13.5"
+python-preference = "only-managed"
 
 [tool.uv.build-backend]
 module-root = "src"
@@ -78,13 +85,23 @@ exclude_lines = [
 
 [tool.ruff]
 line-length = 160
-exclude = [".codex", "docs/superpowers"]
+target-version = "py312"
+exclude = ["docs/superpowers", ".agents", ".superpowers", ".worktrees", ".venv", "site"]
 
 [tool.ruff.lint]
-select = ["E", "F", "W"]
+select = ["E4", "E7", "E9", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 20
 
 [tool.ruff.format]
 docstring-code-format = true
 
 [tool.ty.rules]
 all = "error"
+
+[tool.ty.environment]
+python-version = "3.12"
+
+[tool.ty.src]
+include = ["src", "tests", "tools", ".codex/skills"]

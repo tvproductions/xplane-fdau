@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import re
 from datetime import date
 from pathlib import Path, PurePosixPath
-import re
 
 from backlog.findings import finding_key
 from backlog.model import (
@@ -16,7 +16,6 @@ from backlog.model import (
     SourceLocation,
     SpecificationArtifact,
 )
-
 
 _DATE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
 _APPROVAL = re.compile(r"([0-9]{4}-[0-9]{2}-[0-9]{2}) — (\S.*)")
@@ -189,10 +188,7 @@ def _design_findings(loaded: AuditLoad) -> list[Finding]:
                 if declaration.anchor_epic != design.epic:
                     continue
                 member_set = set(declaration.members)
-                if all("." not in member for member in member_set):
-                    allowed = covered_epics <= member_set
-                else:
-                    allowed = set(known) <= member_set
+                allowed = covered_epics <= member_set if all("." not in member for member in member_set) else set(known) <= member_set
                 if allowed:
                     break
             if not allowed:

@@ -1,11 +1,10 @@
 from __future__ import annotations
 
+import sys
+import unittest
 from dataclasses import replace
 from pathlib import Path
-import sys
 from typing import cast
-import unittest
-
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / ".codex/skills/backlog-status/scripts"

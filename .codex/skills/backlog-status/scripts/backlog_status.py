@@ -1,27 +1,27 @@
 from __future__ import annotations
 
 import argparse
-from contextlib import redirect_stderr
-from pathlib import Path
-from io import TextIOWrapper
 import re
 import subprocess
 import sys
+from contextlib import redirect_stderr
+from io import TextIOWrapper
+from pathlib import Path
 from typing import TextIO
 
 from backlog.audit import audit_repository
 from backlog.edit import (
     MutationPlan,
     MutationRefusal,
-    plan_selection,
-    plan_transition,
     plan_record_gate,
     plan_reopen_gate,
-    plan_suspend,
     plan_resume,
+    plan_selection,
+    plan_suspend,
+    plan_transition,
     publish_mutation,
 )
-from backlog.model import AuditLoad, CHILD_STATUSES, Finding, GitState
+from backlog.model import CHILD_STATUSES, AuditLoad, Finding, GitState
 from backlog.report import build_report, observe_git, render_human, render_json, with_dependency_readiness
 
 

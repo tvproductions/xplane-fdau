@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
-from datetime import UTC, date, datetime, time, timedelta
 import math
 import re
+from dataclasses import dataclass, replace
+from datetime import UTC, date, datetime, time, timedelta
 from typing import Literal
 
 from .errors import FDRValidationError
-
 
 _DATE_FORMATS = (
     (re.compile(r"^[0-9]{2}/[0-9]{2}/[0-9]{4}$"), "%m/%d/%Y"),

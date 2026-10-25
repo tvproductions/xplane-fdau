@@ -10,7 +10,6 @@ from backlog.model import AuditLoad, BacklogChild, Finding, SourceLocation
 from backlog.policy import allowed_kinds
 from backlog.rules import structural_findings
 
-
 _STAGES = ("queued", "designing", "specified", "planned", "in_progress", "implemented", "reviewed", "verified")
 _EXECUTING = frozenset({"in_progress", "implemented", "reviewed", "verified"})
 _COMPLETED = frozenset({"implemented", "reviewed", "verified"})
@@ -41,7 +40,7 @@ def _specification(loaded: AuditLoad, child: BacklogChild, state: str) -> bool:
         return False
     spec = specs[0]
     if state == "designing":
-        status_valid = spec.status == "draft" or spec.status in {"approved", "implemented"} and bool(spec.approval)
+        status_valid = spec.status == "draft" or (spec.status in {"approved", "implemented"} and bool(spec.approval))
     else:
         status_valid = spec.status in {"approved", "implemented"} and bool(spec.approval)
     return child.id in spec.children and status_valid
@@ -113,7 +112,7 @@ def historical_plan_findings(loaded: AuditLoad, child: BacklogChild) -> tuple[Fi
     relevant = [
         finding
         for finding in (*structural_findings(loaded), *adherence_findings(loaded))
-        if finding.node == child.id or finding.node is None and finding.path in governing_paths
+        if finding.node == child.id or (finding.node is None and finding.path in governing_paths)
     ]
     if relevant:
         problems.append("historical admission requires valid structure and governing acceptance criteria")
@@ -152,7 +151,7 @@ def _ordinary_plan(loaded: AuditLoad, child: BacklogChild, state: str | None) ->
         else:
             requirement = f"a {expected} approved single-child plan citing its governing design"
         findings.append(_finding("lifecycle.plan", child.source, child.id, f"{state} child requires {requirement}"))
-    if plan.completion_evidence is None and (state in _COMPLETED or state == "in_progress" and plan.status == "completed"):
+    if plan.completion_evidence is None and (state in _COMPLETED or (state == "in_progress" and plan.status == "completed")):
         findings.append(_finding("lifecycle.completion", plan.source, child.id, "completed plan requires eligible child-level completion evidence"))
     return findings
 

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Callable, Iterator
 from datetime import datetime
-import os
 from pathlib import Path
 from typing import NoReturn, Protocol, TextIO, cast
 

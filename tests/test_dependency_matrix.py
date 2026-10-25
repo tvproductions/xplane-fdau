@@ -19,7 +19,6 @@ from tools.dependency_matrix import (
     source_test_command,
 )
 
-
 PYTHONS = ("3.12",)
 VERSION = "0.1.0"
 WHEEL_NAME = "xplane_fdau-0.1.0-py3-none-any.whl"
@@ -50,6 +49,7 @@ class MatrixRunTests(unittest.TestCase):
         self.root = self.base / "checkout"
         self.root.mkdir()
         (self.root / "pyproject.toml").write_text('[project]\nversion = "0.1.0"\n', encoding="utf-8")
+        (self.root / ".python-version").write_text("3.12.15\n", encoding="utf-8")
         self.external = self.base / "external"
         self.external.mkdir()
         self.artifact_dir: Path | None = None
@@ -107,6 +107,25 @@ class MatrixRunTests(unittest.TestCase):
             ],
         )
         self.assertEqual([(entry.command, entry.exit_code) for entry in result.commands], [(command, 0) for command, _ in self.calls])
+
+    def test_external_source_and_wheel_use_exact_reviewed_python_patch(self) -> None:
+        for pin in ("3.12.15", "3.12.16"):
+            with self.subTest(pin=pin):
+                (self.root / ".python-version").write_text(pin + "\n", encoding="utf-8")
+                self.calls.clear()
+                result = run_matrix(self.root, self.runner, self.make_temp)
+                self.assertTrue(result.success, result.error)
+                requests = [command[-1] for command, _ in self.calls if command[:2] == ("uv", "venv")]
+                self.assertEqual([pin, pin], requests)
+
+    def test_unsupported_or_inexact_python_request_stops_before_build(self) -> None:
+        for pin in ("3.13.1", "3.12", "3.12.15\n3.13.1"):
+            with self.subTest(pin=pin):
+                (self.root / ".python-version").write_text(pin + "\n", encoding="utf-8")
+                self.calls.clear()
+                result = run_matrix(self.root, self.runner, self.make_temp)
+                self.assertFalse(result.success)
+                self.assertEqual([], self.calls)
 
     def test_accepts_only_uv_generated_gitignore_beside_exact_artifact_pair(self) -> None:
         def runner(command: tuple[str, ...], cwd: Path) -> int:
@@ -180,7 +199,7 @@ class MatrixRunTests(unittest.TestCase):
         export = self.calls[3][0]
         self.assertEqual(export[:3], ("uv", "--quiet", "export"))
         self.assertEqual(export[-1], str(self.artifact_dir / "source-requirements.txt"))
-        for index, version in enumerate(PYTHONS):
+        for index, version in enumerate(((self.root / ".python-version").read_text(encoding="utf-8").strip(),)):
             source_venv, source_sync, source_install, source_test, venv, install, smoke = self.calls[4 + index * 7 : 11 + index * 7]
             source_dir = self.artifact_dir / f"source-{version}"
             source_interpreter = installed_interpreter(source_dir, __import__("os").name)
@@ -202,7 +221,7 @@ class MatrixRunTests(unittest.TestCase):
         def runner(command: tuple[str, ...], cwd: Path) -> int:
             result = self.runner(command, cwd)
             if self.artifact_dir is not None and command == source_test_command(
-                installed_interpreter(self.artifact_dir / "source-3.12", __import__("os").name)
+                installed_interpreter(self.artifact_dir / "source-3.12.15", __import__("os").name)
             ):
                 return 7
             return result
@@ -210,7 +229,7 @@ class MatrixRunTests(unittest.TestCase):
         result = run_matrix(self.root, runner, self.make_temp)
         self.assertFalse(result.success)
         assert self.artifact_dir is not None
-        self.assertEqual(result.commands[-1].command, source_test_command(installed_interpreter(self.artifact_dir / "source-3.12", __import__("os").name)))
+        self.assertEqual(result.commands[-1].command, source_test_command(installed_interpreter(self.artifact_dir / "source-3.12.15", __import__("os").name)))
         self.assertEqual(result.commands[-1].exit_code, 7)
         self.assertEqual(result.preserved_failure_paths, (self.artifact_dir,))
         assert self.artifact_dir is not None
@@ -219,11 +238,10 @@ class MatrixRunTests(unittest.TestCase):
     def test_cleanup_rejects_replaced_directory_identity(self) -> None:
         def runner(command: tuple[str, ...], cwd: Path) -> int:
             self.runner(command, cwd)
-            if command[0].endswith("python.exe") or command[0].endswith("/python"):
-                if command[-1] == VERSION and "venv-3.12" in command[0]:
-                    assert self.artifact_dir is not None
-                    self.artifact_dir.rename(self.external / "preserved-original")
-                    self.artifact_dir.mkdir()
+            if (command[0].endswith("python.exe") or command[0].endswith("/python")) and command[-1] == VERSION and "venv-3.12" in command[0]:
+                assert self.artifact_dir is not None
+                self.artifact_dir.rename(self.external / "preserved-original")
+                self.artifact_dir.mkdir()
             return 0
 
         result = run_matrix(self.root, runner, self.make_temp)

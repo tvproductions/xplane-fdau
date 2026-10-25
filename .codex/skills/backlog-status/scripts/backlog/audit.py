@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-from pathlib import Path
 from dataclasses import replace
+from pathlib import Path
 from typing import Literal
 
-from backlog.findings import finding_key
 from backlog.adherence import adherence_findings
+from backlog.findings import finding_key
 from backlog.lifecycle import lifecycle_findings
-from backlog.rules import release_authorization_findings, structural_findings
 from backlog.model import (
     Artifacts,
     AuditLoad,
@@ -23,12 +22,13 @@ from backlog.model import (
 )
 from backlog.parse import (
     MarkdownParseError,
-    parse_backlog,
     parse_artifact,
+    parse_backlog,
     parse_roadmap,
 )
 from backlog.parse_sources import parse_artifact_sources, parse_backlog_sources, parse_roadmap_sources
 from backlog.policy import PolicyError, load_policy
+from backlog.rules import release_authorization_findings, structural_findings
 
 
 def _empty_roadmap() -> Roadmap:

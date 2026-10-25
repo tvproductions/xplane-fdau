@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from pathlib import Path
 import shutil
 import subprocess
-
+from pathlib import Path
 
 FIXTURE = Path(__file__).resolve().parent / "fixtures" / "backlog_status" / "valid"
 

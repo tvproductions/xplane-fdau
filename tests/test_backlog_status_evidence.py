@@ -1,18 +1,19 @@
 from __future__ import annotations
 
-from importlib import import_module
-from pathlib import Path
 import sys
 import tempfile
 import unittest
+from importlib import import_module
+from pathlib import Path
 from typing import override
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / ".codex/skills/backlog-status/scripts"))
 
-from tests.backlog_audit_support import initialize_git, run_git, write_evidence  # noqa: E402
 from backlog.policy import allowed_kinds  # noqa: E402  # ty: ignore[unresolved-import]
+
+from tests.backlog_audit_support import initialize_git, run_git, write_evidence  # noqa: E402
 
 
 class EvidenceTests(unittest.TestCase):

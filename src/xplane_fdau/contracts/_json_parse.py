@@ -77,7 +77,7 @@ def _materialize_number(token: _NumberToken, *, source: str = "<memory>", path: 
     if not token.is_real:
         digits = token.text.removeprefix("-")
         limit = "9223372036854775808" if token.text.startswith("-") else "9223372036854775807"
-        if len(digits) > len(limit) or len(digits) == len(limit) and digits > limit:
+        if len(digits) > len(limit) or (len(digits) == len(limit) and digits > limit):
             raise CanonicalJSONError("integer outside Int64 range", source=source, path=path)
         return int(token.text)
     try:

@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-from pathlib import Path
 import importlib
 import importlib.util
 import shutil
 import sys
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
-
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / ".codex/skills/backlog-status/scripts"
@@ -17,6 +16,7 @@ sys.path.insert(0, str(SCRIPTS))
 
 from backlog.audit import audit_repository, finding_key, load_audit  # noqa: E402  # ty: ignore[unresolved-import]
 from backlog.model import Finding  # noqa: E402  # ty: ignore[unresolved-import]
+
 from tests.backlog_audit_support import audit_fixture, run_git  # noqa: E402
 
 

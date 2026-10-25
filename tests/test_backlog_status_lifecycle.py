@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+import shutil
+import sys
+import tempfile
+import unittest
 from dataclasses import replace
 from importlib import import_module
 from pathlib import Path
-import sys
-import shutil
-import tempfile
-import unittest
 from typing import override
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -14,6 +14,7 @@ sys.path.insert(0, str(ROOT / ".codex/skills/backlog-status/scripts"))
 
 from backlog.audit import load_audit  # noqa: E402  # ty: ignore[unresolved-import]
 from backlog.model import AuditPolicy, HistoricalAdmission  # noqa: E402  # ty: ignore[unresolved-import]
+
 from tests.backlog_audit_support import evidence_fixture, initialize_git, replace_text, run_git, write_evidence  # noqa: E402
 
 

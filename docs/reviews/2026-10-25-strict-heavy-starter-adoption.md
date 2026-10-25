@@ -100,6 +100,38 @@ Index reader rejected the coverage response as untrusted or oversized. No
 advisory-free or complete-refresh claim is justified. Preserve guards and
 diagnose the actual response shapes/size before changing this adapter.
 
+## Task 2 verification
+
+The exact selected environment is installed: Python 3.12.15, uv/uv_build
+0.13.5, Ruff 0.17.2 and ty 0.0.91. Routine and deeper dependencies are separated;
+all reviewed groups synchronized exactly and the lock check passes. Explicit
+Ruff/ty targets are Python 3.12 and project-owned adapters are analyzed.
+Strict Ruff check/format and ty pass over 105 Python files.
+
+Regression evidence: eight original exact-pin/source/matrix assertion failures
+became green; 59 focused source/refresh/matrix/metadata tests pass. Another 188
+runtime/configuration/immutability/tool tests and 132 backlog/import-boundary
+tests pass. Existing intentionally invalid-input tests retain their runtime
+checks using dynamic operations; no blanket lint/type exclusions were added.
+Python 3.12 aliases are annotation-only; existing consumers perform no alias
+introspection. Exception cause rewrites retain the causes set by existing helpers.
+
+Two observed source defects were reproduced with assertion-level failing tests:
+current uv advisories use dependency/fix_versions; coverage's official Index is
+6,212,381 JSON bytes and 5,259,255 HTML bytes, both beyond the former 5 MiB cap.
+The parser now preserves advisory identity/fix versions, and an 8 MiB bound
+retains official-origin/media/oversized rejection tests.
+
+The corrected audit exposed 18 advisories across certifi, filelock, gitpython
+and virtualenv. Only those four affected packages were upgraded within existing
+constraints: certifi 2026.10.23, filelock 4.2.4, gitpython 3.2.1 and virtualenv
+21.14.13. Current uv audit reports zero vulnerabilities/adverse statuses across
+133 audited packages. The original status command now returns no pre-apply
+blockers or current findings. Required pip-audit/export acceptance is still pending;
+this uv audit is supporting evidence, not its replacement or a full refresh claim.
+
+CI, installed artifacts, deeper compatibility and cognitive proof remain pending.
+
 ## A01–A18 acceptance matrix
 
 Each row records actual status, applicability, executed scope and remaining

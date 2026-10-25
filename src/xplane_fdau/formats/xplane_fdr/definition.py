@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+import math
+import os
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
-import math
-import os
 from pathlib import Path, PureWindowsPath
 
 from .errors import FDRValidationError

@@ -1,338 +1,383 @@
 # Skills-first Native Adoption Design
 
 - **Governance:** active
-- **Status:** draft
+- **Status:** approved
 - **Date:** 2026-10-11
 - **Decision owner:** Jeff / tvproductions
 - **Roadmap epic:** `T2`
 - **Roadmap children:** `T2.1`, `T2.2`
-- **Approval:** —
+- **Approval:** 2026-10-25 — Jeff / tvproductions
 
-## Intent and scope
+## Intent and authority — October 25, 2026
 
-Jeff designated `tvproductions/gz-skills-first-starter` as the new baseline for
-skills-first projects and approved proceeding with the proposed two-stage
-adoption. This design covers the first stage: native upstream plugin sources,
-provenance, task routing, and observable discovery. The second stage changes
-Python engineering tools and invocation cadence through a separate design and
-plan after this stage. The approval of the proposed scope is not recorded as
-approval of this subsequently written specification.
+Jeff requires onboarding to `tvproductions/gz-skills-first-starter`, with tight,
+strong and aggressive application of its Astral engineering guidance. Alignment
+is mandatory. Installing plugins or deferring engineering reconciliation cannot
+satisfy this request.
 
-This is a crosscutting maintenance amendment to T2.1/T2.2. It does not reopen or
-advance their delivery state, select a product child, or change the verified
-C1.3 implementation. Existing BACKLOG, ROADMAP, HANDOFF, domain authorities,
-architecture, and release gates remain authoritative. The shared starter is the
-only additional repository in the proposed adoption
-scope. Its own instructions, review, tests and publication authority must be
-followed there. No q4xpcc or other application repository, or upstream SP/gz-skills
-implementation is changed. This FDAU save point does not edit or publish the
-starter repository.
+This revision reconciles the October 11/18 proposals and the pre-existing,
+uncommitted October 25 alignment review. It supersedes the unreleased 0.3.2
+target, zero-template-skill assumption and two-stage proposal that could declare
+native adoption complete while leaving engineering alignment pending. Prior
+proposals remain in Git history; their findings are carried forward here.
+Jeff approved the reconciled design on October 25, explicitly selecting heavy,
+keeping Backplane deferred, and requiring STRICT compliance. Implementation
+planning proceeds under this approval; the written plan requires review before
+execution.
 
-Success means one selected native source for each enabled upstream component,
-accurate immutable provenance, direct project instruction routing, and fresh-session
-evidence of the selected sources. Configuration presence is not proof of
-installation or agent behavior.
+During plan review, Jeff clarified that the originally selected cognitive
+complexity library was unsuccessful. Its replacement must be extracted from
+gzkit first; that extraction has not occurred. Record the cognitive gap and
+continue independent onboarding work, without claiming strict acceptance.
+Uniform, reliable behavior across adopting projects remains the goal.
 
-## Historical baseline — October 11
+This is brownfield first adoption and a crosscutting maintenance amendment under
+T2.1/T2.2, not a new runtime feature. Do not reopen their verified records or
+advance a product child. FDAU does not use gzkit. BACKLOG remains the only mutable
+delivery ledger; ROADMAP, requirements, domain specifications, historical
+evidence and release gates remain authoritative. No other application repository
+or upstream implementation is changed.
 
-- FDAU main: `f4ffb465c1d66633f829ed957886f096df12efb2`, clean before design.
-- Starter: `4acc41595b673faabdbe9be8d38b62755048ab93`, publicly resolved and
-  inspected in a separate temporary checkout. Its bundle validation passes.
-- Starter read-only status: not configured; backport assessment writes nothing.
-- Configure preview refuses `.agents/skills/superpowers`; isolated configuration
-  validation also refuses enabled `gz-skills@gz-skills` as duplicate discovery.
-- Current Superpowers: ignored checkout at v6.4.2,
-  `8ca22dba9a94f28898bbce59f2537ff4d87c747d`, exposed by a junction.
-- Current gz-skills: installed/enabled `gz-skills@gz-skills`, v0.5.0, selected by
-  a release tag in `.codex/config.toml`.
-- Another project's native SP v7.0.0 and gz-skills installation exists and is
-  disabled here. It is not FDAU's selected source or authority.
-- Backlog audit has no findings; no child is selected; next product action is
-  drafting the C1.4 plan. This migration does not implement C1.4.
+## Reviewed target and starting state
 
-## Current assessment — October 18
+The latest published stable starter checked October 25 is **v0.6.0**, published
+October 24, at `c0a6945b2170e1cf5bee3e80738916f5b62d13a5`.
+Its bundle selects:
 
-FDAU is clean on `main` at `94109c1373953898ce780bc7a94c659d3c6bdc08`.
-The strict backlog audit reports no findings and recommends `write_plan C1.4`;
-no child is selected. The ledger records C1.3 verified at 4/4 gates. HANDOFF and
-the BACKLOG introduction still describe its earlier draft state; reconcile these
-current summaries during implementation without altering historical evidence.
-
-The separately maintained starter checkout is clean at
-`88928b2c6c663e37f739c80376dae42b5d8e5b4e`. GitHub's commit endpoint resolved
-that full SHA and current repository HEAD to the same published commit. Its
-declared template version is **0.3.2, unreleased**. The latest published release
-is v0.3.0 at `a7550a6e29b88349041e70e3dbba4778be4b8235`; that release still
-selects SP v6.4.1, so it is unsuitable for the agreed SP v7 selection. Published
-commit availability does not make the 0.3.2 development template a tagged release.
-
-The current starter authors and distributes **zero skills**. Its `bundle.json`,
-both native catalogs, adoption/migration guidance and generated instruction
-fragment were inspected. `starter.py validate` passes on its existing Python
-3.14.8 interpreter. FDAU's Python 3.12 interpreter is not the starter helper's
-acceptance runtime. Read-only configuration preview refuses the existing
-Superpowers discovery junction; status reports `not configured` and runtime
-readiness `unverified`. No adoption files or native installations were changed.
-
-Native inventory reports `gz-skills@gz-skills` installed/enabled at **0.8.0**,
-while FDAU configuration still requests **v0.5.0**. Other projects' plugin
-identities are installed but disabled here; the shared `skills-first-starter`
-identity is absent. This is source drift, not successful adoption.
-
-Official GitHub queries returned SP v7.0.0 and gz-skills v0.8.0 as latest
-releases. The latter resolves to `75bcd11ee9371ecff1a7b3432d2af29d4bdbb788`.
-Its change from 0.7.0 adds the explicit-only release primitive and router release
-guidance; it does not supply a missing stage-one installation capability. This
-proposal retains the shared catalog's 0.7.0 selection to avoid a separate starter
-publication or a per-project catalog. Revisit that choice when the shared catalog
-adopts 0.8.0, or through an explicitly reviewed shared-catalog update. Record the
-effective transition from installed 0.8.0 separately from the configured 0.5.0 pin.
-
-Backplane has no published release. Its current upstream HEAD resolves to
-`c6f0b4a518e3742053618a613d8d858f0e37e9cd`, newer than the catalog's disabled
-pin. Retain the disabled catalog pin; reconsider only with the separate readiness
-and FDAU requirements decision. A newer commit does not establish readiness.
-
-## Shared plugin catalog decision
-
-During review Jeff selected one shared starter plugin catalog, rather than an
-FDAU-specific catalog. Codex calls a plugin catalog a marketplace; this document
-uses that term only for required native command/configuration names. A catalog
-lists upstream sources and selected commits; it is not a store or copied skill
-implementation.
-
-Configure FDAU through preview/apply from the reviewed published starter commit
-`88928b2c6c663e37f739c80376dae42b5d8e5b4e`, with its existing SP v7.0.0 and
-gz-skills v0.7.0 selections and Backplane disabled. Record template version 0.3.2
-as an unreleased development snapshot, with its exact full SHA. This adoption
-does not edit or publish the shared starter. Never use a moving branch,
-fabricated SHA, or an old starter SHA with new component pins. The initially
-reviewed starter revision remains historical assessment evidence.
-
-FDAU uses the shared `skills-first-starter` catalog and plugin identities. It
-creates no project-specific catalog, custom lock extension, installer or status
-CLI. The common helper remains the configuration/status surface; native host
-verification remains a separate acceptance dimension.
-
-An unmodified older starter would downgrade SP to v6.4.1 and is rejected. A local
-FDAU-specific catalog was initially proposed but withdrawn during user review:
-it would introduce per-project catalog maintenance instead of the desired shared
-baseline. The shared SP v7 candidate is now publicly available at the exact
-commit above; FDAU installation remains pending this specification's approval,
-an approved implementation plan and native acceptance. An ordinary Git sync of
-FDAU does not publish the starter.
-
-## Source selection
-
-| Component | Selected release/revision | Enablement |
+| Component | Selected immutable source | State |
 | --- | --- | --- |
-| Superpowers | v7.0.0 / `bb92a77741419a4ab5f06e711a283343f1ada0c3` | enabled |
-| gz-skills | v0.7.0 / `6ebf803e4a2775d3742c84984a03548275b7c926` | enabled |
-| Superpowers Backplane | pre-release / `d0eeee829c491da02351e793544aa16ad96461bf` | disabled; not installed by this migration |
+| Superpowers v7.0.0 | `bb92a77741419a4ab5f06e711a283343f1ada0c3` | enabled |
+| gz-skills v0.8.0 | `75bcd11ee9371ecff1a7b3432d2af29d4bdbb788` | enabled |
+| Backplane prerelease | `d0eeee829c491da02351e793544aa16ad96461bf` | disabled |
 
-SP v7.0.0 was published 2026-10-10. Its release notes, Codex manifest and entry
-skill were inspected. It changes brainstorming and fixes Windows/ledger behavior;
-the implementation plan must review the remaining workflow differences before
-enablement. The Codex manifest declares the skills tree and an empty hooks object.
-No upstream bootstrap script is executed or cache edited. gz-skills v0.7.0 adds
-project-version-aware Python guidance; the starter's tagged-install receipt
-separates installation from fresh-session workflow acceptance. Review the
-0.5-to-0.7 workflow changes in the implementation plan, preserving FDAU's
-runtime, gate and profile policies. These are selected releases, not a perpetual
-claim of latest.
+Recheck published releases at implementation entry and review any changed target.
+Verify tag, full commit, bundle and native catalogs together. Do not adopt
+unreleased main or independently replace component pins under an older starter
+provenance record. The prior review observed unreleased main declaring 0.7.0,
+SP v7.0.1 and blocked cognitive acceptance; that is not the released baseline.
 
-`.codex/config.toml` enables only `superpowers@skills-first-starter` and
-`gz-skills@skills-first-starter` among selected upstream sources, explicitly
-disables Backplane, and disables `gz-skills@gz-skills` for FDAU. Preserve unrelated
-configuration and installations. Inspect the host inventory for other enabled
-copies; do not uninstall a shared source to make the inventory pass. Project
-enablement may be changed only for the components this migration governs.
+FDAU main is `3a5211bfe3c1ab80e25758fce61356dd6ef7cbef`.
+C1.3 is verified, no child is selected and the product recommendation is
+`write_plan C1.4`. Mandatory onboarding maintenance proceeds separately.
 
-## Provenance and routing
+Observed gaps and existing assets:
 
-`.skills-first/bundle.lock.json` is generated by the shared helper and records
-the reviewed published starter revision and its selected component records.
-FDAU does not extend its schema or override component sources independently.
-The shared bundle, catalogs, selected lock, and observed installation must agree.
-Review the helper's generated source URL against the canonical renamed starter
-repository; reconcile stale aliases in the shared starter rather than inventing
-a local provenance workaround.
+- No starter lock, generated instruction fragment, explicit lane settings or
+  template-owned `update-gz-template` skill.
+- Configuration requests gz-skills v0.5.0; October 25 native inventory reports
+  installed/enabled `gz-skills@gz-skills` **0.8.3**, superseding the earlier
+  0.8.0 observation. Installed version does not prove adopted provenance.
+- Superpowers uses an ignored checkout and junction. Other projects' native
+  plugin copies are disabled here and are not FDAU's selected authority.
+- Runtime is pure Python and standard-library-only, under `src/xplane_fdau`,
+  using uv_build, `py.typed`, unittest and external installed-wheel checks.
+- Python selects minor-only `3.12`, with support `>=3.12,<3.13`.
+  Ruff selects E/F/W without an explicit target; ty uses error severity without
+  an explicit target. Exact execution and effective configuration need proof.
+- Hooks omit ty/unittest and include detect-secrets. Routine CI invokes deep
+  analysis and repeats full unittest. Branch coverage is disabled.
+- Existing dependencies omit part of the required on-demand analyzer assortment.
+  Existing coverage/Interrogate floors are 40%; Xenon limits are C/B/A.
+- HANDOFF and the BACKLOG introduction have stale C1.3 summaries. The managed
+  child ledger and completed evidence own current state.
+- The weak-test audit remains unresolved; a passing suite does not resolve it.
 
-Create no starter skill or skill-discovery directory. The current starter
-retired `skills-first-start` and moved routing into ordinary instructions;
-upstream SP/gz-skills trees are never copied. Generate `AGENTS.skills-first.md`
-with FDAU's selected identities and a pointer from AGENTS. Provide
-`docs/agents/skills-first.md` for ownership, installation, verification, rollback,
-and the Python binding source. Read `docs/engineering/python.md`,
-`docs/baseline-policy.md` and `docs/gz-skills-python.md` in the pinned reviewed
-starter checkout when needed. Those are policy documents, not discoverable
-skills. Reconcile the generated fragment's immediate Python/tool obligations
-with FDAU's explicitly deferred second stage: clearly state that the existing
-cadence and minor-line Python selector govern until that stage is approved.
-Preserve the provenance of any adapted fragment and report the deferred policy
-requirements as adoption gaps rather than claiming full engineering parity.
+## Explicit lane and retained governance
 
-The instructions route project operations to existing project skills, engineering
-selection to gzs-router, and feature design/implementation to Superpowers.
-It adds no lifecycle, profile selection, autonomous job, or Backplane operation.
-No lite/heavy or gzkit profile is inferred.
+Jeff explicitly selected **heavy** on October 25. Record that choice through
+the pinned `gzs-project-setup` workflow during implementation; a specification
+entry alone does not establish installed settings or readiness. Both lanes
+require the same full Python/Astral
+baseline, deeper analysis and release discipline.
 
-## Migration and recovery
+For heavy, distinguish intended SP + Backplane + gz-skills composition from
+observed readiness. Backplane remains disabled until its readiness and separate
+integration decision. Whole-heavy-stack readiness cannot pass while it is
+deferred. Python acceptance and SP/gz-skills discovery have independent results.
+Do not migrate FDAU requirements, BACKLOG or HANDOFF into Backplane records.
 
-1. Keep current sources active while preparing and verifying the candidate
-   repository configuration in an isolated feature worktree.
-2. Inventory host sources and supported manager operations. Register the reviewed
-   shared catalog and install the selected SP/gz-skills through the native manager.
-   Inspect any user-level changes the manager makes. Keep activation scoped to
-   FDAU; if this host cannot do that, report the limitation and stop activation.
-3. Reconcile FDAU enablement. Before restarting, detach its old discovery junction
-   using a verified nonrecursive link-only operation. Keep the ignored checkout
-   as a nondiscoverable rollback source until acceptance; do not delete its target
-   through the junction or remove another project's checkout.
-4. Start a fresh session in the candidate checkout. Confirm exactly one selected
-   source and the expected upstream entry skills (`using-superpowers` and
-   `gzs-router`). No starter entry skill is expected. Installation output is not
-   enough.
-5. Record acceptance evidence, complete repository checks, obtain independent
-   review, and use the ordinary finishing choice before integration.
+## Required Astral engineering contract
 
-### FDAU requirements and SP-BP boundary
+Adopt and verify every applicable requirement in the reviewed starter's
+`docs/engineering/astral-alignment.md`, `python.md` and
+`astral-acceptance.md`. The default is adoption and verification, not an
+optional recommendation. Alternatives and previews need explicit decisions.
+A departure needs a demonstrated constraint, evidence, owner and revisit
+condition; existing layout or convenience is insufficient.
 
-Jeff explicitly reserved FDAU's requirements and backlog approach. This migration
-does not adopt SP-BP's requirements technique, rewrite FDAU requirements or
-acceptance gates into its records, or migrate BACKLOG/HANDOFF authority. Plugin
-installation or later activation alone cannot authorize those changes.
+### Reproducible environment and effective configuration
 
-A future reviewed integration may either retain FDAU's approach or deliberately
-merge it with SP-BP's. A merger must preserve FDAU's stable identities, acceptance
-evidence, traceability and authority, with an explicit source mapping and conflict
-resolution. Neither direction is selected by this specification. Backplane stays
-disabled and uninstalled by this migration; future integration needs a separate
-readiness/design decision, not an implied consequence of starter parity.
+Retain the XPPython3-bound Python **3.12** family and empty runtime dependencies.
+Verify the latest stable host-compatible 3.12 patch against official sources;
+record its exact value in `.python-version` and CI. Align
+`requires-python = ">=3.12,<3.13"`, Ruff `py312`, ty's 3.12 target and actual
+execution. Keep actual embedded-host evidence separate where applicable:
+this core does not ship a simulator adapter.
 
-Changing host setup cannot rewrite the running session's discovered skill list.
-Mark fresh-session acceptance UNKNOWN until observed. Preserve candidate state
-and exact resume instructions if continuation needs another session.
+Centralize supported settings in `pyproject.toml`. Inspect uv/Ruff/ty discovery,
+configuration precedence, relevant nonsecret overrides, analyzed paths and
+executable origins. Document approved tool families, check freshness within
+them and verify exact uv, uv_build and tool selections. Keep selected versions
+stable between authorized maintenance events; do not copy starter execution
+patches as permanent adopter requirements.
 
-Rollback restores the previous project configuration and junction to the retained
-v6.4.2 checkout, then verifies discovery in a fresh session. Do not delete native
-caches or uninstall sources another project uses. Record any failure and whether
-rollback has been observed; a documented procedure is not an executed test.
+Use uv for interpreter/environment management, dependency edits, resolution,
+locking, builds and execution. Routine commands and CI use `--locked`, failing
+on stale declarations. Frozen offline checks retain an explicit lock check;
+frozen alone cannot establish freshness. Exact sync targets only the intended
+project environment and reviewed compatible groups. Preserve dependency purpose,
+sources, runtime/dev distinctions and build isolation. Never hand-edit locks,
+resolve moving latest on every run or use overlays as baseline proof.
 
-## Project boundaries retained
+### Strict routine gate
 
-- Pure Python and standard-library-only application runtime; no simulator/network
-  client dependencies. Python 3.12 minor-line support follows the scope amendment
-  and the starter's XPPython3 exception; no exact patch or Python 3.14 application
-  runtime is imposed.
-- Existing `src`, tools, project skills, architecture, plans, evidence and data
-  layout remain. No folders are added merely to mimic the starter diagram.
-- BACKLOG remains the only delivery-state authority. Backplane stays expected,
-  deferred, disabled, and outside issue operations.
-- Existing quality cadence, numeric limits, CI and release checks remain unchanged
-  in stage one. Stage two will separately reconcile their invocation policy.
-- Git sync, tags, publication and releases remain separately authorized. Local
-  implementation commits and the eventual finishing choice do not grant a push.
-- The broader weak-test audit remains unresolved. Correct only affected layout
-  and installation snapshots in this stage, preserving real policy controls.
+Local commands, installed pre-commit hooks and routine CI enforce the same four
+checks: **Ruff check, Ruff format --check, ty and unittest**, through locked
+project tools and documented scopes. Run full unittest once per aggregate,
+not once per changed filename. Retain separate artifact/installed-wheel CI jobs.
 
-## Implementation surfaces and verification
+Adopt the reviewed Ruff families `E4,E7,E9,F,I,UP,B,SIM,RUF`; review and fix
+findings rather than selecting ALL, blanket-ignoring or shrinking scope.
+The formatter owns formatting. Keep ty diagnostics at error severity.
+Cover runtime, tests, tools and repository-owned Python adapters; exclude
+external sources/generated content and document genuinely distinct scopes.
 
-| Surface | Responsibility and acceptance |
+Move deeper analysis, including detect-secrets, outside the four routine hooks
+and routine CI without dropping the controls. Keep explicit adoption/release
+acceptance and on-demand commands. Reconcile quality/hygiene/dependency-refresh
+adapters, instructions, documentation and behavior tests with the new cadence.
+Record timings and avoid redundant complete-suite invocations.
+
+CI uses Astral setup-uv, reviewed immutable Action revisions, an explicit uv
+version and validation of the exact Python pin. An edited workflow is not an
+observed CI pass. Remote verification remains pending until exact-commit CI is
+observed following separately authorized ordinary synchronization.
+
+### Mandatory deeper acceptance
+
+Execute applicable minimum tools at adoption and release acceptance, outside
+routine hooks/CI:
+
+| Dimension | Required tool and interpretation |
 | --- | --- |
-| Shared starter bundle and both native catalogs; FDAU `.codex/config.toml` and `.skills-first/bundle.lock.json` | Shared source selection; exact SHA agreement; disabled Backplane; preservation of unrelated entries |
-| `AGENTS.md`, `AGENTS.skills-first.md`, `docs/agents/skills-first.md` | Current source authority, installation/fresh-session procedure, routing and rollback |
-| `docs/architecture/gz_skills_plugin_only_specification.md` | Amend current ID/marketplace contract without rewriting dated evidence |
-| Project instructions and skill discovery roots | Direct routing; no starter-owned skill copies, duplicate upstream discovery or retired entry expectations |
-| `tests/test_project_skills.py` and focused metadata tests | Reject mismatched pins, duplicate active sources and accidental Backplane enablement using realistic altered fixtures; allow legitimate reviewed version changes |
-| `pyproject.toml`, `tools/release.py`, artifact tests | Exclude new governance paths from distributions and reject synthetic archive leakage; preserve installed runtime inventory |
-| Stage-one evidence | Exact sources, host version, native registration/install results, fresh-session entry identities, review findings and verification outcomes |
+| Cyclomatic complexity | Ruff C901, maximum 20 per function |
+| Cognitive complexity | OPEN dependency: shared replacement library to be extracted from gzkit; no accepted measurement yet |
+| Function/module/project complexity | Lizard, explicit counting population and aggregates |
+| Class cohesion | cohesion, scores reviewed against actual responsibilities |
+| Documentation | Interrogate and review of usefulness/correctness |
+| Dead code | Vulture, investigating consumers before deletion |
+| Security | Bandit and retained detect-secrets controls, reviewed findings |
+| Coverage | Coverage.py branch and statement measurement through unittest |
+| Mutation strength | Cosmic Ray, bounded consequential scope and unittest |
+| Dependency declarations | deptry, preserving legitimate dev/dynamic usage |
+| Known vulnerabilities | pip-audit against exact uv-lock exports, no second resolver |
+| Architectural imports | Import Linter contracts for actual FDAU boundaries |
 
-Use the existing starter helper for configuration preview and status, existing
-project fixture tests for governing rules, and read-only native manager listings
-for host inventory. Record configuration/install/discovery separately as
-PASS/FAIL/UNKNOWN. No new project checker or duplicate lifecycle is introduced.
-Actual native discovery is operator-observed and cannot be certified by a file
-scan. Never print unrelated credentials or user configuration in receipts.
+Verify compatibility on selected Python 3.12 with representative invented
+fixtures and actual project scopes; pin/lock tools in appropriate development
+groups. Inventory or another project's receipt is not acceptance evidence.
+Retain exact commands, tool sources/versions, scope, results and reviewed findings.
 
-Run focused unittest, Ruff and ty during implementation. Packaging/governance
-changes require one stable-candidate complete offline hygiene gate under the
-currently approved cadence and a fresh Python 3.12 external installed-wheel
-smoke. Add no new runtime dependencies. Preserve failed artifacts. After host
-acceptance, independent review and repository verification, the first stage may
-be reported complete; Python engineering parity remains pending stage two.
+#### Cognitive analysis dependency — open
 
-## Next-stage boundary
+Jeff's October 25 plan-review decision supersedes the released starter's
+complexipy selection for this migration. Do not install or configure that
+rejected tool as acceptance proof, reproduce a cognitive analyzer locally, or
+copy code from gzkit. FDAU remains outside the gzkit governance ecosystem.
 
-The separate engineering design will bind routine Ruff check/format, ty, unittest
-and pre-commit; move deeper analysis outside hooks/CI; replace Xenon/Radon and
-decide Wily's retirement; establish project-pinned on-demand complexity, mutation,
-dependency and import-boundary tools; and add branch coverage measurement. It
-must preserve existing numeric limits, provide comparable legacy measurements,
-prove compatibility on Python 3.12, and avoid broad application refactors. It
-cannot inherit a pass from this source-installation migration.
+Owner of the extraction/readiness decision: Jeff / upstream library and starter
+maintainers. The extraction is outside this repository's onboarding scope and
+has not occurred. Package name, release, API and compatibility are unverified;
+do not invent pins or an integration contract. Revisit when the extracted
+library is available and the shared starter has a reviewed adoption contract.
+Adopt that common contract so projects receive uniform analyzer behavior.
+
+Keep cognitive analysis and its affected A18 evidence UNKNOWN, blocked by the
+external prerequisite; it is not N/A, waived, or PASS. The prior target of 15
+is historical policy input, not proof of equivalent counting by the replacement.
+Verify the shared tool's counting, thresholds, Python 3.12 compatibility and
+actual FDAU results before closing the gap. Other onboarding work may proceed;
+strict overall acceptance remains incomplete until this proof exists.
+
+Preserve the existing 40% coverage and Interrogate floors. Report statement and
+branch results separately and expose consequential gaps; never lower a floor to
+accept new branch measurement. No unrelated gzkit or project threshold applies.
+
+Record legacy Xenon C/B/A scores and comparable Lizard measurements before
+retiring Xenon/Radon. Retain the stricter numeric ceilings **20/10/5** under a
+reviewed function-based counting contract, rather than silently adopting the
+starter's 20/20/20 defaults. The metrics differ: review population, scores and
+verdict changes explicitly. Retire Wily after mapping useful history/measurements
+to the retained evidence; preserve historical receipts.
+
+Run all required dimensions even if another reports findings. Required failures
+remain failures. Remediate necessary onboarding findings with behavior tests and
+review. Do not add over-limit functions, raise ceilings, regenerate snapshots or
+suppress findings to claim acceptance. A temporary regression baseline does not
+establish strict adoption. If a correction requires separate behavioral design,
+record the dependency and keep onboarding pending until resolved.
+
+Mutation begins from a clean baseline in an isolated disposable checkout, using
+unittest and consequential public seams; classify survivors. Never mutate the
+working checkout or add redundant tests for a percentage. Trace changed tests
+to requirements, observable failure, realistic defects and legitimate changes
+they must allow. Correct affected weak snapshots without claiming the entire
+prior weak-test audit resolved.
+
+### Artifacts, code currency and release discipline
+
+Build with `uv build --no-sources`, preserving the sdist-to-wheel path.
+Record exact isolated build inputs independently of the runtime lock. Check
+metadata, resources, licenses, typing marker, empty Requires-Dist and inventories.
+New governance files and tools must respect the reviewed distribution boundary.
+
+Verify imports, CLI, resources and representative public typed APIs in a fresh
+Python 3.12 environment outside the checkout without source-path injection.
+Review relevant Python 3.12 idioms/stdlib opportunities against versioned official
+documentation and record adopt/defer/N/A decisions. Do not apply unavailable
+3.14 features or start unrelated modernization.
+
+Adopt independent product SemVer and a newly written PRD for every major,
+including 1.0.0, within FDAU planning authority. Minor releases need coherent
+selected bundles and compatibility notes. Existing G1 and separate release
+authorization remain binding; onboarding does not authorize publication.
+
+## Native sources, provenance and rollback
+
+Use a separate clean checkout of the verified released starter and its existing
+helper. Retain the agreed shared `skills-first-starter` catalog; add no FDAU
+catalog, lock extension, installer or parallel checker. Review preview before apply.
+
+The managed set includes `.skills-first/bundle.lock.json`,
+`AGENTS.skills-first.md`, host configuration and
+`.agents/skills/update-gz-template/SKILL.md`. Add the AGENTS pointer and retain
+project-owned skills. Keep bundle, catalogs, lock, fragment and selected sources
+coherent. Review installed 0.8.3 versus selected 0.8.0 explicitly; do not downgrade
+or uninstall another project's shared plugin. Scope activation to FDAU and
+disable its old source only with verified replacement. Native managers own caches.
+
+Verify the existing Superpowers junction's real target before detaching only
+the link nonrecursively. Keep the old checkout nondiscoverable for rollback.
+Fresh-session observation must verify exactly one selected SP/gz-skills source
+and actual availability/invocation of the template update skill. Installation
+and file scans do not establish discovery.
+
+Record initial Git/dirty state, source configuration and rollback references.
+Restore reviewed prior configuration, instruction routing, tool declarations,
+lock and discovery link from those references while preserving unrelated work.
+Verify recovery in a fresh session. Never delete through junctions, reset user
+changes or uninstall other projects' sources. A documented rollback procedure
+is not an executed rollback test.
+
+## Implementation sequence
+
+1. Recheck authorities, audit/next, current release and starting dirty state.
+2. Approve this reconciled written design and explicitly choose the lane.
+   Write/review the executable onboarding plan, then isolate implementation.
+3. Establish the A01–A18 record, source-to-target mapping, legacy measurements,
+   effective configuration and tool compatibility.
+4. Reconcile exact environment, strict routine checks, required on-demand
+   tools/analysis and necessary findings in verified implementation tasks.
+5. Apply reviewed native configuration/managed files; update project routing,
+   packaging exclusions where necessary, adapters and stale current summaries.
+6. Execute acceptance analysis, stable-candidate artifact/hygiene proof,
+   installed behavior, hook observation and independent review. Avoid duplicate
+   complete gates on an unchanged candidate.
+7. Observe fresh-session discovery and exact-commit remote CI when ordinary
+   synchronization is separately authorized. Keep unavailable proof UNKNOWN.
+8. Use the normal finishing/integration workflow; retain rollback until main
+   verification passes.
+
+Engineering reconciliation is part of this onboarding objective. Implementing it
+in verified slices does not permit a partial completion claim.
+
+## Acceptance record
+
+Keep a dated record under `docs/reviews/`, linked from existing authorities.
+Expand every individual A01–A18 row with applicability/reason, actual command
+and scope, observed result, evidence location and open work:
+
+| Rows | FDAU proof |
+| --- | --- |
+| A01 | Identity, revision/dirty work, migration map and rollback |
+| A02–A03 | Installed src imports, CLI/backend and pure-Python build |
+| A04–A08 | Effective configuration, exact interpreter/tools, freshness, exact sync/lock and actual routine checks |
+| A09 | Installed hooks and observed exact-commit CI enforcing routine checks |
+| A10 | Dependency/source intent and empty runtime Requires-Dist |
+| A11–A13 | Source-independent artifacts, clean installed public behavior, typing |
+| A14 | Workspace applicability; verify the current single-distribution scope |
+| A15 | Private/special-source applicability from actual metadata and nonsecret settings |
+| A16 | Actual deployment/build triggers; separate core from external host adapters |
+| A17 | Export/script/tool consumers, including vulnerability-audit export |
+| A18 | Exceptions, deeper analysis, code currency and wider obligations |
+
+Results are PASS/FAIL/UNKNOWN/N/A/EXCEPTION. N/A needs an absent triggering
+feature. Exceptions need evidence, owner, accepted-by and revisit condition.
+Required failed, unknown or stale proof blocks strict acceptance. Accepted
+exceptions remain visibly conditional and do not satisfy Jeff's STRICT
+compliance completion requirement. The documented Python 3.12 host lane and
+disabled Backplane are baseline-defined selections, not waivers of applicable
+Astral acceptance. Do not seek reduced compliance merely to close onboarding.
+
+Report lane, helper configuration, Python acceptance, required analysis, native
+discovery and deferred Backplane readiness separately. Do not equate an approved
+design, configured helper or passing backlog audit with completed adoption.
+
+## Implementation surfaces
+
+| Surface | Responsibility |
+| --- | --- |
+| `pyproject.toml`, `.python-version`, `uv.lock` | Strict effective configuration, exact runtime/tools and groups |
+| `tools/quality.py`, project quality/hygiene/dependency-refresh adapters | Routine versus explicit deeper gates; retained artifact/offline controls |
+| Hooks and CI/readiness workflows | Matching routine commands, exact uv/Python, immutable Actions |
+| Native config, lock, fragment, template update skill | Consistent starter provenance and fresh-session discovery |
+| AGENTS, project skills and engineering guidance | Required policy, ownership and actual commands |
+| Release/artifact tooling and meaningful fixture tests | Public behavior and prevention of governance/runtime leakage |
+| Review evidence and BACKLOG/HANDOFF current summaries | Honest acceptance state, findings and rollback |
+
+Use existing commands/upstream helpers where sufficient. Necessary composition
+belongs in project tooling, not a parallel lifecycle. Exact paths, tests,
+verification and commit boundaries belong in the implementation plan.
 
 ## Acceptance criteria
 
-These sections assign this maintenance amendment to its owning tooling surfaces;
-they do not replace the completed BACKLOG gate statements or reopen the children.
-
 ### T2.1 — Project repository-hygiene adapter and fresh artifact verification
 
-- The selected lock, catalog, and project enablement agree on all immutable
-  sources, with no duplicate active discovery and Backplane disabled.
-- Project routing preserves existing operational and domain authorities; fresh
-  host acceptance records actual discovery separately from configuration checks.
-- Synthetic archive leakage checks and a fresh artifact pair demonstrate that
-  the new governance files do not ship with the runtime.
-- Negative configuration fixtures reject mismatched pins and duplicate sources,
-  and allow a legitimate reviewed revision without a filename inventory snapshot.
+- Strict Astral runtime/configuration, four routine checks, mandatory deeper
+  analysis and installed-artifact proof are implemented and observed.
+- Existing numeric limits and domain behavior survive reviewed reconciliation;
+  affected tests exercise consuming behavior and realistic negative controls.
+- Configuration/provenance/routing agree; fresh-session discovery verifies
+  sources without duplicates or accidental Backplane enablement.
+- Each A01–A18 row has an honest outcome; unfinished engineering reconciliation
+  cannot be reported as completed onboarding.
 
 ### T2.2 — Governed dependency and toolchain refresh
 
-- The provenance record inventories the starter and every selected component;
-  native managers retain cache ownership and updates remain explicit.
-- The reviewed published shared starter commit selects SP v7.0.0 and gz-skills
-  v0.7.0; FDAU records its exact SHA and unreleased template version accurately.
-- Installation and recovery preserve sources used by other projects; fresh
-  acceptance and unresolved host limitations are reported honestly.
-- Application Python support, runtime dependencies, release authority, and the
-  separate engineering-policy stage remain unchanged by this migration.
+- Record exact released starter/component sources, Python 3.12 execution and
+  dated family/freshness/compatibility decisions.
+- Verify required tools and actual results; preserve dependency intent, native
+  cache ownership and other projects' sources.
+- Use `update-gz-template` after discovery for template maintenance and canonical
+  dependency workflows for tools. Review at adoption, scoped maintenance,
+  quarterly on demand and release acceptance; no automatic schedule is created.
+- Preserve requirements/backlog/release authorities and distinguish lane intent,
+  engineering acceptance and deferred whole-stack readiness.
 
-## Sources and design review
+## Sources and review status
 
-- [Starter adoption](https://github.com/tvproductions/gz-skills-first-starter/blob/88928b2c6c663e37f739c80376dae42b5d8e5b4e/docs/adoption.md)
-- [Starter migration contract](https://github.com/tvproductions/gz-skills-first-starter/blob/88928b2c6c663e37f739c80376dae42b5d8e5b4e/docs/migration-0.3.md)
-- [Starter backport guidance](https://github.com/tvproductions/gz-skills-first-starter/blob/88928b2c6c663e37f739c80376dae42b5d8e5b4e/docs/backport.md)
-- [Python binding](https://github.com/tvproductions/gz-skills-first-starter/blob/88928b2c6c663e37f739c80376dae42b5d8e5b4e/docs/engineering/python.md)
-- [gz-skills 0.8.0 changes](https://github.com/tvproductions/gz-skills/blob/75bcd11ee9371ecff1a7b3432d2af29d4bdbb788/CHANGELOG.md)
-- [SP v7.0.0](https://github.com/obra/superpowers/releases/tag/v7.0.0)
-- [Codex marketplace and project enablement](https://developers.openai.com/plugins/build/plugins)
+- [Released v0.6.0](https://github.com/tvproductions/gz-skills-first-starter/releases/tag/v0.6.0)
+- [Brownfield adoption](https://github.com/tvproductions/gz-skills-first-starter/blob/v0.6.0/docs/adoption-0.5.md)
+- [Astral alignment](https://github.com/tvproductions/gz-skills-first-starter/blob/v0.6.0/docs/engineering/astral-alignment.md)
+- [A01–A18 acceptance](https://github.com/tvproductions/gz-skills-first-starter/blob/v0.6.0/docs/engineering/astral-acceptance.md)
+- [Python engineering](https://github.com/tvproductions/gz-skills-first-starter/blob/v0.6.0/docs/engineering/python.md)
+- [Baseline and lanes](https://github.com/tvproductions/gz-skills-first-starter/blob/v0.6.0/docs/baseline-policy.md)
+- [Canonical updates](https://github.com/tvproductions/gz-skills-first-starter/blob/v0.6.0/docs/updating.md)
+- [Official uv locking/syncing](https://docs.astral.sh/uv/concepts/projects/sync/)
+- [Official Ruff selection](https://docs.astral.sh/ruff/linter/#rule-selection)
+- [Official ty configuration](https://docs.astral.sh/ty/configuration/)
 
-Self-review: the first stage is independently verifiable; no source/gate change
-has been implemented or marked approved by this draft. Shared source selection
-and the exclusion of starter publication are explicit;
-fresh-session discovery is an acceptance gate. The FDAU/SP-BP requirements
-exception is explicit. Stage-two tools and cadence are excluded from stage-one
-implementation. This draft requires written-spec review before the
-implementation plan is created.
-
-Draft verification exposed two pre-existing frozen active-spec inventories in
-`GovernanceArtifactTests.test_active_design_epic_assignments_match_roadmap_contract`
-and `test_active_artifact_assignments_match_current_roadmap_children`. The strict
-backlog consumer audit accepted this draft, but those filename snapshots rejected
-its presence. Their redundant snapshot methods were removed during the requested
-Git save-point correction. Existing adherence/lifecycle fixtures retain positive
-and negative controls for known/unique/ordered children, epic assignments,
-cross-epic declarations, plan ownership, required approvals and completion
-evidence. The broader weak-test audit remains unresolved. This correction does
-not implement native adoption or approve this specification.
-
-October 18 reassessment verification: the strict backlog audit reports no
-findings after the revision; 42 focused governance/documentation unittest tests,
-strict MkDocs build and `git diff --check` pass. The starter's bundle/both-catalog
-validation passes on its existing Python 3.14.8 interpreter. Temporary-directory
-access initially prevented two fixture tests in the sandbox; the same focused
-suite passed with temporary-directory access. Native installation, candidate
-configuration and fresh-session discovery remain pending. No approval, product
-child transition, engineering-policy implementation or publication is implied.
+Self-review: obsolete sources and split-completion claims are removed.
+Mandatory engineering reconciliation, explicit heavy selection, actual
+acceptance evidence and FDAU constraints are explicit. Approved design authority
+does not establish implementation, acceptance or whole-heavy-stack readiness.

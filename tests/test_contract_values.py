@@ -11,7 +11,7 @@ from unittest import mock
 
 from xplane_fdau.contracts import _value_io, canonical_bytes
 from xplane_fdau.contracts._json_parse import _parse_json_document
-from xplane_fdau.contracts.errors import CanonicalJSONError, ContractShapeError, ContractValidationError
+from xplane_fdau.contracts.errors import CanonicalJSONError, ContractShapeError, ContractValidationError, FDAUContractError
 from xplane_fdau.contracts.values import InlineValue, PayloadReference, PayloadSpec, RepresentationSpec, RetentionStatus, ShapeSpec, UnitSpec
 
 
@@ -96,9 +96,10 @@ class InlineValueTests(unittest.TestCase):
         vector = InlineValue(representation="vector", value=[0.0] * 65535)
         self.assertIsInstance(vector.value, tuple)
         self.assertEqual(65535, len(vector.value))  # ty: ignore[invalid-argument-type]
-        for values in ([], [0.0] * 65536):
-            with self.assertRaises(ContractValidationError):
-                InlineValue(representation="vector", value=values)
+        with self.assertRaises(ContractValidationError):
+            InlineValue(representation="vector", value=[])
+        with self.assertRaises(ContractShapeError):
+            InlineValue(representation="vector", value=[0.0] * 65536)
         value = InlineValue(representation="integer", value=1)
         with self.assertRaises(FrozenInstanceError):
             value.value = 2  # ty: ignore[invalid-assignment]
@@ -166,9 +167,50 @@ class DeclarationTests(unittest.TestCase):
                 declared = PayloadSpec(**arguments)
                 self.assertEqual(tuple(values), getattr(declared, field))
                 arguments[field] = [*values, f"{prefix}65535"]
-                with self.assertRaises(ContractValidationError) as caught:
+                with self.assertRaises(ContractShapeError) as caught:
                     PayloadSpec(**arguments)
                 self.assertEqual("/" + field, caught.exception.path)
+
+    def test_oversized_inline_collections_fail_shape_before_inspecting_elements(self) -> None:
+        for representation, element, fill, bad in (
+            ("vector", None, 0.0, math.inf),
+            ("fixed_array", "string", "x", "e\u0301"),
+            ("variable_array", "integer", 0, 2**63),
+        ):
+            for first in (fill, bad, None, {}):
+                fields = {"representation": representation, "value": [first, *([fill] * 65535)]}
+                if element is not None:
+                    fields["element_representation"] = element
+                for read in (False, True):
+                    with self.subTest(representation=representation, first=first, read=read), self.assertRaises(FDAUContractError) as caught:
+                        if read:
+                            _value_io._inline_value_from_wire(fields, path="/test.value", source="collection.json")
+                        else:
+                            InlineValue(**fields)
+                    self.assertIs(type(caught.exception), ContractShapeError)
+                    self.assertEqual("/test.value/value" if read else "/value", caught.exception.path)
+
+    def test_oversized_allow_lists_precede_entry_errors_in_constructors_and_nested_readers(self) -> None:
+        for field, other, fill in (
+            ("allowed_media_types", "allowed_storage_roles", "a/b"),
+            ("allowed_storage_roles", "allowed_media_types", "test.raw"),
+        ):
+            for first in (fill, "e\u0301", "BAD", None, {}):
+                fields = {"allowed_media_types": ["a/b"], "allowed_storage_roles": ["test.raw"]}
+                fields[field] = [first, *([fill] * 65535)]
+                # An earlier canonical-domain failure must also lose to the later shape failure.
+                if field == "allowed_storage_roles":
+                    fields[other] = ["e\u0301"]
+                for read in (False, True):
+                    with self.subTest(field=field, first=first, read=read), self.assertRaises(FDAUContractError) as caught:
+                        if read:
+                            _value_io._representation_spec_from_wire(
+                                {"kind": "referenced_bytes", "payload": fields}, path="/test.spec", source="collection.json"
+                            )
+                        else:
+                            PayloadSpec(**fields)
+                    self.assertIs(type(caught.exception), ContractShapeError)
+                    self.assertEqual(("/test.spec/payload/" if read else "/") + field, caught.exception.path)
 
     def test_all_owned_metadata_models_are_frozen_slotted_and_keyword_only(self) -> None:
         payload = PayloadSpec(allowed_media_types=["a/b"], allowed_storage_roles=["test.raw"])
@@ -246,7 +288,7 @@ class DeclarationTests(unittest.TestCase):
                 InlineValue(representation="fixed_array", element_representation=representation, value=values)
             self.assertEqual("/value/1", caught.exception.path)
         with self.assertRaises(CanonicalJSONError) as caught:
-            InlineValue(representation="vector", value=[float("inf"), *([0.0] * 65535)])
+            InlineValue(representation="vector", value=[float("inf"), *([0.0] * 65534)])
         self.assertEqual("/value/0", caught.exception.path)
         with self.assertRaises(ContractShapeError) as caught:
             InlineValue(representation="fixed_array", element_representation="integer", value=[None, "wrong"])
@@ -291,7 +333,7 @@ class DeclarationTests(unittest.TestCase):
         roles.reverse()
         self.assertEqual(("a/b", "a/c"), spec.allowed_media_types)
         self.assertEqual(("test.a", "test.b"), spec.allowed_storage_roles)
-        for values in ([], ["a/c", "a/b"], ["a/b", "a/b"], ["a/b"] * 65536):
+        for values in ([], ["a/c", "a/b"], ["a/b", "a/b"]):
             with self.subTest(values=values[:2]), self.assertRaises(ContractValidationError):
                 PayloadSpec(allowed_media_types=values, allowed_storage_roles=["test.raw"])
         for values in (["raw"], ["test.b", "test.a"], ["test.a", "test.a"]):
@@ -319,6 +361,13 @@ class DeclarationTests(unittest.TestCase):
 
 
 class WireValueTests(unittest.TestCase):
+    def test_parsed_collection_limit_precedes_numeric_token_materialization(self) -> None:
+        document = '{"representation":"vector","value":[1e9999' + ",0.0" * 65535 + "]}"
+        with self.assertRaises(ContractShapeError) as caught:
+            _value_io._inline_value_from_wire(_parse_json_document(document), path="/test.value", source="collection.json")
+        self.assertEqual("/test.value/value", caught.exception.path)
+        self.assertEqual("collection.json", caught.exception.source)
+
     def test_deepcopy_preserves_omitted_variant_fields_and_canonical_bytes(self) -> None:
         cases = (
             (InlineValue(representation="integer", value=1), b'{"representation":"integer","value":1}\n'),

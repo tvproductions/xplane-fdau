@@ -18,6 +18,7 @@ from .values import (
     UnitSpec,
     ValueRepresentation,
     _choice,
+    _ordered_array,
     _scalar_check,
     _tag,
 )
@@ -110,9 +111,7 @@ def _shape(value: object, stem: str, *, path: str = "") -> None:
         elif domain.startswith("array:"):
             if child is None:
                 continue
-            if type(child) not in (list, tuple):
-                raise ContractShapeError("expected ordered array", path=child_path)
-            child = cast(list[object] | tuple[object, ...], child)
+            child = _ordered_array(child, path=child_path)
             for index, item in enumerate(child):
                 _primitive_shape(item, domain[6:], path=f"{child_path}/{index}")
         else:

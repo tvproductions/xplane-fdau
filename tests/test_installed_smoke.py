@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib.util
 import io
 import os
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -17,6 +18,15 @@ from xplane_fdau.formats.xplane_fdr import FDRReader
 
 
 class InstalledSmokeTests(unittest.TestCase):
+    def test_console_child_runs_through_uv_in_the_installed_environment(self) -> None:
+        command = [str(Path(sys.executable).parent / "xplane-fdau"), "fdr", "validate", "flight.fdr"]
+        with mock.patch.object(installed_smoke.subprocess, "run", return_value=subprocess.CompletedProcess(command, 0)) as run:
+            installed_smoke._run(command)
+        self.assertEqual(
+            ["uv", "run", "--offline", "--no-project", "--python", sys.executable, *command],
+            run.call_args.args[0],
+        )
+
     def test_value_smoke_rejects_incorrect_canonical_projection(self) -> None:
         import xplane_fdau.contracts as contracts
 

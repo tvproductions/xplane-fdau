@@ -435,4 +435,78 @@ and each named package's official PyPI JSON release endpoint. Local raw probe
 responses/commands live in the ignored plan workspace and are not portable
 proof of future candidate acceptance.
 
+## Collection-shape and execution follow-up
+
+The next bounded continuation starts from feature commit `f88290d`, preserving
+the existing worktree and selected SP 7.0.0/gz-skills 0.8.0 sources. Backlog
+audit/next passed through locked all-groups uv; C1.4 remains unselected.
+
+Jeff explicitly resolved the collection-taxonomy question: the general 65,535
+collection ceiling is a shape limit. Oversized inline vectors/arrays and payload
+allow-lists now raise `ContractShapeError` at the containing array before any
+element-domain or semantic failure. Constructors and private nested readers share
+the shape check. Empty vectors and empty allow-lists retain their semantic
+minimum constraints; declaration-specific lengths are unchanged. Regression
+controls cover the accepted boundary, wrong element primitives, null, overflow,
+non-NFC text, competing fields and preserved JSON number tokens. The initial
+assertions failed against the former semantic classification before correction.
+
+Native differential controls cover the newly shared array-shape function in a
+disposable source copy, with import-origin checks and uv-only Python children:
+42 normal results, 30 killed, and 12 reviewed equivalents. Eleven survivors
+change deferred private annotations, which current runtime callers do not
+evaluate; one changes a private signature compatibly with all three callers.
+No meaningful survivor remains in this changed-function group. The old
+phase-moving count mutation no longer applies to the corrected implementation;
+it is superseded, not relabeled killed. This is not a fresh full mutation batch.
+
+Independent endpoint review bounds the two remaining identity mutations to
+current data-only public paths on CPython 3.12.15. Both differ only when given
+the live private upper-bound integer object, which no current public producer
+returns. Decimal/JSON/bytes conversion, `sys.maxsize`, separately compiled
+literals and arithmetic endpoint inputs passed under calibrated in-memory
+mutations. Private introspection/module mutation, other interpreters and future
+constant-exposing APIs are excluded. No private-constant regression snapshot was
+added. The earlier 95 equivalence dispositions remain historical and individually
+mapped; this follow-up does not certify every current mutation job.
+
+External source tests, wheel smoke and its nested installed CLI now launch
+through uv. External commands use an explicit interpreter with `--no-project`
+to preserve wheel-only origin; their environments are prepared independently
+from the exact reviewed pin/export. Project-local matrix tools use locked
+all-groups execution. Command-boundary assertions failed before both corrections;
+the focused matrix and installed-smoke checks subsequently passed. A real
+external uv launch confirmed Python 3.12.15 and installed-package origin.
+
+A fresh external wheel/sdist pair passed the default source-independent
+sdist-to-wheel build, strict metadata and exact inventory validation. The wheel
+passed actual installed smoke and both collection-shape controls in a newly
+created wheel-only Python 3.12.15 environment. The retained local path and
+artifact hashes are recorded in the execution ledger. No external source matrix
+or repeated full acceptance suite is inferred from this smoke.
+
+The refreshed security scan identified five public Git revision pins missing
+from the existing secrets baseline. Jeff explicitly approved their individual
+false-positive entries after native source revisions were verified. Only those
+five entries were added; existing entries, detector settings and the baseline
+timestamp were preserved. This is not blanket suppression or regeneration.
+
+The bounded code review found no actionable defect. Installed uv-only hooks
+supply the stable checkpoint's complete routine gate; its actual result belongs
+in the ledger and retained command log. Focused results and prior gates do not
+substitute for that observation. Current analysis still preserves the cognitive
+UNKNOWN and four native Lizard discovery errors, along with reviewed Bandit
+warnings. Jeff reconfirmed the cognitive extraction is unavailable. Network
+proof remains timed out and remote exact-commit CI remains unobserved. Coverage
+and complete mutation acceptance must be reconciled against the final candidate;
+older measurements are not relabeled current. Tasks 4/7, integration and STRICT
+acceptance remain open.
+
+Local evidence is under the existing plan workspace: `continue-count-*`,
+`continue-matrix-*`, `continue-smoke-*`, `continue-endpoint-alias-review.md`,
+`continue-remediation-review.md`, `continue-artifact-path.txt`, and refreshed
+`continue-analysis*` reports. The ledger preserves the exact scope, mistakes,
+corrections and remaining actions. No integration, remote sync or release was
+performed.
+
 **Overall: onboarding in progress; STRICT acceptance incomplete.**

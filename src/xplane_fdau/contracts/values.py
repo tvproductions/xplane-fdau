@@ -57,6 +57,16 @@ class _Missing(Enum):
 _OMITTED = _Missing.OMITTED
 
 
+def _ordered_array(value: object, *, path: str) -> list[object] | tuple[object, ...]:
+    """Check container shape before inspecting any element's domain."""
+    if type(value) not in (list, tuple):
+        raise ContractShapeError("expected ordered array", path=path)
+    checked = cast(list[object] | tuple[object, ...], value)
+    if len(checked) > 65535:
+        raise ContractShapeError("array exceeds collection limit", path=path)
+    return checked
+
+
 def _tag(value: object, vocabulary: type[StrEnum], *, path: str) -> StrEnum:
     if type(value) not in (str, vocabulary):
         raise ContractShapeError("expected representation tag", path=path)
@@ -103,13 +113,11 @@ def _inline_check(representation: object, element: object, value: object, phase:
             return tag, element, value
         raise CanonicalJSONError("null is prohibited", path="/value")
     if array or tag == ValueRepresentation.VECTOR:
-        if type(value) not in (list, tuple):
-            raise ContractShapeError("expected ordered array", path="/value")
-        value = cast(list[object] | tuple[object, ...], value)
+        value = _ordered_array(value, path="/value")
         scalar = str(element) if array else "real"
         for index, item in enumerate(value):
             _scalar_check(item, scalar, phase, path=f"/value/{index}")
-        if phase == 2 and (len(value) > 65535 or (tag == ValueRepresentation.VECTOR and not value)):
+        if phase == 2 and tag == ValueRepresentation.VECTOR and not value:
             raise ContractValidationError("value count outside range", path="/value")
         value = tuple(value)
     else:
@@ -335,13 +343,11 @@ def _array_set_check(value: object, phase: int, *, path: str, media: bool) -> No
         if phase == 0:
             return
         raise CanonicalJSONError("null is prohibited", path=path)
-    if type(value) not in (list, tuple):
-        raise ContractShapeError("expected ordered array", path=path)
-    value = cast(list[object] | tuple[object, ...], value)
+    value = _ordered_array(value, path=path)
     for index, item in enumerate(value):
         _scalar_check(item, "string", min(phase, 1), path=f"{path}/{index}")
     if phase == 2:
-        if not 1 <= len(value) <= 65535:
+        if not value:
             raise ContractValidationError("allow-list count outside range", path=path)
         previous: str | None = None
         for index, item in enumerate(value):

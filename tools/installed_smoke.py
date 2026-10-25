@@ -75,7 +75,8 @@ def _command_path() -> Path:
 
 
 def _run(command: list[str]) -> None:
-    result = subprocess.run(command, capture_output=True, text=True, check=False)
+    launch = ["uv", "run", "--offline", "--no-project", "--python", sys.executable, *command]
+    result = subprocess.run(launch, capture_output=True, text=True, check=False)
     if result.returncode != 0:
         raise SmokeError(f"command failed ({' '.join(command)}): {result.stderr.strip()}")
 

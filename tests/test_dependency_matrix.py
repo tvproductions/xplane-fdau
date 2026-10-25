@@ -33,7 +33,10 @@ class MatrixContractTests(unittest.TestCase):
         for version in PYTHONS:
             with self.subTest(version=version):
                 interpreter = installed_interpreter(Path("source") / version, "nt")
-                self.assertEqual(source_test_command(interpreter), (str(interpreter), "-m", "unittest", "discover", "-q"))
+                self.assertEqual(
+                    source_test_command(interpreter),
+                    ("uv", "run", "--offline", "--no-project", "--python", str(interpreter), "python", "-m", "unittest", "discover", "-q"),
+                )
 
     def test_installed_interpreter_on_both_platforms(self) -> None:
         self.assertEqual(installed_interpreter(Path("venv"), "nt"), Path("venv") / "Scripts" / "python.exe")
@@ -102,8 +105,19 @@ class MatrixRunTests(unittest.TestCase):
             [command for command, _ in self.calls[:3]],
             [
                 ("uv", "build", "--offline", "--no-sources", "--out-dir", str(self.artifact_dir)),
-                ("uv", "run", "--offline", "--frozen", "twine", "check", "--strict", str(self.artifact_dir / WHEEL_NAME), str(self.artifact_dir / SDIST_NAME)),
-                ("uv", "run", "--offline", "--frozen", "python", "tools/release.py", "check-dist", str(self.artifact_dir)),
+                (
+                    "uv",
+                    "run",
+                    "--offline",
+                    "--locked",
+                    "--all-groups",
+                    "twine",
+                    "check",
+                    "--strict",
+                    str(self.artifact_dir / WHEEL_NAME),
+                    str(self.artifact_dir / SDIST_NAME),
+                ),
+                ("uv", "run", "--offline", "--locked", "--all-groups", "python", "tools/release.py", "check-dist", str(self.artifact_dir)),
             ],
         )
         self.assertEqual([(entry.command, entry.exit_code) for entry in result.commands], [(command, 0) for command, _ in self.calls])
@@ -117,6 +131,18 @@ class MatrixRunTests(unittest.TestCase):
                 self.assertTrue(result.success, result.error)
                 requests = [command[-1] for command, _ in self.calls if command[:2] == ("uv", "venv")]
                 self.assertEqual([pin, pin], requests)
+
+    def test_python_execution_uses_uv_without_project_discovery_in_external_environments(self) -> None:
+        result = run_matrix(self.root, self.runner, self.make_temp)
+        self.assertTrue(result.success, result.error)
+        assert self.artifact_dir is not None
+        source_test = next(command for command, _ in self.calls if "unittest" in command)
+        smoke = next(command for command, _ in self.calls if str(self.root / "tools/installed_smoke.py") in command)
+        for command, environment in ((source_test, "source-3.12.15"), (smoke, "venv-3.12.15")):
+            with self.subTest(environment=environment):
+                self.assertEqual(("uv", "run", "--offline", "--no-project", "--python"), command[:5])
+                self.assertEqual(Path(command[5]), installed_interpreter(self.artifact_dir / environment, __import__("os").name))
+                self.assertEqual("python", command[6])
 
     def test_unsupported_or_inexact_python_request_stops_before_build(self) -> None:
         for pin in ("3.13.1", "3.12", "3.12.15\n3.13.1"):
@@ -213,7 +239,13 @@ class MatrixRunTests(unittest.TestCase):
             self.assertEqual(venv, (("uv", "venv", str(venv_dir), "--python", version), self.root))
             interpreter = installed_interpreter(venv_dir, __import__("os").name)
             self.assertEqual(install, (("uv", "pip", "install", "--python", str(interpreter), str(wheel)), self.root))
-            self.assertEqual(smoke, ((str(interpreter), str(self.root / "tools/installed_smoke.py"), VERSION), self.artifact_dir))
+            self.assertEqual(
+                smoke,
+                (
+                    ("uv", "run", "--offline", "--no-project", "--python", str(interpreter), "python", str(self.root / "tools/installed_smoke.py"), VERSION),
+                    self.artifact_dir,
+                ),
+            )
             self.assertFalse(self.root == source_dir or self.root in source_dir.parents)
             self.assertFalse(self.root == venv_dir or self.root in venv_dir.parents)
 
@@ -238,7 +270,7 @@ class MatrixRunTests(unittest.TestCase):
     def test_cleanup_rejects_replaced_directory_identity(self) -> None:
         def runner(command: tuple[str, ...], cwd: Path) -> int:
             self.runner(command, cwd)
-            if (command[0].endswith("python.exe") or command[0].endswith("/python")) and command[-1] == VERSION and "venv-3.12" in command[0]:
+            if str(self.root / "tools/installed_smoke.py") in command:
                 assert self.artifact_dir is not None
                 self.artifact_dir.rename(self.external / "preserved-original")
                 self.artifact_dir.mkdir()

@@ -61,7 +61,7 @@ def expected_artifact_names(version: str) -> set[str]:
 
 def source_test_command(interpreter: Path) -> tuple[str, ...]:
     """Run source unittest under one external interpreter without changing project .venv."""
-    return (str(interpreter), "-m", "unittest", "discover", "-q")
+    return ("uv", "run", "--offline", "--no-project", "--python", str(interpreter), "python", "-m", "unittest", "discover", "-q")
 
 
 def installed_interpreter(venv_dir: Path, os_name: str) -> Path:
@@ -200,8 +200,8 @@ def run_matrix(root: Path, runner: Runner = _default_runner, make_temp: TempFact
         sdist = artifact_dir / f"{PACKAGE}-{version}.tar.gz"
         _inspect_payload(wheel, sdist, version)
         hashes = {wheel.name: _sha256(wheel), sdist.name: _sha256(sdist)}
-        run(("uv", "run", "--offline", "--frozen", "twine", "check", "--strict", str(wheel), str(sdist)), root)
-        run(("uv", "run", "--offline", "--frozen", "python", "tools/release.py", "check-dist", str(artifact_dir)), root)
+        run(("uv", "run", "--offline", "--locked", "--all-groups", "twine", "check", "--strict", str(wheel), str(sdist)), root)
+        run(("uv", "run", "--offline", "--locked", "--all-groups", "python", "tools/release.py", "check-dist", str(artifact_dir)), root)
         requirements = artifact_dir / "source-requirements.txt"
         run(
             ("uv", "--quiet", "export", "--frozen", "--all-groups", "--no-emit-project", "--format", "requirements.txt", "--output-file", str(requirements)),
@@ -220,7 +220,10 @@ def run_matrix(root: Path, runner: Runner = _default_runner, make_temp: TempFact
             run(("uv", "venv", str(venv_dir), "--python", python_version), root)
             interpreter = installed_interpreter(venv_dir, os.name)
             run(("uv", "pip", "install", "--python", str(interpreter), str(wheel)), root)
-            run((str(interpreter), str(root / "tools/installed_smoke.py"), version), artifact_dir)
+            run(
+                ("uv", "run", "--offline", "--no-project", "--python", str(interpreter), "python", str(root / "tools/installed_smoke.py"), version),
+                artifact_dir,
+            )
         shutil.rmtree(_cleanup_target(root, owned))
     except (OSError, ValueError, RuntimeError, KeyError, TypeError, zipfile.BadZipFile, tarfile.TarError) as error:
         preserved = (owned.path,) if owned is not None else ()

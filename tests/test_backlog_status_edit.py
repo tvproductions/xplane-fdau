@@ -594,6 +594,27 @@ class LifecyclePlanningTests(unittest.TestCase):
         sources = {path.relative_to(root): path.read_bytes() for path in root.rglob("*") if path.is_file() and ".git" not in path.relative_to(root).parts}
         return sources, (root / ".git/index").read_bytes(), run_git(root, "rev-parse", "HEAD")
 
+    def _lifecycle_plan(self, root: Path, status: str, plan_status: str | None, link_plan: bool | None) -> bool:
+        """Prepare the selected fixture plan and its eligible completion evidence."""
+        requires_plan = status in {"planned", "in_progress", "implemented", "reviewed", "verified"}
+        effective_link_plan = requires_plan if link_plan is None else link_plan
+        effective_plan_status = plan_status
+        if effective_plan_status is None and (requires_plan or effective_link_plan):
+            effective_plan_status = "approved" if status == "planned" else "in_progress" if status == "in_progress" else "completed"
+        completion_path = ".superpowers/sdd/t1-2/completion.md"
+        if effective_plan_status is not None:
+            completion_evidence = completion_path if effective_plan_status == "completed" else None
+            write_active_plan(
+                root,
+                "docs/superpowers/plans/t1-2.md",
+                status=effective_plan_status,
+                completion_evidence=completion_evidence,
+            )
+            if completion_evidence is not None:
+                write_evidence(root, completion_path, child="T1.2", gate=None)
+
+        return effective_link_plan
+
     def lifecycle_root(
         self,
         status: str,
@@ -635,22 +656,7 @@ class LifecyclePlanningTests(unittest.TestCase):
         effective_design_status = design_status or ("draft" if status == "designing" else "approved")
         write_active_design(root, "docs/superpowers/specs/t1-design.md", children=("T1.2",), status=effective_design_status)
 
-        requires_plan = status in {"planned", "in_progress", "implemented", "reviewed", "verified"}
-        effective_link_plan = requires_plan if link_plan is None else link_plan
-        effective_plan_status = plan_status
-        if effective_plan_status is None and (requires_plan or effective_link_plan):
-            effective_plan_status = "approved" if status == "planned" else "in_progress" if status == "in_progress" else "completed"
-        completion_path = ".superpowers/sdd/t1-2/completion.md"
-        if effective_plan_status is not None:
-            completion_evidence = completion_path if effective_plan_status == "completed" else None
-            write_active_plan(
-                root,
-                "docs/superpowers/plans/t1-2.md",
-                status=effective_plan_status,
-                completion_evidence=completion_evidence,
-            )
-            if completion_evidence is not None:
-                write_evidence(root, completion_path, child="T1.2", gate=None)
+        effective_link_plan = self._lifecycle_plan(root, status, plan_status, link_plan)
 
         review_path = ".superpowers/sdd/t1-2/review.md"
         has_review = status in {"reviewed", "verified"}

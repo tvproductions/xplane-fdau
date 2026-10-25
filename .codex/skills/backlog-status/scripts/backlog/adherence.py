@@ -156,6 +156,20 @@ def _historical_findings(loaded: AuditLoad) -> list[Finding]:
     return findings
 
 
+def _declared_cross_epic(loaded: AuditLoad, design_epic: str, covered_epics: set[str], known: tuple[str, ...]) -> bool:
+    """Check explicit cross-epic declarations without inferring authorization."""
+    declarations = loaded.sources.roadmap_cross_epic_designs
+    allowed = False
+    for declaration in declarations:
+        if declaration.anchor_epic != design_epic:
+            continue
+        member_set = set(declaration.members)
+        allowed = covered_epics <= member_set if all("." not in member for member in member_set) else set(known) <= member_set
+        if allowed:
+            break
+    return allowed
+
+
 def _design_findings(loaded: AuditLoad) -> list[Finding]:
     if "ROADMAP.md" in loaded.invalid_paths:
         return []
@@ -163,7 +177,6 @@ def _design_findings(loaded: AuditLoad) -> list[Finding]:
     roadmap_children = {child.id: child for child in loaded.snapshot.roadmap.local_children}
     roadmap_epics = {epic.id for epic in loaded.snapshot.roadmap.epics}
     order = {child.id: index for index, child in enumerate(loaded.snapshot.roadmap.local_children)}
-    declarations = loaded.sources.roadmap_cross_epic_designs
     for design in loaded.snapshot.artifacts.specifications:
         epic_source = _fixed_metadata_source(design, 6)
         children_source = _fixed_metadata_source(design, 7)
@@ -183,14 +196,7 @@ def _design_findings(loaded: AuditLoad) -> list[Finding]:
                 findings.append(_finding("artifact.spec.child-order", children_source, "design children are not in roadmap order"))
         covered_epics = {roadmap_children[child].epic for child in known}
         if len(covered_epics) > 1:
-            allowed = False
-            for declaration in declarations:
-                if declaration.anchor_epic != design.epic:
-                    continue
-                member_set = set(declaration.members)
-                allowed = covered_epics <= member_set if all("." not in member for member in member_set) else set(known) <= member_set
-                if allowed:
-                    break
+            allowed = _declared_cross_epic(loaded, design.epic, covered_epics, known)
             if not allowed:
                 findings.append(
                     _finding(
@@ -306,71 +312,106 @@ def _gate_drift_findings(
     return findings
 
 
-def _backlog_link_findings(loaded: AuditLoad) -> list[Finding]:
+def _governing_spec_findings(
+    loaded: AuditLoad, child: BacklogChild, source: SourceLocation, state: ChildStatus, governing: SpecificationArtifact
+) -> list[Finding]:
+    """Check lifecycle eligibility, child coverage and acceptance drift together."""
+    findings: list[Finding] = []
+    allowed_statuses = {"draft", "approved", "implemented"} if state == "designing" else {"approved", "implemented"}
+    if governing.status not in allowed_statuses:
+        findings.append(_finding("artifact.spec.status", source, f"design status {governing.status} cannot govern {state}", node=child.id))
+    if child.id not in governing.children:
+        findings.append(_finding("artifact.spec.coverage", source, "linked design does not cover backlog child", node=child.id))
+    if "ROADMAP.md" not in loaded.invalid_paths and governing.status in allowed_statuses and child.id in governing.children:
+        findings.extend(_gate_drift_findings(loaded, child, governing))
+    return findings
+
+
+def _specification_link_findings(
+    loaded: AuditLoad, child: BacklogChild, source: SourceLocation, state: ChildStatus, specifications: dict[str, SpecificationArtifact]
+) -> list[Finding]:
+    """Validate a child specification path before consulting its governing design."""
     findings: list[Finding] = []
     root = loaded.snapshot.root
+    governing: SpecificationArtifact | None = None
+    if child.specification is not None:
+        _resolved, problem = _resolved_regular_markdown(root, child.specification)
+        if problem is not None:
+            code = "artifact.spec.missing" if problem == "missing" else "artifact.spec.path"
+            findings.append(_finding(code, source, f"specification link is {problem}", node=child.id))
+        elif child.specification in loaded.invalid_paths:
+            pass
+        elif state != "queued":
+            governing = specifications.get(child.specification)
+            if governing is None:
+                findings.append(_finding("artifact.spec.governing", source, "lifecycle requires an active governing design", node=child.id))
+            else:
+                findings.extend(_governing_spec_findings(loaded, child, source, state, governing))
+    elif state in _GOVERNED_STATES:
+        findings.append(_finding("artifact.spec.required", source, f"{state} child requires a governing design", node=child.id))
+
+    return findings
+
+
+def _plan_requirement(state: ChildStatus) -> tuple[set[str] | None, str | None]:
+    """Keep the stage-specific plan policy and its diagnostic wording together."""
+    allowed_statuses: set[str] | None = None
+    requirement: str | None = None
+    if state == "planned":
+        allowed_statuses = {"approved", "in_progress"}
+        requirement = "an approved or in_progress plan"
+    elif state == "in_progress":
+        allowed_statuses = {"in_progress", "completed"}
+        requirement = "an in_progress plan or a completed plan with eligible completion evidence"
+    elif state in {"implemented", "reviewed", "verified", "released"}:
+        allowed_statuses = {"completed"}
+        requirement = "a completed plan"
+    return allowed_statuses, requirement
+
+
+def _plan_link_findings(
+    loaded: AuditLoad, child: BacklogChild, source: SourceLocation, state: ChildStatus, plans: dict[str, PlanArtifact], historical_paths: set[str]
+) -> list[Finding]:
+    """Validate linked plan identity and stage eligibility after resolving its path."""
+    findings: list[Finding] = []
+    root = loaded.snapshot.root
+    linked_plan: PlanArtifact | None = None
+    if child.plan is not None:
+        _resolved, problem = _resolved_regular_markdown(root, child.plan)
+        if problem is not None:
+            code = "artifact.plan.missing" if problem == "missing" else "artifact.plan.path"
+            findings.append(_finding(code, source, f"plan link is {problem}", node=child.id))
+        elif child.plan not in loaded.invalid_paths:
+            linked_plan = plans.get(child.plan)
+            if linked_plan is None and child.plan not in historical_paths:
+                findings.append(_finding("artifact.plan.governing", source, "plan link must select an active implementation plan", node=child.id))
+            elif linked_plan is not None and linked_plan.child != child.id:
+                findings.append(_finding("artifact.plan.child", source, "linked plan covers a different child", node=child.id))
+            elif linked_plan is not None and child.specification is not None and linked_plan.source_specification != child.specification:
+                findings.append(_finding("artifact.plan.source", source, "linked plan cites a different governing design", node=child.id))
+    if state in {"planned", "in_progress", "implemented", "reviewed", "verified", "released"} and child.plan is None:
+        findings.append(_finding("artifact.plan.required", source, f"{state} child requires an implementation plan", node=child.id))
+    if linked_plan is not None and linked_plan.child == child.id:
+        allowed_statuses, requirement = _plan_requirement(state)
+        if allowed_statuses is not None and linked_plan.status not in allowed_statuses:
+            findings.append(_finding("artifact.plan.status", source, f"{state} child requires {requirement}", node=child.id))
+    return findings
+
+
+def _backlog_link_findings(loaded: AuditLoad) -> list[Finding]:
+    findings: list[Finding] = []
     specifications = {item.path: item for item in loaded.snapshot.artifacts.specifications}
     plans = {item.path: item for item in loaded.snapshot.artifacts.plans}
     historical_paths = {item.path for item in loaded.snapshot.artifacts.historical}
     for index, child in enumerate(loaded.snapshot.backlog.children):
         source = _child_source(loaded, index, child)
         state = _effective_state(child)
-        governing: SpecificationArtifact | None = None
-        if child.specification is not None:
-            _resolved, problem = _resolved_regular_markdown(root, child.specification)
-            if problem is not None:
-                code = "artifact.spec.missing" if problem == "missing" else "artifact.spec.path"
-                findings.append(_finding(code, source, f"specification link is {problem}", node=child.id))
-            elif child.specification in loaded.invalid_paths:
-                pass
-            elif state != "queued":
-                governing = specifications.get(child.specification)
-                if governing is None:
-                    findings.append(_finding("artifact.spec.governing", source, "lifecycle requires an active governing design", node=child.id))
-                else:
-                    allowed_statuses = {"draft", "approved", "implemented"} if state == "designing" else {"approved", "implemented"}
-                    if governing.status not in allowed_statuses:
-                        findings.append(_finding("artifact.spec.status", source, f"design status {governing.status} cannot govern {state}", node=child.id))
-                    if child.id not in governing.children:
-                        findings.append(_finding("artifact.spec.coverage", source, "linked design does not cover backlog child", node=child.id))
-                    if "ROADMAP.md" not in loaded.invalid_paths and governing.status in allowed_statuses and child.id in governing.children:
-                        findings.extend(_gate_drift_findings(loaded, child, governing))
-        elif state in _GOVERNED_STATES:
-            findings.append(_finding("artifact.spec.required", source, f"{state} child requires a governing design", node=child.id))
+        findings.extend(_specification_link_findings(loaded, child, source, state, specifications))
 
         if state == "queued" and any(item.satisfied for item in child.gates.items):
             findings.append(_finding("artifact.spec.context-gate", source, "queued contextual reference cannot justify a checked gate", node=child.id))
 
-        linked_plan: PlanArtifact | None = None
-        if child.plan is not None:
-            _resolved, problem = _resolved_regular_markdown(root, child.plan)
-            if problem is not None:
-                code = "artifact.plan.missing" if problem == "missing" else "artifact.plan.path"
-                findings.append(_finding(code, source, f"plan link is {problem}", node=child.id))
-            elif child.plan not in loaded.invalid_paths:
-                linked_plan = plans.get(child.plan)
-                if linked_plan is None and child.plan not in historical_paths:
-                    findings.append(_finding("artifact.plan.governing", source, "plan link must select an active implementation plan", node=child.id))
-                elif linked_plan is not None and linked_plan.child != child.id:
-                    findings.append(_finding("artifact.plan.child", source, "linked plan covers a different child", node=child.id))
-                elif linked_plan is not None and child.specification is not None and linked_plan.source_specification != child.specification:
-                    findings.append(_finding("artifact.plan.source", source, "linked plan cites a different governing design", node=child.id))
-        if state in {"planned", "in_progress", "implemented", "reviewed", "verified", "released"} and child.plan is None:
-            findings.append(_finding("artifact.plan.required", source, f"{state} child requires an implementation plan", node=child.id))
-        if linked_plan is not None and linked_plan.child == child.id:
-            allowed_statuses: set[str] | None = None
-            requirement: str | None = None
-            if state == "planned":
-                allowed_statuses = {"approved", "in_progress"}
-                requirement = "an approved or in_progress plan"
-            elif state == "in_progress":
-                allowed_statuses = {"in_progress", "completed"}
-                requirement = "an in_progress plan or a completed plan with eligible completion evidence"
-            elif state in {"implemented", "reviewed", "verified", "released"}:
-                allowed_statuses = {"completed"}
-                requirement = "a completed plan"
-            if allowed_statuses is not None and linked_plan.status not in allowed_statuses:
-                findings.append(_finding("artifact.plan.status", source, f"{state} child requires {requirement}", node=child.id))
+        findings.extend(_plan_link_findings(loaded, child, source, state, plans, historical_paths))
     return findings
 
 

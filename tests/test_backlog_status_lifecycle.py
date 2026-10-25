@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / ".codex/skills/backlog-status/scripts"))
 
 from backlog.audit import load_audit  # noqa: E402  # ty: ignore[unresolved-import]
-from backlog.model import AuditPolicy, HistoricalAdmission  # noqa: E402  # ty: ignore[unresolved-import]
+from backlog.model import AuditLoad, AuditPolicy, HistoricalAdmission  # noqa: E402  # ty: ignore[unresolved-import]
 
 from tests.backlog_audit_support import evidence_fixture, initialize_git, replace_text, run_git, write_evidence  # noqa: E402
 
@@ -263,6 +263,15 @@ class LifecycleTests(unittest.TestCase):
             self.assertIn("lifecycle.historical-plan", self.codes(loaded))
             (self.root / path).write_bytes(original)
 
+    def _copy_historical_evidence(self, root: Path, original: AuditLoad) -> None:
+        """Preserve exact existing acceptance, review and completion evidence bytes."""
+        paths = {path for child in original.snapshot.backlog.children for item in child.gates.items for path in item.evidence}
+        paths.update(child.review_evidence for child in original.snapshot.backlog.children if child.review_evidence)
+        paths.update(plan.completion_evidence for plan in original.snapshot.artifacts.plans if plan.completion_evidence)
+        for path in paths:
+            (root / path).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / path, root / path)
+
     def test_real_d1_historical_controls(self) -> None:
         # The real D1.2 backlog wording awaits Task 5's reviewed reconciliation.
         # Normalize only this isolated copy to the approved design statements;
@@ -272,12 +281,7 @@ class LifecycleTests(unittest.TestCase):
         for name in ("BACKLOG.md", "ROADMAP.md"):
             shutil.copyfile(ROOT / name, root / name)
         original = load_audit(ROOT)
-        paths = {path for child in original.snapshot.backlog.children for item in child.gates.items for path in item.evidence}
-        paths.update(child.review_evidence for child in original.snapshot.backlog.children if child.review_evidence)
-        paths.update(plan.completion_evidence for plan in original.snapshot.artifacts.plans if plan.completion_evidence)
-        for path in paths:
-            (root / path).parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(ROOT / path, root / path)
+        self._copy_historical_evidence(root, original)
         child = next(child for child in original.snapshot.backlog.children if child.id == "D1.2")
         acceptance = next(item for item in original.sources.design_acceptance if item.child == child.id and item.path == child.specification)
         lines = (root / "BACKLOG.md").read_text(encoding="utf-8").splitlines()

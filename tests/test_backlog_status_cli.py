@@ -432,7 +432,7 @@ class BacklogStatusCliTests(unittest.TestCase):
     def test_executable_stdout_is_utf8_with_lf_even_under_legacy_pipe_encoding(self) -> None:
         for args in (["status", "--json"], ["audit"], ["next"]):
             result = subprocess.run(
-                [sys.executable, str(SCRIPTS / "backlog_status.py"), *args],
+                ["uv", "run", "--locked", "--all-groups", "python", str(SCRIPTS / "backlog_status.py"), *args],
                 cwd=ROOT,
                 env={**os.environ, "PYTHONIOENCODING": "cp1252"},
                 capture_output=True,

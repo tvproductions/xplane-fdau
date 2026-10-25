@@ -5,7 +5,6 @@ import importlib.util
 import json
 import os
 import subprocess
-import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -24,7 +23,18 @@ class MutationExecutionTests(unittest.TestCase):
                 "import unittest\nclass UnicodeFailure(unittest.TestCase):\n    def test_failure(self):\n        self.fail('caf\u00e9')\n", encoding="utf-8"
             )
             result = subprocess.run(
-                (sys.executable, "-c", mutation._TEST_SCRIPT, "unicode_tests"),
+                (
+                    "uv",
+                    "run",
+                    "--project",
+                    str(Path(__file__).resolve().parents[1]),
+                    "--locked",
+                    "--all-groups",
+                    "python",
+                    "-c",
+                    mutation._TEST_SCRIPT,
+                    "unicode_tests",
+                ),
                 cwd=root,
                 env=dict(os.environ, PYTHONIOENCODING="cp1252"),
                 capture_output=True,
@@ -54,6 +64,7 @@ class MutationExecutionTests(unittest.TestCase):
 
                     def runner(command, calls=calls, workspaces=workspaces, outcome=outcome, **kwargs):
                         calls.append(command)
+                        self.assertEqual(("uv", "run", "--project", str(root), "--locked", "--all-groups", "python"), command[:7])
                         copy = kwargs["cwd"]
                         workspaces.append(copy)
                         self.assertNotEqual(root, copy)

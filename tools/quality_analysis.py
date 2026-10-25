@@ -257,7 +257,11 @@ def audit_dependencies(root: Path, runner: Runner = run_bounded) -> int:
                 return 2
             _validate_export(target)
             command = (
-                sys.executable,
+                "uv",
+                "run",
+                "--locked",
+                "--all-groups",
+                "python",
                 "-m",
                 "pip_audit",
                 "--requirement",

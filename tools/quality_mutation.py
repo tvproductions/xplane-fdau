@@ -13,7 +13,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 Runner = Callable[..., subprocess.CompletedProcess[str]]
-_SELECTED_TESTS = ("tests.test_contract_values", "tests.test_canonical_json", "tests.test_contract_identity")
+_SELECTED_TESTS = ("tests.test_contract_values", "tests.test_canonical_json", "tests.test_contract_identity", "tests.test_contract_provenance")
 _TEST_SCRIPT = """import sys
 from pathlib import Path
 import importlib.util
@@ -52,7 +52,7 @@ def _write_config(root: Path, destination: Path, command: tuple[str, ...]) -> Pa
         if path.is_absolute() or ".." in path.parts or not (destination / path).is_file():
             raise ValueError("mutation scope must name existing contained source files")
     # Cosmic Ray uses POSIX shlex.split on all platforms, then shell=False.
-    # Forward slashes preserve a Windows interpreter path through that parser.
+    # Forward slashes preserve a Windows executable path through that parser.
     native_command = shlex.join((command[0].replace("\\", "/"), *command[1:]))
     config = destination / "mutation.toml"
     config.write_text(
@@ -87,12 +87,13 @@ def run_mutation(root: Path, output: Path, runner: Runner = subprocess.run) -> i
             _copy_sources(root, copy)
             script = copy / "run_selected_tests.py"
             script.write_text(_TEST_SCRIPT, encoding="utf-8")
-            tests = (sys.executable, "-B", script.name, *_SELECTED_TESTS)
+            launch = ("uv", "run", "--project", str(root.resolve()), "--locked", "--all-groups", "python")
+            tests = (*launch, "-B", script.name, *_SELECTED_TESTS)
             config = _write_config(root, copy, tests)
             if runner(tests, cwd=copy, check=False, timeout=60).returncode:
                 json.dump({"baseline": "FAIL", "results": []}, report)
                 return 2
-            native = (sys.executable, "-c", "from cosmic_ray.cli import main; main()")
+            native = (*launch, "-c", "from cosmic_ray.cli import main; main()")
             session = "session.sqlite"
             for args in (("init", config.name, session), ("exec", config.name, session)):
                 if runner((*native, *args), cwd=copy, check=False, timeout=3600).returncode:

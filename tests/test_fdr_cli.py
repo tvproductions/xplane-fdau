@@ -313,7 +313,7 @@ class FDRCliTests(unittest.TestCase):
     def test_console_script_executes_the_public_help_surface(self) -> None:
         script = Path(sys.executable).parent / ("xplane-fdau.exe" if os.name == "nt" else "xplane-fdau")
         completed = subprocess.run(
-            [str(script), "--help"],
+            ["uv", "run", "--locked", "--all-groups", str(script), "--help"],
             cwd=Path(__file__).parents[1],
             capture_output=True,
             text=True,

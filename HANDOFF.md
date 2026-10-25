@@ -1,32 +1,298 @@
 # Project Handoff
 
-## Current position — 2026-10-25, strict heavy starter onboarding
+## Task 4 resumed checkpoint — 2026-10-25
 
-This current summary supersedes the older checkpoints below. C1.3 is verified
-with 4/4 gates and accepted independent review in BACKLOG; product next is
-C1.4, with no product child selected. The broader test-quality audit remains
-open; onboarding replaces only the affected weak guidance snapshots.
+The restart below was followed in the existing feature worktree. The retained
+twelve tooling/test edits were preserved, and remediation proceeded in bounded
+groups. See the [current evidence](docs/reviews/2026-10-25-strict-heavy-starter-adoption.md#resumed-task-4-remediation-checkpoint)
+and the existing ignored plan ledger for exact commands and raw results.
 
-Mandatory starter alignment is approved and in progress on the isolated
-`chore/strict-heavy-onboarding` branch. Read its
-[approved plan](docs/superpowers/plans/2026-10-25-strict-heavy-starter-onboarding.md)
-and [dated evidence](docs/reviews/2026-10-25-strict-heavy-starter-adoption.md).
-Exact environment policy and four routine checks are implemented; native source
-configuration and explicit heavy settings have been reconciled. Fresh-session
-discovery of the selected native pair and project update skill passed; final
-engineering acceptance remains incomplete.
-Backplane stays disabled and FDAU delivery authorities remain local.
+Current result: 23 additional inherited mutation survivors are killed by native
+differential controls; 95 have individually mapped, bounded equivalence reviews;
+two endpoint-alias questions and collection-count error taxonomy remain open.
+All 22 retained Bandit findings have scoped dispositions, including two retained
+trust advisories. No runtime library source changed. Current focused contract
+verification passed 76 tests; focused analysis/mutation checks passed 20, and
+whole-source Ruff/format/ty passed. Mandatory installed hooks supply the final
+checkpoint save gate; check `task4-resume-commit.log`, the ledger and Git history
+for its observed result. The first `task4-resume-commit.log` attempt was stopped:
+the inherited native hook launcher invoked the venv interpreter directly. Its
+preserved original and corrected uv-only launcher are local state, and only
+`task4-resume-commit-uv.log` can establish the compliant save. Earlier 644-test
+evidence is historical.
 
-Cognitive analysis is explicitly UNKNOWN until Jeff/upstream extracts the shared
-library from gzkit and integrates it into the starter. No FDAU-local substitute
-is authorized. Lizard discovery errors and remaining analyzer findings also stay
-open. Continue independent onboarding verification without declaring STRICT
-compliance. Main integration, remote sync and releases remain separately gated.
-The feature environment owns the shared installed pre-commit launcher; reinstall
-it from verified main before removing the feature worktree at eventual integration.
+Interactive Python commands and native mutation test children used locked
+all-groups uv. The inherited hook-launcher violation above was corrected before
+the save retry. Preserve its uv-only launch when reinstalling from verified main;
+the default generated pre-commit launcher uses a direct interpreter. Five subprocess test modules and mutation/audit
+composition were reconciled accordingly. Existing provenance tests are now in
+the selected mutation suite. The external dependency matrix still constructs
+direct interpreter commands: reconcile it before invoking it under the current
+all-Python-through-uv instruction. No network audit or full mutation batch was
+rerun. Native installed-source inspection passed; no new discovery claim follows.
 
-The historical checkpoint below describes its original state, not current C1.3
-approval or delivery authority. Recheck Git state and backlog audit/next on entry.
+Next bounded action: reconcile general collection-limit error taxonomy against
+the canonical specification and completed C1.3 plan, including existing inline
+and allow-list count assertions, before changing runtime behavior or freezing an
+error priority. Retain endpoint-alias uncertainty unless a meaningful public
+control or bounded equivalence argument resolves it. Do not repeat the completed
+Unicode/exact-type/payload groups or the 22-finding security review.
+
+Task 4/7 and STRICT acceptance remain incomplete. Cognitive extraction, four
+Lizard discovery omissions, timed-out network proof and exact-commit CI remain
+open. Main/unrelated worktrees remain untouched; no integration, push or release
+is authorized. Verify current feature HEAD and cleanliness because saving this
+checkpoint creates a later commit than the restart's `ea50bf0`.
+
+## Restart point — 2026-10-25 22:15 UTC, failed resume corrected
+
+Jeff requested this refreshed handoff after stopping a failed resume. **Start
+from the existing work, not from a new implementation or template migration.**
+The Task 4 resume point and retained evidence below remain applicable. STRICT
+acceptance is incomplete; no plan task was completed in the failed resume.
+
+### What happened and what was verified
+
+- The agent incorrectly told Jeff to open the feature worktree in another
+  session because the advertised skills came from main. Jeff had already
+  started a fresh session and explicitly directed the agent to manage the
+  worktree and source mismatch itself. That instruction is binding.
+- The agent then bypassed uv's cache-lock permission failure by invoking
+  `.venv/Scripts/python.exe` directly. Jeff explicitly restated that **ALL
+  Python execution must go through uv**. The direct runs are workflow
+  violations and must not be used as onboarding acceptance evidence.
+- A subsequent authorized `uv run --locked --all-groups python
+  .codex/skills/backlog-status/scripts/backlog_status.py audit` exited 0,
+  with no findings. Its local log is
+  `.superpowers/sdd/2026-10-25-strict-heavy-starter-onboarding/resume-uv-audit.log`.
+  Handoff closeout reran both `audit` and `next` through that same uv prefix;
+  both exited 0 with no findings. Their local logs are
+  `restart-handoff-uv-audit.log` and `restart-handoff-uv-next.log` in the same
+  directory. Both recommend `write_plan C1.4`; this does not displace the
+  authorized crosscutting onboarding work or select C1.4. Earlier direct
+  runs do not supply acceptance evidence.
+- Native plugin listings from the feature directory showed the selected
+  SP 7.0.0 and gz-skills 0.8.0 installed/enabled, Backplane disabled and the
+  legacy gz-skills source disabled. Actual cached Git HEADs matched the
+  bundle pins. Reading these installed sources is possible here. This is
+  installation/provenance evidence; it does not re-prove fresh discovery.
+  Verified installed skill roots are
+  `C:/Users/Jeff/.codex/plugins/cache/skills-first-starter/superpowers/7.0.0/skills`
+  and `C:/Users/Jeff/.codex/plugins/cache/skills-first-starter/gz-skills/0.8.0/skills`.
+- Feature HEAD remains `ea50bf03824dd37ceaacfbc21dcf7f4d87ae7b28`; main
+  remains `3a5211bfe3c1ab80e25758fce61356dd6ef7cbef`. The twelve existing
+  tooling/test edits remain uncommitted. No implementation edits, commits,
+  merges, pushes or dependency changes occurred in the failed resume.
+- A read-only Bandit reviewer was interrupted when Jeff stopped execution.
+  It produced preliminary observations, no completed review artifact or
+  accepted disposition. All 22 findings remain open. No reviewer is running.
+- The ledger, round-2 mutation results, raw Bandit report, prior 644-test
+  quality log, prior native-discovery result and both external artifact/test
+  directories named below were checked present at this checkpoint.
+  Their earlier results are dated evidence, not new candidate verification.
+
+### Required approach for the restart
+
+1. **Own the workspace.** Set every project command's working directory to
+   `U:/repos/xp/xplane-fdau/.worktrees/strict-heavy-onboarding`. Verify its
+   branch, HEAD and diff. Jeff need not open, switch, create or repair a
+   worktree for the agent. Preserve main's original design/plan edits and
+   the unrelated dependency-refresh worktree.
+2. **Enter once, deliberately.** Read this handoff, the applicable feature
+   instructions and required authorities, then the approved onboarding
+   design/plan and existing ledger. Read long authorities in bounded parts
+   so output truncation cannot masquerade as a completed read. Load the
+   selected native skills and project adapters; never silently substitute
+   main's legacy skill versions. Diagnose a source mismatch using native
+   observations and installed-source provenance, preserving user defaults
+   and managed caches. Ask only for a specific unresolved required action,
+   after exhausting authorized ways to resolve it here.
+3. **Use uv for every Python execution.** This includes inspection snippets,
+   scratch scripts, tests and verification. Use the exact locked/all-groups
+   environment required by the feature policy. If uv cannot access its
+   configured cache, request the tool's narrowly scoped sandbox escalation;
+   the uv audit above succeeded that way. Never fall back to `python`,
+   `py`, a venv executable, or an unreviewed alternate environment. Check
+   existing direct-interpreter tooling against this instruction before
+   using it; do not invent an exemption. Use PowerShell for simple file/Git
+   inspection. Unsupported CLI flags are not evidence: audit/next do not
+   accept `--json`.
+4. **Bound the work.** Jeff objected that template alignment had grown into
+   an oversized implementation slice. Resume only Task 4's retained
+   remediation: one reviewable survivor group or security finding at a
+   time, with ledgered result and next action. Do not repeat completed
+   Tasks 1–3/5–6, refresh templates/tools, start C1.4, or broaden the weak-test
+   audit. A context window ending is not itself a technical defect; avoid
+   making successors reconstruct repeated exploration or unfinished claims.
+5. **Prove the behavior.** Follow the approved tests-first workflow for
+   actual corrections. Derive expected behavior from the governing
+   contract, demonstrate a realistic negative control, then verify the
+   correction. Preserve existing edits. Do not add private-signature,
+   prose or temporary-state snapshots merely to kill mutations. Keep raw
+   mutation results and individual survivor dispositions linked.
+6. **Keep proof precise.** Run focused unittest/Ruff/ty during remediation.
+   Run the required stable-candidate gate at closeout; installed commit
+   hooks are mandatory. Do not repeat multi-minute complete gates without
+   a changed candidate or unresolved reason. Scope reviews explicitly;
+   interrupted reviews and passing tests do not establish security or
+   STRICT acceptance. Keep commentary brief and candid about findings.
+7. **Separate external dependencies from local work.** Cognitive extraction,
+   the four Lizard omissions, timed-out pip-audit proof and exact-commit CI
+   remain open as described below. Finish independent authorized work,
+   preserve UNKNOWN/FAIL, and report the exact prerequisite. Do not invent
+   analyzers, change thresholds, retry unchanged timeouts, or claim whole
+   onboarding completion to close a checkpoint.
+8. **Finish the temporary branch deliberately.** After required work and
+   review are ready, present a concrete result for the separate integration
+   decision. If Jeff selects local integration, follow exact-fast-forward
+   main verification, reinstall hooks from verified main, then remove the
+   temporary worktree/branch through Git. Do not remove this dirty worktree
+   or leave it as a permanent delivery path. Merge, push and release authority
+   remain separate; this handoff request authorizes none of them.
+
+**First implementation step after entry:** inspect the retained round-2
+survivors and the Unicode boundary/error-precedence requirements identified
+below. Complete one bounded group with focused evidence before moving on.
+This refreshed handoff ends the failed session; it does not authorize further
+implementation before the next resume. Only handoff text and ignored resume
+diagnostics were changed for continuity. No new acceptance claim is made.
+
+## Resume point — 2026-10-25, strict heavy onboarding / Task 4
+
+Observed **2026-10-25 21:36 UTC**. Jeff requested a handoff because context was
+nearly full after a long execution session. This section supersedes older resume
+points below. Work is preserved locally; **STRICT acceptance is incomplete**.
+
+Use this retained worktree as the working directory:
+`U:/repos/xp/xplane-fdau/.worktrees/strict-heavy-onboarding`.
+Branch: `chore/strict-heavy-onboarding`.
+HEAD: `ea50bf03824dd37ceaacfbc21dcf7f4d87ae7b28`
+(`build: adopt strict heavy starter tooling and policy`). Main remains at
+`3a5211bfe3c1ab80e25758fce61356dd6ef7cbef`; it has not been integrated or pushed.
+Main's pre-existing approved spec/plan edits are preserved. The unrelated
+`chore/dependency-refresh-2026-10-18` worktree remains untouched.
+
+**First action:** read session authorities, the
+[approved plan](docs/superpowers/plans/2026-10-25-strict-heavy-starter-onboarding.md),
+[design](docs/superpowers/specs/2026-10-11-skills-first-native-adoption-design.md),
+and [evidence](docs/reviews/2026-10-25-strict-heavy-starter-adoption.md); compare
+HEAD and `git diff`, then run backlog audit/next. Stop on findings. Expected next
+product action is `write_plan C1.4`, but do not select it: the active authorized
+work is onboarding Task 4 remediation, followed by Task 7 acceptance.
+C1.3 is already verified at 4/4 gates. Do not reopen it or repeat Tasks 1–3/5–6.
+
+### Settled decisions and committed work
+
+- Jeff approved strict heavy adoption; Backplane stays disabled and FDAU delivery
+  authority stays local. No gzkit lifecycle or runtime feature is introduced.
+- Selected starter v0.6.0/full SHA and shared SP 7.0.0/gz-skills 0.8.0 pins are
+  recorded in `.skills-first/bundle.lock.json`. Exact environment: managed
+  Python 3.12.15, uv/uv_build 0.13.5, Ruff 0.17.2 (`py312`), ty 0.0.91 (`3.12`).
+- Native installation, restored user defaults, outside-project control and fresh
+  selected-source discovery passed in the earlier execution. The agent owns
+  resuming in the feature worktree and reconciling its selected sources;
+  main intentionally retains its old configuration until verified integration.
+- Foundation offline hygiene passed. Its separate coverage run passed 630 tests:
+  95.08% statements, 91.75% branches, 94.18% combined. External wheel-only exact
+  Python smoke and real valid/invalid typing consumers passed. The source-independent
+  build explicitly built the wheel from the sdist. These are foundation observations,
+  not a claim that all later acceptance work is finished.
+- Native pre-commit runs four checks, including full unittest. No hook was bypassed.
+  Its shared launcher points to this feature environment: retain the worktree and
+  reinstall from verified main before eventual removal. Main's old junction and
+  its target are rollback state, not deletion targets.
+
+### Uncommitted remediation, already verified
+
+Twelve code/test files remain modified: backlog `adherence.py`, `edit.py`,
+`lifecycle.py`, `rules.py`; hygiene's script; `tools/runtime_imports.py`; and
+`test_backlog_status_edit`, `test_backlog_status_lifecycle`, `test_release_tool`,
+`test_canonical_json`, `test_contract_identity`, `test_contract_values`.
+They separate existing validation/fixture responsibilities and add missing tests
+for existing public contracts. **No runtime library implementation changed in
+this checkpoint.** Do not discard or reimplement this diff.
+
+The final existing-source aggregate passed **644 unittest tests in 405.539 seconds**,
+Ruff check/format and ty. Focused backlog checks passed 107 tests; related
+archive/hygiene/rules/import checks passed 45. Ruff C901 has no findings and
+native Lizard has no discovered function/module/project limit violations under
+20/10/5. Its original four discovery errors remain errors. Independent review
+of this remediation retained no new Critical/Important/Minor defects; it ran no
+tests and did not certify STRICT acceptance. A formatting-only annotation wrap
+was corrected before the passing final aggregate.
+
+The selected mutation baseline now passes 62 tests. Original native batch:
+1,436 cases = 1,199 killed, 236 survivors, one encoding-incompetent case.
+That encoding case was reproduced, fixed in the test bootstrap, and rerun
+natively as normal/killed. Differential reruns killed 97, then another 18 of the
+original survivors; **121 remain under review**. These are incremental controls,
+not a newly executed complete batch. Runtime source hashes remained unchanged.
+Do not relabel the retained batch as a fresh passing mutation measurement.
+
+### Exact remaining work
+
+1. Resume survivor review from the raw round-2 results. Three likely next
+   regressions were identified but **not added**: valid Unicode scalars U+D7FF
+   and U+E000 adjacent to the surrogate range. Add positive direct-text/parameter
+   cases and rerun the corresponding surviving boundary mutations. Also assess
+   the array-count check moved from phase 2 to phase 1 against the approved
+   deterministic error-order contract (design around line 1413); do not invent
+   a new error priority merely to kill a mutation.
+2. Disposition every remaining meaningful survivor. Several concern private
+   signatures, deferred private annotations, closed vocabularies, Enum/Boolean
+   identities, literal identities, redundant guards or repeated pure phases.
+   Do not declare all harmless without checking reachable public behavior.
+   CPython 3.12.15's `Objects/unicodeobject.c` was inspected for Latin-1 iteration
+   caching; that evidence does not establish arbitrary string-identity equivalence.
+3. Review the 22 retained Bandit findings in context: 11 B404, eight B603, one
+   B607, one B105 path-string false-positive candidate, one medium B310 opener
+   advisory. There were no analyzer errors. Subprocess argument vectors/ownership
+   and the bounded fixed-origin PyPI caller checks were inspected, but no clean
+   security measurement was declared. Preserve raw findings; no blanket suppression,
+   scope narrowing or threshold workaround was applied.
+4. Update the existing evidence/plan after dispositions, verify affected changes,
+   and save the remediation through normal installed hooks. It is intentionally
+   **uncommitted** at this handoff. Final measurements must track affected inputs.
+
+**External/open acceptance:** cognitive UNKNOWN until Jeff/upstream extracts the
+shared library from gzkit and integrates its contract into the starter. The old
+library was a bust: no complexipy substitute, copied gzkit code, local analyzer,
+or invented equivalent threshold. Lizard 1.24.3 omits inline definitions in
+`formats/xplane_fdr/config.py`, `reader.py`, `sinks/xplane_fdr.py`, and the identity
+test Protocol; do not rewrite sound code for that parser. Two native pip-audit
+attempts timed out at 600 seconds; bounded Windows tree cleanup is corrected and
+proved, but network proof is UNKNOWN. Do not retry without a relevant change.
+Exact-commit remote CI is UNKNOWN; Git sync, main integration and releases retain
+separate authorization gates. No release is authorized. The broader weak-test
+audit is still open.
+
+### Local evidence and continuity
+
+All execution evidence is local-only under
+`.superpowers/sdd/2026-10-25-strict-heavy-starter-onboarding/`:
+`progress.md` records completed Tasks 1–3/5–6 and the still-open Task 4;
+`task4-remediation-quality-retry.log` proves the 644-test aggregate;
+`task4-backlog-all-focused.log` and `task4-tooling-fixtures-focused.log` hold the
+focused checks. `task4-survivor-rerun.jsonl` and `task4-survivor-round2.jsonl`
+retain work IDs/diffs/results; their summary JSON files prove 97/18 additional
+kills. `task4-bandit-current.json`, `review.md` and
+`review-remediation.md` preserve analysis/review context. Foundation evidence is
+`task7-offline-hygiene.log`, `task7-coverage.json`,
+`task7-native-fresh-result.json`, and `task7-installed-typing.json`.
+
+Retained external artifacts:
+`C:/Users/Jeff/AppData/Local/Temp/fdau-strict-artifacts-93a10c233f364f4da2cd32a1aac741e7`.
+Installed test environment:
+`C:/Users/Jeff/AppData/Local/Temp/fdau-strict-wheel-a715d8a733a047aba95a5a7795e6fe7f`.
+They were checked present at handoff; recheck before reuse. Detailed hashes and
+provenance are in the dated review. Preserve the ignored ledger while work is
+open. No verification process remains intentionally running.
+
+Standing authorization covers the approved onboarding plan and necessary
+tooling/test remediation; it survives the handoff. It does not grant a merge,
+push, publication, Backplane activation or cognitive-library implementation.
+Use the project adapters, `superpowers:executing-plans`, TDD/verification and
+the selected gz-skills review/quality workflows; do not restart planning.
 
 ## Historical checkpoint — 2026-10-04, C1.3 draft review and test-quality concern
 

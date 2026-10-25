@@ -6,6 +6,7 @@ import os
 import re
 import stat
 import tempfile
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, NoReturn
@@ -279,6 +280,43 @@ def _gate_item(child: BacklogChild, ordinal: int) -> GateItem:
     return child.gates.items[ordinal - 1]
 
 
+def _remove_gate_evidence(
+    lines: list[str], start: int, end: int, first: str, marker: re.Match[str], split_terminator: Callable[[str], tuple[str, str]]
+) -> None:
+    """Remove only the mapped evidence suffix while retaining original line endings."""
+    fragments: list[tuple[str, tuple[int, int] | None]] = []
+
+    def append_fragment(value: str, line: int, offset: int, *, normalize: bool) -> None:
+        if fragments:
+            fragments.append((" ", None))
+        if not normalize:
+            fragments.extend((character, (line, offset + position)) for position, character in enumerate(value))
+            return
+        for match in re.finditer(r"\S+", value):
+            if match.start() > 0 and fragments[-1][0] != " ":
+                fragments.append((" ", (line, match.start() - 1)))
+            fragments.extend((character, (line, match.start() + position)) for position, character in enumerate(match.group(0)))
+
+    append_fragment(first[marker.end() :], start, marker.end(), normalize=False)
+    for index in range(start + 1, end):
+        continuation, _ = split_terminator(lines[index])
+        append_fragment(continuation, index, 0, normalize=True)
+    logical = "".join(character for character, _ in fragments)
+    marker_offset = logical.find(" — Evidence: ")
+    if marker_offset < 0:
+        _refuse("mutation.audit", "parsed gate evidence suffix no longer matches BACKLOG.md")
+    source = next((origin for _character, origin in fragments[marker_offset:] if origin is not None), None)
+    if source is None:
+        _refuse("mutation.audit", "parsed gate evidence suffix no longer matches BACKLOG.md")
+    source_line, source_offset = source
+    content, terminator = split_terminator(lines[source_line])
+    lines[source_line] = f"{content[:source_offset]}{terminator}"
+    for index in range(source_line + 1, end):
+        content, terminator = split_terminator(lines[index])
+        if content.strip():
+            lines[index] = terminator
+
+
 def _gate_edit(text: str, item: GateItem, *, close: bool, suffix: str = "") -> str:
     """Edit only one parsed gate marker and its block's final content line."""
     lines = text.splitlines(keepends=True)
@@ -314,37 +352,7 @@ def _gate_edit(text: str, item: GateItem, *, close: bool, suffix: str = "") -> s
         content, terminator = split_terminator(lines[last])
         lines[last] = f"{content}{suffix}{terminator}"
     else:
-        fragments: list[tuple[str, tuple[int, int] | None]] = []
-
-        def append_fragment(value: str, line: int, offset: int, *, normalize: bool) -> None:
-            if fragments:
-                fragments.append((" ", None))
-            if not normalize:
-                fragments.extend((character, (line, offset + position)) for position, character in enumerate(value))
-                return
-            for match in re.finditer(r"\S+", value):
-                if match.start() > 0 and fragments[-1][0] != " ":
-                    fragments.append((" ", (line, match.start() - 1)))
-                fragments.extend((character, (line, match.start() + position)) for position, character in enumerate(match.group(0)))
-
-        append_fragment(first[marker.end() :], start, marker.end(), normalize=False)
-        for index in range(start + 1, end):
-            continuation, _ = split_terminator(lines[index])
-            append_fragment(continuation, index, 0, normalize=True)
-        logical = "".join(character for character, _ in fragments)
-        marker_offset = logical.find(" — Evidence: ")
-        if marker_offset < 0:
-            _refuse("mutation.audit", "parsed gate evidence suffix no longer matches BACKLOG.md")
-        source = next((origin for _character, origin in fragments[marker_offset:] if origin is not None), None)
-        if source is None:
-            _refuse("mutation.audit", "parsed gate evidence suffix no longer matches BACKLOG.md")
-        source_line, source_offset = source
-        content, terminator = split_terminator(lines[source_line])
-        lines[source_line] = f"{content[:source_offset]}{terminator}"
-        for index in range(source_line + 1, end):
-            content, terminator = split_terminator(lines[index])
-            if content.strip():
-                lines[index] = terminator
+        _remove_gate_evidence(lines, start, end, first, marker, split_terminator)
     return "".join(lines)
 
 

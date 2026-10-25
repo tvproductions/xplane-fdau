@@ -14,6 +14,56 @@ from xplane_fdau.contracts.canonical_json import _encode_document
 
 
 class CanonicalJSONTests(unittest.TestCase):
+    def test_parameter_root_rejects_caller_objects_without_comparison_hooks(self) -> None:
+        class RaisingType(type):
+            @override
+            def __ne__(cls, other: object) -> bool:
+                raise AssertionError("caller comparison must not run")
+
+        class CallerMapping(dict[str, object], metaclass=RaisingType):
+            pass
+
+        with self.assertRaises(CanonicalJSONError) as caught:
+            canonical_bytes(CallerMapping())
+        self.assertEqual("", caught.exception.path)
+
+    def test_parameter_primitives_require_exact_types_despite_caller_equality(self) -> None:
+        class EqualityType(type):
+            @override
+            def __eq__(cls, other: object) -> bool:
+                return True
+
+            @override
+            def __ne__(cls, other: object) -> bool:
+                return False
+
+            __hash__ = type.__hash__
+
+        class CallerString(str, metaclass=EqualityType):
+            pass
+
+        class CallerInteger(int, metaclass=EqualityType):
+            pass
+
+        class CallerFloat(float, metaclass=EqualityType):
+            pass
+
+        class CallerBoolean(metaclass=EqualityType):
+            pass
+
+        for value in (CallerString("text"), CallerInteger(1), CallerFloat(1.0), CallerBoolean()):
+            with self.subTest(kind=type(value).__name__), self.assertRaises(CanonicalJSONError) as caught:
+                canonical_bytes({"test.value": value})
+            self.assertEqual("/test.value", caught.exception.path)
+        with self.assertRaises(CanonicalJSONError) as caught:
+            canonical_bytes({CallerString("test.key"): 0})
+        self.assertEqual("", caught.exception.path)
+
+    def test_parameter_text_accepts_scalars_adjacent_to_surrogates(self) -> None:
+        for text, utf8 in (("\ud7ff", b"\xed\x9f\xbf"), ("\ue000", b"\xee\x80\x80")):
+            with self.subTest(scalar=ord(text)):
+                self.assertEqual(b'{"test.text":"' + utf8 + b'"}\n', canonical_bytes({"test.text": text}))
+
     def test_parse_canonical_convergence_and_digest(self) -> None:
         expected = b'{"test.x":1}\n'
         self.assertEqual(expected, canonical_bytes({"test.x": 1}))
@@ -157,6 +207,70 @@ class CanonicalJSONTests(unittest.TestCase):
         value["extra"] = 0
         with self.assertRaises(CanonicalJSONError):
             _encode_document(value)
+
+    def test_parameter_text_boundaries_and_unicode_interior(self) -> None:
+        for text in ("x", "x" * 16384, " "):
+            with self.subTest(length=len(text)):
+                self.assertEqual(b'{"test.text":"' + text.encode() + b'"}\n', canonical_bytes({"test.text": text}))
+        self.assertEqual('{"test.text":"q\u0301"}\n'.encode(), canonical_bytes({"test.text": "q\u0301"}))
+        self.assertEqual(b'{"test.text":" \\u001f"}\n', canonical_bytes({"test.text": " \x1f"}))
+        for text in ("", "x" * 16385, "\ud801", "\udbff", "\udc00", "\udfff", "\u1f71"):
+            with self.subTest(text=repr(text)), self.assertRaises(CanonicalJSONError) as caught:
+                canonical_bytes({"test.text": text})
+            self.assertEqual("/test.text", caught.exception.path)
+
+    def test_array_depth_is_counted_for_lists_and_tuples(self) -> None:
+        for factory in (list, tuple):
+            with self.subTest(container=factory.__name__):
+                parameter: object = 0
+                for _ in range(31):
+                    parameter = factory((parameter,))
+                self.assertTrue(canonical_bytes({"test.array": parameter}).endswith(b"\n"))
+                with self.assertRaises(CanonicalJSONError) as caught:
+                    canonical_bytes({"test.array": factory((parameter,))})
+                self.assertEqual("/test.array" + "/0" * 31, caught.exception.path)
+                document: object = 0
+                for _ in range(64):
+                    document = factory((document,))
+                self.assertTrue(_encode_document(document).endswith(b"\n"))
+                with self.assertRaises(CanonicalJSONError) as caught:
+                    _encode_document(factory((document,)))
+                self.assertEqual("/0" * 64, caught.exception.path)
+
+    def test_public_array_length_and_exact_container_contract(self) -> None:
+        class DerivedList(list[object]):
+            """A caller-owned collection subtype is outside the data-only domain."""
+
+        class DerivedTuple(tuple[object, ...]):
+            """Tuple subtypes also require explicit normalization by the caller."""
+
+        for factory in (list, tuple):
+            values = factory(0 for _ in range(65535))
+            self.assertTrue(canonical_bytes({"test.array": values}).endswith(b"\n"))
+            with self.assertRaises(CanonicalJSONError) as caught:
+                canonical_bytes({"test.array": factory(0 for _ in range(65536))})
+            self.assertEqual("/test.array", caught.exception.path)
+        for value in (DerivedList((1,)), DerivedTuple((1,))):
+            with self.subTest(container=type(value).__name__), self.assertRaises(CanonicalJSONError) as caught:
+                canonical_bytes({"test.array": value})
+            self.assertEqual("/test.array", caught.exception.path)
+
+    def test_raw_numeric_boundaries_and_negative_real_are_canonical(self) -> None:
+        self.assertEqual(b'{"test.real":-1.25}\n', canonical_bytes({"test.real": -1.25}))
+        self.assertEqual(b'{"test.real":-1.0}\n', canonical_bytes({"test.real": -1.0}))
+        for number in (-(2**63), 2**63 - 1):
+            self.assertEqual(f'{{"test.integer":{number}}}\n'.encode(), canonical_bytes({"test.integer": number}))
+        for number in (-(2**63) - 1, 2**63):
+            with self.subTest(number=number), self.assertRaises(CanonicalJSONError) as caught:
+                canonical_bytes({"test.integer": number})
+            self.assertEqual("/test.integer", caught.exception.path)
+
+    def test_parameter_identifier_length_boundary(self) -> None:
+        identifier = "a." + "b" * 253
+        self.assertEqual(f'{{"{identifier}":0}}\n'.encode(), canonical_bytes({identifier: 0}))
+        with self.assertRaises(CanonicalJSONError) as caught:
+            canonical_bytes({identifier + "b": 0})
+        self.assertEqual("/" + identifier + "b", caught.exception.path)
 
 
 if __name__ == "__main__":

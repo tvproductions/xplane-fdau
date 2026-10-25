@@ -8,7 +8,6 @@ import importlib.util
 import json
 import os
 import subprocess
-import sys
 import tempfile
 import time
 import tomllib
@@ -223,7 +222,7 @@ class AnalysisExecutionTests(unittest.TestCase):
         self.assertIn("--all-groups", calls[0])
         self.assertIn("--no-emit-project", calls[0])
         self.assertEqual(2, len(calls))
-        self.assertEqual((sys.executable, "-m", "pip_audit"), calls[1][:3])
+        self.assertEqual(("uv", "run", "--locked", "--all-groups", "python", "-m", "pip_audit"), calls[1][:7])
         self.assertFalse(exported[0].exists())
 
     def test_nonexact_or_unhashed_exports_stop_before_the_auditor(self) -> None:
@@ -248,10 +247,12 @@ class AnalysisExecutionTests(unittest.TestCase):
             root = Path(directory)
             marker = root / "child-survived"
             ready = root / "ready"
-            child = "import pathlib,time; time.sleep(2); pathlib.Path('child-survived').write_bytes(b'leaked')"
-            parent = f"import pathlib,subprocess,sys,time; subprocess.Popen([sys.executable,'-c',{child!r}]); pathlib.Path('ready').write_bytes(b'ready'); time.sleep(3)"
+            child = "import pathlib,time; pathlib.Path('ready').write_bytes(b'ready'); time.sleep(2); pathlib.Path('child-survived').write_bytes(b'leaked')"
+            launch = ("uv", "run", "--project", str(Path(__file__).resolve().parents[1]), "--locked", "--all-groups", "python")
+            child_command = (*launch, "-c", child)
+            parent = f"import subprocess,time; subprocess.Popen({child_command!r}); time.sleep(3)"
             with self.assertRaises(subprocess.TimeoutExpired):
-                self.analysis.run_bounded((sys.executable, "-c", parent), cwd=root, check=False, timeout=1)
+                self.analysis.run_bounded((*launch, "-c", parent), cwd=root, check=False, timeout=1)
             self.assertTrue(ready.is_file(), "fixture did not start before the deadline")
             time.sleep(2.5)
             self.assertFalse(marker.exists(), "timed-out child survived the owning runner")
@@ -262,7 +263,19 @@ class ImportBoundaryTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         policy = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))["tool"].get("importlinter")
         self.assertIsNotNone(policy, "required import boundaries are not configured")
-        command = (sys.executable, "-c", "from importlinter.cli import lint_imports_command; lint_imports_command()", "--no-cache", "--no-logo")
+        command = (
+            "uv",
+            "run",
+            "--project",
+            str(root),
+            "--locked",
+            "--all-groups",
+            "python",
+            "-c",
+            "from importlinter.cli import lint_imports_command; lint_imports_command()",
+            "--no-cache",
+            "--no-logo",
+        )
         positive = subprocess.run(command, cwd=root, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False, timeout=30)
         self.assertEqual(0, positive.returncode, positive.stdout + positive.stderr)
         with tempfile.TemporaryDirectory() as directory:

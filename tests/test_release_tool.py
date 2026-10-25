@@ -47,6 +47,16 @@ class ReleaseToolTests(unittest.TestCase):
         writer.writerows(rows)
         return output.getvalue().encode("utf-8")
 
+    def _record_bytes(self, wheel_files: dict[str, bytes], record_name: str, wheel_record: bytes | Callable[[bytes], bytes] | None) -> bytes:
+        """Build the valid record or apply the deliberately invalid fixture override."""
+        generated_record = self._wheel_record(wheel_files, record_name)
+        if isinstance(wheel_record, bytes):
+            return wheel_record
+        elif wheel_record is not None:
+            return wheel_record(generated_record)
+        else:
+            return generated_record
+
     def _make_dist(
         self,
         directory: Path,
@@ -78,13 +88,7 @@ class ReleaseToolTests(unittest.TestCase):
         for name in wheel_remove or ():
             wheel_files.pop(name, None)
         if record_name not in (wheel_remove or set()):
-            generated_record = self._wheel_record(wheel_files, record_name)
-            if isinstance(wheel_record, bytes):
-                wheel_files[record_name] = wheel_record
-            elif wheel_record is not None:
-                wheel_files[record_name] = wheel_record(generated_record)
-            else:
-                wheel_files[record_name] = generated_record
+            wheel_files[record_name] = self._record_bytes(wheel_files, record_name, wheel_record)
         wheel = directory / "xplane_fdau-0.1.0-py3-none-any.whl"
         with zipfile.ZipFile(wheel, "w") as archive:
             for name in (

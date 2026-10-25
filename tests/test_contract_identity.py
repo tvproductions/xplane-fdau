@@ -5,7 +5,7 @@ from __future__ import annotations
 import unittest
 from collections.abc import Mapping
 from types import MappingProxyType
-from typing import Any, Protocol, cast
+from typing import Any, Protocol, cast, override
 
 from xplane_fdau.contracts import _identity_validation as identity
 from xplane_fdau.contracts.errors import CanonicalJSONError, ContractShapeError, ContractValidationError, FDAUContractError
@@ -17,6 +17,37 @@ class _Validator(Protocol):
 
 
 class IdentityValidationTests(unittest.TestCase):
+    def test_primitive_domains_ignore_caller_type_equality(self) -> None:
+        class EqualityType(type):
+            @override
+            def __eq__(cls, other: object) -> bool:
+                return True
+
+            @override
+            def __ne__(cls, other: object) -> bool:
+                return False
+
+            __hash__ = type.__hash__
+
+        class CallerInteger(int, metaclass=EqualityType):
+            """Integer-like equality cannot grant exact integer membership."""
+
+        class CallerString(str, metaclass=EqualityType):
+            """String-like equality likewise does not grant exact string membership."""
+
+        self.assert_rejected(identity._integer_domain, CallerInteger(1), ContractShapeError, "/integer")
+        self.assert_rejected(identity._text, CallerString("test.x"), ContractShapeError, "/text")
+        with self.assertRaises(ContractShapeError) as caught:
+            cast(Any, DefinitionRef)(definition_id="\ud801", definition_revision=CallerInteger(1), definition_hash="a" * 64)
+        self.assertEqual("/definition_revision", caught.exception.path)
+
+    def test_text_domain_unicode_and_exact_version_length(self) -> None:
+        self.assertEqual("x" * 128, identity._version_text("x" * 128, path="/version"))
+        self.assertEqual("q\u0301", identity._version_text("q\u0301", path="/version"))
+        for text in ("\ud801", "\udbff", "\udc00", "\udfff", "\u1f71"):
+            with self.subTest(text=repr(text)):
+                self.assert_rejected(identity._text, text, CanonicalJSONError, "/text")
+
     def assert_rejected(self, operation: _Validator, value: object, error: type[FDAUContractError], path: str) -> None:
         with self.assertRaises(error) as caught:
             operation(value, path=path)
@@ -91,6 +122,11 @@ if __name__ == "__main__":
 
 
 class ReferenceTests(unittest.TestCase):
+    def test_required_null_cannot_be_skipped_before_a_later_domain_failure(self) -> None:
+        with self.assertRaises(ContractShapeError) as caught:
+            cast(Any, DefinitionRef)(definition_id=None, definition_revision=2**63, definition_hash="a" * 64)
+        self.assertEqual("/definition_id", caught.exception.path)
+
     def test_shape_then_canonical_failures_precede_semantics(self) -> None:
         base = {"definition_id": "bad", "definition_revision": 1, "definition_hash": "a" * 64}
         for changes, error, path in (

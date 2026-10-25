@@ -6,7 +6,7 @@ import re
 from backlog.adherence import adherence_findings
 from backlog.evidence import ObservationError, evidence_findings, observed_bytes
 from backlog.findings import finding_key
-from backlog.model import AuditLoad, BacklogChild, Finding, SourceLocation
+from backlog.model import AuditLoad, BacklogChild, Finding, HistoricalAdmission, SourceLocation
 from backlog.policy import allowed_kinds
 from backlog.rules import structural_findings
 
@@ -90,13 +90,42 @@ def _child_evidence(loaded: AuditLoad, child: BacklogChild, state: str | None) -
     return findings
 
 
+def _historical_structure_problems(loaded: AuditLoad, child: BacklogChild) -> list[str]:
+    """Check historical structure and covering acceptance criteria together."""
+    problems: list[str] = []
+    governing_paths = {child.plan, child.specification}
+    relevant = [
+        finding
+        for finding in (*structural_findings(loaded), *adherence_findings(loaded))
+        if finding.node == child.id or (finding.node is None and finding.path in governing_paths)
+    ]
+    if relevant:
+        problems.append("historical admission requires valid structure and governing acceptance criteria")
+    return problems
+
+
+def _historical_digest_problems(loaded: AuditLoad, child: BacklogChild, pins: list[HistoricalAdmission]) -> list[str]:
+    """Validate historical HEAD-backed bytes against the approved digest."""
+    problems: list[str] = []
+    if child.plan is not None:
+        try:
+            content = observed_bytes(loaded.snapshot.root, child.plan, require_head=True)
+            if len(pins) == 1 and hashlib.sha256(content).hexdigest() != pins[0].sha256:
+                problems.append("historical plan bytes differ from the approved digest")
+        except ObservationError as error:
+            problems.append(str(error))
+    return problems
+
+
 def historical_plan_findings(loaded: AuditLoad, child: BacklogChild) -> tuple[Finding, ...]:
     """Admit only typed policy pins with all verified historical prerequisites."""
     problems: list[str] = []
     state = _state(child)
     if state != "verified":
         problems.append("historical admission requires effective verified state")
-    pins = [] if loaded.policy is None else [pin for pin in loaded.policy.historical if pin.child == child.id and pin.plan == child.plan]
+    pins: list[HistoricalAdmission] = (
+        [] if loaded.policy is None else [pin for pin in loaded.policy.historical if pin.child == child.id and pin.plan == child.plan]
+    )
     if len(pins) != 1:
         problems.append("linked child and historical plan do not match an approved policy admission")
     plans = [plan for plan in loaded.snapshot.artifacts.historical if plan.path == child.plan]
@@ -108,21 +137,8 @@ def historical_plan_findings(loaded: AuditLoad, child: BacklogChild) -> tuple[Fi
         problems.append("historical admission requires verified roadmap prerequisites")
     if _child_evidence(loaded, child, "verified"):
         problems.append("historical admission requires eligible HEAD-backed review and all-gate evidence")
-    governing_paths = {child.plan, child.specification}
-    relevant = [
-        finding
-        for finding in (*structural_findings(loaded), *adherence_findings(loaded))
-        if finding.node == child.id or (finding.node is None and finding.path in governing_paths)
-    ]
-    if relevant:
-        problems.append("historical admission requires valid structure and governing acceptance criteria")
-    if child.plan is not None:
-        try:
-            content = observed_bytes(loaded.snapshot.root, child.plan, require_head=True)
-            if len(pins) == 1 and hashlib.sha256(content).hexdigest() != pins[0].sha256:
-                problems.append("historical plan bytes differ from the approved digest")
-        except ObservationError as error:
-            problems.append(str(error))
+    problems.extend(_historical_structure_problems(loaded, child))
+    problems.extend(_historical_digest_problems(loaded, child, pins))
     if problems:
         return (_finding("lifecycle.historical-plan", child.source, child.id, "; ".join(problems)),)
     return ()

@@ -1,6 +1,5 @@
 import importlib.util
 import subprocess
-import sys
 import tomllib
 import unittest
 from pathlib import Path
@@ -34,7 +33,15 @@ class ProjectMetadataTests(unittest.TestCase):
         self.assertTrue((root / "src/xplane_fdau/__init__.py").is_file())
         self.assertFalse((root / "xplane_fdau").exists())
         result = subprocess.run(
-            [sys.executable, "-c", "from pathlib import Path; import xplane_fdau; print(Path(xplane_fdau.__file__).resolve())"],
+            [
+                "uv",
+                "run",
+                "--locked",
+                "--all-groups",
+                "python",
+                "-c",
+                "from pathlib import Path; import xplane_fdau; print(Path(xplane_fdau.__file__).resolve())",
+            ],
             cwd=root,
             capture_output=True,
             text=True,

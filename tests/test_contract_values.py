@@ -6,6 +6,7 @@ import math
 import pickle
 import unittest
 from dataclasses import FrozenInstanceError
+from typing import override
 from unittest import mock
 
 from xplane_fdau.contracts import _value_io, canonical_bytes
@@ -156,6 +157,101 @@ class PayloadReferenceTests(unittest.TestCase):
 
 
 class DeclarationTests(unittest.TestCase):
+    def test_allow_list_count_limits_are_distinct_from_entry_validation(self) -> None:
+        for field, prefix in (("allowed_media_types", "a/x"), ("allowed_storage_roles", "test.x")):
+            with self.subTest(field=field):
+                values = [f"{prefix}{index:05d}" for index in range(65535)]
+                arguments = {"allowed_media_types": ["a/b"], "allowed_storage_roles": ["test.raw"]}
+                arguments[field] = values
+                declared = PayloadSpec(**arguments)
+                self.assertEqual(tuple(values), getattr(declared, field))
+                arguments[field] = [*values, f"{prefix}65535"]
+                with self.assertRaises(ContractValidationError) as caught:
+                    PayloadSpec(**arguments)
+                self.assertEqual("/" + field, caught.exception.path)
+
+    def test_all_owned_metadata_models_are_frozen_slotted_and_keyword_only(self) -> None:
+        payload = PayloadSpec(allowed_media_types=["a/b"], allowed_storage_roles=["test.raw"])
+        cases = (
+            (
+                PayloadReference(media_type="a/b", byte_length=1, sha256="a" * 64, storage_role="test.raw", retention_status="retained"),
+                ("a/b", 1, "a" * 64, "test.raw", "retained"),
+                "byte_length",
+                2,
+            ),
+            (payload, (["a/b"], ["test.raw"]), "allowed_media_types", ("a/c",)),
+            (RepresentationSpec(kind="integer"), ("integer",), "kind", "real"),
+            (ShapeSpec(kind="scalar"), ("scalar",), "kind", "fixed"),
+            (UnitSpec(kind="unitless"), ("unitless",), "kind", "unit"),
+        )
+        for value, positional, attribute, replacement in cases:
+            with self.subTest(model=type(value).__name__):
+                self.assertRaises(FrozenInstanceError, setattr, value, attribute, replacement)
+                self.assertRaises(TypeError, vars, value)
+                self.assertRaises(TypeError, type(value), *positional)
+
+    def test_shape_errors_precede_canonical_and_semantic_errors_across_fields(self) -> None:
+        for minimum in (-1, 2**63):
+            with self.subTest(minimum=minimum), self.assertRaises(ContractShapeError) as caught:
+                RepresentationSpec(kind="variable_array", element_representation="integer", minimum_length=minimum, maximum_length="wrong")
+            self.assertEqual("/maximum_length", caught.exception.path)
+        with self.assertRaises(ContractShapeError) as caught:
+            PayloadReference(media_type="\ud801", byte_length=True, sha256="a" * 64, storage_role="test.raw", retention_status="retained")
+        self.assertEqual("/byte_length", caught.exception.path)
+        with self.assertRaises(ContractShapeError) as caught:
+            PayloadSpec(allowed_media_types=["a/c", "a/b"], allowed_storage_roles=[True])
+        self.assertEqual("/allowed_storage_roles/0", caught.exception.path)
+        with self.assertRaises(ContractShapeError) as caught:
+            PayloadSpec(allowed_media_types=None, allowed_storage_roles=[True])
+        self.assertEqual("/allowed_storage_roles/0", caught.exception.path)
+        with self.assertRaises(ContractShapeError) as caught:
+            RepresentationSpec(kind="vector", length=None, maximum_length=1)
+        self.assertEqual("/maximum_length", caught.exception.path)
+
+    def test_variant_names_require_exact_strings(self) -> None:
+        class CallerString(str):
+            """A caller wrapper must be normalized before entering the data domain."""
+
+        for constructor, kind in ((ShapeSpec, "scalar"), (UnitSpec, "unitless")):
+            with self.subTest(model=constructor.__name__), self.assertRaises(ContractShapeError) as caught:
+                constructor(kind=CallerString(kind))
+            self.assertEqual("/kind", caught.exception.path)
+
+    def test_owned_payload_and_serializer_reject_type_equality_spoofs(self) -> None:
+        class EqualityType(type):
+            @override
+            def __eq__(cls, other: object) -> bool:
+                return True
+
+            @override
+            def __ne__(cls, other: object) -> bool:
+                return False
+
+            __hash__ = type.__hash__
+
+        class CallerObject(metaclass=EqualityType):
+            """Type equality does not make an object an owned contract model."""
+
+        value = CallerObject()
+        with self.assertRaises(ContractShapeError) as caught:
+            RepresentationSpec(kind="referenced_bytes", payload=value)
+        self.assertEqual("/payload", caught.exception.path)
+        with self.assertRaises(CanonicalJSONError) as caught:
+            canonical_bytes(value)
+        self.assertEqual("", caught.exception.path)
+
+    def test_array_domains_precede_semantics_across_elements(self) -> None:
+        for representation, values in (("string", ["", "\u1f71"]), ("enumeration", ["Bad", "\u1f71"])):
+            with self.subTest(representation=representation), self.assertRaises(CanonicalJSONError) as caught:
+                InlineValue(representation="fixed_array", element_representation=representation, value=values)
+            self.assertEqual("/value/1", caught.exception.path)
+        with self.assertRaises(CanonicalJSONError) as caught:
+            InlineValue(representation="vector", value=[float("inf"), *([0.0] * 65535)])
+        self.assertEqual("/value/0", caught.exception.path)
+        with self.assertRaises(ContractShapeError) as caught:
+            InlineValue(representation="fixed_array", element_representation="integer", value=[None, "wrong"])
+        self.assertEqual("/value/1", caught.exception.path)
+
     def test_representation_variants_and_bounds(self) -> None:
         for kind in ("boolean", "integer", "real", "string", "enumeration"):
             self.assertEqual(kind, RepresentationSpec(kind=kind).kind)
@@ -418,6 +514,58 @@ class WireValueTests(unittest.TestCase):
                 self.assertIsNone(loaded.exception.line)
                 self.assertIsNone(loaded.exception.column)
 
+    def test_value_primitives_reject_subclasses_with_type_equality_override(self) -> None:
+        class EqualityType(type):
+            @override
+            def __eq__(cls, other: object) -> bool:
+                return other is float or other is str
+
+            @override
+            def __ne__(cls, other: object) -> bool:
+                return other is not float and other is not str
+
+            __hash__ = type.__hash__
+
+        class CallerFloat(float, metaclass=EqualityType):
+            pass
+
+        class CallerString(str, metaclass=EqualityType):
+            pass
+
+        with self.assertRaises(ContractShapeError) as caught:
+            InlineValue(representation="real", value=CallerFloat(1.0))
+        self.assertEqual("/value", caught.exception.path)
+        with self.assertRaises(ContractShapeError) as caught:
+            ShapeSpec(kind=CallerString("scalar"))
+        self.assertEqual("/kind", caught.exception.path)
+
+    def test_irrelevant_fields_cannot_impersonate_omission_with_equality(self) -> None:
+        class CallerValue:
+            @override
+            def __eq__(self, other: object) -> bool:
+                return True
+
+            @override
+            def __ne__(self, other: object) -> bool:
+                return False
+
+        with self.assertRaises(ContractShapeError) as caught:
+            InlineValue(representation="integer", element_representation=CallerValue(), value=1)
+        self.assertEqual("/element_representation", caught.exception.path)
+        with self.assertRaises(ContractShapeError) as caught:
+            RepresentationSpec(kind="integer", length=CallerValue())
+        self.assertEqual("/length", caught.exception.path)
+
+    def test_inline_text_accepts_scalars_adjacent_to_surrogates(self) -> None:
+        for text, utf8 in (("\ud7ff", b"\xed\x9f\xbf"), ("\ue000", b"\xee\x80\x80")):
+            with self.subTest(scalar=ord(text)):
+                expected = b'{"representation":"string","value":"' + utf8 + b'"}\n'
+                model = InlineValue(representation="string", value=text)
+                self.assertEqual(expected, canonical_bytes(model))
+                restored = _value_io._inline_value_from_wire(_parse_json_document(expected))
+                self.assertEqual(text, restored.value)
+                self.assertEqual(expected, canonical_bytes(restored))
+
     def test_payload_error_precedence_across_all_fields(self) -> None:
         base = {"media_type": "a/b", "byte_length": 0, "sha256": "a" * 64, "storage_role": "test.raw", "retention_status": "retained"}
         cases = (
@@ -425,6 +573,7 @@ class WireValueTests(unittest.TestCase):
             ({k: v for k, v in (base | {"media_type": "e\u0301/b"}).items() if k != "storage_role"}, ContractShapeError, "/storage_role"),
             (base | {"byte_length": -1, "storage_role": "test.e\u0301"}, CanonicalJSONError, "/storage_role"),
             (base | {"media_type": 1, "retention_status": "bad"}, ContractShapeError, "/media_type"),
+            (base | {"media_type": "BAD", "sha256": "a" * 16385}, ContractValidationError, "/media_type"),
         )
         for fields, error, path in cases:
             with self.subTest(fields=fields):
@@ -435,6 +584,23 @@ class WireValueTests(unittest.TestCase):
                     with self.assertRaises(error) as constructed:
                         PayloadReference(**fields)  # ty: ignore[invalid-argument-type]
                     self.assertEqual(path, constructed.exception.path)
+
+    def test_payload_allow_list_errors_follow_domain_tiers_and_property_order(self) -> None:
+        cases = (
+            (["BAD", ""], ["test.raw"], ContractValidationError, "/allowed_media_types/0"),
+            (["BAD"], ["e\u0301"], CanonicalJSONError, "/allowed_storage_roles/0"),
+        )
+        for media, roles, error, path in cases:
+            fields = {"allowed_media_types": media, "allowed_storage_roles": roles}
+            with self.subTest(path=path):
+                for build in (
+                    lambda fields=fields: PayloadSpec(**fields),
+                    lambda fields=fields: _value_io._payload_spec_from_wire(fields),
+                    lambda fields=fields: _value_io._payload_spec_from_wire(_parse_json_document(json.dumps(fields))),
+                ):
+                    with self.assertRaises(error) as caught:
+                        build()
+                    self.assertEqual(path, caught.exception.path)
 
     def test_shape_errors_outrank_array_domain_errors_and_null_is_not_omission(self) -> None:
         with self.assertRaises(ContractShapeError) as caught:

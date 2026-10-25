@@ -57,6 +57,21 @@ def _literal_string(node: ast.AST) -> str | None:
     return None
 
 
+def _call_name(node: ast.Call, bindings: Mapping[str, str]) -> str | None:
+    """Resolve only the supported reflective-call shapes to qualified names."""
+    called = _qualified_name(node.func, bindings)
+    if called in {"getattr", "builtins.getattr"} and len(node.args) >= 2:
+        parent = _qualified_name(node.args[0], bindings)
+        attribute = _literal_string(node.args[1])
+        if parent is not None and attribute is not None:
+            return f"{parent}.{attribute}"
+    if called in {"vars", "builtins.vars"} and len(node.args) == 1:
+        parent = _qualified_name(node.args[0], bindings)
+        if parent is not None:
+            return f"{parent}.__dict__"
+    return None
+
+
 def _qualified_name(node: ast.AST, bindings: Mapping[str, str]) -> str | None:
     if isinstance(node, ast.Name):
         return bindings.get(node.id, node.id)
@@ -64,16 +79,7 @@ def _qualified_name(node: ast.AST, bindings: Mapping[str, str]) -> str | None:
         parent = _qualified_name(node.value, bindings)
         return f"{parent}.{node.attr}" if parent is not None else None
     if isinstance(node, ast.Call):
-        called = _qualified_name(node.func, bindings)
-        if called in {"getattr", "builtins.getattr"} and len(node.args) >= 2:
-            parent = _qualified_name(node.args[0], bindings)
-            attribute = _literal_string(node.args[1])
-            if parent is not None and attribute is not None:
-                return f"{parent}.{attribute}"
-        if called in {"vars", "builtins.vars"} and len(node.args) == 1:
-            parent = _qualified_name(node.args[0], bindings)
-            if parent is not None:
-                return f"{parent}.__dict__"
+        return _call_name(node, bindings)
     if isinstance(node, ast.Subscript):
         attribute = _literal_string(node.slice)
         if attribute not in _IMPORT_LOADER_NAMES:

@@ -330,6 +330,93 @@ not complete Task 4 or overall STRICT acceptance.
 
 ## Ownership and remaining work
 
+### Resumed Task 4 remediation checkpoint
+
+Resume verified feature HEAD `ea50bf03824dd37ceaacfbc21dcf7f4d87ae7b28`
+and preserved the twelve existing tooling/test edits. Locked all-groups uv
+backlog audit and next returned no findings; C1.4 remains unselected. Native
+inspection confirmed the selected SP 7.0.0/gz-skills 0.8.0 sources enabled and
+their cached Git revisions matching the bundle. This is current installation
+evidence, separate from the earlier fresh-session discovery observation.
+
+The retained complexity remediation was preserved. Additional public-behavior
+tests protect Unicode scalars U+D7FF/U+E000, exact primitive types despite caller
+equality overrides, irrelevant-field rejection, and deterministic payload error
+tiers/property order. Expectations use literal bytes and paths, with no private
+signature or prose snapshots. No runtime library implementation changed.
+
+Native differential controls now account for the 121 round-2 survivors:
+
+| Group | Observed disposition |
+| --- | --- |
+| Unicode boundary rejection | Three survived before the new tests; all three now killed |
+| Optional-field filtering | Five killed by existing provenance tests omitted from the original selected suite; no duplicate tests added |
+| Exact primitive/omission checks | Eleven now killed, including four follow-up controls; two follow-up controls were already killed by the first new tests |
+| Payload error precedence | Four survived before the new cases; all four now killed |
+| Reviewed equivalents | 95 mapped individually to current public callers, closed vocabularies, normalized Enums, deferred annotations, redundant checks or explicitly bounded supported-CPython behavior |
+| Open questions | Two endpoint-object identity cases and one collection-count error-tier reconciliation |
+
+These are **23 additional differential kills**, not a fresh full mutation batch
+or proof that arbitrary string/object identities are interchangeable. Runtime
+source hashes remain unchanged. The array-count mutant is not cleared by
+freezing current behavior: the design calls general collection bounds shape
+limits, while current count checks report semantic errors. The shared taxonomy
+question also affects the retained allow-list limit assertion. No error priority
+or runtime correction was invented to close that discrepancy.
+
+Scoped independent review dispositioned all 22 retained Bandit findings:
+19 contextual subprocess/import warnings, the baseline-path false positive,
+and two retained advisories concerning executable lookup and redirect trust.
+No actionable security defect was established; this is not an analyzer-clean
+measurement or blanket suppression. The original report remains preserved.
+
+Interactive Python commands and native mutation children used uv. Before the
+checkpoint save completed, inspection found the previously installed Git hook
+itself still launched pre-commit directly with the venv interpreter. That launch
+violated the all-Python-through-uv instruction. The owned commit/test process tree
+was stopped without a commit; its incomplete output is not acceptance evidence.
+The original launcher is preserved locally. Its replacement invokes pre-commit
+through locked all-groups uv with the same feature environment, native hook
+arguments and configuration, and fails if uv is unavailable. It must retain this
+uv-only property when reinstalled from verified main before worktree removal.
+Five subprocess fixture modules now launch through the locked project environment; the descendant
+itself signals readiness in the process-tree cleanup test. Mutation composition
+now uses explicit project selection through uv for baseline, Cosmic Ray and
+mutant tests, and includes the existing provenance module. Dependency-audit
+composition likewise uses locked uv, retaining hashed export, no second resolver
+and the bounded deadline. Five command-boundary assertion failures preceded
+these two tooling corrections; 20 focused analysis/mutation tests subsequently
+passed. No network-audit retry or full native mutation batch was executed.
+The separate external dependency matrix still constructs direct interpreter
+commands and must be reconciled before it is next executed under this policy.
+
+Current focused contract verification passed 76 tests; whole-scope Ruff
+lint/format and ty passed. Scoped test and command-composition reviews retained
+no new defect after correcting descendant readiness. Stable checkpoint saving
+uses the corrected installed four-check commit hooks; the execution ledger records their
+actual result rather than inferring it from these focused checks.
+
+Current native Lizard remeasurement discovers 1,512 functions, maximum 20 and
+weighted project mean 3.4153, with no measured module above 10. Its four original
+discovery mismatches remain errors and the evaluator still returns 2. Current
+Bandit remeasurement retains the same 22 finding categories with no analyzer
+errors. These raw reports do not convert reviewed warnings or missing functions
+into a clean measurement.
+
+Local-only supporting artifacts are under the existing plan workspace:
+`task4-unicode-*`, `task4-optionals-existing-tests*`,
+`task4-exact-types-*`, `task4-payload-precedence-*`,
+`task4-contracts-current.log`, `task4-uv-composition-red.log`,
+`task4-uv-composition-green-retry.log`, `task4-uv-child-readiness.log`,
+`task4-bandit-disposition.md`, `task4-survivor-disposition-review.md`,
+`task4-test-remediation-review.md` and `task4-uv-composition-review.md`.
+The stopped attempt is `task4-resume-commit.log`; the corrected launcher attempt
+is `task4-resume-commit-uv.log`, whose result must be read before claiming a save.
+Raw mutation IDs/diffs and per-ID dispositions remain linked there. Prior dated
+coverage/artifact measurements are not relabeled as current-candidate proof.
+Task 4, Task 7 and STRICT acceptance remain incomplete; cognitive extraction,
+four Lizard omissions, timed-out network proof and exact-commit CI stay open.
+
 Environment/metadata/refresh safeguards: plan Task 2, A04–A08/A10/A18.
 Routine composition/hooks/CI: Task 3, A08/A09.
 Analysis and affected tool/test/adapter refactoring: Task 4, A18.

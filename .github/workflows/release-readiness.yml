@@ -10,16 +10,20 @@ jobs:
   validate-release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7.0.1
-      - uses: astral-sh/setup-uv@v10.2.0
-      - run: uv python install 3.12
-      - run: uv sync --frozen --python 3.12
-      - run: uv run --python 3.12 python tools/quality.py check
-      - run: uv run --python 3.12 mkdocs build --strict
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          version: "0.13.5"
+          python-version: "3.12.15"
+          enable-cache: true
+      - run: uv python install
+      - run: uv sync --locked --all-groups
+      - run: uv run --locked --all-groups python tools/quality.py check
+      - run: uv run --locked --all-groups mkdocs build --strict
       - run: uv build --no-sources
-      - run: uv tool run twine@7.0.0 check --strict dist/*
-      - run: uv run --python 3.12 python tools/release.py check-dist dist
-      - uses: actions/upload-artifact@v7.0.1
+      - run: uv run --locked --all-groups twine check --strict dist/*
+      - run: uv run --locked --all-groups python tools/release.py check-dist dist
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: distribution
           path: |
@@ -31,14 +35,18 @@ jobs:
     needs: validate-release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7.0.1
-      - uses: astral-sh/setup-uv@v10.2.0
-      - run: uv python install 3.12
-      - uses: actions/download-artifact@v8.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          version: "0.13.5"
+          python-version: "3.12.15"
+          enable-cache: true
+      - run: uv python install
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: distribution
           path: dist
-      - run: uv venv "$RUNNER_TEMP/xplane-fdau-smoke" --python 3.12
+      - run: uv venv "$RUNNER_TEMP/xplane-fdau-smoke"
       - run: uv pip install --python "$RUNNER_TEMP/xplane-fdau-smoke/bin/python" dist/xplane_fdau-0.1.0-py3-none-any.whl
       - run: |
           cd "$RUNNER_TEMP"

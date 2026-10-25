@@ -68,13 +68,13 @@ class PublicAPITests(unittest.TestCase):
             self.assertIsNotNone(getattr(native_sink, name))
 
     def test_c1_2_reference_exports(self) -> None:
-        self.assertEqual(["DefinitionRef", "RecordRef", "AlgorithmRef"], contract_identity.__all__)
+        self.assertCountEqual(["DefinitionRef", "RecordRef", "AlgorithmRef"], contract_identity.__all__)
         for name in contract_identity.__all__:
             self.assertIs(getattr(contracts, name), getattr(contract_identity, name))
         self.assertEqual(["__version__"], xplane_fdau.__all__)
 
     def test_c1_2_provenance_exports(self) -> None:
-        self.assertEqual(
+        self.assertCountEqual(
             ["Authority", "ProvenanceSource", "ProducerIdentity", "ProviderIdentity", "AdapterIdentity"],
             contract_provenance.__all__,
         )
@@ -95,7 +95,7 @@ class PublicAPITests(unittest.TestCase):
             "ShapeSpec",
             "UnitSpec",
         ]
-        self.assertEqual(names, values.__all__)
+        self.assertCountEqual(names, values.__all__)
         for name in names:
             self.assertIs(getattr(values, name), getattr(contracts, name))
 

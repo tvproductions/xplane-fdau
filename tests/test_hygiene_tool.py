@@ -25,7 +25,6 @@ EXPECTED_PREFIX = [
     ("uv", "run", "--offline", "--frozen", "python", ".codex/skills/backlog-status/scripts/backlog_status.py", "audit"),
     ("uv", "run", "--offline", "--frozen", "mkdocs", "build", "--strict"),
     ("uv", "run", "--offline", "--frozen", "python", "tools/quality.py", "pre-commit"),
-    ("uv", "run", "--offline", "--frozen", "python", "tools/quality.py", "check"),
 ]
 
 
@@ -64,7 +63,8 @@ class HygieneCommandTests(unittest.TestCase):
                     self.fail("runner environment must be a dictionary")
                 self.assertEqual("1", env["UV_OFFLINE"])
                 self.assertEqual(os.environ.get("PATH"), env.get("PATH"))
-        self.assertEqual(1, [command for command, _ in calls].count(EXPECTED_PREFIX[6]))
+        self.assertEqual(1, [command for command, _ in calls].count(EXPECTED_PREFIX[5]))
+        self.assertNotIn(("uv", "run", "--offline", "--frozen", "python", "tools/quality.py", "check"), [command for command, _ in calls])
         for command, _ in calls:
             self.assertNotIn(command[:2], [("uv", "tree"), ("git", "add"), ("git", "commit")])
 
@@ -89,7 +89,7 @@ class HygieneCommandTests(unittest.TestCase):
     def test_full_quality_failure_stops_before_artifacts(self) -> None:
         module = load_hygiene()
         commands: list[tuple[str, ...]] = []
-        full_quality = EXPECTED_PREFIX[6]
+        full_quality = EXPECTED_PREFIX[5]
 
         def runner(command: tuple[str, ...], **kwargs: object) -> subprocess.CompletedProcess[str]:
             commands.append(command)

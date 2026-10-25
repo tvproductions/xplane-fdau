@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -19,6 +20,35 @@ from tests.backlog_audit_support import initialize_git, run_git  # noqa: E402
 
 
 class AuditPolicyTests(unittest.TestCase):
+    def test_hook_repository_environment_cannot_redirect_fixture_git_operations(self) -> None:
+        protected = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        (protected / "sentinel.txt").write_text("preserve\n", encoding="utf-8")
+        initialize_git(protected)
+        original_head = run_git(protected, "rev-parse", "HEAD")
+        original_index = (protected / ".git/index").read_bytes()
+        original_config = (protected / ".git/config").read_bytes()
+        inherited = {
+            "GIT_DIR": str(protected / ".git"),
+            "GIT_COMMON_DIR": str(protected / ".git"),
+            "GIT_WORK_TREE": str(protected),
+            "GIT_INDEX_FILE": str(protected / ".git/index"),
+            "GIT_OBJECT_DIRECTORY": str(protected / ".git/objects"),
+        }
+        with patch.dict(os.environ, inherited):
+            try:
+                target = self.make_repository()
+            except subprocess.CalledProcessError as error:
+                self.fail(f"fixture Git inherited the hook repository: {error}")
+            self.assertTrue((target / ".git").is_dir(), "fixture Git was redirected into the hook repository")
+            try:
+                policy = load_policy(target)
+            except PolicyError as error:
+                self.fail(f"explicit fixture root was ignored by policy Git reads: {error}")
+            self.assertEqual(3, len(policy.historical))
+        self.assertEqual(original_head, run_git(protected, "rev-parse", "HEAD"))
+        self.assertEqual(original_index, (protected / ".git/index").read_bytes())
+        self.assertEqual(original_config, (protected / ".git/config").read_bytes())
+
     def test_fixture_commits_ignore_inherited_signing_and_hooks(self) -> None:
         directory = Path(self.enterContext(tempfile.TemporaryDirectory()))
         hook = directory / "pre-commit"

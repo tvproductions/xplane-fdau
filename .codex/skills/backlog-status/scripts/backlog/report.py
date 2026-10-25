@@ -6,6 +6,7 @@ from dataclasses import replace
 from pathlib import Path
 
 from backlog.findings import finding_key
+from backlog.git_environment import git_environment
 from backlog.model import (
     Artifacts,
     Backlog,
@@ -51,6 +52,7 @@ def _git(root: Path, *arguments: str) -> str:
         ("git", "--no-optional-locks", "-C", str(root), *arguments),
         check=True,
         capture_output=True,
+        env=git_environment(),
         text=True,
         encoding="utf-8",
     )

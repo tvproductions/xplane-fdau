@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / ".codex/skills/backlog-status/scripts"))
+from backlog.git_environment import git_environment  # ty: ignore[unresolved-import]
 
 FIXTURE = Path(__file__).resolve().parent / "fixtures" / "backlog_status" / "valid"
 
@@ -88,6 +92,7 @@ def run_git(root: Path, *arguments: str, data: bytes | None = None) -> bytes:
         capture_output=True,
         check=True,
         shell=False,
+        env=git_environment(),
     ).stdout
 
 

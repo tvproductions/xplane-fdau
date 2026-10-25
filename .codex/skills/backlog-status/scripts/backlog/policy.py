@@ -6,6 +6,7 @@ from datetime import date
 from pathlib import Path
 from typing import Literal
 
+from backlog.git_environment import git_environment
 from backlog.model import AuditPolicy, HistoricalAdmission, SpecificationArtifact
 from backlog.parse import MarkdownParseError, parse_artifact
 
@@ -44,6 +45,7 @@ def _git_blob(root: Path, object_name: str) -> bytes:
             ("git", "-C", str(root), "show", object_name),
             check=False,
             capture_output=True,
+            env=git_environment(),
         )
     except OSError as error:
         raise PolicyError("policy.unavailable", POLICY_PATH, 1, f"cannot inspect policy in Git: {error}") from error

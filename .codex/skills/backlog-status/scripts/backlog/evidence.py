@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 
 from backlog.findings import finding_key
+from backlog.git_environment import git_environment
 from backlog.model import Finding
 from backlog.parse import MarkdownParseError, parse_evidence
 
@@ -34,7 +35,9 @@ def _regular_path(root: Path, path: str) -> Path:
 
 def _git(root: Path, *arguments: str) -> bytes:
     try:
-        result = subprocess.run(["git", "--literal-pathspecs", "-C", str(root), *arguments], capture_output=True, check=False, shell=False)
+        result = subprocess.run(
+            ["git", "--literal-pathspecs", "-C", str(root), *arguments], capture_output=True, check=False, shell=False, env=git_environment()
+        )
     except OSError as error:
         raise ObservationError("evidence.git", f"cannot inspect Git evidence: {error}") from error
     if result.returncode:

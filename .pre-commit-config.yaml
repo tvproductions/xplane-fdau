@@ -6,17 +6,26 @@ repos:
     hooks:
       - id: ruff-check
         name: ruff check
-        entry: uv run ruff check
+        entry: uv run --locked --all-groups ruff check
         language: system
         types: [python]
 
       - id: ruff-format-check
         name: ruff format check
-        entry: uv run ruff format --check
+        entry: uv run --locked --all-groups ruff format --check
         language: system
         types: [python]
 
-      - id: detect-secrets-baseline
-        name: detect-secrets baseline
-        entry: uv run detect-secrets-hook --baseline .secrets.baseline
+      - id: ty-check
+        name: ty check
+        entry: uv run --locked --all-groups ty check
         language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: unittest
+        name: unittest
+        entry: uv run --locked --all-groups python -m unittest discover -q
+        language: system
+        pass_filenames: false
+        always_run: true

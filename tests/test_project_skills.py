@@ -156,9 +156,8 @@ class ProjectSkillTests(unittest.TestCase):
                 ("uv", "run", "--offline", "--frozen", "python", ".codex/skills/backlog-status/scripts/backlog_status.py", "audit"),
                 ("uv", "run", "--offline", "--frozen", "mkdocs", "build", "--strict"),
                 ("uv", "run", "--offline", "--frozen", "python", "tools/quality.py", "pre-commit"),
-                ("uv", "run", "--offline", "--frozen", "python", "tools/quality.py", "check"),
             ],
-            executed[:7],
+            executed[:6],
         )
 
     def test_hygiene_stops_when_backlog_audit_fails(self) -> None:
@@ -281,19 +280,23 @@ class ProjectSkillTests(unittest.TestCase):
         self.assertIn("git merge --ff-only", hygiene)
         self.assertIn("main HEAD", hygiene)
 
-    def test_pre_commit_runs_only_fast_staged_checks(self) -> None:
+    def test_pre_commit_enforces_four_locked_routine_checks(self) -> None:
         config = load_config(".pre-commit-config.yaml")
         hooks = [hook for repo in config["repos"] for hook in repo["hooks"]]
         self.assertEqual(
-            {"ruff-check", "ruff-format-check", "detect-secrets-baseline"},
+            {"ruff-check", "ruff-format-check", "ty-check", "unittest"},
             {hook["id"] for hook in hooks},
         )
         by_id = {hook["id"]: hook for hook in hooks}
-        self.assertEqual("uv run ruff check", by_id["ruff-check"]["entry"])
-        self.assertEqual("uv run ruff format --check", by_id["ruff-format-check"]["entry"])
+        self.assertEqual("uv run --locked --all-groups ruff check", by_id["ruff-check"]["entry"])
+        self.assertEqual("uv run --locked --all-groups ruff format --check", by_id["ruff-format-check"]["entry"])
         self.assertEqual(["python"], by_id["ruff-check"]["types"])
         self.assertEqual(["python"], by_id["ruff-format-check"]["types"])
-        self.assertTrue(all(hook.get("pass_filenames", True) for hook in hooks))
+        for identity in ("ty-check", "unittest"):
+            self.assertFalse(by_id[identity]["pass_filenames"])
+            self.assertTrue(by_id[identity]["always_run"])
+        self.assertEqual("uv run --locked --all-groups ty check", by_id["ty-check"]["entry"])
+        self.assertEqual("uv run --locked --all-groups python -m unittest discover -q", by_id["unittest"]["entry"])
         self.assertNotIn("tools/quality.py check", " ".join(hook["entry"] for hook in hooks))
         raw_config = yaml.safe_load(Path(".pre-commit-config.yaml").read_text(encoding="utf-8"))
         raw_repos = raw_config["repos"]

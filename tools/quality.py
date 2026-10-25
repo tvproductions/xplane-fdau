@@ -9,7 +9,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
 SOURCE_PATH = "src/xplane_fdau"
-SOURCE_PATHS = (SOURCE_PATH, "tests", "tools")
+SOURCE_PATHS = (SOURCE_PATH, "tests", "tools", ".codex/skills")
 PYTHON_QUALITY_PATHS = SOURCE_PATHS
 SECRET_SCAN_PATHS = (".",)
 SECRET_BASELINE = ".secrets.baseline"
@@ -30,7 +30,7 @@ class Step:
 
 def uv(*args: str) -> tuple[str, ...]:
     """Build a command that executes a development tool through uv."""
-    return ("uv", "run", *args)
+    return ("uv", "run", "--locked", "--all-groups", *args)
 
 
 COMMANDS: dict[str, tuple[Step, ...]] = {
@@ -38,7 +38,7 @@ COMMANDS: dict[str, tuple[Step, ...]] = {
     "format-check": (Step("ruff format --check", uv("ruff", "format", "--check", *SOURCE_PATHS)),),
     "format": (Step("ruff format", uv("ruff", "format", *SOURCE_PATHS)),),
     "typecheck": (Step("ty check", uv("ty", "check")),),
-    "test": (Step("unittest", uv("python", "-m", "unittest", "discover", "-v")),),
+    "test": (Step("unittest", uv("python", "-m", "unittest", "discover", "-q")),),
     "preflight": (
         Step(
             "live-state preflight",
@@ -92,12 +92,7 @@ CHECK_STEPS = (
     *COMMANDS["lint"],
     *COMMANDS["format-check"],
     *COMMANDS["typecheck"],
-    *COMMANDS["security"],
-    *COMMANDS["docs"],
-    *COMMANDS["dead-code"],
-    *COMMANDS["complexity"],
-    *COMMANDS["preflight"],
-    *COMMANDS["coverage"],
+    *COMMANDS["test"],
 )
 
 

@@ -132,6 +132,53 @@ this uv audit is supporting evidence, not its replacement or a full refresh clai
 
 CI, installed artifacts, deeper compatibility and cognitive proof remain pending.
 
+## Task 3 candidate verification
+
+The local quality aggregate now invokes only locked Ruff check, Ruff format,
+ty and unittest, once each. All reviewed groups are explicit because routine
+unittest also verifies repository tooling. Hooks enforce the same four checks;
+ty/unittest run once without per-file arguments. Hygiene uses its all-files
+hook invocation as the single routine suite, retaining lock/backlog/docs and
+safe artifact checks. The previous direct second quality invocation is removed.
+
+Ten assertion-level negative controls became 33 passing focused tests, with
+strict whole-source lint/format and ty passing. CI/readiness YAML uses verified
+immutable Action commits: checkout v7.0.1, setup-uv v10.3.2, upload-artifact
+v7.0.2 and download-artifact v8.0.2. Every setup records uv 0.13.5 and Python
+3.12.15; the duplicate CI unittest job is removed and artifact handoff remains.
+No exact-commit remote CI result is available yet.
+
+The native pre-commit hook was installed after observing no pre-existing hook.
+Its launcher uses the retained feature environment; after verified main
+integration it must be reinstalled from main before feature-worktree removal.
+The Task 3 commit observes actual hook execution; whole-candidate all-files
+hook proof belongs to stable hygiene to avoid repeating the same full suite.
+
+## Commit-hook isolation incident and correction
+
+The first installed-hook run passed lint/format/ty but failed unittest. Git's
+repository-local hook variables redirected disposable fixture Git operations
+into the feature repository. The fixture commits changed its branch ref/index
+and set the shared repository bare flag. All working files survived. Recovery
+preserved the fixture tip under a local recovery ref, restored the recorded
+Task 2 feature HEAD/index (37cb6e3) without checking out or discarding working
+files, and restored non-bare operation. Main remained at 3a5211b and the unrelated
+worktree branch remained at f81c4c2. A recovery copy of the affected configuration
+and failed-hook output is retained in ignored execution evidence.
+
+A real two-disposable-repository regression first failed, then passed after
+clearing Git's documented repository-local routing variables in fixture Git
+operations and explicit-root backlog policy/evidence/report reads. It verifies
+both fixture repository creation/reading and preservation of the sentinel's
+HEAD, index and config. Unrelated process/user settings remain inherited.
+The full-hook retry is required before claiming installed enforcement passes.
+
+Three other failures were ordered __all__ snapshots after Ruff sorted exports;
+export membership and identity/importability are unchanged. The checks now use
+exact multiset comparison, retaining rejection of missing/extra/duplicate names
+without freezing incidental ordering. Seven focused public-API/isolation checks
+and strict static checks pass. This does not close the broader weak-test audit.
+
 ## A01–A18 acceptance matrix
 
 Each row records actual status, applicability, executed scope and remaining

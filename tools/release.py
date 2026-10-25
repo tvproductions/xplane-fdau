@@ -87,7 +87,19 @@ def _sha256(path: Path) -> str:
 
 
 def _forbidden(parts: tuple[str, ...]) -> bool:
-    forbidden = {".codex", ".git", ".superpowers", "__pycache__", ".ruff_cache", ".pytest_cache"}
+    forbidden = {
+        ".agents",
+        ".codex",
+        ".git",
+        ".gz-skills",
+        ".skills-first",
+        ".superpowers",
+        "AGENTS.skills-first.md",
+        "__pycache__",
+        ".ruff_cache",
+        ".pytest_cache",
+        ".import_linter_cache",
+    }
     return bool(forbidden.intersection(parts)) or ("docs" in parts and "superpowers" in parts) or "official" in "/".join(parts).lower()
 
 

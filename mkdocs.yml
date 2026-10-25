@@ -17,6 +17,8 @@ plugins:
 nav:
   - Overview: index.md
   - Project:
+      - Starter alignment: agents/skills-first.md
+      - Python engineering: engineering/python.md
       - Backlog method: project/backlog-method.md
       - Backlog model: project/backlog-governance-model.md
   - Architecture:

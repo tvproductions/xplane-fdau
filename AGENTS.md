@@ -41,8 +41,8 @@
   framework.
 - Use Python's `unittest` framework.
 - During implementation, use focused `unittest`, Ruff lint/format, and ty
-  checks for the affected work. Pre-commit runs fast staged-file checks; it
-  does not run the complete suite on each intermediate commit.
+  checks for the affected work. Installed pre-commit runs Ruff check,
+  Ruff format --check, ty, and the full unittest suite. Do not bypass hooks.
 - Run the complete project gate on the active supported Python version once at
   stable closeout for ordinary changes. Edits to existing source files use the
   standalone quality gate. Run full offline hygiene when package layout,
@@ -77,18 +77,30 @@ verification passes. This does not authorize remote sync, a tag, or release.
 
 ## Canonical gz-skills Workflows
 
-- The `gz-skills@gz-skills` Codex plugin is the sole portable workflow authority.
-  The trusted project `.codex/config.toml` pins marketplace `gz-skills` to
-  `https://github.com/tvproductions/gz-skills.git` at reviewed tag `v0.5.0`
-  and enables the plugin. Install through `codex plugin add gz-skills@gz-skills`
-  if absent; verify ID, version, enabled state, and source with
+- Read `AGENTS.skills-first.md`, `docs/agents/skills-first.md`, and
+  `docs/engineering/python.md`. Their applicable starter engineering obligations
+  are mandatory. The approved baseline is recorded in `.skills-first/bundle.lock.json`;
+  the current adoption evidence is `docs/reviews/2026-10-25-strict-heavy-starter-adoption.md`.
+- Use the shared `skills-first-starter` marketplace at its reviewed full starter
+  revision, with `superpowers@skills-first-starter` and
+  `gz-skills@skills-first-starter`. The latter is the sole portable workflow authority.
+  Keep duplicate sources disabled in this project. Verify ID, version, enabled state,
+  actual checkout revision and source with
   `codex plugin list --json` and `codex plugin marketplace list --json`.
-  Stop if the plugin is unavailable. Do not use copied, linked, vendored, or
+  Use the native manager for installation and refresh; preserve user defaults and
+  unrelated projects. Verify discovery in a fresh session; configured is not discovered.
+  Stop the affected workflow if its owning plugin is unavailable. Do not use copied, linked, vendored, or
   standalone `gzs-*` skills under `.agents/skills`, `.codex/skills`, or another
   discovery root, and do not recreate `gz-skills.lock.json`.
-- A full `gzs-update-dependencies` run inventories the project-pinned plugin
-  alongside Python and other managed dependencies. Review a new release before
-  changing `.codex/config.toml`; Codex marketplace owns the plugin update.
+- The explicit profile is **heavy**. Backplane remains disabled pending readiness
+  and separate adoption authority. FDAU requirements, backlog and release ownership
+  remain local. Heavy selection does not establish complete stack readiness.
+- A full `gzs-update-dependencies` run inventories the starter, Superpowers,
+  Backplane and gz-skills independently alongside Python and managed tools.
+  Use the discovered `update-gz-template` skill for released template changes;
+  reconcile shared provenance and managed files together, without a private catalog.
+  Review at adoption, scoped maintenance, quarterly on demand, and release acceptance.
+  Do not create an automatic schedule. Codex owns native plugin updates.
   The T2.2 Python/uv adapter does not mutate the plugin cache. A full refresh
   cannot be reported complete while this project-managed pin is unverified.
 - Use `gzs-router` for catalog orientation. Apply the documented automatic
@@ -103,8 +115,8 @@ verification passes. This does not authorize remote sync, a tag, or release.
   workflow never implies either operation.
 - Project adapters under `.codex/skills` provide exact xplane-fdau commands and
   domain boundaries beneath the portable invariants. The quality command is
-  `uv run python tools/quality.py check`; the current hygiene command is
-  `uv run --offline --frozen python .codex/skills/hygiene/scripts/hygiene.py`. Use `unittest`
+  `uv run --locked --all-groups python tools/quality.py check`; the hygiene command is
+  `uv run --offline --frozen --all-groups python .codex/skills/hygiene/scripts/hygiene.py`. Use `unittest`
   only, preserve the standard-library-only runtime, and follow the canonical
   Git-sync safeguards for any explicitly authorized ordinary push.
 
@@ -118,12 +130,11 @@ verification passes. This does not authorize remote sync, a tag, or release.
 
 ## Superpowers Workflow
 
-- Use `.agents/superpowers` as the governing external Superpowers checkout.
-  Keep it ignored and update it from `https://github.com/obra/superpowers.git`;
-  do not vendor upstream Superpowers under `.codex`.
-- Expose its skills at `.agents/skills/superpowers` using a local directory
-  junction to `.agents/superpowers/skills`, matching the q4xpcc discovery
-  surface. Keep both the checkout and junction ignored.
+- Use the selected native Superpowers plugin. Do not create a competing
+  `.agents/skills/superpowers` junction or vendor upstream skills. Preserve a
+  pre-existing checkout as rollback state; detach only a verified link, never
+  recursively delete its target. Main's legacy discovery surface is reconciled
+  separately at verified integration.
 - Keep `.codex/skills` limited to xplane-fdau-specific adapters, domain
   guidance, and repository-local tooling; do not duplicate a canonical
   `gzs-*` workflow there.

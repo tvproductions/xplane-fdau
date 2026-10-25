@@ -198,19 +198,6 @@ class DocumentationTests(unittest.TestCase):
             self.assertNotIn("xplane-fdr validate", text, path)
             self.assertNotIn("xplane-fdr to-geojson", text, path)
 
-    def test_active_agent_guidance_and_runtime_docstrings_use_fdau_identity(self) -> None:
-        """Current agent guidance and shipped help must name the installed project."""
-        agent_guidance = "\n".join(self._read_required_text(path) for path in (ROOT / "AGENTS.md", ROOT / "HANDOFF.md"))
-        runtime_paths = tuple(sorted((ROOT / "src/xplane_fdau").rglob("*.py")))
-        self.assertTrue(runtime_paths)
-        runtime_text = "\n".join(self._read_required_text(path) for path in runtime_paths)
-
-        self.assertIn("xplane-fdau", agent_guidance)
-        self.assertIn(".agents/superpowers", agent_guidance)
-        self.assertNotIn("will be designed for `xplane-fdr`", agent_guidance)
-        self.assertIn(":mod:`xplane_fdau.formats.xplane_fdr`", runtime_text)
-        self.assertNotIn(":mod:`xplane_fdr`", runtime_text)
-
     def test_migration_closeout_preserves_the_unreleased_next_contract_boundary(self) -> None:
         """The next agent must not release or skip the canonical contract sequence."""
         handoff = self._read_required_text(ROOT / "HANDOFF.md")

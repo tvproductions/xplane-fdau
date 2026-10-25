@@ -269,40 +269,25 @@ def _scope(root: Path, runner: Runner, blockers: list[dict[str, object]]) -> tup
     return branch.strip(), sorted(paths, key=lambda item: str(item["path"]))
 
 
-def collect_status(root: Path, runner: Runner, opener: Opener) -> dict[str, Any]:
-    """Collect official uv, lock, PyPI, and advisory evidence without mutation."""
-    root = root.resolve()
-    blockers: list[dict[str, object]] = []
-    official_evidence: list[tuple[str, str, str, str]] = []
-
-    def evidence_opener(request: Request, timeout: int, ceiling: int) -> tuple[bytes, str, str]:
-        body, final_url, content_type = opener(request, timeout, ceiling)
-        official_evidence.append((request.full_url, hashlib.sha256(body).hexdigest(), final_url, content_type))
-        return body, final_url, content_type
-
-    findings: list[dict[str, object]] = []
-    dependencies: list[dict[str, object]] = []
-    try:
-        project = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
-        lock = tomllib.loads((root / "uv.lock").read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, tomllib.TOMLDecodeError) as error:
-        blockers.append({"kind": "source", "reason": f"invalid managed TOML: {error}"})
-        project, lock = {}, {}
-    declarations, declared_names = _required_declarations(project, blockers)
+def _installed_uv(project: dict[str, Any], root: Path, runner: Runner, blockers: list[dict[str, object]]) -> tuple[str | None, object]:
+    """Verify the installed tool and declared execution constraint."""
     code, output, error = runner(("uv", "--version"), root)
-    match = re.match(r"uv (\d+\.\d+\.\d+)", output) if code == 0 else None
-    installed = match.group(1) if match else None
+    match: re.Match[str] | None = re.match(r"uv (\d+\.\d+\.\d+)", output) if code == 0 else None
+    installed = str(match.group(1)) if match else None
     if installed is None:
         blockers.append({"kind": "source", "reason": f"unverified installed uv: {error.strip()}"})
     required = project.get("tool", {}).get("uv", {}).get("required-version")
     if required is not None and (not isinstance(required, str) or not re.fullmatch(r"(?:==|>=)\d+\.\d+\.\d+", required)):
         blockers.append({"kind": "source", "reason": "invalid uv requirement"})
-    tree_value = _json_result(runner, TREE_COMMAND, root, blockers)
-    metadata_value = _json_result(runner, METADATA_COMMAND, root, blockers)
-    tree = _preview_resolution(tree_value, TREE_COMMAND, blockers) if tree_value is not None else {}
-    metadata = _preview_resolution(metadata_value, METADATA_COMMAND, blockers) if metadata_value is not None else {}
-    if tree and metadata and set(tree) != set(metadata):
-        blockers.append({"kind": "source", "reason": "universal tree and workspace metadata disagree"})
+    return installed, required
+
+
+def _locked_inventory(
+    lock: dict[str, Any], tree: dict[str, Any], declared_names: Sequence[str], evidence_opener: Opener, blockers: list[dict[str, object]]
+) -> tuple[list[dict[str, object]], list[dict[str, object]], dict[str, set[str]]]:
+    """Reconcile each locked registry package with resolver and official evidence."""
+    dependencies: list[dict[str, object]] = []
+    findings: list[dict[str, object]] = []
     lock_packages = lock.get("package", [])
     if not isinstance(lock_packages, list):
         blockers.append({"kind": "source", "reason": "invalid universal lock package list"})
@@ -327,36 +312,16 @@ def collect_status(root: Path, runner: Runner, opener: Opener) -> dict[str, Any]
         if node is None:
             blockers.append({"kind": "source", "name": name, "version": version, "reason": "universal lock package absent from uv tree"})
         try:
-            index = fetch_index(name, evidence_opener)
-            newest = newest_stable_release(index)
-            artifacts = _locked_artifacts(package)
-            yanked = any(release_is_yanked(index, version, digest) for _, digest in artifacts)
-            if yanked:
-                findings.append({"kind": "yanked", "name": name, "version": version, "source": f"https://pypi.org/simple/{name}/"})
-            latest = node.get("latest_version") if bool(node) else None
-            if latest is not None and not isinstance(latest, str):
-                raise SourceError("invalid uv latest_version")
-            outdated = latest is not None and Version(latest) > Version(version)
-            if latest is None and Version(newest) > Version(version):
-                findings.append(
-                    {"kind": "no-candidate", "name": name, "version": version, "newest_stable": newest, "source": "uv universal resolution and PyPI Index JSON"}
-                )
-            dependencies.append(
-                {
-                    "name": name,
-                    "version": version,
-                    "newest_stable": newest,
-                    "resolver_candidate": latest,
-                    "outdated": outdated,
-                    "declared": name in declared_names,
-                    "source": f"https://pypi.org/simple/{name}/",
-                }
-            )
+            dependency, package_findings = _inspect_locked_release(package, name, version, node, declared_names, evidence_opener)
+            dependencies.append(dependency)
+            findings.extend(package_findings)
         except (SourceError, InvalidVersion, ValueError) as source_error:
             blockers.append({"kind": "source", "name": name, "version": version, "reason": str(source_error)})
-    audit_value = _json_result(runner, AUDIT_COMMAND, root, blockers, findings_exit=True)
-    if audit_value is not None:
-        findings.extend(_audit_findings(audit_value, locked_versions, blockers))
+    return dependencies, findings, locked_versions
+
+
+def _uv_candidate(installed: str | None, evidence_opener: Opener, blockers: list[dict[str, object]]) -> tuple[str | None, str | None]:
+    """Select a stable uv candidate only from compatible official release metadata."""
     candidate = installed
     uv_latest: str | None = None
     try:
@@ -383,6 +348,11 @@ def collect_status(root: Path, runner: Runner, opener: Opener) -> dict[str, Any]
             candidate = uv_latest
     except (SourceError, InvalidSpecifier, ValueError) as source_error:
         blockers.append({"kind": "source", "name": "uv", "reason": str(source_error)})
+    return candidate, uv_latest
+
+
+def _validate_build_backend(declarations: dict[str, list[str]], blockers: list[dict[str, object]]) -> None:
+    """Require one declared uv_build backend while retaining existing source blockers."""
     build_requirements: list[tuple[str, Requirement]] = []
     for value in declarations.get("build", []):
         try:
@@ -393,6 +363,70 @@ def collect_status(root: Path, runner: Runner, opener: Opener) -> dict[str, Any]
             build_requirements.append((value, parsed))
     if len(build_requirements) != 1:
         blockers.append({"kind": "source", "reason": "expected one uv_build build requirement"})
+
+
+def _inspect_locked_release(
+    package: dict[str, Any], name: str, version: str, node: Any, declared_names: Sequence[str], evidence_opener: Opener
+) -> tuple[dict[str, object], list[dict[str, object]]]:
+    """Inspect release freshness and yanking without losing provenance."""
+    findings: list[dict[str, object]] = []
+    index = fetch_index(name, evidence_opener)
+    newest = newest_stable_release(index)
+    artifacts = _locked_artifacts(package)
+    yanked = any(release_is_yanked(index, version, digest) for _, digest in artifacts)
+    if yanked:
+        findings.append({"kind": "yanked", "name": name, "version": version, "source": f"https://pypi.org/simple/{name}/"})
+    latest = node.get("latest_version") if bool(node) else None
+    if latest is not None and not isinstance(latest, str):
+        raise SourceError("invalid uv latest_version")
+    outdated = latest is not None and Version(latest) > Version(version)
+    if latest is None and Version(newest) > Version(version):
+        findings.append(
+            {"kind": "no-candidate", "name": name, "version": version, "newest_stable": newest, "source": "uv universal resolution and PyPI Index JSON"}
+        )
+    dependency = {
+        "name": name,
+        "version": version,
+        "newest_stable": newest,
+        "resolver_candidate": latest,
+        "outdated": outdated,
+        "declared": name in declared_names,
+        "source": f"https://pypi.org/simple/{name}/",
+    }
+    return dependency, findings
+
+
+def collect_status(root: Path, runner: Runner, opener: Opener) -> dict[str, Any]:
+    """Collect official uv, lock, PyPI, and advisory evidence without mutation."""
+    root = root.resolve()
+    blockers: list[dict[str, object]] = []
+    official_evidence: list[tuple[str, str, str, str]] = []
+
+    def evidence_opener(request: Request, timeout: int, ceiling: int) -> tuple[bytes, str, str]:
+        body, final_url, content_type = opener(request, timeout, ceiling)
+        official_evidence.append((request.full_url, hashlib.sha256(body).hexdigest(), final_url, content_type))
+        return body, final_url, content_type
+
+    try:
+        project = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+        lock = tomllib.loads((root / "uv.lock").read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, tomllib.TOMLDecodeError) as error:
+        blockers.append({"kind": "source", "reason": f"invalid managed TOML: {error}"})
+        project, lock = {}, {}
+    declarations, declared_names = _required_declarations(project, blockers)
+    installed, required = _installed_uv(project, root, runner, blockers)
+    tree_value = _json_result(runner, TREE_COMMAND, root, blockers)
+    metadata_value = _json_result(runner, METADATA_COMMAND, root, blockers)
+    tree = _preview_resolution(tree_value, TREE_COMMAND, blockers) if tree_value is not None else {}
+    metadata = _preview_resolution(metadata_value, METADATA_COMMAND, blockers) if metadata_value is not None else {}
+    if tree and metadata and set(tree) != set(metadata):
+        blockers.append({"kind": "source", "reason": "universal tree and workspace metadata disagree"})
+    dependencies, findings, locked_versions = _locked_inventory(lock, tree, declared_names, evidence_opener, blockers)
+    audit_value = _json_result(runner, AUDIT_COMMAND, root, blockers, findings_exit=True)
+    if audit_value is not None:
+        findings.extend(_audit_findings(audit_value, locked_versions, blockers))
+    candidate, uv_latest = _uv_candidate(installed, evidence_opener, blockers)
+    _validate_build_backend(declarations, blockers)
     branch, reviewed_paths = _scope(root, runner, blockers)
     proposed_files = list(MANAGED_FILES)
     proposed_commands = [["uv", "lock", "--upgrade"], ["uv", "sync", "--all-groups", "--locked"], ["uv", "lock", "--check"]]
@@ -531,6 +565,33 @@ def _uv_owner(root: Path, runner: Runner, candidate: str) -> str:
     return "standalone" if code == 0 else "unknown"
 
 
+def _write_prepared_files(prepared: dict[Path, bytes], result: dict[str, Any]) -> None:
+    """Write reviewed managed bytes and verify each write before continuing."""
+    for path, contents in prepared.items():
+        if path.read_bytes() != contents:
+            path.write_bytes(contents)
+            if path.read_bytes() != contents:
+                result["status"] = "failed"
+                raise UpdateError(f"managed file write verification failed: {path}", result)
+
+
+def _verify_refreshed_graph(root: Path, after: dict[str, Any], opener: Opener, result: dict[str, Any], candidate: str) -> None:
+    """Reject unexplained stale dependencies, adverse evidence and policy drift."""
+    remaining = _remaining_constraints(root, after, opener)
+    result["remaining_constraints"] = remaining
+    unresolved = [item for item in remaining if not item["explained"]]
+    adverse = [item for item in after["current_findings"] if item.get("kind") != "no-candidate"]
+    if after["pre_apply_blockers"] or adverse or unresolved:
+        result["status"] = "failed"
+        raise UpdateError(
+            f"refreshed graph has unresolved evidence: {after['pre_apply_blockers']} {adverse} {unresolved}",
+            result,
+        )
+    if after["python"]["declared"] != ">=3.12,<3.13" or not isinstance(after["uv"]["required"], str) or after["uv"]["required"] != f"=={candidate}":
+        result["status"] = "failed"
+        raise UpdateError("refreshed project policy differs from reviewed target", result)
+
+
 def apply_status(
     root: Path,
     expected_sha256: str,
@@ -584,29 +645,12 @@ def apply_status(
         if code or not re.match(rf"uv {re.escape(candidate)}(?:\s|$)", output):
             result["status"] = "failed"
             raise UpdateError(f"uv version verification failed: {error}", result)
-    for path, contents in prepared.items():
-        if path.read_bytes() != contents:
-            path.write_bytes(contents)
-            if path.read_bytes() != contents:
-                result["status"] = "failed"
-                raise UpdateError(f"managed file write verification failed: {path}", result)
+    _write_prepared_files(prepared, result)
     for command in (("uv", "lock", "--upgrade"), ("uv", "sync", "--all-groups", "--locked"), ("uv", "lock", "--check")):
         run(command)
     after = collect_status(root, runner, opener)
     result["after"] = after
-    remaining = _remaining_constraints(root, after, opener)
-    result["remaining_constraints"] = remaining
-    unresolved = [item for item in remaining if not item["explained"]]
-    adverse = [item for item in after["current_findings"] if item.get("kind") != "no-candidate"]
-    if after["pre_apply_blockers"] or adverse or unresolved:
-        result["status"] = "failed"
-        raise UpdateError(
-            f"refreshed graph has unresolved evidence: {after['pre_apply_blockers']} {adverse} {unresolved}",
-            result,
-        )
-    if after["python"]["declared"] != ">=3.12,<3.13" or not isinstance(after["uv"]["required"], str) or after["uv"]["required"] != f"=={candidate}":
-        result["status"] = "failed"
-        raise UpdateError("refreshed project policy differs from reviewed target", result)
+    _verify_refreshed_graph(root, after, opener, result, candidate)
     run(
         (
             "uv",
@@ -675,14 +719,93 @@ def _marker_targets(marker: Marker | None) -> tuple[list[str], list[str]]:
     return versions, platforms
 
 
-def _remaining_constraints(root: Path, after: dict[str, Any], opener: Opener) -> list[dict[str, object]]:
-    """Attribute stale transitive versions to exact official parent requirements."""
-    declarations = after["python"]["groups"]
+def _registry_parents(packages: list[Any], name: str, errors: list[str]) -> list[tuple[str, str]]:
+    """Find registry parents and preserve unverified-parent evidence."""
+    parents: list[tuple[str, str]] = []
+    for package in packages:
+        if not isinstance(package, dict):
+            continue
+        children = package.get("dependencies", [])
+        if not isinstance(children, list) or not any(isinstance(child, dict) and canonicalize_name(str(child.get("name", ""))) == name for child in children):
+            continue
+        parent_name, parent_version = package.get("name"), package.get("version")
+        if not isinstance(parent_name, str) or not isinstance(parent_version, str) or "registry" not in package.get("source", {}):
+            errors.append(f"unverified parent for {name}")
+            continue
+        parents.append((canonicalize_name(parent_name), parent_version))
+    return parents
+
+
+def _parent_constraints(
+    parents: list[tuple[str, str]], name: str, latest: str, opener: Opener, release_cache: dict[tuple[str, str], list[str]]
+) -> tuple[set[str], list[dict[str, object]], list[str]]:
+    """Explain transitive constraints using exact official parent releases."""
+    covered: set[str] = set()
+    constraints: list[dict[str, object]] = []
+    errors: list[str] = []
+    for parent_name, parent_version in sorted(set(parents)):
+        key = (parent_name, parent_version)
+        try:
+            if key not in release_cache:
+                release_cache[key] = fetch_release_requirements(parent_name, parent_version, opener)
+            requirements = [(text, Requirement(text)) for text in release_cache[key]]
+        except (SourceError, InvalidRequirement) as error:
+            errors.append(f"{parent_name} {parent_version}: {error}")
+            continue
+        for requirement_text, parsed in requirements:
+            if canonicalize_name(parsed.name) != name or latest in parsed.specifier:
+                continue
+            versions, platforms = _marker_targets(parsed.marker)
+            if not versions:
+                continue
+            covered.update(versions)
+            constraints.append(
+                {
+                    "parent": parent_name,
+                    "parent_version": parent_version,
+                    "requirement": requirement_text,
+                    "source": f"https://pypi.org/pypi/{parent_name}/{parent_version}/json",
+                    "applies_python": versions,
+                    "applies_platforms": platforms,
+                }
+            )
+    return covered, constraints, errors
+
+
+def _declared_constraints(declarations: dict[str, list[str]]) -> dict[str, list[tuple[str, str, Requirement]]]:
+    """Index declared constraints by canonical project name and group."""
     direct: dict[str, list[tuple[str, str, Requirement]]] = {}
     for group_name, group in declarations.items():
         for requirement_text in group:
             parsed = Requirement(requirement_text)
             direct.setdefault(canonicalize_name(parsed.name), []).append((group_name, requirement_text, parsed))
+    return direct
+
+
+def _python_constraints(name: str, latest: str, covered: set[str], opener: Opener) -> list[dict[str, object]]:
+    """Explain candidate interpreter exclusions not already covered by parents."""
+    constraints: list[dict[str, object]] = []
+    index = fetch_index(name, opener)
+    excluded, python_requirements = release_python_exclusions(index, latest, SUPPORTED_PYTHON)
+    newly_covered = [version for version in excluded if version not in covered]
+    if newly_covered:
+        covered.update(newly_covered)
+        constraints.append(
+            {
+                "kind": "candidate-python",
+                "parent": name,
+                "requirement": python_requirements,
+                "source": f"https://pypi.org/simple/{name}/",
+                "applies_python": newly_covered,
+            }
+        )
+    return constraints
+
+
+def _remaining_constraints(root: Path, after: dict[str, Any], opener: Opener) -> list[dict[str, object]]:
+    """Attribute stale transitive versions to exact official parent requirements."""
+    declarations = after["python"]["groups"]
+    direct = _declared_constraints(declarations)
     try:
         lock = tomllib.loads((root / "uv.lock").read_text(encoding="utf-8"))
     except (OSError, UnicodeError, tomllib.TOMLDecodeError) as error:
@@ -715,62 +838,14 @@ def _remaining_constraints(root: Path, after: dict[str, Any], opener: Opener) ->
                         "applies_platforms": platforms,
                     }
                 )
-        parents: list[tuple[str, str]] = []
-        for package in packages:
-            if not isinstance(package, dict):
-                continue
-            children = package.get("dependencies", [])
-            if not isinstance(children, list) or not any(
-                isinstance(child, dict) and canonicalize_name(str(child.get("name", ""))) == name for child in children
-            ):
-                continue
-            parent_name, parent_version = package.get("name"), package.get("version")
-            if not isinstance(parent_name, str) or not isinstance(parent_version, str) or "registry" not in package.get("source", {}):
-                errors.append(f"unverified parent for {name}")
-                continue
-            parents.append((canonicalize_name(parent_name), parent_version))
-        for parent_name, parent_version in sorted(set(parents)):
-            key = (parent_name, parent_version)
-            try:
-                if key not in release_cache:
-                    release_cache[key] = fetch_release_requirements(parent_name, parent_version, opener)
-                requirements = [(text, Requirement(text)) for text in release_cache[key]]
-            except (SourceError, InvalidRequirement) as error:
-                errors.append(f"{parent_name} {parent_version}: {error}")
-                continue
-            for requirement_text, parsed in requirements:
-                if canonicalize_name(parsed.name) != name or latest in parsed.specifier:
-                    continue
-                versions, platforms = _marker_targets(parsed.marker)
-                if not versions:
-                    continue
-                covered.update(versions)
-                constraints.append(
-                    {
-                        "parent": parent_name,
-                        "parent_version": parent_version,
-                        "requirement": requirement_text,
-                        "source": f"https://pypi.org/pypi/{parent_name}/{parent_version}/json",
-                        "applies_python": versions,
-                        "applies_platforms": platforms,
-                    }
-                )
+        parents = _registry_parents(packages, name, errors)
+        parent_coverage, parent_constraints, parent_errors = _parent_constraints(parents, name, latest, opener, release_cache)
+        covered.update(parent_coverage)
+        constraints.extend(parent_constraints)
+        errors.extend(parent_errors)
         if covered != {str(version) for version in SUPPORTED_PYTHON} and not errors:
             try:
-                index = fetch_index(name, opener)
-                excluded, python_requirements = release_python_exclusions(index, latest, SUPPORTED_PYTHON)
-                newly_covered = [version for version in excluded if version not in covered]
-                if newly_covered:
-                    covered.update(newly_covered)
-                    constraints.append(
-                        {
-                            "kind": "candidate-python",
-                            "parent": name,
-                            "requirement": python_requirements,
-                            "source": f"https://pypi.org/simple/{name}/",
-                            "applies_python": newly_covered,
-                        }
-                    )
+                constraints.extend(_python_constraints(name, latest, covered, opener))
             except SourceError as error:
                 errors.append(f"{name} {latest}: {error}")
         explained = not errors and covered == {str(version) for version in SUPPORTED_PYTHON}

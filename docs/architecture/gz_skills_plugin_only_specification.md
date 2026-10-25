@@ -1,5 +1,12 @@
 # gz-skills plugin-only adoption specification
 
+> FDAU source-selection supersession, 2026-10-25: the approved
+> [strict heavy starter design](../superpowers/specs/2026-10-11-skills-first-native-adoption-design.md)
+> and [current adoption guidance](../agents/skills-first.md) replace this document's
+> original marketplace selection for FDAU. Its historical approval and results
+> below remain unchanged. Plugin-only delivery, local domain ownership and
+> explicit-only publication boundaries continue to apply.
+
 - **Status:** Approved
 - **Approval:** 2026-09-19 — Jeff / tvproductions
 - **Date:** 2026-09-19

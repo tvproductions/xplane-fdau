@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "starter": {
+    "repository": "https://github.com/tvproductions/gz-skills-first-starter.git",
+    "version": "0.6.0",
+    "revision": "c0a6945b2170e1cf5bee3e80738916f5b62d13a5"
+  },
+  "components": [
+    {
+      "name": "superpowers",
+      "repository": "https://github.com/obra/superpowers",
+      "release": "v7.0.0",
+      "revision": "bb92a77741419a4ab5f06e711a283343f1ada0c3",
+      "status": "released; selected independently of deferred Backplane",
+      "enabled_by_default": true
+    },
+    {
+      "name": "superpowers-backplane",
+      "repository": "https://github.com/tvproductions/superpowers-backplane",
+      "release": null,
+      "revision": "d0eeee829c491da02351e793544aa16ad96461bf",
+      "status": "pre-release; published commit, host acceptance incomplete",
+      "enabled_by_default": false
+    },
+    {
+      "name": "gz-skills",
+      "repository": "https://github.com/tvproductions/gz-skills",
+      "release": "v0.8.0",
+      "revision": "75bcd11ee9371ecff1a7b3432d2af29d4bdbb788",
+      "status": "released",
+      "enabled_by_default": true
+    }
+  ]
+}

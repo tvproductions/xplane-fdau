@@ -4,4 +4,18 @@ source = "https://github.com/tvproductions/gz-skills.git"
 ref = "v0.5.0"
 
 [plugins."gz-skills@gz-skills"]
+enabled = false
+
+[marketplaces."skills-first-starter"]
+source_type = "git"
+source = "https://github.com/tvproductions/gz-skills-first-starter.git"
+ref = "c0a6945b2170e1cf5bee3e80738916f5b62d13a5"
+
+[plugins."superpowers@skills-first-starter"]
+enabled = true
+
+[plugins."superpowers-backplane@skills-first-starter"]
+enabled = false
+
+[plugins."gz-skills@skills-first-starter"]
 enabled = true

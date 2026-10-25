@@ -24,11 +24,6 @@ DISCOVERABLE_PROJECT_SKILLS = PROJECT_SKILL_DIRECTORIES
 
 
 class ProjectSkillTests(unittest.TestCase):
-    def test_repository_governance_is_excluded_from_source_builds(self) -> None:
-        project = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
-        excluded = set(project["tool"]["uv"]["build-backend"]["source-exclude"])
-        self.assertTrue({".codex/**", ".git/**", ".superpowers/**", "docs/superpowers/**"}.issubset(excluded))
-
     def test_project_skills_are_scoped_to_unreleased_xplane_fdau(self) -> None:
         for name in DISCOVERABLE_PROJECT_SKILLS:
             path = Path(".codex/skills") / name / "SKILL.md"
@@ -52,24 +47,6 @@ class ProjectSkillTests(unittest.TestCase):
         attributes = Path(".gitattributes").read_text(encoding="utf-8")
         self.assertNotIn(".codex/plugins/superpowers", attributes)
 
-        instructions = Path("AGENTS.md").read_text(encoding="utf-8")
-        self.assertIn(".agents/superpowers", instructions)
-        self.assertIn(".agents/skills/superpowers", instructions)
-        self.assertIn("merge back to `main`", instructions)
-        self.assertIn("remove the worktree", instructions)
-
-        workflow_steps = (
-            "brainstorming",
-            "using-git-worktrees",
-            "writing-plans",
-            "subagent-driven-development",
-            "test-driven-development",
-            "requesting-code-review",
-            "finishing-a-development-branch",
-        )
-        positions = [instructions.index(f"`superpowers:{name}`") for name in workflow_steps]
-        self.assertEqual(sorted(positions), positions)
-
     def test_release_skill_stops_after_local_readiness(self) -> None:
         text = Path(".codex/skills/release/SKILL.md").read_text(encoding="utf-8")
 
@@ -79,21 +56,22 @@ class ProjectSkillTests(unittest.TestCase):
 
     def test_plugin_only_gz_skills_authority(self) -> None:
         config = tomllib.loads(Path(".codex/config.toml").read_text(encoding="utf-8"))
-        marketplace = config["marketplaces"]["gz-skills"]
+        lock = json.loads(Path(".skills-first/bundle.lock.json").read_text(encoding="utf-8"))
+        marketplace = config["marketplaces"]["skills-first-starter"]
         self.assertEqual("git", marketplace["source_type"])
-        self.assertEqual("https://github.com/tvproductions/gz-skills.git", marketplace["source"])
-        self.assertRegex(marketplace["ref"], r"^v\d+\.\d+\.\d+$")
-        instructions = Path("AGENTS.md").read_text(encoding="utf-8")
-        self.assertIn(f"at reviewed tag `{marketplace['ref']}`", instructions)
+        self.assertEqual("https://github.com/tvproductions/gz-skills-first-starter.git", marketplace["source"])
+        self.assertEqual(lock["starter"]["repository"], marketplace["source"])
+        self.assertRegex(marketplace["ref"], r"^[a-f0-9]{40}$")
+        self.assertEqual(lock["starter"]["revision"], marketplace["ref"])
         self.assertEqual(
             1,
             sum(entry.get("source") == marketplace["source"] for entry in config["marketplaces"].values()),
         )
-        self.assertEqual({"enabled": True}, config["plugins"]["gz-skills@gz-skills"])
-        self.assertEqual(
-            ["gz-skills@gz-skills"],
-            sorted(name for name in config["plugins"] if name.startswith("gz-skills@")),
-        )
+        for component in lock["components"]:
+            self.assertRegex(component["revision"], r"^[a-f0-9]{40}$")
+            self.assertEqual({"enabled": component["enabled_by_default"]}, config["plugins"][f"{component['name']}@skills-first-starter"])
+            enabled = [name for name, value in config["plugins"].items() if name.startswith(component["name"] + "@") and value["enabled"]]
+            self.assertEqual([f"{component['name']}@skills-first-starter"] if component["enabled_by_default"] else [], enabled)
         self.assertFalse(Path("gz-skills.lock.json").exists())
         for root in (Path(".agents/skills"), Path(".codex/skills")):
             with self.subTest(root=root):
@@ -107,14 +85,6 @@ class ProjectSkillTests(unittest.TestCase):
                 self.assertFalse(path.exists() or path.is_symlink())
 
     def test_plugin_guidance_and_dependency_inventory(self) -> None:
-        instructions = Path("AGENTS.md").read_text(encoding="utf-8")
-        self.assertIn("sole portable workflow authority", instructions)
-        self.assertIn("gz-skills@gz-skills", instructions)
-        self.assertIn(".codex/config.toml", instructions)
-        self.assertIn("full `gzs-update-dependencies`", instructions)
-        self.assertIn("tools/dependency_refresh.py", instructions)
-        self.assertNotIn("snapshot under `.agents/skills/gzs-*`", instructions)
-
         design = Path("docs/superpowers/specs/2026-08-15-xplane-fdau-local-workflow-skills-design.md").read_text(encoding="utf-8")
         self.assertIn("gz_skills_plugin_only_specification.md", design)
 
@@ -211,53 +181,6 @@ class ProjectSkillTests(unittest.TestCase):
 
         self.assertEqual(3, module.run_local_hygiene(runner))
         self.assertEqual(3, len(executed))
-
-    def test_hygiene_guidance_names_full_offline_project_adapter(self) -> None:
-        command = "uv run --offline --frozen python .codex/skills/hygiene/scripts/hygiene.py"
-        skill = Path(".codex/skills/hygiene/SKILL.md").read_text(encoding="utf-8")
-        instructions = Path("AGENTS.md").read_text(encoding="utf-8")
-        self.assertIn(command, skill)
-        self.assertIn(command, instructions)
-        for required in (
-            "gzs-repository-hygiene",
-            "mkdocs build --strict",
-            "tools/quality.py check",
-            "twine check --strict",
-            "tools/release.py check-dist",
-            "temporary",
-            "preserved",
-            "cleanup",
-            "offline",
-            "3.12",
-            "code-quality",
-            "documentation",
-            "release",
-        ):
-            with self.subTest(required=required):
-                self.assertIn(required, skill)
-        self.assertIn("--dependencies", skill)
-        self.assertIn("gzs-update-dependencies", skill)
-        self.assertNotIn("git push", skill)
-        self.assertNotIn("Git sync is authorized", skill)
-        self.assertNotIn("release is authorized", skill)
-
-    def test_local_guidance_runs_full_gate_once_at_stable_closeout(self) -> None:
-        quality_skill = Path(".codex/skills/code-quality/SKILL.md").read_text(encoding="utf-8")
-        hygiene_skill = Path(".codex/skills/hygiene/SKILL.md").read_text(encoding="utf-8")
-        agents = Path("AGENTS.md").read_text(encoding="utf-8")
-        self.assertIn("stable closeout", quality_skill)
-        self.assertIn("focused", quality_skill)
-        self.assertNotIn("before a commit", quality_skill)
-        self.assertIn("quality.py check", hygiene_skill)
-        self.assertIn("exactly once", hygiene_skill)
-        self.assertIn("fast", hygiene_skill)
-        self.assertIn("stable closeout", agents)
-        self.assertIn("focused", agents)
-        self.assertIn("existing source files", agents)
-        self.assertIn("package layout", agents)
-        self.assertIn("existing source files", hygiene_skill)
-        self.assertIn("package layout", hygiene_skill)
-        self.assertIn("version-sensitive", agents)
 
     def test_exact_fast_forward_uses_focused_main_checks(self) -> None:
         agents = Path("AGENTS.md").read_text(encoding="utf-8")

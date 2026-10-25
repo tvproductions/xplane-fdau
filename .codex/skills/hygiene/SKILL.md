@@ -13,14 +13,16 @@ root:
 git status --short --branch
 git diff --stat
 git diff --cached --stat
-uv run --offline --frozen python .codex/skills/hygiene/scripts/hygiene.py
+uv run --offline --frozen --all-groups python .codex/skills/hygiene/scripts/hygiene.py
 ```
 
 The outer uv invocation and every routine child command run offline. The script
 checks normal and ignored Git status, `uv lock --check --offline`, and the strict
 backlog audit. It runs `mkdocs build --strict` and all-files pre-commit
-hooks before invoking `tools/quality.py check` directly exactly once.
-Documentation or hook failures therefore stop before coverage.
+hooks supplying Ruff check, Ruff format --check, ty and unittest exactly once.
+There is no second direct aggregate. Required deeper acceptance is explicit;
+see `docs/engineering/python.md`. Network audit and isolated mutation are not
+routine offline hygiene.
 Use full hygiene at stable closeout when package layout, shipped resource or
 schema inventory, distribution metadata, lockfiles, build rules, or artifact
 validation changes. It supplies the complete active-Python quality gate, so

@@ -191,6 +191,10 @@ class ReleaseToolTests(unittest.TestCase):
         wheel_cases = {
             "skill": {".codex/skills/backlog-status/SKILL.md": b"governance\n"},
             "portable-skill": {".agents/skills/gzs-router/SKILL.md": b"governance\n"},
+            "starter-lock": {".skills-first/bundle.lock.json": b"{}\n"},
+            "profile": {".gz-skills/settings.json": b"{}\n"},
+            "starter-instructions": {"AGENTS.skills-first.md": b"governance\n"},
+            "template-update": {".agents/skills/update-gz-template/SKILL.md": b"governance\n"},
             "evidence": {".superpowers/sdd/t1-6/gate-1.md": b"governance\n"},
             "backlog": {"BACKLOG.md": b"governance\n"},
             "roadmap": {"ROADMAP.md": b"governance\n"},
@@ -199,6 +203,10 @@ class ReleaseToolTests(unittest.TestCase):
         sdist_cases = {
             "skill": {f"{root}/.codex/skills/backlog-status/SKILL.md": b"governance\n"},
             "portable-skill": {f"{root}/.agents/skills/gzs-router/SKILL.md": b"governance\n"},
+            "starter-lock": {f"{root}/.skills-first/bundle.lock.json": b"{}\n"},
+            "profile": {f"{root}/.gz-skills/settings.json": b"{}\n"},
+            "starter-instructions": {f"{root}/AGENTS.skills-first.md": b"governance\n"},
+            "template-update": {f"{root}/.agents/skills/update-gz-template/SKILL.md": b"governance\n"},
             "evidence": {f"{root}/.superpowers/sdd/t1-6/gate-1.md": b"governance\n"},
             "plan": {f"{root}/docs/superpowers/plans/t1-6.md": b"governance\n"},
             "backlog": {f"{root}/BACKLOG.md": b"governance\n"},

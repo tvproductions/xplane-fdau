@@ -64,17 +64,22 @@ python-preference = "only-managed"
 [tool.uv.build-backend]
 module-root = "src"
 source-exclude = [
+    ".agents/**",
     ".codex/**",
+    ".gz-skills/**",
     ".git/**",
+    ".skills-first/**",
     ".superpowers/**",
     ".ruff_cache/**",
+    ".import_linter_cache/**",
+    "AGENTS.skills-first.md",
     "docs/superpowers/**",
     "tests/fixtures/fdr/*official*",
 ]
 
 [tool.coverage.run]
 source = ["xplane_fdau"]
-branch = false
+branch = true
 
 [tool.coverage.report]
 exclude_lines = [
@@ -105,3 +110,32 @@ python-version = "3.12"
 
 [tool.ty.src]
 include = ["src", "tests", "tools", ".codex/skills"]
+
+[tool.importlinter]
+root_package = "xplane_fdau"
+
+[[tool.importlinter.contracts]]
+name = "Canonical contracts remain independent of delivery adapters"
+type = "forbidden"
+source_modules = ["xplane_fdau.contracts"]
+forbidden_modules = ["xplane_fdau.formats", "xplane_fdau.sinks", "xplane_fdau.cli"]
+
+[[tool.importlinter.contracts]]
+name = "Formats remain independent of sinks and CLI"
+type = "forbidden"
+source_modules = ["xplane_fdau.formats"]
+forbidden_modules = ["xplane_fdau.sinks", "xplane_fdau.cli"]
+
+[[tool.importlinter.contracts]]
+name = "Sinks remain independent of CLI"
+type = "forbidden"
+source_modules = ["xplane_fdau.sinks"]
+forbidden_modules = ["xplane_fdau.cli"]
+
+# Explicit on-demand scope. The adapter supplies an isolated unittest command.
+[cosmic-ray]
+module-path = ["src/xplane_fdau/contracts/values.py", "src/xplane_fdau/contracts/canonical_json.py", "src/xplane_fdau/contracts/_identity_validation.py"]
+timeout = 30
+
+[cosmic-ray.distributor]
+name = "local"

@@ -33,6 +33,12 @@ by an adapter. Native FDR format APIs live in
    uv run python tools/quality.py docs
    ```
 
+For engineering/governance guidance, preserve the reviewed starter provenance
+and actual commands in `docs/agents/skills-first.md` and
+`docs/engineering/python.md`. Record UNKNOWN/FAIL honestly; generated settings
+or a passing documentation check do not certify adoption. Review explanatory
+accuracy instead of adding phrase-presence or current-state snapshots.
+
 `mkdocs build --strict` renders the MkDocstrings API reference and fails on
 MkDocs navigation or configured link-validation warnings.
 

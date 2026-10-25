@@ -181,6 +181,78 @@ and strict static checks pass. This does not close the broader weak-test audit.
 
 ## A01–A18 acceptance matrix
 
+### Current implementation observations
+
+The installed Task 3 commit hook retry passed all four checks at `a28d084`.
+The prior incident is corrected by the real two-repository isolation regression;
+the earlier sentence requiring a retry records its state before that observation.
+
+Released native configuration is now applied through the verified starter helper.
+No-op, conflicting-content, changed-pin and symlink refusal probes passed without
+overwriting protected fixture bytes. The native marketplace was initially cached
+at the older `b6f76dd` revision; the scoped native upgrade brought it to the exact
+selected `c0a6945` revision. Installed Superpowers and gz-skills Git HEADs match
+the shared catalog's full component pins. Native add changed two global disabled
+defaults to enabled; those two original false tables were restored surgically.
+All native user plugin/marketplace tables match the captured before state.
+Project native inspection enables the selected pair and disables Backplane;
+the outside-project control activates neither starter source. Old installed
+copies and main's legacy junction/target are preserved.
+
+The selected upstream setup helper initialized settings and recorded the user's
+explicit heavy choice. A fresh read-only native Codex session subsequently
+discovered and read the exact selected `superpowers:using-superpowers`,
+`gz-skills:gzs-router` and project `update-gz-template` skill. It verified entry
+bytes/source revisions and reported no active duplicate source. Temporary-path
+access warnings and a failed remote catalog request were reported; no whole-stack
+or current-upstream freshness claim follows. Parent-session outside-project
+control is separate evidence. This supersedes earlier pending native-discovery
+notes, and does not certify Python engineering acceptance.
+
+Explicit analysis now retains original source hashes, reconciles native Lizard
+function locations with AST declarations, runs independent static dimensions
+after failures, and returns nonzero for the cognitive UNKNOWN prerequisite.
+Real fixtures cover 20/10/5 boundaries, malformed reports, missing/escaping/linked
+source, original inline suites and function-free modules. Real Import Linter
+accepts the actual graph and rejects all twelve forbidden direct/indirect fixture
+edges. Exact export tests preserve hashes, disable the second resolver and prove
+cleanup. Reports are created exclusively; an existing report survives untouched.
+
+Observed runtime analysis: Interrogate 41.1% against 40%; deptry, Vulture and
+three import contracts pass. The first full static run exposes five C901
+violations, real security-review findings and four Lizard discovery mismatches.
+Dependency-refresh responsibilities were subsequently separated without changing
+their guarded workflow: 29 consuming tests pass; C901 passes for that module;
+native Lizard maximum is 20 and module mean 9.75, versus 57/14.33 before.
+Other required findings remain open; this is not a clean whole-project analysis.
+The secret scan updated two existing reviewed fixture line numbers and its
+timestamp only; no finding was removed or newly blessed.
+
+The bounded disposable Cosmic Ray session passed its unmodified 48-test baseline
+and completed 1,436 mutations: 1,199 killed, 236 survived and one incompetent.
+The incompetent result was an actual CP1252/UTF-8 decoding error, reproduced by
+a subprocess fixture and corrected by explicit UTF-8 bootstrap streams. The
+survivors and affected native rerun remain review/acceptance work; no percentage
+waiver or complete mutation claim is made. The source checkout was never mutated.
+
+The first pip-audit attempt exceeded its 600-second total deadline. Windows
+launchers left child processes; only the identified audit-owned tree was stopped.
+A real disposable parent/child regression now proves tree termination before
+temporary cleanup. The retry uses the locked environment's current interpreter,
+explicit hashes, no dependency resolver and bounded process-tree cleanup.
+Until a successful native result is observed, dependency audit remains UNKNOWN;
+the separately passing earlier uv audit is not substituted for required pip-audit.
+
+Current focused evidence includes 49 analysis/mutation/refresh tests, 43
+archive/native-configuration/installed-smoke fixtures and 57 governance/docs/API
+tests. Strict MkDocs and full Ruff/format/ty checks passed before the latest
+bounded refresh refactor; its own focused static and behavior checks pass.
+Three affected obsolete wording snapshots were removed; real configuration,
+command composition, archive, import and public-API controls remain. The broader
+test-quality audit is still open. Final candidate hygiene, coverage, fresh
+installed artifacts, independent branch review and exact-commit remote CI remain
+separate observations below. No remote operation or main integration occurred.
+
 Each row records actual status, applicability, executed scope and remaining
 proof. UNKNOWN is not PASS. All required rows must pass for strict acceptance;
 Backplane whole-stack readiness is independently deferred.
@@ -188,23 +260,73 @@ Backplane whole-stack readiness is independently deferred.
 | ID | Applicability / observed status | Evidence / remaining work |
 | --- | --- | --- |
 | A01 | PASS for initial identity/scope/rollback capture | Starting HEAD, dirty-document provenance, isolated branch, native inventory and preserved main recorded above; update at candidate closeout |
-| A02 | UNKNOWN; library and CLI apply | Existing src layout/import checks; fresh installed candidate required |
-| A03 | UNKNOWN; pure Python applies | Existing uv_build; exact selected backend and actual builds pending |
-| A04 | UNKNOWN | Effective uv/Ruff/ty precedence and all analyzed scopes pending |
-| A05 | UNKNOWN | Managed 3.12.15 execution observed; exact pin/targets/CI reconciliation pending |
-| A06 | UNKNOWN | Dated official candidate evidence above; compatibility and final pin verification pending |
-| A07 | UNKNOWN | Original frozen sync passed; exact revised group/lock proof pending |
-| A08 | UNKNOWN | Strict selected rules, tool provenance and four actual checks pending |
-| A09 | UNKNOWN | Installed hook observation and exact-commit remote CI pending; no push authority inferred |
-| A10 | UNKNOWN | Runtime empty; original dev/build purposes captured; candidate lock and Requires-Dist proof pending |
-| A11 | UNKNOWN | Source-independent sdist-to-wheel build and inventory/input proof pending |
-| A12 | UNKNOWN | Fresh external installed candidate behavior pending |
-| A13 | UNKNOWN; typed library applies | Existing py.typed; built marker/public typing surface proof pending |
-| A14 | UNKNOWN applicability verification | Single distribution, no declared workspace; confirm effective metadata before N/A |
-| A15 | UNKNOWN applicability verification | No private/special runtime sources declared; effective override/source inspection pending |
-| A16 | UNKNOWN applicability verification | Pure-Python core; no shipped simulator adapter/native/container product observed; record actual triggers |
-| A17 | UNKNOWN; audit export/tool consumers apply | Exact dependency-export and isolated-tool execution contracts pending |
-| A18 | UNKNOWN; REQUIRED external cognitive dependency | All available deeper tools, findings, code currency and host distinctions pending; cognitive proof cannot pass until shared extraction/integration |
+| A02 | PASS on the reviewed candidate | Installed src package, CLI and external import-origin smoke pass |
+| A03 | PASS | Exact uv_build 0.13.5 declaration; actual pure wheel built from sdist, Generator uv 0.13.5 |
+| A04 | PASS for current declared scopes | Recorded effective configuration/provenance; complete runtime/test/tool/adapter Ruff/format/ty checks pass |
+| A05 | PASS for selected execution lane | Exact managed 3.12.15 locally and externally; py312/3.12 tool targets and immutable CI inputs reconciled; remote execution remains A09 UNKNOWN |
+| A06 | PASS for recorded selected families | Dated official release/compatibility review and actual installation/gates; no whole-stack latest-release claim |
+| A07 | PASS | Exact groups/lock selection; offline frozen execution and lock check pass |
+| A08 | PASS for the four routine checks | All-files installed hooks pass Ruff check, format check, ty and full unittest; deeper acceptance remains A18 |
+| A09 | UNKNOWN | Local installed-hook enforcement passes; exact-commit remote CI not run, no push authority inferred |
+| A10 | PASS | Project runtime dependencies empty; fresh wheel publishes no Requires-Dist; dev/build tools retained outside runtime |
+| A11 | PASS | Actual offline no-sources build explicitly builds wheel from sdist; exact inventories and hashes retained |
+| A12 | PASS | Fresh wheel-only external 3.12.15 environment passes CLI/resources/imports/canonical/public-value smoke |
+| A13 | PASS | Installed py.typed and public annotations; external ty accepts valid bytes consumer and rejects assigning bytes to int |
+| A14 | N/A | One distribution and no uv workspace declaration; installed/build inventories confirm the single-package boundary |
+| A15 | N/A for alternate/private-source variants | No tool.uv.sources/private index declarations or corresponding runtime dependencies; standard registry lane applies |
+| A16 | N/A for host/native/container variants | Delivered pure-Python wheel/sdist has no simulator plugin, native binary or container artifact; adapters remain external |
+| A17 | UNKNOWN | Exact hashed export/no-second-resolver controls pass, but both required native pip-audit attempts timed out |
+| A18 | FAIL / UNKNOWN | Current static findings and mutation survivors remain unresolved; four Lizard discovery errors and required external cognitive proof prevent complete measurement |
+
+## Reviewed candidate verification
+
+Independent whole-branch review covered starting base `3a5211b` through `a28d084`
+plus staged tree `59cbb20b7e77ccf7b05072f7dc749388b8a9ffd7`. It retained no new
+Critical/Important/Minor defects and judged the foundation suitable for continued
+governed onboarding, without certifying STRICT acceptance. Its attempted focused
+test run hit sandbox user-temp ACL errors and supplies no regression/pass evidence;
+the parent-owned approved native checks below supply execution evidence. It did
+not independently certify freshness, native activation, every-platform cleanup,
+security clearance, mutation strength, artifacts, coverage or remote CI.
+
+On that unchanged source candidate, full offline hygiene exited 0: lock, backlog,
+strict docs, all-files four-check hooks and fresh artifact pair validation passed.
+The separate Coverage run passed **630 unittest tests in 404.823 seconds**.
+It measured 2,414/2,539 statements (95.08%) and 868/946 branches (91.75%),
+94.18% combined, against the retained 40% floor. Standalone cohesion 1.2.0 also
+measured invented shared-field versus split-field classes at 100% versus 50%;
+this validates the selected CLI without inventing a universal acceptance floor.
+
+Retained artifact pair was built offline with `uv build --no-sources`; the log
+explicitly reports “Building wheel from source distribution”. Fresh strict
+inventory validation passed. SHA-256 values:
+
+- sdist: `235ba653b978541a37418beb63662bf5635c0e7cead8b31f3ef3a961d78aff50`
+- wheel: `867c0a4cee3c468b8843ccafec2b4660326a7dd2d034bc3a61cd93c886b6ae3e`
+
+A new external managed Python 3.12.15 environment installed that wheel only,
+offline with no index/dependencies. Installed smoke passed outside the checkout;
+origin is the external environment's site-packages. The installed typing marker
+exists. ty 0.0.91 accepted the valid public canonical-bytes consumer and rejected
+the invalid bytes-to-int assignment, proving consuming typing behavior rather
+than marker presence alone. Local raw paths/results remain in the plan workspace.
+
+Current deeper analysis exits **2**, with cognitive UNKNOWN, four Lizard discovery
+errors, 1,456 discovered functions, maximum 49 and weighted project mean 3.4904.
+Ruff C901 still flags three backlog-tool functions. Lizard also exposes existing
+function limits in backlog adherence/edit/lifecycle/rules, hygiene, three test
+fixtures and module means in backlog rules (13.0) and runtime_imports (10.8).
+Security findings and the 236 mutation survivors still require disposition and
+any necessary correction. No required finding was suppressed or limit weakened.
+The single encoding-incompetent identifier mutation was rerun natively after
+the UTF-8 fix: normal/killed, with original source hash unchanged. The original
+batch is preserved; it is not relabeled as a new complete mutation run.
+
+Both pip-audit attempts reached their 600-second total deadline. The corrected
+runner stopped the second owned process tree and cleaned its temporary export;
+no further retries are planned in this execution. Required network proof remains
+UNKNOWN. These results do not authorize a merge, remote sync or release and do
+not complete Task 4 or overall STRICT acceptance.
 
 ## Ownership and remaining work
 

@@ -1,6 +1,34 @@
 # Project Handoff
 
-## Resume point — 2026-10-04, C1.3 draft review and test-quality concern
+## Current position — 2026-10-25, strict heavy starter onboarding
+
+This current summary supersedes the older checkpoints below. C1.3 is verified
+with 4/4 gates and accepted independent review in BACKLOG; product next is
+C1.4, with no product child selected. The broader test-quality audit remains
+open; onboarding replaces only the affected weak guidance snapshots.
+
+Mandatory starter alignment is approved and in progress on the isolated
+`chore/strict-heavy-onboarding` branch. Read its
+[approved plan](docs/superpowers/plans/2026-10-25-strict-heavy-starter-onboarding.md)
+and [dated evidence](docs/reviews/2026-10-25-strict-heavy-starter-adoption.md).
+Exact environment policy and four routine checks are implemented; native source
+configuration and explicit heavy settings have been reconciled. Fresh-session
+discovery of the selected native pair and project update skill passed; final
+engineering acceptance remains incomplete.
+Backplane stays disabled and FDAU delivery authorities remain local.
+
+Cognitive analysis is explicitly UNKNOWN until Jeff/upstream extracts the shared
+library from gzkit and integrates it into the starter. No FDAU-local substitute
+is authorized. Lizard discovery errors and remaining analyzer findings also stay
+open. Continue independent onboarding verification without declaring STRICT
+compliance. Main integration, remote sync and releases remain separately gated.
+The feature environment owns the shared installed pre-commit launcher; reinstall
+it from verified main before removing the feature worktree at eventual integration.
+
+The historical checkpoint below describes its original state, not current C1.3
+approval or delivery authority. Recheck Git state and backlog audit/next on entry.
+
+## Historical checkpoint — 2026-10-04, C1.3 draft review and test-quality concern
 
 Observed 2026-10-05 01:02 UTC before this checkpoint: `main` at
 `e56e6a9de3ba961315f2d60d5ba22c5daca1ddc0`, with only the primary worktree.

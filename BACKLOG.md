@@ -1,7 +1,7 @@
 # xplane-fdau Backlog
 
 - **Status:** Active delivery ledger and Superpowers entry point
-- **Updated:** 2026-10-04
+- **Updated:** 2026-10-25
 
 Read `ROADMAP.md` for architecture order and dependencies. Then use this file to
 select one primary child slice whose prerequisites are verified. Each child
@@ -13,7 +13,10 @@ slice receives one focused plan and one independently reviewable outcome.
 - Governing scope amendment: approved; `xplane-fdau` owns reusable X-Plane
   FDAU, native FDR, ARINC, and FDM/FOQA-support behavior while external clients
   own all simulator I/O.
-- Active design: repository-local backlog governance and status reporting.
+- Active design: canonical FDAU contracts; mandatory strict heavy starter
+  onboarding is approved crosscutting maintenance, with
+  [plan](docs/superpowers/plans/2026-10-25-strict-heavy-starter-onboarding.md) and
+  [evidence](docs/reviews/2026-10-25-strict-heavy-starter-adoption.md).
 - Active child: —.
 - `D1.1`, `D1.2`, and `D1.3` are verified. The statusless external `I1.0`
   handoff condition is eligible for q4xpcc Phase 24A planning reconciliation;
@@ -30,10 +33,14 @@ slice receives one focused plan and one independently reviewable outcome.
   independent review. `C1.1` canonical JSON and number encoding is `verified`
   with 4/4 gates and accepted independent review. `C1.2` identity, hashing,
   references, authority, and provenance is `verified` with 4/4 gates and
-  accepted independent review. `C1.3` is the next canonical dependency-ready
-  child; `T3.1` remains independent.
-- Canonical contract design: approved with accepted independent review; `C1.3`
+  accepted independent review. `C1.3` typed values and payload references is
+  `verified` with 4/4 gates and accepted independent review. `C1.4` is the next
+  canonical dependency-ready child; `T3.1` remains independent.
+- Canonical contract design: approved with accepted independent review; `C1.4`
   through `C4.4` remain specified with zero delivery gates satisfied.
+- Heavy is explicitly selected; Backplane remains disabled. STRICT starter
+  acceptance is incomplete, including the external cognitive-library extraction
+  prerequisite. This maintenance does not select or reopen a product child.
 - Release, tag, and package publication: prohibited pending their separate
   gates and authorization.
 - Ordinary Git synchronization may commit and push only through an explicit

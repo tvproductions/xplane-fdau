@@ -17,7 +17,7 @@ slice receives one focused plan and one independently reviewable outcome.
   onboarding is approved crosscutting maintenance, with
   [plan](docs/superpowers/plans/2026-10-25-strict-heavy-starter-onboarding.md) and
   [evidence](docs/reviews/2026-10-25-strict-heavy-starter-adoption.md).
-- Active child: —.
+- Active child: `C1.4`.
 - `D1.1`, `D1.2`, and `D1.3` are verified. The statusless external `I1.0`
   handoff condition is eligible for q4xpcc Phase 24A planning reconciliation;
   `T1.3` is verified with 4/4 gates under its approved audit policy
@@ -67,7 +67,7 @@ The child slices below refine this sequence without weakening or reordering it.
 | `C1.1` | Canonical JSON and binary64/integer encoding | `verified` | `B1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-09-27-c1-1-canonical-json-number-encoding.md) | 4/4 | [review](.superpowers/sdd/2026-09-27-c1-1-canonical-json-number-encoding/review.md) | — | — |
 | `C1.2` | Identity, hashing, references, authority, and provenance | `verified` | `C1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-10-04-c1-2-identity-hashing-references-provenance.md) | 4/4 | [review](.superpowers/sdd/2026-10-04-c1-2-identity-hashing-references-provenance/review.md) | — | — |
 | `C1.3` | Typed values and content-addressed payload references | `verified` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-10-04-c1-3-typed-values-payload-references.md) | 4/4 | [review](.superpowers/sdd/2026-10-04-c1-3-typed-values-payload-references/review.md) | — | — |
-| `C1.4` | Clock domains, UTC instants, anchors, and simulator timing | `specified` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C1.4` | Clock domains, UTC instants, anchors, and simulator timing | `in_progress` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-10-26-c1-4-clock-domains-utc-anchors-simulator-timing.md) | 0/4 | — | — | — |
 | `C1.5` | Validity states and acquisition-quality vocabulary | `specified` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C2.1` | Measurement-definition model and semantic invariants | `specified` | `C1.3`, `C1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C2.2` | Measurement catalog, schema, ordering, and references | `specified` | `C2.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |

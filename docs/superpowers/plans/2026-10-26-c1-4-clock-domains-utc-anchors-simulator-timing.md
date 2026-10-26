@@ -1,7 +1,7 @@
 # C1.4 Clock Domains, UTC, Anchors, and Simulator Timing Implementation Plan
 
 - **Governance:** active
-- **Status:** approved
+- **Status:** in_progress
 - **Date:** 2026-10-26
 - **Roadmap child:** `C1.4`
 - **Source specification:** `docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md`
@@ -124,12 +124,12 @@ self.assertEqual("/resolution", caught.exception.path)
 self.assertEqual(1, ClockDomain(**DOMAIN_KWARGS).resolution)
 ```
 
-- [ ] **Step 1 — Write failing behavior tests.** Establish importable declarations, then prove validation/immutability assertions fail before implementation; import errors alone do not complete RED. Test all three clock kinds and four units. For UUIDs use `11111111-1111-4111-8111-111111111111` and producer `22222222-2222-4222-8222-222222222222`. Assert `resolution=1` and `2**63-1` accepted, zero/negative rejected semantically, `True`/`1.0` rejected as shape, and `2**63` rejected as canonical overflow. Test NFC `origin`/`scope` at 1 and 512 characters; reject empty, 513, non-NFC, surrogates, invalid UUIDs, wrong enum spellings, positional construction, mutation, and dynamic attributes.
-- [ ] **Step 2 — Add tick/readings controls.** Assert tick period `{numerator_ns: 1, denominator: 3}` is preserved, caller mutation cannot affect it, and the stored mapping cannot be mutated. Reject missing/extra keys, `0`, negatives, Booleans, overflow, unreduced `2/6`, absent tick period for ticks, and supplied tick period for other units. Readings preserve both Int64 endpoints and signed values; reject bool, real, string, and overflow without coercion. Check exact error class and JSON Pointer for every representative failure.
-- [ ] **Step 3 — Verify RED.** Run `uv run --locked --all-groups python -m unittest tests.test_contract_timing tests.test_installed_smoke -v`; retain the assertion failures in the execution directory.
-- [ ] **Step 4 — Implement the models and validators.** Copy mappings before validation, validate all shapes/domains before semantics, use `math.gcd` for the period, and preserve resolution as metadata rather than multiplying it into readings. Missing optional fields stay absent. Keep helper imports acyclic.
-- [ ] **Step 5 — Verify GREEN.** Rerun Step 3, then focused `ruff check`, `ruff format --check`, and `ty check` through `uv run --locked --all-groups` on the affected files. Expected: tests pass and no diagnostics.
-- [ ] **Step 6 — Commit scoped files:** `feat: add immutable clock domains and readings`.
+- [x] **Step 1 — Write failing behavior tests.** Establish importable declarations, then prove validation/immutability assertions fail before implementation; import errors alone do not complete RED. Test all three clock kinds and four units. For UUIDs use `11111111-1111-4111-8111-111111111111` and producer `22222222-2222-4222-8222-222222222222`. Assert `resolution=1` and `2**63-1` accepted, zero/negative rejected semantically, `True`/`1.0` rejected as shape, and `2**63` rejected as canonical overflow. Test NFC `origin`/`scope` at 1 and 512 characters; reject empty, 513, non-NFC, surrogates, invalid UUIDs, wrong enum spellings, positional construction, mutation, and dynamic attributes.
+- [x] **Step 2 — Add tick/readings controls.** Assert tick period `{numerator_ns: 1, denominator: 3}` is preserved, caller mutation cannot affect it, and the stored mapping cannot be mutated. Reject missing/extra keys, `0`, negatives, Booleans, overflow, unreduced `2/6`, absent tick period for ticks, and supplied tick period for other units. Readings preserve both Int64 endpoints and signed values; reject bool, real, string, and overflow without coercion. Check exact error class and JSON Pointer for every representative failure.
+- [x] **Step 3 — Verify RED.** Run `uv run --locked --all-groups python -m unittest tests.test_contract_timing tests.test_installed_smoke -v`; retain the assertion failures in the execution directory.
+- [x] **Step 4 — Implement the models and validators.** Copy mappings before validation, validate all shapes/domains before semantics, use `math.gcd` for the period, and preserve resolution as metadata rather than multiplying it into readings. Missing optional fields stay absent. Keep helper imports acyclic.
+- [x] **Step 5 — Verify GREEN.** Rerun Step 3, then focused `ruff check`, `ruff format --check`, and `ty check` through `uv run --locked --all-groups` on the affected files. Expected: tests pass and no diagnostics.
+- [x] **Step 6 — Commit scoped files:** `feat: add immutable clock domains and readings`.
 
 ## Task 2: Checked comparison and exact nanosecond differences
 

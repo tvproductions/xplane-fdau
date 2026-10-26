@@ -74,6 +74,8 @@ class InstalledSmokeTests(unittest.TestCase):
             "xplane_fdau.contracts.canonical_json",
             "xplane_fdau.contracts.values",
             "xplane_fdau.contracts._value_io",
+            "xplane_fdau.contracts.timing",
+            "xplane_fdau.contracts._timing_validation",
             "xplane_fdau.formats",
             "xplane_fdau.formats.xplane_fdr",
             "xplane_fdau.formats.xplane_fdr.config",

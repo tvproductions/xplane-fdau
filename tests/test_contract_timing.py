@@ -147,3 +147,83 @@ class ClockModelTests(unittest.TestCase):
             value.extra = 1  # ty: ignore[invalid-assignment]
         with self.assertRaises(TypeError):
             ClockReading(DOMAIN_ID, 1)  # ty: ignore[too-many-positional-arguments, missing-argument]
+
+
+class ClockArithmeticTests(unittest.TestCase):
+    def test_comparison_is_signed_and_domain_checked(self) -> None:
+        from xplane_fdau.contracts.timing import compare_clock_readings
+
+        one = ClockReading(clock_domain_id=DOMAIN_ID, value=1)
+        two = ClockReading(clock_domain_id=DOMAIN_ID, value=2)
+        self.assertEqual(-1, compare_clock_readings(one, two))
+        self.assertEqual(1, compare_clock_readings(two, one))
+        self.assertEqual(0, compare_clock_readings(one, one))
+        with self.assertRaises(ContractValidationError) as caught:
+            compare_clock_readings(one, ClockReading(clock_domain_id=OTHER_ID, value=1))
+        self.assertEqual("/right/clock_domain_id", caught.exception.path)
+
+    def test_tick_difference_is_exact_or_rejected(self) -> None:
+        from xplane_fdau.contracts.timing import difference_clock_readings_ns
+
+        domain = _domain(unit="tick", tick_period={"numerator_ns": 1, "denominator": 3})
+        zero = ClockReading(clock_domain_id=DOMAIN_ID, value=0)
+        three = ClockReading(clock_domain_id=DOMAIN_ID, value=3)
+        one = ClockReading(clock_domain_id=DOMAIN_ID, value=1)
+        self.assertEqual(1, difference_clock_readings_ns(three, zero, domain))
+        self.assertEqual(-1, difference_clock_readings_ns(zero, three, domain))
+        self.assertEqual(0, difference_clock_readings_ns(zero, zero, domain))
+        with self.assertRaises(ContractValidationError) as caught:
+            difference_clock_readings_ns(one, zero, domain)
+        self.assertEqual("", caught.exception.path)
+
+    def test_scaled_units_do_not_multiply_resolution(self) -> None:
+        from xplane_fdau.contracts.timing import difference_clock_readings_ns
+
+        for unit, expected in (("nanosecond", 2), ("microsecond", 2000), ("millisecond", 2000000)):
+            with self.subTest(unit=unit):
+                domain = _domain(unit=unit, resolution=10)
+                self.assertEqual(
+                    expected,
+                    difference_clock_readings_ns(ClockReading(clock_domain_id=DOMAIN_ID, value=3), ClockReading(clock_domain_id=DOMAIN_ID, value=1), domain),
+                )
+
+    def test_final_bounds_and_large_cancelling_intermediates(self) -> None:
+        from xplane_fdau.contracts.timing import difference_clock_readings_ns
+
+        zero = ClockReading(clock_domain_id=DOMAIN_ID, value=0)
+        maximum = ClockReading(clock_domain_id=DOMAIN_ID, value=2**63 - 1)
+        minimum = ClockReading(clock_domain_id=DOMAIN_ID, value=-(2**63))
+        domain = _domain()
+        self.assertEqual(2**63 - 1, difference_clock_readings_ns(maximum, zero, domain))
+        self.assertEqual(-(2**63), difference_clock_readings_ns(minimum, zero, domain))
+        for later, earlier in ((maximum, minimum), (minimum, maximum), (zero, minimum)):
+            with self.subTest(later=later.value, earlier=earlier.value), self.assertRaises(ContractValidationError) as caught:
+                difference_clock_readings_ns(later, earlier, domain)
+            self.assertEqual("", caught.exception.path)
+        half = _domain(unit="tick", tick_period={"numerator_ns": 1, "denominator": 2})
+        self.assertEqual(2**63 - 1, difference_clock_readings_ns(maximum, ClockReading(clock_domain_id=DOMAIN_ID, value=-(2**63 - 1)), half))
+        multiplied = _domain(unit="tick", tick_period={"numerator_ns": 2**63 - 1, "denominator": 2})
+        self.assertEqual(2**63 - 1, difference_clock_readings_ns(ClockReading(clock_domain_id=DOMAIN_ID, value=2), zero, multiplied))
+        with self.assertRaises(ContractValidationError):
+            difference_clock_readings_ns(maximum, zero, _domain(unit="microsecond"))
+
+    def test_argument_shape_precedes_mismatch_and_keeps_argument_paths(self) -> None:
+        from xplane_fdau.contracts.timing import compare_clock_readings, difference_clock_readings_ns
+
+        good = ClockReading(clock_domain_id=DOMAIN_ID, value=1)
+        other = ClockReading(clock_domain_id=OTHER_ID, value=1)
+        for args, path in (((None, good), "/left"), ((good, 1), "/right")):
+            with self.subTest(path=path), self.assertRaises(ContractShapeError) as caught:
+                compare_clock_readings(*args)  # ty: ignore[invalid-argument-type]
+            self.assertEqual(path, caught.exception.path)
+        for args, path in (((None, good, _domain()), "/later"), ((good, None, _domain()), "/earlier"), ((good, other, None), "/domain")):
+            with self.subTest(path=path), self.assertRaises(ContractShapeError) as caught:
+                difference_clock_readings_ns(*args)  # ty: ignore[invalid-argument-type]
+            self.assertEqual(path, caught.exception.path)
+        for args, path in (
+            ((good, other, _domain()), "/earlier/clock_domain_id"),
+            ((good, good, _domain(clock_domain_id=OTHER_ID)), "/domain/clock_domain_id"),
+        ):
+            with self.subTest(path=path), self.assertRaises(ContractValidationError) as caught:
+                difference_clock_readings_ns(*args)
+            self.assertEqual(path, caught.exception.path)

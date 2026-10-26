@@ -509,4 +509,27 @@ Local evidence is under the existing plan workspace: `continue-count-*`,
 corrections and remaining actions. No integration, remote sync or release was
 performed.
 
+## Resume-session source review and local integration direction
+
+Live GitHub release queries during the resume session still report starter
+v0.6.0 (`c0a6945b2170e1cf5bee3e80738916f5b62d13a5`) as latest published.
+Its selected SP 7.0.0 and gz-skills 0.8.0 pins agree with the feature bundle,
+native project configuration and native plugin inventory. Upstream latest SP
+is 7.0.1 and gz-skills is 0.8.3. SP 7.0.1 improves context gathering and
+brainstorming questions and shortens several skills for compaction survival.
+Those are relevant improvements, but independently replacing its pin would
+break this reviewed released-bundle selection. No component update was applied.
+The shared native plugin cache is outside the disposable worktree; retiring
+the worktree does not uninstall those shared plugins.
+
+Jeff subsequently directed finishing the work in the durable main checkout.
+Local integration now proceeds with verified implementation and the acceptance
+gaps explicitly open; this changes integration timing, not the STRICT standard.
+Main's original handoff/design/plan bytes and the ignored execution workspace
+must be preserved, its environment reconciled through uv, and the shared
+uv-only hook redirected to main before retiring the temporary worktree.
+No remote synchronization, publication or acceptance waiver follows from this
+direction. Cognitive integration, four native Lizard discovery omissions,
+network audit proof and exact-commit CI remain outstanding.
+
 **Overall: onboarding in progress; STRICT acceptance incomplete.**

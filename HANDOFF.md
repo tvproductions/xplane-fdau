@@ -1,5 +1,182 @@
 # Project Handoff
 
+## Local integration directed in the resume session
+
+Jeff directed finishing this work in the durable main checkout and retiring
+the disposable onboarding worktree after verification. This supersedes the
+older integration timing below, while STRICT acceptance remains incomplete.
+The approved specification remains
+`docs/superpowers/specs/2026-10-11-skills-first-native-adoption-design.md`;
+the plan's Task 7 step 8 records this subsequent integration direction.
+
+The live release review still selects published starter v0.6.0 and its SP
+7.0.0/gz-skills 0.8.0 bundle. Upstream SP 7.0.1 and gz-skills 0.8.3 are newer
+components; no independent pin substitution was authorized or applied.
+Shared plugins live outside the worktree. Main must receive project routing,
+the uv-managed environment, and the uv-only hook before worktree retirement.
+
+Preserve the ignored execution evidence under main's
+`.superpowers/sdd/2026-10-25-strict-heavy-starter-onboarding/`, including the
+original main files. Do not repeat completed mutation/coverage remediation.
+Cognitive-library integration, four Lizard discovery omissions, network audit
+proof and exact-commit CI remain open. This integration is no STRICT acceptance,
+product-child completion, Git push, tag or release claim.
+
+Integration verification and final Git state are recorded after execution.
+
+## Restart after workflow failure — 2026-10-26
+
+Observed **2026-10-26 00:27 UTC**. Jeff requested this handoff and a fresh start
+after the agent repeatedly confused specification authority, integration timing
+and approval. This section supersedes the older resume instructions below.
+No merge, push, PR, tag or release occurred. This handoff performs no upgrade.
+
+**Objective:** Complete the mandatory template alignment. First resolve the
+Superpowers source/version concern and explain the governing specification
+clearly; do not start another implementation slice or repeat completed work.
+
+**Workspace:** The agent owns the existing feature worktree:
+`U:/repos/xp/xplane-fdau/.worktrees/strict-heavy-onboarding`, branch
+`chore/strict-heavy-onboarding`, source HEAD
+`528ff96381e69219005950ad267374540e63c8d8`
+(`fix: enforce collection shape limits and uv verification paths`). The tree
+was clean before this handoff; the new handoff text is uncommitted. Do not ask
+Jeff to reopen or manage a different worktree. Main remains at `3a5211b`, with
+its preserved HANDOFF/design/approved-step-document edits. The unrelated
+dependency-refresh worktree remains at `f81c4c2` and is outside scope.
+
+### Governing specification and source selection
+
+The work was **not performed without a specification**. The approved semantic
+authority is [Skills-first Native Adoption Design](docs/superpowers/specs/2026-10-11-skills-first-native-adoption-design.md),
+whose metadata records Jeff's October 25 approval. Its lines 28–31 explicitly
+permit independent work while the cognitive prerequisite is unavailable, without
+claiming STRICT acceptance. The approved executable steps are in
+[Strict Heavy Starter Onboarding](docs/superpowers/plans/2026-10-25-strict-heavy-starter-onboarding.md).
+Its Task 7 step 8 currently says “Finish only after acceptance.” Do not substitute
+vague references to a “plan” for identifying the source specification and the
+exact requirement. Neither tests nor skill invocation certify acceptance.
+
+The feature bundle and native configuration select released starter **v0.6.0**,
+revision `c0a6945b2170e1cf5bee3e80738916f5b62d13a5`, whose catalog pins
+**Superpowers 7.0.0**, revision `bb92a77741419a4ab5f06e711a283343f1ada0c3`,
+and gz-skills 0.8.0. Backplane is disabled. The prior
+[adoption review](docs/reviews/2026-10-25-strict-heavy-starter-adoption.md)
+already knew SP 7.0.1 and gz-skills 0.8.3 existed, but retained the reviewed
+released catalog instead of substituting independent components. The design
+also records an earlier observation of unreleased starter main selecting SP
+7.0.1. These are dated observations, not a new latest-release review.
+
+**Jeff's unresolved concern:** Why is 7.0.1 not active here, and is Superpowers
+actually being followed? A cached 7.0.1 copy exists under
+`C:/Users/Jeff/.codex/plugins/cache/xplane-health-skills-first/superpowers/7.0.1`,
+at `2ce8aa15d05bd57213e6f746f953aafb7ded7a8b`. Its presence does not activate
+it for FDAU. The active feature source remains the starter-selected 7.0.0.
+The session's advertised skill catalog is still main-derived; selected installed
+7.0.0/0.8.0 sources were read explicitly. Do not claim a fresh discovery from
+that file inspection, silently use main's older skills, or modify managed caches.
+
+**First concrete action on resume:** Read this section and the governing spec,
+then verify actual native source selection from the feature directory. Use the
+project `update-gz-template` guidance for a bounded read-only check of published
+starter/component releases and compare the reviewed bundle with SP 7.0.1. Report
+why the current pin exists and whether it still meets Jeff's current direction.
+Do not repeat the full tool refresh or silently upgrade one component under
+the old bundle. A review request is not an instruction to edit caches, activate
+another project's source, or change user defaults. Own the source reconciliation.
+
+### What failed in this session
+
+- The agent did not name and distinguish the approved specification clearly.
+- It proposed a draft PR to obtain CI because `ci.yml` runs on main pushes and
+  PRs, then presented Superpowers' optional finishing routes while STRICT
+  acceptance was still incomplete. Superpowers offers local merge, push/PR or
+  keep-as-is; it does not mandate a PR or draft status.
+- Jeff initially answered yes to feature push/draft PR, then selected **1**
+  (local merge) after the discussion of those alternatives. Local integration
+  is his latest selected route. The agent repeatedly asked whether that changed
+  acceptance timing, then alternated between saying it would merge and saying
+  it was holding. It did not execute either route. Do not ask Jeff to repeat
+  his basic choice merely because a new session began, or treat that choice as
+  evidence that STRICT acceptance passed. Reconcile the specification's open
+  requirements and the recorded integration direction consistently before acting.
+- One external smoke setup used a relative receipt path from Temp. PowerShell
+  continued after the read failed and uv created an unintended empty Temp/.venv.
+  Its exact path, creation time, contents and absence of links were verified;
+  only that newly created empty environment was removed. Absolute paths and
+  fail-fast PowerShell corrected the retry. No direct Python fallback occurred.
+
+### Verified implementation and evidence — do not redo
+
+Commit `528ff96` corrects the general 65,535 collection ceiling to
+`ContractShapeError` before element domain/semantic validation, as Jeff explicitly
+selected. Constructors and nested readers share the check. Semantic minima and
+declaration-specific lengths remain distinct. It also routes external matrix
+source/wheel commands and installed-smoke console children through uv, preserving
+external installed origin, and adds only five individually approved public Git
+pin false positives to the secrets baseline. Existing entries/settings/timestamp
+were structurally verified unchanged. Independent bounded review found no defect.
+
+The existing local-only execution workspace is
+`.superpowers/sdd/2026-10-25-strict-heavy-starter-onboarding/`:
+
+- `continue-acceptance-current.json` binds the exact source HEAD, results,
+  source hashes, artifacts and remaining prerequisites.
+- Mandatory installed uv-only hooks passed Ruff, format, ty and full unittest:
+  `continue-commit.log`. No hook was bypassed.
+- `continue-coverage.log/json`: **656 tests passed**, 304.238 seconds;
+  statement coverage **95.31%**, branch **92.37%**, combined **94.52%**.
+- `continue-mutation-complete.json/log`: a **fresh complete** native batch,
+  baseline 79 tests, **1,430 normal jobs: 1,316 killed, 114 survived**, zero
+  abnormal/incompetent executions. Raw exit 1 is preserved. Every survivor has
+  an individually bounded equivalence rationale; none is unmatched in
+  `continue-mutation-review.json`. The mapping checks mutation and surrounding
+  diff context; shifted contexts are in `continue-manual-dispositions.json`.
+  Private-introspection, supported-interpreter and future-API limits remain
+  explicit. Do not relabel this as every mutation killed or universal equivalence.
+- `continue-remediation-review.md`, `continue-endpoint-alias-review.md` and
+  `continue-empty-vector-equivalence.md` retain scoped reviews. The former
+  endpoint/count uncertainty is resolved for the stated public paths; do not
+  repeat those investigations or add private-state snapshots.
+- `continue-analysis-final.json/log`: native Lizard 1,518 functions, maximum 20,
+  weighted mean 3.4130; four original discovery errors and cognitive UNKNOWN
+  still force exit 2. Reviewed Bandit warnings remain visible. Strict docs,
+  whole-source Ruff/format/ty and final actual backlog audit passed.
+
+Fresh external artifacts and wheel-only Python 3.12.15 smoke passed, including
+installed collection-error controls. Verified retained locations:
+`C:/Users/Jeff/AppData/Local/Temp/fdau-alignment-current-a5e76508335f444f98063a3ddb99dc86/dist`
+and sibling `installed`. Digests are in the current JSON receipt and ledger.
+These paths and ignored reports are local-only; preserve them before eventual
+worktree retirement. Older dated gates are not substitutes for current proof.
+
+### Remaining boundaries and restart rules
+
+Tasks 4/7 and STRICT acceptance remain incomplete: the shared cognitive library
+is still unavailable (Jeff reconfirmed), native Lizard has four discovery
+omissions, network audit proof remains timed out, and exact-commit remote CI is
+unobserved. Do not retry unchanged network timeouts, rewrite sound source for
+Lizard, substitute a cognitive analyzer or claim acceptance from routine tests.
+
+All project Python execution goes through locked all-groups uv in this feature
+directory. External wheel-only checks use explicitly selected uv environments
+with `--no-project` to prevent editable fallback. Cache-lock denial requires
+narrow sandbox escalation; never use python/py/venv executables directly.
+The shared Git hook is a corrected uv-only launcher pointing to this feature
+environment; retain it and the worktree until verified main reinstallation.
+
+Main's three preserved files were compared and copied to local
+`integration-main-originals/` under this execution workspace. The design matches
+feature byte-for-byte; the executable-steps document differs only in recorded
+progress/status, scratch path and approval note; main HANDOFF is an older pointer.
+Main remains dirty. Do not discard its files, remove a dirty worktree, silently
+merge over them or touch the unrelated worktree. A future local integration must
+preserve these originals, reconcile current authority, verify main, retain uv-only
+hooks, and preserve ignored evidence before cleanup.
+
+This request ends the session with **handoff text only**. No implementation,
+integration, remote operation or plugin/version update follows it in this session.
+
 ## Task 4 resumed checkpoint — 2026-10-25
 
 The restart below was followed in the existing feature worktree. The retained

@@ -9,7 +9,20 @@ import unicodedata
 from ._binary64 import _ecmascript_number_token
 from ._json_parse import _materialize_number, _NumberToken, _ObjectPairs, _pointer
 from .errors import CanonicalJSONError
-from .timing import ClockAnchor, ClockDomain, ClockReading, UtcInstant, _clock_anchor_wire, _clock_domain_wire, _clock_reading_wire, _utc_instant_wire
+from .timing import (
+    ClockAnchor,
+    ClockDomain,
+    ClockReading,
+    ObservationTiming,
+    SourceTiming,
+    UtcInstant,
+    _clock_anchor_wire,
+    _clock_domain_wire,
+    _clock_reading_wire,
+    _observation_timing_wire,
+    _source_timing_wire,
+    _utc_instant_wire,
+)
 from .values import (
     InlineValue,
     PayloadReference,
@@ -143,6 +156,10 @@ def _encode_bytes(value: object, *, parameter: bool) -> bytes:
 
 def canonical_bytes(value: object) -> bytes:
     """Encode an owned value model or a data-only parameter object."""
+    if type(value) is ObservationTiming:
+        return _encode_document(_observation_timing_wire(value))
+    if type(value) is SourceTiming:
+        return _encode_document(_source_timing_wire(value))
     if type(value) is ClockDomain:
         return _encode_document(_clock_domain_wire(value))
     if type(value) is ClockReading:

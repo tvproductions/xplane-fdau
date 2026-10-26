@@ -9,7 +9,7 @@ from enum import StrEnum
 from types import MappingProxyType
 from typing import cast
 
-from ._timing_validation import _OMITTED, _enum, _scalar, _utc_parts, _validate
+from ._timing_validation import _OMITTED, _enum, _Missing, _scalar, _utc_parts, _validate
 from .errors import ContractShapeError, ContractValidationError
 
 __all__ = ["ClockKind", "ClockUnit", "ClockDomain", "ClockReading"]  # noqa: RUF022 -- specification ownership order
@@ -21,6 +21,15 @@ class ClockKind(StrEnum):
     HOST_MONOTONIC = "host_monotonic"
     SOURCE = "source"
     SIMULATOR = "simulator"
+
+
+class ReplayState(StrEnum):
+    """Observed replay state; absence carries no implied state."""
+
+    LIVE = "live"
+    REPLAY = "replay"
+    SEEKING = "seeking"
+    UNKNOWN = "unknown"
 
 
 class ClockUnit(StrEnum):
@@ -43,7 +52,7 @@ class ClockDomain:
     origin: str
     scope: str
     producer_instance_id: str
-    tick_period: object = _OMITTED
+    tick_period: Mapping[str, int] | _Missing = _OMITTED
 
     def __post_init__(self) -> None:
         if isinstance(self.tick_period, Mapping):
@@ -149,7 +158,7 @@ class ClockAnchor:
     uncertainty_ns: int
 
     def __post_init__(self) -> None:
-        _arguments((self.monotonic_reading, ClockReading, "/monotonic_reading"), (self.utc, UtcInstant, "/utc"))
+        _nested_arguments((self.monotonic_reading, ClockReading, "/monotonic_reading"), (self.utc, UtcInstant, "/utc"))
         _validate(_clock_anchor_wire(self), "clock_anchor")
 
 
@@ -158,4 +167,87 @@ def _utc_instant_wire(value: UtcInstant) -> str:
 
 
 def _clock_anchor_wire(value: ClockAnchor) -> dict[str, object]:
-    return {"monotonic_reading": _clock_reading_wire(value.monotonic_reading), "utc": value.utc.value, "uncertainty_ns": value.uncertainty_ns}
+    return {
+        "monotonic_reading": _clock_reading_wire(value.monotonic_reading) if type(value.monotonic_reading) is ClockReading else value.monotonic_reading,
+        "utc": value.utc.value if type(value.utc) is UtcInstant else value.utc,
+        "uncertainty_ns": value.uncertainty_ns,
+    }
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class SourceTiming:
+    """Timing genuinely supplied by a source or simulator."""
+
+    clock: ClockDomain
+    reading: ClockReading
+    source_sequence: int | _Missing = _OMITTED
+
+    def __post_init__(self) -> None:
+        _nested_arguments((self.clock, ClockDomain, "/clock"), (self.reading, ClockReading, "/reading"))
+        _validate(_source_timing_wire(self), "source_timing")
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class ObservationTiming:
+    """Receipt timing plus independently supplied source and simulator evidence."""
+
+    receipt_clock: ClockDomain
+    receipt_reading: ClockReading
+    receipt_utc: UtcInstant
+    source_timing: SourceTiming | _Missing = _OMITTED
+    receipt_anchor: ClockAnchor | _Missing = _OMITTED
+    xplane_cycle: int | _Missing = _OMITTED
+    simulator_flight_time_ns: int | _Missing = _OMITTED
+    acquisition_phase: str | _Missing = _OMITTED
+    paused: bool | _Missing = _OMITTED
+    replay_state: ReplayState | str | _Missing = _OMITTED
+    time_speed: float | _Missing = _OMITTED
+
+    def __post_init__(self) -> None:
+        _nested_arguments(
+            (self.receipt_clock, ClockDomain, "/receipt_clock"),
+            (self.receipt_reading, ClockReading, "/receipt_reading"),
+            (self.receipt_utc, UtcInstant, "/receipt_utc"),
+            (self.source_timing, SourceTiming, "/source_timing"),
+            (self.receipt_anchor, ClockAnchor, "/receipt_anchor"),
+        )
+        _validate(_observation_timing_wire(self), "observation_timing")
+        if self.replay_state is not _OMITTED:
+            object.__setattr__(self, "replay_state", _enum(self.replay_state, "replay_state", path="/replay_state"))
+
+
+def _nested_arguments(*arguments: tuple[object, type, str]) -> None:
+    for value, expected, path in arguments:
+        if value is not None and value is not _OMITTED:
+            _arguments((value, expected, path))
+
+
+def _source_timing_wire(value: SourceTiming) -> dict[str, object]:
+    result: dict[str, object] = {
+        "clock": _clock_domain_wire(value.clock) if type(value.clock) is ClockDomain else value.clock,
+        "reading": _clock_reading_wire(value.reading) if type(value.reading) is ClockReading else value.reading,
+    }
+    if value.source_sequence is not _OMITTED:
+        result["source_sequence"] = value.source_sequence
+    return result
+
+
+def _observation_timing_wire(value: ObservationTiming) -> dict[str, object]:
+    result: dict[str, object] = {
+        "receipt_clock": _clock_domain_wire(value.receipt_clock) if type(value.receipt_clock) is ClockDomain else value.receipt_clock,
+        "receipt_reading": _clock_reading_wire(value.receipt_reading) if type(value.receipt_reading) is ClockReading else value.receipt_reading,
+        "receipt_utc": value.receipt_utc.value if type(value.receipt_utc) is UtcInstant else value.receipt_utc,
+    }
+    for name, child in (
+        ("source_timing", _source_timing_wire(value.source_timing) if type(value.source_timing) is SourceTiming else value.source_timing),
+        ("receipt_anchor", _clock_anchor_wire(value.receipt_anchor) if type(value.receipt_anchor) is ClockAnchor else value.receipt_anchor),
+        ("xplane_cycle", value.xplane_cycle),
+        ("simulator_flight_time_ns", value.simulator_flight_time_ns),
+        ("acquisition_phase", value.acquisition_phase),
+        ("paused", value.paused),
+        ("replay_state", value.replay_state.value if type(value.replay_state) is ReplayState else value.replay_state),
+        ("time_speed", value.time_speed),
+    ):
+        if child is not _OMITTED:
+            result[name] = child
+    return result

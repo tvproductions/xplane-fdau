@@ -55,6 +55,30 @@ SINK_NAMES = {
 
 
 class PublicAPITests(unittest.TestCase):
+    def test_timing_exports_have_exact_ownership_and_package_identity(self) -> None:
+        from xplane_fdau.contracts import timing
+
+        names = [
+            "ClockKind",
+            "ClockUnit",
+            "ReplayState",
+            "ClockDomain",
+            "ClockReading",
+            "ClockAnchor",
+            "UtcInstant",
+            "ObservationTiming",
+            "SourceTiming",
+            "compare_clock_readings",
+            "difference_clock_readings_ns",
+        ]
+        self.assertEqual(names, timing.__all__)
+        for name in names:
+            self.assertIs(getattr(timing, name), getattr(contracts, name))
+        self.assertEqual(["__version__"], xplane_fdau.__all__)
+        self.assertFalse(hasattr(timing, "AcquisitionPhase"))
+        for name in ("_observation_timing_from_wire", "_validate_observation_producer"):
+            self.assertNotIn(name, contracts.__all__)
+
     """Keep documented imports deliberate and importable."""
 
     def test_native_format_and_sink_export_exact_ownership_sets(self) -> None:

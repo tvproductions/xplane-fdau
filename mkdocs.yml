@@ -27,6 +27,7 @@ nav:
       - Native FDR: usage/native-fdr.md
   - Reference:
       - Native FDR API: reference/native-fdr.md
+      - Canonical timing: reference/contracts-timing.md
 
 validation:
   omitted_files: ignore

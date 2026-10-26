@@ -165,6 +165,64 @@ def _canonical_values_smoke() -> None:
     raise SmokeError("installed byte-only value was accepted inline")
 
 
+def _canonical_timing_smoke() -> None:
+    """Verify installed timing precision and domain boundaries."""
+    import json
+
+    import xplane_fdau.contracts as contracts
+    from xplane_fdau.contracts._json_parse import _parse_json_document
+    from xplane_fdau.contracts._timing_io import _observation_timing_from_wire
+
+    clock = contracts.ClockDomain(
+        clock_domain_id="11111111-1111-4111-8111-111111111111",
+        kind="host_monotonic",
+        unit="tick",
+        resolution=1,
+        origin="installed process",
+        scope="smoke",
+        producer_instance_id="22222222-2222-4222-8222-222222222222",
+        tick_period={"numerator_ns": 1, "denominator": 3},
+    )
+    zero = contracts.ClockReading(clock_domain_id=clock.clock_domain_id, value=0)
+    three = contracts.ClockReading(clock_domain_id=clock.clock_domain_id, value=3)
+    if contracts.difference_clock_readings_ns(three, zero, clock) != 1 or contracts.compare_clock_readings(zero, three) != -1:
+        raise SmokeError("installed clock arithmetic differs from the C1.4 contract")
+    utc = contracts.UtcInstant(value="2026-10-26T12:34:56.123456789Z")
+    if contracts.canonical_bytes(utc) != b'"2026-10-26T12:34:56.123456789Z"\n':
+        raise SmokeError("installed UTC lost nanosecond text")
+    try:
+        utc.to_datetime()
+    except contracts.ContractValidationError:
+        pass
+    else:
+        raise SmokeError("installed UTC conversion silently lost precision")
+    anchor = contracts.ClockAnchor(monotonic_reading=three, utc=utc, uncertainty_ns=5)
+    minimum = contracts.ObservationTiming(receipt_clock=clock, receipt_reading=three, receipt_utc=utc)
+    minimum_wire = contracts.canonical_bytes(minimum)
+    if set(json.loads(minimum_wire)) != {"receipt_clock", "receipt_reading", "receipt_utc"}:
+        raise SmokeError("installed timing invented optional evidence")
+    full = contracts.ObservationTiming(
+        receipt_clock=clock,
+        receipt_reading=three,
+        receipt_utc=utc,
+        receipt_anchor=anchor,
+        xplane_cycle=0,
+        simulator_flight_time_ns=-1,
+        acquisition_phase="unknown",
+        paused=False,
+        replay_state="replay",
+        time_speed=-1.0,
+    )
+    wire = contracts.canonical_bytes(full)
+    if _observation_timing_from_wire(_parse_json_document(wire)) != full:
+        raise SmokeError("installed receipt anchor or optional timing did not round-trip")
+    try:
+        contracts.compare_clock_readings(zero, contracts.ClockReading(clock_domain_id="33333333-3333-4333-8333-333333333333", value=0))
+    except contracts.ContractValidationError:
+        return
+    raise SmokeError("installed arithmetic accepted unrelated clocks")
+
+
 def smoke(version: str, *, checkout: Path) -> None:
     """Exercise the installed public API, schema, FDR files, and CLI commands."""
     import xplane_fdau
@@ -185,6 +243,7 @@ def smoke(version: str, *, checkout: Path) -> None:
         raise SmokeError("installed canonical JSON bytes differ from the C1.1 contract")
     _canonical_identity_smoke()
     _canonical_values_smoke()
+    _canonical_timing_smoke()
     schema = importlib.resources.files("xplane_fdau.formats.xplane_fdr").joinpath("schemas/fdr-record-config-v1.schema.json")
     if not schema.is_file() or '"$schema"' not in schema.read_text(encoding="utf-8"):
         raise SmokeError("installed schema resource is unavailable or invalid")

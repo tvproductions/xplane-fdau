@@ -1,12 +1,12 @@
 # C1.4 Clock Domains, UTC, Anchors, and Simulator Timing Implementation Plan
 
 - **Governance:** active
-- **Status:** in_progress
+- **Status:** completed
 - **Date:** 2026-10-26
 - **Roadmap child:** `C1.4`
 - **Source specification:** `docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md`
 - **Approval:** 2026-10-26 — Jeff / tvproductions; inline execution approved in chat
-- **Completion evidence:** —
+- **Completion evidence:** `.superpowers/sdd/2026-10-26-c1-4-timing/completion.md`
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -20,7 +20,7 @@
 
 ## Global Constraints
 
-- Implement only `C1.4`. Its dependency `C1.2` is verified. `C1.4` remains `specified`, unselected, with 0/4 gates until approved lifecycle changes are applied separately.
+- Implement only `C1.4`. Its dependency `C1.2` is verified. The approved guarded entry transitions selected C1.4 and placed it `in_progress`; delivery gates remain open until their evidence is verified.
 - Runtime is pure Python and standard-library-only. Python 3.12 is the sole supported minor. Use the exact execution patch in `.python-version`, currently `3.12.16`, through locked all-group uv commands. Use `unittest` only.
 - Public structural models are frozen, slotted, keyword-only dataclasses. Named timing vocabularies are `enum.StrEnum`. Retain the exact public ownership table; add no public model, convenience loader, truncating conversion, or alias beyond the specification.
 - `Int64` is `-9223372036854775808..9223372036854775807`; `UInt63` is `0..9223372036854775807`. Reject Boolean/integer/real coercion. Finite binary64 fields require actual floats.
@@ -29,7 +29,7 @@
 - Do not sample clocks, schedule cadence, access a simulator, open recordings, correlate unrelated clocks automatically, extrapolate anchors, synthesize missing timing, or infer one simulator-state field from another.
 - Preserve C1.1–C1.3 behavior, root `xplane_fdau.__all__ == ["__version__"]`, and the stdlib runtime boundary. This slice adds no family document, self-hash dispatch, schema, conformance corpus, raw observation, binding catalog, recording, or adapter.
 - The supplied `ClockDomain` provides domain identity and units, not a global clock registry. Comparisons do not acquire external context.
-- Writing this draft authorizes no implementation, lifecycle transition, commit, push, tag, or release. The local commit checkpoints below are proposed execution steps after approval and apply only to this slice.
+- Jeff approved inline execution and local checkpoints on 2026-10-26. This authority applies only to this slice and the separately authorized maintenance baseline; push, tag, publication, and release remain separately gated.
 
 ## Review Focus
 
@@ -44,6 +44,8 @@
 Observed October 26: `main` at `8bcef360b2728ea4c07b3d41874bc3dd661f051f` has the earlier documentation/Lizard evidence and verified Python dependency refresh as uncommitted changes. Backlog audit and next both report no findings and `action=write_plan child=C1.4`. No child is selected. Preserve those edits; this plan does not assume a clean implementation baseline or absorb the maintenance work into C1.4.
 
 The current session discovers Superpowers 7.0.1 and gz-skills 0.8.0. Native Superpowers version/source metadata and FDAU's older bundle record disagree; the actual 7.0.1 checkout is `2ce8aa15d05bd57213e6f746f953aafb7ded7a8b`. Reconcile the already-open starter provenance work before execution; do not change plugin policy or caches as a C1.4 task.
+
+Execution-source resolution, October 26: entry verified the reviewed 7.0.0 source. During Task 3 the shared cache changed to 7.0.1, and native restoration did not persist. Jeff explicitly approved installed 7.0.1 for the remainder of C1.4. Both observed revisions are now authorized for this run; the execution/TDD/review/verification rules are unchanged. This bounded exception does not update the shared bundle pins or establish starter acceptance.
 
 Two ownership decisions keep the plan within the approved specification:
 
@@ -67,10 +69,10 @@ Reuse `_identity_validation` scalar domains and UUID/NFC/counter checks, `_json_
 ## Execution entry — after plan approval
 
 - [x] Record approval and the user's execution method. Re-read the approved specification and verify source/plugin authorities, backlog audit/next, HEAD, status, and worktrees. Jeff approved the plan and inline execution on 2026-10-26. Resume verification found no backlog findings; main remains at `8bcef36`. The active sources match the reviewed bundle: Superpowers 7.0.0 at `bb92a77741419a4ab5f06e711a283343f1ada0c3`, gz-skills 0.8.0 at `75bcd11ee9371ecff1a7b3432d2af29d4bdbb788`, and starter at `c0a6945b2170e1cf5bee3e80738916f5b62d13a5`. The earlier 7.0.1 paragraph records a dated observation, not the execution selection. Clean-baseline resolution remains pending; no implementation or lifecycle transition has started.
-- [ ] Establish a clean reviewed base containing the separately completed maintenance work. Do not silently stash, commit, discard, or copy the dirty main changes into a feature branch. Resolve the baseline through the user's chosen integration/save route before feature execution.
-- [ ] Use `superpowers:using-git-worktrees` at execution time to establish the temporary C1.4 feature worktree unless Jeff explicitly chooses the current checkout. Record its exact baseline and environment provenance.
-- [ ] After approval, link this plan to C1.4, select C1.4, and transition through `planned` to `in_progress` using each backlog operation's dry-run, target SHA-256, and apply procedure. Audit each mutation. Do not advance gates merely because a plan exists.
-- [ ] Make the scoped planning/lifecycle commit after authorization. Subsequent task commits include only the task's reviewed files and run mandatory hooks.
+- [x] Establish a clean reviewed base containing the separately completed maintenance work. Jeff authorized the local checkpoint `a2ef12d`; mandatory hooks passed. No stash or remote operation was used.
+- [x] Use `superpowers:using-git-worktrees` at execution time to establish the temporary C1.4 feature worktree. `.worktrees/c1-4-timing`, branch `feature/c1-4-timing`, starts at `a2ef12d` on Python 3.12.16 with locked offline all-group sync.
+- [x] After approval, link this plan to C1.4, select C1.4, and transition through `planned` to `in_progress` using each backlog operation's dry-run, target SHA-256, and apply procedure. Each successful mutation audited cleanly; no gate advanced at entry.
+- [x] Make the scoped planning/lifecycle commit after authorization. The ledger records combining it with Task 1 in `716f62d`; subsequent task commits run mandatory hooks.
 
 ## Public interfaces fixed by this plan
 
@@ -227,13 +229,13 @@ with mock.patch.object(contracts, "difference_clock_readings_ns", return_value=9
 
 The smoke calls the public contracts namespace, as the existing value smoke does, so this negative control exercises its check rather than an unused patch.
 
-- [ ] **Step 1 — Write failing public/installed tests.** Assert the exact timing export inventory and identity of each package re-export; private readers/validators stay private. Add all three new runtime modules to the exact installed module inventory. The installed timing smoke exercises 1/3 tick arithmetic, retained nine-digit UTC, rejected precision loss, matching anchor/receipt timing, minimal optional omission, and unrelated-domain rejection. Add negative controls that prove the smoke fails on altered UTC digits or an incorrect clock difference rather than merely importing names.
-- [ ] **Step 2 — Verify RED** with `uv run --locked --all-groups python -m unittest tests.test_public_api tests.test_installed_smoke -v`.
-- [ ] **Step 3 — Complete integration and guidance.** Export the specified names, invoke timing smoke from the installed-smoke entry point, and add a short timing reference page with runnable construction/comparison/UTC examples and MkDocstrings for `xplane_fdau.contracts.timing`. Explain exact UTC conversion, units/resolution, unrelated domains, anchor uncertainty, optional evidence, and adapter ownership. Link it in Reference navigation. Extend documentation verification through existing executable example/API checks, avoiding phrase snapshots.
-- [ ] **Step 4 — Verify focused GREEN.** Run Step 2 plus `tests.test_documentation` and `tests.test_runtime_import_boundary`; run focused Ruff/format and ty. Build `uv run --locked --all-groups mkdocs build --strict`.
-- [ ] **Step 5 — Request independent change review** with the approved specification, this plan, four acceptance gates, and actual diff/evidence. Resolve material findings before stable closeout. Review must include arithmetic precision, nested error precedence, exact ownership, unavailable-context limits, and preserved runtime boundaries.
-- [ ] **Step 6 — Run the stable-candidate full gate once.** New runtime modules change packaged contents, so run `uv run --offline --frozen --all-groups python .codex/skills/hygiene/scripts/hygiene.py`. It supplies all-files Ruff/format/ty/unittest, lock/backlog/docs checks, and a fresh external artifact pair with strict metadata and inventory checks. Do not run a duplicate standalone aggregate on the same candidate. Fix failures and rerun from the first affected gate.
-- [ ] **Step 7 — Verify the external Python 3.12 wheel.** Use the existing `tools.dependency_matrix.run_matrix(root)` procedure, launched through locked all-group uv, for fresh source/artifact and external installed-wheel checks on the exact `.python-version`. Record command exits, interpreter/import origins, artifact hashes, timing smoke results, and cleanup/preserved-failure paths. Preserve isolation with `--no-project` and the explicit environment interpreter for child commands. This is required for the new installed import surface; no unsupported-minor matrix is added.
+- [x] **Step 1 — Write failing public/installed tests.** Assert the exact timing export inventory and identity of each package re-export; private readers/validators stay private. Add all three new runtime modules to the exact installed module inventory. The installed timing smoke exercises 1/3 tick arithmetic, retained nine-digit UTC, rejected precision loss, matching anchor/receipt timing, minimal optional omission, and unrelated-domain rejection. Add negative controls that prove the smoke fails on altered UTC digits or an incorrect clock difference rather than merely importing names.
+- [x] **Step 2 — Verify RED** with `uv run --locked --all-groups python -m unittest tests.test_public_api tests.test_installed_smoke -v`.
+- [x] **Step 3 — Complete integration and guidance.** Export the specified names, invoke timing smoke from the installed-smoke entry point, and add a short timing reference page with runnable construction/comparison/UTC examples and MkDocstrings for `xplane_fdau.contracts.timing`. Explain exact UTC conversion, units/resolution, unrelated domains, anchor uncertainty, optional evidence, and adapter ownership. Link it in Reference navigation. Extend documentation verification through existing executable example/API checks, avoiding phrase snapshots.
+- [x] **Step 4 — Verify focused GREEN.** Run Step 2 plus `tests.test_documentation` and `tests.test_runtime_import_boundary`; run focused Ruff/format and ty. Build `uv run --locked --all-groups mkdocs build --strict`.
+- [x] **Step 5 — Request independent change review** with the approved specification, this plan, four acceptance gates, and actual diff/evidence. Resolve material findings before stable closeout. Review must include arithmetic precision, nested error precedence, exact ownership, unavailable-context limits, and preserved runtime boundaries.
+- [x] **Step 6 — Run the stable-candidate full gate once.** New runtime modules change packaged contents, so run `uv run --offline --frozen --all-groups python .codex/skills/hygiene/scripts/hygiene.py`. It supplies all-files Ruff/format/ty/unittest, lock/backlog/docs checks, and a fresh external artifact pair with strict metadata and inventory checks. Do not run a duplicate standalone aggregate on the same candidate. Fix failures and rerun from the first affected gate.
+- [x] **Step 7 — Verify the external Python 3.12 wheel.** Use the existing `tools.dependency_matrix.run_matrix(root)` procedure, launched through locked all-group uv, for fresh source/artifact and external installed-wheel checks on the exact `.python-version`. Record command exits, interpreter/import origins, artifact hashes, timing smoke results, and cleanup/preserved-failure paths. Preserve isolation with `--no-project` and the explicit environment interpreter for child commands. This is required for the new installed import surface; no unsupported-minor matrix is added.
 - [ ] **Step 8 — Evidence the four gates.** Write each gate receipt with exact candidate identity, commands/results and bounded review findings. Use the guarded backlog adapter's dry-run/target-hash/apply procedure to record gates and advance only C1.4 after all requirements pass. A routine suite does not certify deferred starter STRICT acceptance, G1, or release readiness.
 - [ ] **Step 9 — Commit:** `feat: expose and verify canonical timing contracts`; keep independent review and gate-recording changes scoped. Do not bypass hooks. Any later code correction invalidates its affected earlier gate evidence.
 - [ ] **Step 10 — Finish through the selected integration route.** After branch verification, use `superpowers:finishing-a-development-branch`. If Jeff selects local integration, follow AGENTS.md's exact fast-forward verification; retain branch/worktree until main verification passes. Push/tag/publication remain separately authorized.
@@ -268,4 +270,4 @@ Intent is the approved canonical design; scope is C1.4's four backlog gates. Pla
 | Source/resource delivery and verification boundaries | Aligned: Task 5 hygiene, wheel verification, review and controlled gate evidence |
 | Selection, approval, execution and remote/release authority | Aligned: draft metadata and execution-entry conditions |
 
-Self-review checks field names/signatures, semantic order, arithmetic units and bounds, exact export ownership, nullable/omitted distinction, and mapping of all five Review Focus cases. No implementation or delivery gate is claimed by this document. After focused drafting checks, record their commands and results in the drafting evidence directory; leave this plan draft until Jeff reviews it.
+Drafting self-review checked field names/signatures, semantic order, arithmetic units and bounds, exact export ownership, nullable/omitted distinction, and mapping of all five Review Focus cases. Its earlier audit and logs remain drafting evidence. Jeff subsequently approved execution; delivery acceptance requires the separate execution review and gate receipts.

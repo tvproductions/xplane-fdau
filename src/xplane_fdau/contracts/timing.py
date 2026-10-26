@@ -12,7 +12,19 @@ from typing import cast
 from ._timing_validation import _OMITTED, _enum, _Missing, _scalar, _utc_parts, _validate
 from .errors import ContractShapeError, ContractValidationError
 
-__all__ = ["ClockKind", "ClockUnit", "ClockDomain", "ClockReading"]  # noqa: RUF022 -- specification ownership order
+__all__ = [  # noqa: RUF022 -- specification ownership order
+    "ClockKind",
+    "ClockUnit",
+    "ReplayState",
+    "ClockDomain",
+    "ClockReading",
+    "ClockAnchor",
+    "UtcInstant",
+    "ObservationTiming",
+    "SourceTiming",
+    "compare_clock_readings",
+    "difference_clock_readings_ns",
+]
 
 
 class ClockKind(StrEnum):

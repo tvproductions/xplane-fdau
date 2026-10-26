@@ -35,6 +35,31 @@ def _read(fields: dict[str, Any]) -> timing.ObservationTiming:
 
 
 class TimingReaderTests(unittest.TestCase):
+    def test_nested_context_mismatch_precedes_later_nested_semantic_failure(self) -> None:
+        clock = DOMAIN_KWARGS | {"kind": "source", "resolution": 0}
+        anchor = {"monotonic_reading": {"clock_domain_id": OTHER_ID, "value": 7}, "utc": UTC_TEXT, "uncertainty_ns": -1}
+        cases = (
+            (_wire() | {"receipt_clock": clock}, "/receipt_clock/kind"),
+            (_wire() | {"receipt_anchor": anchor}, "/receipt_anchor/monotonic_reading/clock_domain_id"),
+            (
+                _wire() | {"receipt_anchor": anchor | {"monotonic_reading": {"clock_domain_id": DOMAIN_ID, "value": 8}}},
+                "/receipt_anchor/monotonic_reading/value",
+            ),
+            (
+                _wire()
+                | {"receipt_anchor": anchor | {"monotonic_reading": {"clock_domain_id": DOMAIN_ID, "value": 7}, "utc": "2026-10-26T12:34:56.123456788Z"}},
+                "/receipt_anchor/utc",
+            ),
+            (
+                _wire() | {"source_timing": {"clock": DOMAIN_KWARGS | {"resolution": 0}, "reading": {"clock_domain_id": DOMAIN_ID, "value": 0}}},
+                "/source_timing/clock/kind",
+            ),
+        )
+        for fields, path in cases:
+            with self.subTest(path=path), self.assertRaises(ContractValidationError) as caught:
+                _read(fields)
+            self.assertEqual(path, caught.exception.path)
+
     def test_earlier_cross_field_semantics_precede_later_counter_failure(self) -> None:
         with self.assertRaises(ContractValidationError) as caught:
             _read(_wire() | {"receipt_clock": DOMAIN_KWARGS | {"kind": "source"}, "xplane_cycle": -1})

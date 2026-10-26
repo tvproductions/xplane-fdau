@@ -10,6 +10,18 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class DocumentationTests(unittest.TestCase):
+    def test_timing_reference_examples_execute_with_exact_precision(self) -> None:
+        import re
+
+        page = ROOT / "docs/reference/contracts-timing.md"
+        namespace: dict[str, object] = {}
+        examples = re.findall(r"```python\n(.*?)```", page.read_text(encoding="utf-8"), re.DOTALL)
+        self.assertTrue(examples)
+        for example in examples:
+            exec(compile(example, str(page), "exec"), namespace)
+        self.assertEqual(2000, namespace["elapsed_ns"])
+        self.assertIs(True, namespace["precision_rejected"])
+
     """Protect the active FDAU and native-FDR documentation contract."""
 
     def test_superseded_core_plan_cannot_be_mistaken_for_active_work(self) -> None:

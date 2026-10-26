@@ -152,7 +152,16 @@ def _mapping(value: object, *, path: str) -> Mapping[str, object]:
     return cast(Mapping[str, object], value)
 
 
-def _check(fields: Mapping[str, object], stem: str, phase: int, *, path: str = "") -> None:
+def _check(
+    fields: Mapping[str, object],
+    stem: str,
+    phase: int,
+    *,
+    path: str = "",
+    expectations: dict[str, tuple[object, ...]] | None = None,
+) -> None:
+    if phase == 2 and expectations is None:
+        expectations = _context_expectations(fields, stem, path=path)
     layout = _LAYOUT[stem]
     for name, kind, optional in layout:
         value = fields.get(name, _OMITTED)
@@ -162,11 +171,11 @@ def _check(fields: Mapping[str, object], stem: str, phase: int, *, path: str = "
                 raise ContractShapeError("missing timing property", path=child_path)
             continue
         if kind in _LAYOUT and value is not None:
-            _check(_mapping(value, path=child_path), kind, phase, path=child_path)
+            _check(_mapping(value, path=child_path), kind, phase, path=child_path, expectations=expectations)
         else:
             _scalar(value, kind, phase, path=child_path)
-        if phase == 2:
-            _context_semantics(fields, stem, name, path=path)
+        if phase == 2 and expectations is not None and child_path in expectations and value not in expectations[child_path]:
+            raise ContractValidationError("timing evidence does not match its context", path=child_path)
     if phase == 0:
         allowed = {name for name, _, _ in layout}
         for name in sorted(fields):
@@ -186,16 +195,19 @@ def _semantics(fields: Mapping[str, object], stem: str, *, path: str) -> None:
             raise ContractValidationError("tick period must be in lowest terms", path=path)
 
 
-def _context_semantics(fields: Mapping[str, object], stem: str, name: str, *, path: str) -> None:
+def _context_expectations(fields: Mapping[str, object], stem: str, *, path: str) -> dict[str, tuple[object, ...]]:
+    """Place contextual constraints on their exact semantic leaf positions."""
+    result: dict[str, tuple[object, ...]] = {}
+    for name, kind, _ in _LAYOUT[stem]:
+        if kind in _LAYOUT and name in fields:
+            result.update(_context_expectations(_mapping(fields[name], path=path + "/" + name), kind, path=path + "/" + name))
     if stem == "source_timing":
         clock = _mapping(fields["clock"], path=path + "/clock")
-        reading = _mapping(fields["reading"], path=path + "/reading")
-        if name == "clock" and clock["kind"] not in ("source", "simulator"):
-            raise ContractValidationError("source timing requires a source or simulator clock", path=path + "/clock/kind")
-        if name == "reading":
-            _match(clock["clock_domain_id"], reading["clock_domain_id"], path=path + "/reading/clock_domain_id")
+        result[path + "/clock/kind"] = ("source", "simulator")
+        result[path + "/reading/clock_domain_id"] = (clock["clock_domain_id"],)
     elif stem == "observation_timing":
-        _observation_semantics(fields, name, path=path)
+        result.update(_observation_expectations(fields, path=path))
+    return result
 
 
 def _match(expected: object, actual: object, *, path: str) -> None:
@@ -203,19 +215,15 @@ def _match(expected: object, actual: object, *, path: str) -> None:
         raise ContractValidationError("timing evidence does not match its context", path=path)
 
 
-def _observation_semantics(fields: Mapping[str, object], name: str, *, path: str) -> None:
+def _observation_expectations(fields: Mapping[str, object], *, path: str) -> dict[str, tuple[object, ...]]:
     clock = _mapping(fields["receipt_clock"], path=path + "/receipt_clock")
     reading = _mapping(fields["receipt_reading"], path=path + "/receipt_reading")
-    if name == "receipt_clock" and clock["kind"] != "host_monotonic":
-        raise ContractValidationError("receipt requires host monotonic clock", path=path + "/receipt_clock/kind")
-    if name == "receipt_reading":
-        _match(clock["clock_domain_id"], reading["clock_domain_id"], path=path + "/receipt_reading/clock_domain_id")
-    if name == "receipt_anchor":
-        anchor = _mapping(fields["receipt_anchor"], path=path + "/receipt_anchor")
-        anchor_reading = _mapping(anchor["monotonic_reading"], path=path + "/receipt_anchor/monotonic_reading")
+    result = {path + "/receipt_clock/kind": ("host_monotonic",), path + "/receipt_reading/clock_domain_id": (clock["clock_domain_id"],)}
+    if "receipt_anchor" in fields:
         for name in ("clock_domain_id", "value"):
-            _match(reading[name], anchor_reading[name], path=path + "/receipt_anchor/monotonic_reading/" + name)
-        _match(fields["receipt_utc"], anchor["utc"], path=path + "/receipt_anchor/utc")
+            result[path + "/receipt_anchor/monotonic_reading/" + name] = (reading[name],)
+        result[path + "/receipt_anchor/utc"] = (fields["receipt_utc"],)
+    return result
 
 
 def _validate(fields: Mapping[str, object], stem: str) -> None:

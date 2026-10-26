@@ -18,6 +18,28 @@ from xplane_fdau.formats.xplane_fdr import FDRReader
 
 
 class InstalledSmokeTests(unittest.TestCase):
+    def test_timing_smoke_detects_incorrect_difference(self) -> None:
+        import xplane_fdau.contracts as contracts
+
+        with mock.patch.object(contracts, "difference_clock_readings_ns", return_value=99), self.assertRaises(installed_smoke.SmokeError):
+            installed_smoke._canonical_timing_smoke()
+
+    def test_timing_smoke_detects_altered_utc_digits(self) -> None:
+        import xplane_fdau.contracts as contracts
+
+        original = contracts.canonical_bytes
+
+        def broken(value: object) -> bytes:
+            if type(value) is contracts.UtcInstant:
+                return b'"2026-10-26T12:34:56.123456788Z"\n'
+            return original(value)
+
+        with mock.patch.object(contracts, "canonical_bytes", side_effect=broken), self.assertRaises(installed_smoke.SmokeError):
+            installed_smoke._canonical_timing_smoke()
+
+    def test_timing_smoke_passes_against_the_real_public_contracts(self) -> None:
+        installed_smoke._canonical_timing_smoke()
+
     def test_console_child_runs_through_uv_in_the_installed_environment(self) -> None:
         command = [str(Path(sys.executable).parent / "xplane-fdau"), "fdr", "validate", "flight.fdr"]
         with mock.patch.object(installed_smoke.subprocess, "run", return_value=subprocess.CompletedProcess(command, 0)) as run:

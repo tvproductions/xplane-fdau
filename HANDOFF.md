@@ -1,10 +1,11 @@
 # Project Handoff
 
-## Local integration directed in the resume session
+## Local integration complete — resume-session closeout
 
-Jeff directed finishing this work in the durable main checkout and retiring
-the disposable onboarding worktree after verification. This supersedes the
-older integration timing below, while STRICT acceptance remains incomplete.
+The onboarding implementation is locally integrated into main at `9a71569`.
+The disposable onboarding worktree and temporary branch were removed after
+main verification. Do not recreate them or repeat completed remediation.
+Jeff directed this durable integration; STRICT acceptance remains incomplete.
 The approved specification remains
 `docs/superpowers/specs/2026-10-11-skills-first-native-adoption-design.md`;
 the plan's Task 7 step 8 records this subsequent integration direction.
@@ -12,8 +13,12 @@ the plan's Task 7 step 8 records this subsequent integration direction.
 The live release review still selects published starter v0.6.0 and its SP
 7.0.0/gz-skills 0.8.0 bundle. Upstream SP 7.0.1 and gz-skills 0.8.3 are newer
 components; no independent pin substitution was authorized or applied.
-Shared plugins live outside the worktree. Main must receive project routing,
-the uv-managed environment, and the uv-only hook before worktree retirement.
+Shared plugins live outside the worktree. Main now has the project routing,
+synced uv-managed environment and uv-only hook pointing to main. Its old
+Superpowers discovery junction was detached nonrecursively; the rollback
+checkout target remains intact. Native inventory verifies the selected sources
+enabled and competing sources/Backplane disabled. This active session's earlier
+skill advertisement is not fresh-session discovery proof for main.
 
 Preserve the ignored execution evidence under main's
 `.superpowers/sdd/2026-10-25-strict-heavy-starter-onboarding/`, including the
@@ -22,7 +27,17 @@ Cognitive-library integration, four Lizard discovery omissions, network audit
 proof and exact-commit CI remain open. This integration is no STRICT acceptance,
 product-child completion, Git push, tag or release claim.
 
-Integration verification and final Git state are recorded after execution.
+The fresh mandatory hook suite, whole-source Ruff/format and ty passed before
+integration. Main's exact fast-forward, frozen all-groups sync, lock check,
+backlog audit, two live-state tests, strict docs, fresh source-independent
+artifacts, strict metadata/inventory and external uv wheel-only smoke passed.
+Local-only results and hashes are in
+`.superpowers/sdd/2026-10-25-strict-heavy-starter-onboarding/integration-main-verification.json`;
+the copied-evidence manifest and `integration-main-resume-originals/` preserve
+the original main edits. The unrelated dependency-refresh worktree is retained.
+This closeout adds only documentation; its final save runs main's mandatory
+hooks. No remote operation occurred. The remaining onboarding work is the open
+acceptance proof above, not another installation or integration.
 
 ## Restart after workflow failure — 2026-10-26
 

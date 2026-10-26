@@ -35,7 +35,7 @@ dev = [
     "pyyaml>=6.0.3",
     "ruff==0.17.2",
     "twine>=7.0.0",
-    "ty==0.0.91",
+    "ty==0.0.92",
     "wily>=1.12.2",
     "xenon>=0.9.3",
 ]
@@ -60,6 +60,8 @@ build-backend = "uv_build"
 [tool.uv]
 required-version = "==0.13.5"
 python-preference = "only-managed"
+# Official immutable catalog for Python 3.12.16, newer than uv 0.13.5's bundled catalog.
+python-downloads-json-url = "https://raw.githubusercontent.com/astral-sh/uv/acee8d938b52225be3e90ccfcbe69fa4eb8ed215/crates/uv-python-managed/download-metadata.json"
 
 [tool.uv.build-backend]
 module-root = "src"

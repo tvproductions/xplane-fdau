@@ -22,9 +22,9 @@ EXPECTED_PREFIX = [
     ("git", "status", "--short", "--branch"),
     ("git", "status", "--short", "--branch", "--ignored=matching"),
     ("uv", "lock", "--check", "--offline"),
-    ("uv", "run", "--offline", "--frozen", "python", ".codex/skills/backlog-status/scripts/backlog_status.py", "audit"),
-    ("uv", "run", "--offline", "--frozen", "mkdocs", "build", "--strict"),
-    ("uv", "run", "--offline", "--frozen", "python", "tools/quality.py", "pre-commit"),
+    ("uv", "run", "--offline", "--frozen", "--all-groups", "python", ".codex/skills/backlog-status/scripts/backlog_status.py", "audit"),
+    ("uv", "run", "--offline", "--frozen", "--all-groups", "mkdocs", "build", "--strict"),
+    ("uv", "run", "--offline", "--frozen", "--all-groups", "python", "tools/quality.py", "pre-commit"),
 ]
 
 
@@ -63,8 +63,10 @@ class HygieneCommandTests(unittest.TestCase):
                     self.fail("runner environment must be a dictionary")
                 self.assertEqual("1", env["UV_OFFLINE"])
                 self.assertEqual(os.environ.get("PATH"), env.get("PATH"))
+                if command[:2] == ("uv", "run"):
+                    self.assertIn("--all-groups", command)
         self.assertEqual(1, [command for command, _ in calls].count(EXPECTED_PREFIX[5]))
-        self.assertNotIn(("uv", "run", "--offline", "--frozen", "python", "tools/quality.py", "check"), [command for command, _ in calls])
+        self.assertNotIn(("uv", "run", "--offline", "--frozen", "--all-groups", "python", "tools/quality.py", "check"), [command for command, _ in calls])
         for command, _ in calls:
             self.assertNotIn(command[:2], [("uv", "tree"), ("git", "add"), ("git", "commit")])
 
@@ -161,8 +163,8 @@ class HygieneArtifactTests(unittest.TestCase):
                 sdist = directory / f"xplane_fdau-{self.version}.tar.gz"
                 artifact = [
                     ("uv", "build", "--offline", "--no-sources", "--out-dir", str(directory)),
-                    ("uv", "run", "--offline", "--frozen", "twine", "check", "--strict", str(wheel), str(sdist)),
-                    ("uv", "run", "--offline", "--frozen", "python", "tools/release.py", "check-dist", str(directory)),
+                    ("uv", "run", "--offline", "--frozen", "--all-groups", "twine", "check", "--strict", str(wheel), str(sdist)),
+                    ("uv", "run", "--offline", "--frozen", "--all-groups", "python", "tools/release.py", "check-dist", str(directory)),
                 ]
                 commands = [value for kind, value in events if kind == "run"]
                 self.assertEqual(EXPECTED_PREFIX + artifact + EXPECTED_PREFIX[:2], commands)

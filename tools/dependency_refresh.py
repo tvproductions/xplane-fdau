@@ -84,7 +84,7 @@ def canonical_json(report: dict[str, Any]) -> str:
 
 
 def _run(args: tuple[str, ...], cwd: Path) -> tuple[int, str, str]:
-    timeout = 1800 if args == ("uv", "run", "--offline", "--frozen", "python", ".codex/skills/hygiene/scripts/hygiene.py") else 120
+    timeout = 1800 if args == ("uv", "run", "--offline", "--frozen", "--all-groups", "python", ".codex/skills/hygiene/scripts/hygiene.py") else 120
     try:
         result = subprocess.run(args, cwd=cwd, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False, timeout=timeout)
     except (OSError, subprocess.TimeoutExpired) as error:
@@ -656,6 +656,7 @@ def apply_status(
             "uv",
             "run",
             "--frozen",
+            "--all-groups",
             "python",
             "-m",
             "unittest",
@@ -669,7 +670,7 @@ def apply_status(
             "-v",
         )
     )
-    run(("uv", "run", "--offline", "--frozen", "python", ".codex/skills/hygiene/scripts/hygiene.py"))
+    run(("uv", "run", "--offline", "--frozen", "--all-groups", "python", ".codex/skills/hygiene/scripts/hygiene.py"))
     matrix = matrix_runner(root)
     result["matrix"] = {
         "success": matrix.success,

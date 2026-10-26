@@ -123,9 +123,9 @@ class ProjectSkillTests(unittest.TestCase):
                 ("git", "status", "--short", "--branch"),
                 ("git", "status", "--short", "--branch", "--ignored=matching"),
                 ("uv", "lock", "--check", "--offline"),
-                ("uv", "run", "--offline", "--frozen", "python", ".codex/skills/backlog-status/scripts/backlog_status.py", "audit"),
-                ("uv", "run", "--offline", "--frozen", "mkdocs", "build", "--strict"),
-                ("uv", "run", "--offline", "--frozen", "python", "tools/quality.py", "pre-commit"),
+                ("uv", "run", "--offline", "--frozen", "--all-groups", "python", ".codex/skills/backlog-status/scripts/backlog_status.py", "audit"),
+                ("uv", "run", "--offline", "--frozen", "--all-groups", "mkdocs", "build", "--strict"),
+                ("uv", "run", "--offline", "--frozen", "--all-groups", "python", "tools/quality.py", "pre-commit"),
             ],
             executed[:6],
         )
@@ -143,7 +143,7 @@ class ProjectSkillTests(unittest.TestCase):
         finally:
             sys.modules.pop(spec.name, None)
 
-        audit_command = ("uv", "run", "--offline", "--frozen", "python", ".codex/skills/backlog-status/scripts/backlog_status.py", "audit")
+        audit_command = ("uv", "run", "--offline", "--frozen", "--all-groups", "python", ".codex/skills/backlog-status/scripts/backlog_status.py", "audit")
         executed: list[tuple[str, ...]] = []
 
         def runner(command: tuple[str, ...], **kwargs: object) -> subprocess.CompletedProcess[str]:

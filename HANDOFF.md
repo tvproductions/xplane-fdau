@@ -1,5 +1,185 @@
 # Project Handoff
 
+## Fresh-session resume — C1.4 plan review, 2026-10-26
+
+**Observed:** 2026-10-26 21:46 UTC. Jeff explicitly requested this handoff for a
+fresh session. This section supersedes older resume instructions and current-state
+claims below; retain the older sections as dated history.
+
+**Resume point:** Review the existing [C1.4 implementation plan](docs/superpowers/plans/2026-10-26-c1-4-clock-domains-utc-anchors-simulator-timing.md).
+It is a **draft**, already written, audited and explained in chat. Jeff asked to
+write the plan and then to review it here; neither message approved implementation
+or selected an execution method. Native execution was recommended because the
+five tasks share validators and wire readers; it was not selected. No C1.4 code,
+worktree, selection, lifecycle transition or acceptance gate has been created.
+
+**First concrete action:** Read AGENTS.md and its governing authorities, then run
+the backlog audit and next action through the project's required uv version.
+Read this draft and the approved canonical specification's timing/public-API
+sections, then continue the user's plan review and obtain the still-pending plan
+approval/execution choice. Expected current result: audit has no findings, no
+child is selected, and C1.4 is `specified`, 0/4 gates. The tool still recommends
+`write_plan C1.4` because the draft is unapproved/unlinked; **do not rewrite or
+duplicate the existing plan**. Stop on audit findings or material authority drift.
+
+The [approved canonical specification](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md)
+already supplies implementation authority for the design, not approval of this
+draft execution plan. Its C1.4 requirements are clocks/readings, exact UTC,
+checked comparison/differences, and explicit anchor/source/simulator timing.
+The draft records two implementation choices for review: acquisition phase stays
+a closed string without moving its future bindings enum into contracts; matching
+an enclosing observation's producer uses a private context check, with record
+integration remaining C3.1. No new product design or repeated brainstorming is
+needed unless review identifies an actual specification gap.
+
+### Workspace and pending execution prerequisites
+
+- Worktree: `U:/repos/xp/xplane-fdau`, branch `main`, HEAD
+  `8bcef360b2728ea4c07b3d41874bc3dd661f051f`. The tree is dirty and the index is
+  empty. The verified dependency refresh, documentation changes, Lizard evidence
+  and C1.4 draft are **uncommitted**. Preserve all of them.
+- The unrelated worktree
+  `C:/Users/Jeff/.codex/worktrees/c68f/xplane-fdau`, branch
+  `chore/dependency-refresh-2026-10-18`, remains at `f81c4c2`; leave it alone.
+- Before feature execution, establish the clean reviewed baseline and temporary
+  C1.4 worktree described by the draft. Do not silently stash, discard, commit or
+  absorb the pending maintenance into the feature. A save/integration route is
+  still pending; this handoff authorizes neither Git sync nor a commit/push.
+- Keep Python 3.12, stdlib-only runtime, unittest-only testing, and all Python
+  execution through locked/all-group uv. Preserve mandatory hooks.
+- Cognitive analysis is explicitly deferred. STRICT starter acceptance remains
+  incomplete; Backplane stays disabled. C1.4 planning does not close those gaps,
+  select another child, or grant a release/tag/publication exception.
+
+### Completed work to preserve, not repeat
+
+**Python/tool refresh:** Jeff authorized bringing dependencies current. The
+working tree now selects Python **3.12.16**, ty **0.0.92**, and 19 updated packages,
+including Material 9.8.0 and the documentation plugins. Four older transitive
+packages remain constrained by Wily/Radon: colorlog, mando, Plotly and Radon.
+Runtime dependencies remain empty; uv/uv_build remain 0.13.5. Project uv config
+pins Astral's immutable download catalog for the newer Python patch, with CI
+aligned to 3.12.16. The shared Python minor-version junction was restored to its
+original 3.12.15 target; FDAU's own environment uses exact 3.12.16.
+
+Refresh/hygiene child commands now retain `--all-groups`. An external console
+test now selects its actual interpreter using `--no-project`; its stderr
+assertion was preserved. These fixes were necessary for reliable verification.
+Final offline hygiene passed, including all-files Ruff/format/ty/full unittest,
+backlog/docs and fresh strict artifacts. External source verification passed
+**656 tests in 368.399 seconds** on Python 3.12.16; wheel-only smoke passed.
+Native uv audit reported **133 packages, zero vulnerabilities/adverse statuses**;
+installed consistency checked 129 packages. Independent scoped review found no
+actionable findings. Initial failed attempts remain recorded, not relabeled.
+
+The complete local receipt is
+`.superpowers/sdd/dependency-update-2026-10-26/result.json`; its final candidate
+hashes bind 12 changed files. It also proves the six earlier edited files were
+preserved byte-for-byte before this new handoff text. The initial failed matrix
+directory `C:/Users/Jeff/AppData/Local/Temp/xplane-fdau-matrix-xs3vbn43` was retained
+for diagnosis; successful final temporary directories were safely removed.
+Prior exact-commit CI describes committed HEAD, not these uncommitted inputs.
+Do not repeat the full refresh or full gates merely because the session changes;
+check evidence age and relevant input drift first.
+
+**Lizard:** [Upstream PR #530](https://github.com/terryyin/lizard/pull/530) was
+explicitly authorized and submitted. Read-only handoff verification found it open
+and unmerged at head `2948b38ed0bf70c5a4c39163b45dfa50c3020314`. Its reviewed patch
+discovers all ten omitted methods across the four FDAU error scopes, with 1,528
+functions and unchanged prior scores. Released/installed Lizard 1.24.3 remains
+unchanged. Upstream review and reviewed analyzer adoption remain pending. The
+[qualification](docs/reviews/2026-10-26-lizard-inline-qualification.md) and
+[portable patch](docs/reviews/2026-10-26-lizard-inline-suites.patch) are durable
+untracked files; retain them. Do not submit a duplicate PR or reformat FDAU to
+accommodate the parser. Upstream broad testing had five unavailable-framework
+import errors; the passing 128-reader-test result is not a full upstream pass.
+
+**README:** FDAU and FDIU are now expanded as Flight Data Acquisition Unit and
+Flight Data Interface Unit, with the virtual role explained. This edit is also
+uncommitted.
+
+### Starter and tool observations — verify afresh
+
+The project lock/config still selects starter **0.6.0** at
+`c0a6945b2170e1cf5bee3e80738916f5b62d13a5`, SP 7.0.0 at `bb92a77`, and gz-skills
+0.8.0 at `75bcd11`; the marketplace checkout matches that starter SHA. At this
+handoff, native inventory and actual SP checkout again report **7.0.0**; the
+7.0.1 cache path seen during planning is now absent. The session advertisement
+and installed observations changed during the conversation. The draft's 7.0.1
+observation is dated planning evidence, **not a current installation claim**.
+Verify ID/version/enabled state, actual checkout and fresh-session discovery
+before choosing workflow instructions. Do not edit caches or create a private
+marketplace as a workaround.
+
+Jeff correctly challenged the claim that starter guidance required retaining
+old component versions. The live check found released starter 0.6.0 still latest,
+while published main `35ac0578dab0c7b603a9545d9b6b630ee006e551` identified itself
+as **0.7.0 unreleased**, selected SP 7.0.1, and still pinned gz-skills 0.8.0.
+Its guidance recommends independent latest-stable component review; gz-skills
+0.8.3 was the latest component release. FDAU's shared-source/provenance policy
+still needs reconciliation with an explicitly reviewed target. The assistant's
+earlier explanation was too categorical; do not repeat it as upstream policy.
+No starter/plugin adoption was applied by this session's dependency refresh.
+
+The uv executable also reported 0.13.1 temporarily while the project required
+0.13.5. Plan verification succeeded with the cached isolated command prefix
+`uv tool run --offline --from uv==0.13.5 uv run --offline --locked --all-groups`.
+At handoff, normal `uv --version` reports 0.13.5 again. Recheck origin/version;
+do not bypass uv with direct Python or weaken `required-version`.
+
+### Plan verification and local evidence
+
+Draft plan SHA-256:
+`ba883a719715201b4df360e988c752086053208e2f119593ad037130a9635be5`.
+Plan audit found no missing/drifted scoped requirement. Backlog audit, 18
+documentation/API tests, strict MkDocs and whitespace checks passed. Drafting
+evidence is `.superpowers/sdd/2026-10-26-c1-4-timing-plan/plan-audit.json` and its
+sibling logs. No implementation tests for C1.4 have run because no implementation
+exists.
+
+All `.superpowers/sdd/` records and preserved temporary environments are
+**local-only**. Keep this workspace/evidence when starting the fresh session;
+they are not available from a fresh Git clone. Relevant earlier receipt roots
+are `dependency-review-2026-10-26/`, `dependency-update-2026-10-26/`,
+`2026-10-26-c1-4-timing-plan/`, and
+`2026-10-25-strict-heavy-starter-onboarding/` beneath that directory. The plan,
+Lizard qualification and patch are durable project files but remain untracked.
+
+Suggested next workflows: project `backlog-status`, `gzs-session-handoff` resume,
+`gzs-plan-audit` if the plan changes, then the user's chosen execution workflow
+after approval and baseline reconciliation. This request writes handoff text
+only; it performs no implementation, Git sync, plugin update or release.
+
+## Lizard remediation candidate — 2026-10-26
+
+Jeff deferred cognitive analysis and requested the four Lizard errors be
+addressed. A reviewed upstream parser patch now discovers all ten omitted
+protocol methods: FDAU qualification finds 1,528 functions, zero discovery
+errors, and no changes to prior function names, lines or scores. See the
+[qualification and portable patch](docs/reviews/2026-10-26-lizard-inline-qualification.md).
+Jeff subsequently authorized upstream submission. The patch is now
+[Lizard PR #530](https://github.com/terryyin/lizard/pull/530), from
+`ahuimanu:fix/python-inline-suites` at `2948b38`. The installed Lizard 1.24.3
+remains unchanged; upstream review and reviewed analyzer adoption remain the
+delivery path. Cognitive remains deferred/UNKNOWN and STRICT acceptance incomplete.
+
+## STRICT acceptance continuation — 2026-10-26
+
+The integrated candidate remains `8bcef36`. Read-only GitHub inspection now
+confirms exact-commit CI run `40251399123`: quality (656 tests), artifacts and
+installed-wheel all passed. Native pip-audit also passed the exact hashed lock
+export with a fresh isolated HTTP cache: 128 applicable dependencies, zero
+skipped and zero known vulnerabilities. Its old default-cache path hangs in
+temporary-file creation; preserve that cache and use the recorded isolated-cache
+invocation. No dependency or source change was needed.
+
+The [current acceptance record](docs/reviews/2026-10-25-strict-heavy-starter-adoption.md#current-acceptance-continuation-october-26-2026)
+contains commands, hashes, CI links and diagnostic limits. This supersedes older
+claims below that network proof and exact-commit CI are unobserved. Cognitive
+extraction/shared integration and four Lizard discovery errors remain open;
+STRICT acceptance is incomplete. Backplane remains separately deferred. This
+continuation performs no commit, push, workflow dispatch or release.
+
 ## Local integration complete — resume-session closeout
 
 The onboarding implementation is locally integrated into main at `9a71569`.

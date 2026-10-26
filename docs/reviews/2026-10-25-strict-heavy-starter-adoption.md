@@ -4,6 +4,102 @@ Observed 2026-10-25. Owner: Jeff / tvproductions and the FDAU implementer.
 Plan: [strict heavy onboarding](../superpowers/plans/2026-10-25-strict-heavy-starter-onboarding.md).
 Spec: [approved design](../superpowers/specs/2026-10-11-skills-first-native-adoption-design.md).
 
+## Current acceptance continuation — October 26, 2026
+
+Subsequent direction: Jeff deferred cognitive work and requested Lizard
+remediation. The [upstream patch qualification](2026-10-26-lizard-inline-qualification.md)
+records zero discovery errors against the unchanged FDAU corpus with the draft
+parser. The released installed analyzer remains unchanged pending upstream
+delivery and reviewed adoption; neither this draft nor the cognitive deferral
+turns A18 into PASS.
+
+This observation supersedes the historical pending-CI and worktree descriptions
+below. The integrated candidate is main
+`8bcef360b2728ea4c07b3d41874bc3dd661f051f`. This continuation begins from a clean
+checkout and changes acceptance evidence only; the retired onboarding worktree
+is not recreated. STRICT acceptance remains incomplete.
+
+**A09 now passes for that candidate.** The existing
+[CI run 40251399123](https://github.com/tvproductions/xplane-fdau/actions/runs/40251399123)
+ran on a main push at that exact SHA. Its `quality`, `artifacts` and
+`installed-wheel` jobs all completed successfully on Ubuntu with Python 3.12.15
+and uv 0.13.5. Quality ran Ruff check, format check, ty and **656 unittest tests
+in 31.430 seconds**, ending `OK`. Artifact steps built with `--no-sources`,
+checked strict metadata and inventories, and passed the wheel to the separate
+installed smoke job. This session only read existing results; it performed no
+push, workflow dispatch, tag or release. Other successful runs at the same SHA
+are Dependabot activity and are not counted as acceptance evidence.
+
+Fresh-session discovery advertises the selected Superpowers and gz-skills
+entry skills and the project template-update skill. Their instructions were
+invoked/read in this session. Native inventory reports SP 7.0.0 and gz-skills
+0.8.0 enabled from `skills-first-starter`, with competing sources and Backplane
+disabled. Actual cached Git revisions match the bundle, and the selected setup
+helper reports the existing profile as `heavy`. The shared marketplace checkout
+matches starter `c0a6945b2170e1cf5bee3e80738916f5b62d13a5`.
+
+A live release check still selects starter v0.6.0. Read-only inspection of
+upstream main `eef2e858bba709988eb859b17739d2989d8825ab` still describes the
+cognitive extraction/qualification prerequisite; it supplies no released
+replacement integration contract. No template, plugin, package or policy update
+is applied. PyPI still reports Lizard 1.24.3 as latest. A native recheck of the
+four affected scopes reproduces the original discovery omissions and evaluator
+exit 2: config line 41, reader lines 94/96, sink lines 35/42/45/47/49/51, and
+identity-test line 16. These ten omitted definitions remain measurement errors.
+
+The runtime, test, tooling, lock and CI inputs have no Git diff from the
+previously measured `528ff96` candidate. All three mutation-target SHA-256
+values match the prior receipt after CRLF-to-LF normalization. Raw working-file
+hashes differ because this checkout uses CRLF; both forms are retained rather
+than claiming byte identity. The completed 1,430-job mutation review and
+656-test coverage measurement remain preserved, not rerun or relabeled as new
+measurements. Their bounded survivor dispositions remain applicable to the
+unchanged Python source.
+
+New local-only raw observations are in
+`.superpowers/sdd/2026-10-25-strict-heavy-starter-onboarding/acceptance-2026-10-26/`:
+CI run/job JSON and logs, upstream policy observations, the Lizard recheck,
+mutation-source comparisons and dependency-audit diagnostics. The linked GitHub
+run is portable evidence; ignored local files are not available from a fresh
+clone.
+
+**A17 now passes for the current lock and Windows/Python 3.12.15 selection.**
+The exact all-groups hashed export was audited by pip-audit 2.10.1 with
+`--no-deps --disable-pip --require-hashes --format json --timeout 30` and a
+fresh `--cache-dir`: **128 dependencies, zero skipped, zero known
+vulnerabilities, exit 0**. The native run completed in about five seconds.
+The export preserves environment markers; this result does not claim auditing
+dependencies excluded by the selected environment.
+
+The original default-cache command stalled again. An offline native parser
+probe collected 128 dependencies in 0.093 seconds; an ordinary Requests query
+and the auditor's PyPI service query each completed in about 0.11 seconds.
+A 20-second native CLI stack probe located the wait in
+`pip_audit._cache._SafeFileCache._set_impl` / `tempfile._mkstemp_inner`, while
+creating a cache file. Changing only to a fresh isolated cache allowed the
+complete native audit to pass. This establishes a cache-path-specific failure,
+not its underlying filesystem cause. The existing user cache was not deleted
+or repaired. The original owned audit tree was stopped after identification;
+its interrupted nonzero result is retained separately from the successful run.
+
+The repeatable acceptance sequence is a locked all-groups `uv export` with
+`--no-emit-project --format requirements.txt --output-file <export>`, followed
+by `uv run --locked --all-groups python -m pip_audit --requirement <export>`
+with the flags above and a newly created temporary cache directory. Both the
+export and native audit are retained; no second resolver, package change,
+advisory suppression or analyzer substitution was used. The normal aggregate
+still selects the existing default cache and can encounter that local failure;
+the explicit isolated-cache invocation is the passing acceptance command.
+
+Lock SHA-256:
+`7e8bd00119328e4a490be8ad1598fd796cf3a7a5f57e283ccc870b9bc2b74ad4`.
+Export SHA-256:
+`7c370d80df871de6ac8fd6d34a0ff92d04eae03d56dafcf225c83537f8fd031c`.
+`audit-summary.json` and `vulnerabilities-isolated-cache.log` retain the counts,
+exact cache location and raw native output. This closes the network-audit and
+exact-commit CI proof gaps. Required cognitive analysis and the four Lizard
+scope errors remain open; deferred Backplane readiness remains separate.
+
 ## Scope and source identity
 
 This is brownfield first adoption, not a release or an already-completed template
@@ -263,11 +359,11 @@ Backplane whole-stack readiness is independently deferred.
 | A02 | PASS on the reviewed candidate | Installed src package, CLI and external import-origin smoke pass |
 | A03 | PASS | Exact uv_build 0.13.5 declaration; actual pure wheel built from sdist, Generator uv 0.13.5 |
 | A04 | PASS for current declared scopes | Recorded effective configuration/provenance; complete runtime/test/tool/adapter Ruff/format/ty checks pass |
-| A05 | PASS for selected execution lane | Exact managed 3.12.15 locally and externally; py312/3.12 tool targets and immutable CI inputs reconciled; remote execution remains A09 UNKNOWN |
+| A05 | PASS for selected execution lane | Exact managed 3.12.15 locally and externally; py312/3.12 tool targets and immutable CI inputs reconciled; October 26 exact-commit CI also passes |
 | A06 | PASS for recorded selected families | Dated official release/compatibility review and actual installation/gates; no whole-stack latest-release claim |
 | A07 | PASS | Exact groups/lock selection; offline frozen execution and lock check pass |
 | A08 | PASS for the four routine checks | All-files installed hooks pass Ruff check, format check, ty and full unittest; deeper acceptance remains A18 |
-| A09 | UNKNOWN | Local installed-hook enforcement passes; exact-commit remote CI not run, no push authority inferred |
+| A09 | PASS for `8bcef36` | Local installed-hook enforcement passes; October 26 observation confirms quality, artifact and installed-wheel jobs in CI run 40251399123 |
 | A10 | PASS | Project runtime dependencies empty; fresh wheel publishes no Requires-Dist; dev/build tools retained outside runtime |
 | A11 | PASS | Actual offline no-sources build explicitly builds wheel from sdist; exact inventories and hashes retained |
 | A12 | PASS | Fresh wheel-only external 3.12.15 environment passes CLI/resources/imports/canonical/public-value smoke |
@@ -275,8 +371,8 @@ Backplane whole-stack readiness is independently deferred.
 | A14 | N/A | One distribution and no uv workspace declaration; installed/build inventories confirm the single-package boundary |
 | A15 | N/A for alternate/private-source variants | No tool.uv.sources/private index declarations or corresponding runtime dependencies; standard registry lane applies |
 | A16 | N/A for host/native/container variants | Delivered pure-Python wheel/sdist has no simulator plugin, native binary or container artifact; adapters remain external |
-| A17 | UNKNOWN | Exact hashed export/no-second-resolver controls pass, but both required native pip-audit attempts timed out |
-| A18 | FAIL / UNKNOWN | Current static findings and mutation survivors remain unresolved; four Lizard discovery errors and required external cognitive proof prevent complete measurement |
+| A17 | PASS for the recorded lock/environment | October 26 native pip-audit with isolated cache: 128 dependencies, zero skipped, zero known vulnerabilities; exact hashes and command retained above |
+| A18 | FAIL / UNKNOWN | Completed bounded mutation/security dispositions and current coverage are retained; four Lizard discovery errors and required external cognitive proof still prevent complete measurement |
 
 ## Reviewed candidate verification
 

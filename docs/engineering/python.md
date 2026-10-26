@@ -14,6 +14,15 @@ executable origins, lock contents, installed metadata and source-independent
 artifacts must agree; a locked command alone proves none of those observations.
 ty remains a beta tool family and its diagnostics are treated as errors.
 
+The October 26, 2026 refresh selects Python 3.12.16. uv 0.13.5 predates that
+patch, so `tool.uv.python-downloads-json-url` pins Astral's official download
+catalog at commit `acee8d938b52225be3e90ccfcbe69fa4eb8ed215`. The catalog supplies
+platform-specific artifact URLs and SHA-256 hashes for local and CI installs.
+Remove this override after a reviewed uv release includes the selected Python
+patch and fresh installation checks pass. Keep the exact Python pin aligned
+between `.python-version` and CI; do not upgrade the shared minor-version alias
+or an embedded XPPython3 runtime as part of this project refresh.
+
 Run focused unittest, Ruff and ty while editing. The routine gate is exactly
 Ruff check, Ruff format --check, ty and unittest, in that order:
 

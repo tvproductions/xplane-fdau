@@ -1,9 +1,15 @@
 # xplane-fdau
 
 `xplane-fdau` is the standard-library-only, transport-free flight-data kernel
-for X-Plane. It defines the shared FDAU/FDIU domain contracts and processing
-used by external XPPython3/XPLM and `xplane-webapi` clients, but never connects
-to X-Plane itself. It is X-Plane-specific, not simulator-neutral.
+for X-Plane. It defines the shared Flight Data Acquisition Unit (FDAU) /
+Flight Data Interface Unit (FDIU) domain contracts and processing used by
+external XPPython3/XPLM and `xplane-webapi` clients, but never connects to
+X-Plane itself. It is X-Plane-specific, not simulator-neutral.
+
+The name describes a virtual counterpart to the aircraft equipment that
+collects flight data and formats it for recording and other consumers. Here,
+external clients collect simulator values; the core defines how that data is
+represented and processed.
 
 Version `0.1.0` is unreleased. It has no runtime dependencies and uses only the
 Python standard library. For now it supports the Python 3.12 minor line,

@@ -453,7 +453,7 @@ class DependencyApplyTests(unittest.TestCase):
         self.assertNotIn(("uv", "self", "update", "--dry-run", "0.12.17"), self.fixture.calls)
 
     def test_hygiene_runner_allows_full_quality_suite_duration(self) -> None:
-        command = ("uv", "run", "--offline", "--frozen", "python", ".codex/skills/hygiene/scripts/hygiene.py")
+        command = ("uv", "run", "--offline", "--frozen", "--all-groups", "python", ".codex/skills/hygiene/scripts/hygiene.py")
         with patch.object(refresh.subprocess, "run") as subprocess_run:
             subprocess_run.return_value.returncode = 0
             subprocess_run.return_value.stdout = ""
@@ -564,6 +564,10 @@ class DependencyApplyTests(unittest.TestCase):
             )
         self.assertEqual(result["status"], "passed")
         self.assertEqual(calls[:3], [("uv", "lock", "--upgrade"), ("uv", "sync", "--all-groups", "--locked"), ("uv", "lock", "--check")])
+        for command in calls:
+            if command[:2] == ("uv", "run"):
+                with self.subTest(command=command):
+                    self.assertIn("--all-groups", command)
         self.assertEqual(matrix_calls, [self.fixture.root])
         self.assertNotIn(("uv", "self", "update", "0.12.17"), calls)
         updated = project.read_text(encoding="utf-8")

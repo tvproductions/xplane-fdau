@@ -22,9 +22,9 @@ LOCAL_COMMANDS = (
     ("git", "status", "--short", "--branch"),
     ("git", "status", "--short", "--branch", "--ignored=matching"),
     ("uv", "lock", "--check", "--offline"),
-    ("uv", "run", "--offline", "--frozen", "python", ".codex/skills/backlog-status/scripts/backlog_status.py", "audit"),
-    ("uv", "run", "--offline", "--frozen", "mkdocs", "build", "--strict"),
-    ("uv", "run", "--offline", "--frozen", "python", "tools/quality.py", "pre-commit"),
+    ("uv", "run", "--offline", "--frozen", "--all-groups", "python", ".codex/skills/backlog-status/scripts/backlog_status.py", "audit"),
+    ("uv", "run", "--offline", "--frozen", "--all-groups", "mkdocs", "build", "--strict"),
+    ("uv", "run", "--offline", "--frozen", "--all-groups", "python", "tools/quality.py", "pre-commit"),
 )
 DEPENDENCY_COMMAND = ("uv", "tree", "--outdated", "--depth", "1", "--locked", "--format", "json")
 
@@ -144,8 +144,8 @@ def artifact_commands(directory: Path, version: str) -> tuple[tuple[str, ...], .
     sdist = directory / f"xplane_fdau-{version}.tar.gz"
     return (
         ("uv", "build", "--offline", "--no-sources", "--out-dir", str(directory)),
-        ("uv", "run", "--offline", "--frozen", "twine", "check", "--strict", str(wheel), str(sdist)),
-        ("uv", "run", "--offline", "--frozen", "python", "tools/release.py", "check-dist", str(directory)),
+        ("uv", "run", "--offline", "--frozen", "--all-groups", "twine", "check", "--strict", str(wheel), str(sdist)),
+        ("uv", "run", "--offline", "--frozen", "--all-groups", "python", "tools/release.py", "check-dist", str(directory)),
     )
 
 

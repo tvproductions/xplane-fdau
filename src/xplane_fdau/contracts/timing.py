@@ -4,11 +4,12 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from enum import StrEnum
 from types import MappingProxyType
 from typing import cast
 
-from ._timing_validation import _OMITTED, _enum, _validate
+from ._timing_validation import _OMITTED, _enum, _scalar, _utc_parts, _validate
 from .errors import ContractShapeError, ContractValidationError
 
 __all__ = ["ClockKind", "ClockUnit", "ClockDomain", "ClockReading"]  # noqa: RUF022 -- specification ownership order
@@ -73,6 +74,10 @@ def _clock_domain_wire(value: ClockDomain) -> dict[str, object]:
         "scope": value.scope,
         "producer_instance_id": value.producer_instance_id,
     }
+    if type(value.kind) is ClockKind:
+        result["kind"] = value.kind.value
+    if type(value.unit) is ClockUnit:
+        result["unit"] = value.unit.value
     if value.tick_period is not _OMITTED:
         result["tick_period"] = value.tick_period
     if isinstance(value.tick_period, Mapping):
@@ -115,3 +120,42 @@ def _arguments(*arguments: tuple[object, type, str]) -> None:
     for value, expected, path in arguments:
         if type(value) is not expected:
             raise ContractShapeError("unexpected timing model", path=path)
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class UtcInstant:
+    """Preserve explicit UTC text at nanosecond precision."""
+
+    value: str
+
+    def __post_init__(self) -> None:
+        for phase in range(3):
+            _scalar(self.value, "utc", phase, path="")
+
+    def to_datetime(self) -> datetime:
+        """Convert only when microseconds can preserve the instant exactly."""
+        parts = _utc_parts(self.value)
+        if parts[6] % 1000:
+            raise ContractValidationError("datetime conversion would lose nanosecond precision")
+        return datetime(*parts[:6], microsecond=parts[6] // 1000, tzinfo=UTC)
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class ClockAnchor:
+    """Record correlation at one exact monotonic reading with uncertainty."""
+
+    monotonic_reading: ClockReading
+    utc: UtcInstant
+    uncertainty_ns: int
+
+    def __post_init__(self) -> None:
+        _arguments((self.monotonic_reading, ClockReading, "/monotonic_reading"), (self.utc, UtcInstant, "/utc"))
+        _validate(_clock_anchor_wire(self), "clock_anchor")
+
+
+def _utc_instant_wire(value: UtcInstant) -> str:
+    return value.value
+
+
+def _clock_anchor_wire(value: ClockAnchor) -> dict[str, object]:
+    return {"monotonic_reading": _clock_reading_wire(value.monotonic_reading), "utc": value.utc.value, "uncertainty_ns": value.uncertainty_ns}

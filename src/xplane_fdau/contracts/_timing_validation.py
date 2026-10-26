@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping
+from datetime import date
 from enum import Enum, StrEnum
 from math import gcd
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 from ._identity_validation import _counter, _integer_domain, _nfc_text, _text, _uuid
 from .errors import CanonicalJSONError, ContractShapeError, ContractValidationError
+
+if TYPE_CHECKING:
+    from .timing import ClockAnchor, ClockDomain
 
 
 class _Missing(Enum):
@@ -30,7 +35,24 @@ _LAYOUT: dict[str, tuple[tuple[str, str, bool], ...]] = {
     ),
     "clock_reading": (("clock_domain_id", "uuid", False), ("value", "integer", False)),
     "tick_period": (("numerator_ns", "positive", False), ("denominator", "positive", False)),
+    "clock_anchor": (("monotonic_reading", "clock_reading", False), ("utc", "utc", False), ("uncertainty_ns", "counter", False)),
 }
+
+_UTC = re.compile(r"([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{9})Z")
+
+
+def _utc_parts(value: str, *, path: str = "") -> tuple[int, ...]:
+    match = _UTC.fullmatch(value)
+    if match is None:
+        raise ContractValidationError("expected exact nanosecond UTC text", path=path)
+    parts = tuple(int(item) for item in match.groups())
+    try:
+        date(*parts[:3])
+        if parts[3] > 23 or parts[4] > 59 or parts[5] > 59:
+            raise ValueError
+    except ValueError:
+        raise ContractValidationError("invalid Gregorian UTC instant", path=path) from None
+    return parts
 
 
 def _vocabulary(kind: str) -> type[StrEnum]:
@@ -70,6 +92,8 @@ def _scalar(value: object, kind: str, phase: int, *, path: str) -> None:
         _uuid(value, path=path)
     elif kind == "description":
         _nfc_text(value, path=path, maximum=512)
+    elif kind == "utc":
+        _utc_parts(cast(str, value), path=path)
     elif kind in ("positive", "counter"):
         number = _counter(value, path=path)
         if kind == "positive" and number == 0:
@@ -93,7 +117,7 @@ def _check(fields: Mapping[str, object], stem: str, phase: int, *, path: str = "
             if not optional:
                 raise ContractShapeError("missing timing property", path=child_path)
             continue
-        if kind == "tick_period" and value is not None:
+        if kind in _LAYOUT and value is not None:
             _check(_mapping(value, path=child_path), kind, phase, path=child_path)
         else:
             _scalar(value, kind, phase, path=child_path)
@@ -119,3 +143,14 @@ def _semantics(fields: Mapping[str, object], stem: str, *, path: str) -> None:
 def _validate(fields: Mapping[str, object], stem: str) -> None:
     for phase in range(3):
         _check(fields, stem, phase)
+
+
+def _validate_clock_anchor(value: ClockAnchor, *, domain: ClockDomain | None = None, path: str = "") -> None:
+    """Check anchor context only when an external domain is supplied."""
+    from .timing import ClockAnchor, ClockDomain, _arguments
+
+    _arguments((value, ClockAnchor, path))
+    if domain is not None:
+        _arguments((domain, ClockDomain, path + "/domain"))
+        if domain.kind != "host_monotonic" or value.monotonic_reading.clock_domain_id != domain.clock_domain_id:
+            raise ContractValidationError("anchor requires its host monotonic domain", path=path + "/monotonic_reading/clock_domain_id")

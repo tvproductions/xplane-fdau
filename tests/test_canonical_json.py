@@ -14,6 +14,11 @@ from xplane_fdau.contracts.canonical_json import _encode_document
 
 
 class CanonicalJSONTests(unittest.TestCase):
+    def test_owned_utc_scalar_preserves_all_nine_digits(self) -> None:
+        from xplane_fdau.contracts.timing import UtcInstant
+
+        self.assertEqual(b'"0001-01-01T00:00:00.000000001Z"\n', canonical_bytes(UtcInstant(value="0001-01-01T00:00:00.000000001Z")))
+
     def test_parameter_root_rejects_caller_objects_without_comparison_hooks(self) -> None:
         class RaisingType(type):
             @override

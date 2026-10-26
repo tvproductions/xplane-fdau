@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import unittest
 from dataclasses import FrozenInstanceError
+from datetime import UTC
 from enum import StrEnum
 from typing import Any
 
@@ -147,6 +148,107 @@ class ClockModelTests(unittest.TestCase):
             value.extra = 1  # ty: ignore[invalid-assignment]
         with self.assertRaises(TypeError):
             ClockReading(DOMAIN_ID, 1)  # ty: ignore[too-many-positional-arguments, missing-argument]
+
+
+class UtcAnchorTests(unittest.TestCase):
+    def test_utc_preserves_nanoseconds_and_refuses_loss(self) -> None:
+        from xplane_fdau.contracts import canonical_bytes
+        from xplane_fdau.contracts.timing import UtcInstant
+
+        instant = UtcInstant(value="2026-10-26T12:34:56.123456789Z")
+        self.assertEqual("2026-10-26T12:34:56.123456789Z", instant.value)
+        self.assertEqual(b'"2026-10-26T12:34:56.123456789Z"\n', canonical_bytes(instant))
+        with self.assertRaises(ContractValidationError) as caught:
+            instant.to_datetime()
+        self.assertEqual("", caught.exception.path)
+        exact = UtcInstant(value="2026-10-26T12:34:56.123456000Z").to_datetime()
+        self.assertEqual(123456, exact.microsecond)
+        self.assertIs(UTC, exact.tzinfo)
+        self.assertFalse(hasattr(instant, "to_datetime_truncated"))
+
+    def test_calendar_and_precision_boundaries_are_exact(self) -> None:
+        from xplane_fdau.contracts import canonical_bytes
+        from xplane_fdau.contracts.timing import UtcInstant
+
+        for text in ("0001-01-01T00:00:00.000000000Z", "9999-12-31T23:59:59.999999000Z", "2000-02-29T00:00:00.000000000Z", "2024-02-29T00:00:00.000000000Z"):
+            with self.subTest(text=text):
+                instant = UtcInstant(value=text)
+                self.assertEqual(text, instant.value)
+                self.assertEqual(('"' + text + '"\n').encode(), canonical_bytes(instant))
+                self.assertEqual(int(text[:4]), instant.to_datetime().year)
+        invalid = (
+            "1900-02-29T00:00:00.000000000Z",
+            "0000-01-01T00:00:00.000000000Z",
+            "2026-13-01T00:00:00.000000000Z",
+            "2026-01-32T00:00:00.000000000Z",
+            "2026-01-01T24:00:00.000000000Z",
+            "2026-01-01T00:60:00.000000000Z",
+            "2026-01-01T00:00:60.000000000Z",
+            "2026-01-01T00:00:00Z",
+            "2026-01-01T00:00:00.00000000Z",
+            "2026-01-01T00:00:00.0000000000Z",
+            "2026-01-01T00:00:00.000000000+00:00",
+            "2026-01-01t00:00:00.000000000Z",
+            "2026-01-01T00:00:00.000000000z",
+            " 2026-01-01T00:00:00.000000000Z",
+            "\uff12\uff10\uff12\uff16-01-01T00:00:00.000000000Z",
+        )
+        for text in invalid:
+            with self.subTest(text=text), self.assertRaises(ContractValidationError) as caught:
+                UtcInstant(value=text)
+            self.assertEqual("", caught.exception.path)
+        for text in (1, True):
+            with self.assertRaises(ContractShapeError):
+                UtcInstant(value=text)  # ty: ignore[invalid-argument-type]
+        with self.assertRaises(CanonicalJSONError):
+            UtcInstant(value=None)  # ty: ignore[invalid-argument-type]
+
+    def test_anchor_uncertainty_and_explicit_domain_context(self) -> None:
+        from xplane_fdau.contracts import canonical_bytes
+        from xplane_fdau.contracts._timing_validation import _validate_clock_anchor
+        from xplane_fdau.contracts.timing import ClockAnchor, UtcInstant
+
+        reading = ClockReading(clock_domain_id=DOMAIN_ID, value=7)
+        instant = UtcInstant(value="2026-10-26T12:34:56.123456789Z")
+        for uncertainty in (0, 2**63 - 1):
+            anchor = ClockAnchor(monotonic_reading=reading, utc=instant, uncertainty_ns=uncertainty)
+            self.assertEqual(uncertainty, anchor.uncertainty_ns)
+            self.assertIn(b'"monotonic_reading":{"clock_domain_id":"11111111-1111-4111-8111-111111111111","value":7}', canonical_bytes(anchor))
+            _validate_clock_anchor(anchor, domain=_domain())
+            _validate_clock_anchor(anchor)
+        for number, error in ((True, ContractShapeError), (-1, ContractValidationError), (2**63, CanonicalJSONError)):
+            with self.subTest(number=number), self.assertRaises(error) as caught:
+                ClockAnchor(monotonic_reading=reading, utc=instant, uncertainty_ns=number)
+            self.assertEqual("/uncertainty_ns", caught.exception.path)
+        anchor = ClockAnchor(monotonic_reading=reading, utc=instant, uncertainty_ns=0)
+        for domain, path in (
+            (_domain(kind="source"), "/monotonic_reading/clock_domain_id"),
+            (_domain(clock_domain_id=OTHER_ID), "/monotonic_reading/clock_domain_id"),
+        ):
+            with self.assertRaises(ContractValidationError) as caught:
+                _validate_clock_anchor(anchor, domain=domain)
+            self.assertEqual(path, caught.exception.path)
+        with self.assertRaises(ContractShapeError) as caught:
+            ClockAnchor(monotonic_reading=reading, utc=instant.value, uncertainty_ns=0)  # ty: ignore[invalid-argument-type]
+        self.assertEqual("/utc", caught.exception.path)
+
+    def test_timing_canonical_dispatch_does_not_widen_parameter_roots(self) -> None:
+        from xplane_fdau.contracts import canonical_bytes
+        from xplane_fdau.contracts.timing import UtcInstant
+
+        self.assertEqual(
+            b'{"clock_domain_id":"11111111-1111-4111-8111-111111111111","value":-1}\n', canonical_bytes(ClockReading(clock_domain_id=DOMAIN_ID, value=-1))
+        )
+        self.assertIn(b'"kind":"host_monotonic"', canonical_bytes(_domain()))
+        for value in ("2026-10-26T12:34:56.123456789Z", [], object()):
+            with self.assertRaises(CanonicalJSONError):
+                canonical_bytes(value)
+
+        class Derived(UtcInstant):
+            pass
+
+        with self.assertRaises(CanonicalJSONError):
+            canonical_bytes(Derived(value="2026-10-26T12:34:56.123456000Z"))
 
 
 class ClockArithmeticTests(unittest.TestCase):

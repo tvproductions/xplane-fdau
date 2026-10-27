@@ -17,7 +17,7 @@ slice receives one focused plan and one independently reviewable outcome.
   onboarding is approved crosscutting maintenance, with
   [plan](docs/superpowers/plans/2026-10-25-strict-heavy-starter-onboarding.md) and
   [evidence](docs/reviews/2026-10-25-strict-heavy-starter-adoption.md).
-- Active child: `C1.4`.
+- Active child: —.
 - `D1.1`, `D1.2`, and `D1.3` are verified. The statusless external `I1.0`
   handoff condition is eligible for q4xpcc Phase 24A planning reconciliation;
   `T1.3` is verified with 4/4 gates under its approved audit policy
@@ -35,9 +35,9 @@ slice receives one focused plan and one independently reviewable outcome.
   references, authority, and provenance is `verified` with 4/4 gates and
   accepted independent review. `C1.3` typed values and payload references is
   `verified` with 4/4 gates and accepted independent review. `C1.4` timing is
-  `verified` with 4/4 gates and accepted independent review; its temporary
-  branch awaits the integration choice. `C1.5` is the next canonical
-  dependency-ready child after selection is cleared; `T3.1` remains independent.
+  `verified` with 4/4 gates and accepted independent review, and is locally
+  integrated into main. `C1.5` is the next canonical dependency-ready child;
+  `T3.1` remains independent.
 - Canonical contract design: approved with accepted independent review; `C1.5`
   through `C4.4` remain specified with zero delivery gates satisfied.
 - Heavy is explicitly selected; Backplane remains disabled. STRICT starter

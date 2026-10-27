@@ -1,5 +1,40 @@
 # Project Handoff
 
+## C1.4 locally integrated — 2026-10-26
+
+This section supersedes the earlier C1.4 plan-review resume point below.
+Jeff approved the plan and inline execution, authorized local baseline
+checkpoints, accepted installed Superpowers 7.0.1 for the remainder after the
+shared cache changed, and selected option 1: local integration.
+
+C1.4 is **verified, 4/4 gates**, with accepted independent review. Main
+fast-forwarded exactly to reviewed branch HEAD
+`c754adfe6a7e82ac6a66190bfbbfc70b7f8870d2`; subsequent changes are integration
+records only. The temporary C1.4 worktree and branch were removed after main
+verification passed. No child is selected. The next local action is to review
+and write a single-child C1.5 implementation plan from the approved canonical
+specification; C1.5 remains specified with 0/4 gates. Do not repeat C1.4.
+
+The branch passed 691 external source unittest tests, full offline hygiene,
+strict documentation/artifacts and wheel-only smoke on Python 3.12.16. Main
+passed frozen offline all-group sync, lock check, backlog audit, both live-state
+tests, a fresh strict artifact pair and external wheel-only smoke. All 130
+relevant input hashes and both artifact SHA-256 hashes match the verified
+branch. Exact evidence is in
+[the integration receipt](.superpowers/sdd/2026-10-26-c1-4-timing/integration.md),
+alongside the committed completion/review/gate receipts and input manifest.
+Raw execution logs were copied and hash-verified on main before worktree removal;
+they remain local-only under that receipt directory's `execution/` subdirectory.
+
+The earlier maintenance, README and Lizard work is preserved in baseline
+`a2ef12d`. The unrelated dependency-refresh worktree at
+`C:/Users/Jeff/.codex/worktrees/c68f/xplane-fdau`, branch
+`chore/dependency-refresh-2026-10-18`, remains untouched. Cognitive analysis
+remains deferred, STRICT starter acceptance remains incomplete, Backplane stays
+disabled, and G1/release gates remain waiting. No push, tag or publication was
+authorized by local integration. Recheck native plugin sources on resume;
+this session's bounded source exception did not update shared bundle pins.
+
 ## Fresh-session resume — C1.4 plan review, 2026-10-26
 
 **Observed:** 2026-10-26 21:46 UTC. Jeff explicitly requested this handoff for a

@@ -17,7 +17,7 @@ slice receives one focused plan and one independently reviewable outcome.
   onboarding is approved crosscutting maintenance, with
   [plan](docs/superpowers/plans/2026-10-25-strict-heavy-starter-onboarding.md) and
   [evidence](docs/reviews/2026-10-25-strict-heavy-starter-adoption.md).
-- Active child: `C2.1`.
+- Active child: —.
 - `D1.1`, `D1.2`, and `D1.3` are verified. The statusless external `I1.0`
   handoff condition is eligible for q4xpcc Phase 24A planning reconciliation;
   `T1.3` is verified with 4/4 gates under its approved audit policy
@@ -38,12 +38,14 @@ slice receives one focused plan and one independently reviewable outcome.
   `verified` with 4/4 gates and accepted independent review, and is locally
   integrated into main. `C1.5` is `verified` with 4/4 gates and accepted
   independent review, and is locally integrated into main.
-  `C2.1` is the selected canonical child, now `verified` under its
+  `C2.1` is `verified` and locally integrated into main under its
   approved [plan](docs/superpowers/plans/2026-11-01-c2-1-measurement-definition.md).
-  Subagent-driven execution and independent reviews are complete. Implementation is
-  isolated on its temporary feature branch. `T3.1` remains independent.
+  Subagent-driven execution and independent reviews are complete; the
+  [integration record](.superpowers/sdd/2026-11-01-c2-1-definition/integration.md)
+  records exact fast-forward verification and cleanup. `T3.1` remains independent.
 - Canonical contract design: approved with accepted independent review; `C2.1`
-  has 4/4 delivery gates satisfied with committed evidence; local integration awaits the user choice. `C2.2` through `C4.4` remain specified with
+  has 4/4 delivery gates satisfied with committed evidence. `C2.2` through
+  `C4.4` remain specified with
   zero delivery gates satisfied.
 - Heavy is explicitly selected; Backplane remains disabled. STRICT starter
   acceptance is incomplete, including the external cognitive-library extraction

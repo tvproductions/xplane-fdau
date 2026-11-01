@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib.util
 import io
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -18,6 +19,78 @@ from xplane_fdau.formats.xplane_fdr import FDRReader
 
 
 class InstalledSmokeTests(unittest.TestCase):
+    def test_measurement_definition_smoke_passes(self) -> None:
+        self.assertTrue(hasattr(installed_smoke, "_measurement_definition_smoke"), "measurement definition smoke is absent")
+        installed_smoke._measurement_definition_smoke()
+
+    def test_measurement_definition_smoke_detects_ineffective_entry_rejections(self) -> None:
+        from xplane_fdau.measurements import _definition_io
+
+        self.assertTrue(hasattr(installed_smoke, "_measurement_definition_smoke"), "measurement definition smoke is absent")
+        original = _definition_io._measurement_definition_from_wire
+        for tamper, message in (("numeric", "irrelevant numeric"), ("title", "stale hash")):
+
+            def accept_tampered(raw: object, *, path: str = "", source: str = "<memory>", selected: str = tamper) -> object:
+                if isinstance(raw, dict) and ("numeric" in raw if selected == "numeric" else raw.get("title") == "Tampered"):
+                    return object()
+                return original(raw, path=path, source=source)
+
+            with (
+                self.subTest(tamper=tamper),
+                mock.patch.object(_definition_io, "_measurement_definition_from_wire", side_effect=accept_tampered),
+                self.assertRaisesRegex(installed_smoke.SmokeError, message),
+            ):
+                installed_smoke._measurement_definition_smoke()
+
+    def test_measurement_definition_smoke_detects_wrong_ownership_bytes_and_hash(self) -> None:
+        import xplane_fdau.measurements as measurements
+        from xplane_fdau.measurements import _definition_io, models
+
+        self.assertTrue(hasattr(installed_smoke, "_measurement_definition_smoke"), "measurement definition smoke is absent")
+        with mock.patch.object(measurements, "MeasurementDefinition", object()), self.assertRaises(installed_smoke.SmokeError):
+            installed_smoke._measurement_definition_smoke()
+        with mock.patch.object(_definition_io, "_measurement_definition_bytes", return_value=b"incorrect\n"), self.assertRaises(installed_smoke.SmokeError):
+            installed_smoke._measurement_definition_smoke()
+        with mock.patch.object(models, "_definition_content_hash", return_value="0" * 64), self.assertRaisesRegex(installed_smoke.SmokeError, "hash differs"):
+            installed_smoke._measurement_definition_smoke()
+
+    def test_measurement_definition_smoke_is_called_by_the_installed_flow(self) -> None:
+        self.assertTrue(hasattr(installed_smoke, "_measurement_definition_smoke"), "measurement definition smoke is absent")
+        with (
+            mock.patch.object(installed_smoke, "ensure_outside_checkout"),
+            mock.patch.object(installed_smoke, "_command_path", return_value=Path("xplane-fdau")),
+            mock.patch.object(installed_smoke, "_run"),
+            mock.patch.object(installed_smoke, "_measurement_definition_smoke") as check,
+        ):
+            installed_smoke.smoke("0.1.0", checkout=Path("checkout"))
+        check.assert_called_once_with()
+
+    def test_measurement_definition_guide_examples_execute(self) -> None:
+        from dataclasses import replace
+
+        from xplane_fdau.contracts import ContractValidationError
+        from xplane_fdau.measurements import MeasurementDefinition, NumericSpec, ValidityState
+
+        page = Path(__file__).resolve().parents[1] / "docs/reference/measurement-definitions.md"
+        self.assertTrue(page.is_file(), "measurement definition guide is absent")
+        examples = re.findall(r"```python\n(.*?)```", page.read_text(encoding="utf-8"), re.DOTALL)
+        self.assertTrue(examples)
+        namespace: dict[str, object] = {}
+        for example in examples:
+            exec(compile(example, str(page), "exec"), namespace)
+        value = namespace["definition"]
+        self.assertIsInstance(value, MeasurementDefinition)
+        if not isinstance(value, MeasurementDefinition):
+            self.fail("guide did not construct a measurement definition")
+        self.assertEqual((ValidityState.UNKNOWN,), value.allowed_validity)
+        self.assertEqual((), value.allowed_quality)
+        self.assertEqual(namespace["identity_hash"], value.content_hash)
+        self.assertEqual(64, len(value.content_hash))
+        self.assertNotEqual(value.content_hash, replace(value, definition_revision=2).content_hash)
+        with self.assertRaises(ContractValidationError) as rejected:
+            replace(value, numeric=NumericSpec(storage_precision_bits=1, resolution=1))
+        self.assertEqual("/numeric", rejected.exception.path)
+
     def test_measurement_quality_smoke_detects_reordered_acceptance(self) -> None:
         from xplane_fdau.measurements import QualityFlag, _quality
 

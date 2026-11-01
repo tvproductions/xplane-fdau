@@ -266,6 +266,104 @@ def _measurement_quality_smoke() -> None:
             raise SmokeError("installed quality validation accepted noncanonical flags")
 
 
+def _measurement_definition_smoke() -> None:
+    """Verify installed definition ownership, identity, immutability and rejection."""
+    import hashlib
+    import json
+    from dataclasses import FrozenInstanceError, replace
+
+    import xplane_fdau.measurements as measurements
+    from xplane_fdau.contracts import Authority, ContractHashError, ContractValidationError, ProvenanceSource, RepresentationSpec, UnitSpec
+    from xplane_fdau.measurements import _definition_io, models
+
+    for name in (
+        "EnumerationMemberKind",
+        "InterpolationPolicy",
+        "DiscontinuityPolicy",
+        "Sensitivity",
+        "AxisSpec",
+        "CoordinateSpec",
+        "NumericSpec",
+        "EnumerationMember",
+        "EnumerationSpec",
+        "FreshnessSpec",
+        "ApplicabilitySelector",
+        "MeasurementDefinition",
+    ):
+        if getattr(measurements, name) is not getattr(models, name):
+            raise SmokeError("installed measurement definition ownership differs")
+    limitations = ["Synthetic example only"]
+    value = measurements.MeasurementDefinition(
+        definition_id="test.boolean",
+        definition_revision=1,
+        authority=Authority(authority_id="test.authority", authority_revision=1),
+        provenance=[ProvenanceSource(source_id="test.source", source_revision=1, scope="Synthetic")],
+        title="Boolean",
+        description="Synthetic Boolean meaning",
+        limitations=limitations,
+        quantity_id="test.state",
+        representation=RepresentationSpec(kind="boolean"),
+        unit=UnitSpec(kind="unitless"),
+        coordinates=measurements.CoordinateSpec(kind="not_applicable"),
+        freshness=measurements.FreshnessSpec(fresh_for_ns=0),
+        interpolation_policy="prohibited",
+        discontinuity_policy="preserve",
+        allowed_validity=["unknown"],
+        allowed_quality=[],
+        sensitivity="unknown",
+        applicability=[],
+    )
+    wire = _definition_io._measurement_definition_wire(value)
+    canonical = json.dumps(wire, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8") + b"\n"
+    if _definition_io._measurement_definition_bytes(value) != canonical:
+        raise SmokeError("installed measurement definition canonical entry bytes differ")
+    body = {key: child for key, child in wire.items() if key != "content_hash"}
+
+    def digest(fields: dict[str, object]) -> str:
+        preimage = dict(
+            contract_family="https://tvproductions.github.io/xplane-fdau/contracts/measurement-catalog",
+            schema_version=1,
+            definition=fields,
+        )
+        return hashlib.sha256(json.dumps(preimage, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8") + b"\n").hexdigest()
+
+    if value.content_hash != digest(body) or wire.get("content_hash") != value.content_hash:
+        raise SmokeError("installed measurement definition hash differs")
+    restored = _definition_io._measurement_definition_from_wire(json.loads(canonical))
+    if restored != value or restored.content_hash != value.content_hash or _definition_io._measurement_definition_bytes(restored) != canonical:
+        raise SmokeError("installed measurement definition did not round-trip")
+    limitations.append("Caller mutation")
+    if value.limitations != ("Synthetic example only",) or _definition_io._measurement_definition_bytes(value) != canonical:
+        raise SmokeError("installed measurement definition retained mutable input")
+    for name, changed in (("title", "Tampered"), ("content_hash", "0" * 64)):
+        try:
+            setattr(value, name, changed)
+        except (FrozenInstanceError, AttributeError, TypeError):
+            pass
+        else:
+            raise SmokeError("installed measurement definition is mutable")
+    try:
+        replace(value, numeric=measurements.NumericSpec(storage_precision_bits=1, resolution=1))
+    except ContractValidationError as error:
+        if error.path != "/numeric":
+            raise SmokeError("installed irrelevant numeric rejection lost its path") from error
+    else:
+        raise SmokeError("installed constructor accepted irrelevant numeric metadata")
+    numeric = body | {"numeric": {"storage_precision_bits": 1, "resolution": 1}}
+    for tampered, expected, message in (
+        (numeric | {"content_hash": digest(numeric)}, ContractValidationError, "irrelevant numeric"),
+        (wire | {"title": "Tampered"}, ContractHashError, "stale hash"),
+    ):
+        try:
+            _definition_io._measurement_definition_from_wire(tampered)
+        except expected as error:
+            expected_path = "/numeric" if expected is ContractValidationError else "/content_hash"
+            if error.path != expected_path:
+                raise SmokeError(f"installed {message} rejection lost its path") from error
+        else:
+            raise SmokeError(f"installed reader accepted {message}")
+
+
 def smoke(version: str, *, checkout: Path) -> None:
     """Exercise the installed public API, schema, FDR files, and CLI commands."""
     import xplane_fdau
@@ -288,6 +386,7 @@ def smoke(version: str, *, checkout: Path) -> None:
     _canonical_values_smoke()
     _canonical_timing_smoke()
     _measurement_quality_smoke()
+    _measurement_definition_smoke()
     schema = importlib.resources.files("xplane_fdau.formats.xplane_fdr").joinpath("schemas/fdr-record-config-v1.schema.json")
     if not schema.is_file() or '"$schema"' not in schema.read_text(encoding="utf-8"):
         raise SmokeError("installed schema resource is unavailable or invalid")

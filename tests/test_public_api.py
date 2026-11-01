@@ -55,6 +55,26 @@ SINK_NAMES = {
 
 
 class PublicAPITests(unittest.TestCase):
+    def test_contracts_do_not_import_measurements(self) -> None:
+        root = Path(contracts.__file__).parent
+        for path in root.rglob("*.py"):
+            relative = path.relative_to(root).with_suffix("")
+            module = ("xplane_fdau", "contracts", *relative.parts)
+            package = module[:-1]
+            for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+                names: list[str] = []
+                line = 0
+                if isinstance(node, ast.Import):
+                    names = [alias.name for alias in node.names]
+                    line = node.lineno
+                elif isinstance(node, ast.ImportFrom):
+                    line = node.lineno
+                    prefix = package[: len(package) - node.level + 1] if node.level else ()
+                    target = (*prefix, *(node.module.split(".") if node.module is not None else ()))
+                    names = [".".join(target), *[".".join((*target, alias.name)) for alias in node.names]]
+                for name in names:
+                    self.assertFalse(name == "xplane_fdau.measurements" or name.startswith("xplane_fdau.measurements."), f"{path}:{line}: {name}")
+
     def test_measurement_quality_exports_have_exact_ownership(self) -> None:
         import xplane_fdau.measurements as measurements
         from xplane_fdau.measurements import models

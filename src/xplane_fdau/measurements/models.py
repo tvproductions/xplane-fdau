@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import cast
 
+from ..contracts._content_hash import _definition_content_hash
 from ..contracts.errors import ContractShapeError
 from ..contracts.provenance import Authority, ProvenanceSource, _authority_wire, _provenance_source_wire
 from ..contracts.values import _OMITTED, PayloadSpec, RepresentationSpec, UnitSpec, _ordered_array, _representation_spec_wire, _unit_spec_wire
@@ -258,6 +259,12 @@ class MeasurementDefinition:
     applicability: Sequence[ApplicabilitySelector]
     numeric: object = _OMITTED
     enumeration: object = _OMITTED
+    _content_hash: str = field(init=False, repr=False, compare=False)
+
+    @property
+    def content_hash(self) -> str:
+        """Cached family-bound identity computed after constructor validation."""
+        return self._content_hash
 
     def __post_init__(self) -> None:
         # Copy only supported ordered containers; never consume arbitrary iterables.
@@ -278,6 +285,16 @@ class MeasurementDefinition:
         object.__setattr__(self, "sensitivity", Sensitivity(self.sensitivity))
         object.__setattr__(self, "allowed_validity", tuple(ValidityState(item) for item in self.allowed_validity))
         object.__setattr__(self, "allowed_quality", tuple(QualityFlag(item) for item in self.allowed_quality))
+        from ._definition_io import _measurement_definition_wire
+
+        object.__setattr__(
+            self,
+            "_content_hash",
+            _definition_content_hash(
+                "https://tvproductions.github.io/xplane-fdau/contracts/measurement-catalog",
+                _measurement_definition_wire(self, include_hash=False),
+            ),
+        )
 
 
 def _unowned(value: object) -> object:

@@ -1,12 +1,12 @@
 # C2.1 Measurement Definition Implementation Plan
 
 - **Governance:** active
-- **Status:** in_progress
+- **Status:** completed
 - **Date:** 2026-11-01
 - **Roadmap child:** `C2.1`
 - **Source specification:** `docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md`
 - **Approval:** 2026-11-01 — Jeff / tvproductions; plan approved in chat; subagent-driven execution selected in chat
-- **Completion evidence:** —
+- **Completion evidence:** `.superpowers/sdd/2026-11-01-c2-1-definition/completion.md`
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -155,10 +155,10 @@ _definition_entry_build(fields: Mapping[str, object]) -> MeasurementDefinition
 
 **Interfaces:** Private `tools.installed_smoke._measurement_definition_smoke() -> None`, called by the existing smoke flow, raising existing SmokeError for failed acceptance checks. No additional runtime API.
 
-- [ ] **Step 1: Write failing installed smoke tests.** Add the two new private runtime modules to the exact discovered module inventory. Require smoke acceptance of a synthetic Boolean definition, immutable canonical-entry/hash round trip, and rejection of an irrelevant numeric field and stale hash. Patch the private reader to accept tampered content and require SmokeError, ensuring the smoke detects an ineffective check. Run `uv run --locked --all-groups python -m unittest tests.test_installed_smoke -v` and observe expected missing-helper/inventory failure.
-- [ ] **Step 2: Implement smoke through installed imports.** Check public package ownership, private canonical-entry bytes/hash consistency, strict private entry behavior, and constructor immutability. Use no source-tree fixtures or stock catalog entries. Preserve the existing wheel-origin checks and stdlib-only import scan.
-- [ ] **Step 3: Write the guide and MkDocs entry.** Provide one executable synthetic definition example, representation/unit/numeric/coordinate matrix, explicit quality and freshness semantics, semantic revision obligation, and read-only `content_hash` example. Explain reserved enum members are definition metadata and normalized sample authorization arrives later. Render only delivered public API via MkDocstrings. Identify private entry readers as internal integration details; public measurement-catalog loaders/schema remain C2.2 and shared convenience APIs remain pending public API closure. Do not show undelivered functions as usable APIs. Validate examples against tests without phrase-snapshot tests.
-- [ ] **Step 4: Verify GREEN.** Run `uv run --locked --all-groups python -m unittest tests.test_measurement_definition tests.test_measurement_definition_io tests.test_measurement_quality tests.test_public_api tests.test_installed_smoke tests.test_runtime_import_boundary tests.test_documentation -v`, focused static checks and `uv run --locked --all-groups mkdocs build --strict`. Commit exact Task 4 files as `docs: document and verify measurement definitions`, retaining hooks.
+- [x] **Step 1: Write failing installed smoke tests.** Add the two new private runtime modules to the exact discovered module inventory. Require smoke acceptance of a synthetic Boolean definition, immutable canonical-entry/hash round trip, and rejection of an irrelevant numeric field and stale hash. Patch the private reader to accept tampered content and require SmokeError, ensuring the smoke detects an ineffective check. Run `uv run --locked --all-groups python -m unittest tests.test_installed_smoke -v` and observe expected missing-helper/inventory failure.
+- [x] **Step 2: Implement smoke through installed imports.** Check public package ownership, private canonical-entry bytes/hash consistency, strict private entry behavior, and constructor immutability. Use no source-tree fixtures or stock catalog entries. Preserve the existing wheel-origin checks and stdlib-only import scan.
+- [x] **Step 3: Write the guide and MkDocs entry.** Provide one executable synthetic definition example, representation/unit/numeric/coordinate matrix, explicit quality and freshness semantics, semantic revision obligation, and read-only `content_hash` example. Explain reserved enum members are definition metadata and normalized sample authorization arrives later. Render only delivered public API via MkDocstrings. Identify private entry readers as internal integration details; public measurement-catalog loaders/schema remain C2.2 and shared convenience APIs remain pending public API closure. Do not show undelivered functions as usable APIs. Validate examples against tests without phrase-snapshot tests.
+- [x] **Step 4: Verify GREEN.** Run `uv run --locked --all-groups python -m unittest tests.test_measurement_definition tests.test_measurement_definition_io tests.test_measurement_quality tests.test_public_api tests.test_installed_smoke tests.test_runtime_import_boundary tests.test_documentation -v`, focused static checks and `uv run --locked --all-groups mkdocs build --strict`. Commit exact Task 4 files as `docs: document and verify measurement definitions`, retaining hooks.
 
 ## Focused static verification
 
@@ -172,15 +172,15 @@ uv run --locked --all-groups ty check
 
 ## Stable closeout and evidence
 
-- [ ] Perform independent review via `superpowers:requesting-code-review` at the approved execution checkpoints and over the whole branch before finishing. Resolve load-bearing findings and bind evidence to the actual candidate.
-- [ ] Use canonical `gzs-quality-gate`/`gzs-repository-hygiene` with the project adapters. New shipped modules change package inventory, so run full offline hygiene once at stable closeout; it supplies the complete active-Python gate and fresh strict artifacts. Do not separately repeat the standalone gate on unchanged inputs:
+- [x] Perform independent review via `superpowers:requesting-code-review` at the approved execution checkpoints and over the whole branch before finishing. Resolve load-bearing findings and bind evidence to the actual candidate.
+- [x] Use canonical `gzs-quality-gate`/`gzs-repository-hygiene` with the project adapters. New shipped modules change package inventory, so run full offline hygiene once at stable closeout; it supplies the complete active-Python gate and fresh strict artifacts. Do not separately repeat the standalone gate on unchanged inputs:
 
 ```powershell
 uv run --offline --frozen --all-groups python .codex/skills/hygiene/scripts/hygiene.py
 ```
 
-- [ ] Run the release skill's existing external Python 3.12 installed-wheel smoke on the exact validated wheel because installed imports changed. Record wheel/sdist hashes, Python version, import origins and result. No broader Python-minor matrix or release-readiness claim.
-- [ ] Record four gate receipts under `.superpowers/sdd/2026-11-01-c2-1-definition/`: gate 1 representation/unit/coordinate/numeric/enum matrix (Tasks 1–2); gate 2 explicit metadata/policies/provenance (Tasks 1–2); gate 3 irrelevant fields and exact semantic identity mismatch rejection (Tasks 2–3); gate 4 immutable hash-stable synthetic round trips (Tasks 3–4). Keep failures and corrections visible. Commit evidence only when it exists.
+- [x] Run the release skill's existing external Python 3.12 installed-wheel smoke on the exact validated wheel because installed imports changed. Record wheel/sdist hashes, Python version, import origins and result. No broader Python-minor matrix or release-readiness claim.
+- [x] Record four gate receipts under `.superpowers/sdd/2026-11-01-c2-1-definition/`: gate 1 representation/unit/coordinate/numeric/enum matrix (Tasks 1–2); gate 2 explicit metadata/policies/provenance (Tasks 1–2); gate 3 irrelevant fields and exact semantic identity mismatch rejection (Tasks 2–3); gate 4 immutable hash-stable synthetic round trips (Tasks 3–4). Keep failures and corrections visible. Commit evidence only when it exists.
 - [ ] Through guarded backlog operations advance only C2.1 to implemented/reviewed/verified when review and committed gates justify each transition. Complete plan tracking and completion evidence; do not claim C2.2 schema/catalog delivery.
 - [ ] Use `superpowers:finishing-a-development-branch` and obtain the user's integration choice. If local integration is selected, follow AGENTS.md's exact fast-forward procedure and hygiene's focused main checks; keep branch/worktree until main verification passes, then remove them. Remote sync, tagging and publication retain separate authorization.
 
@@ -221,3 +221,7 @@ Gap list: none within C2.1's four gates after this revision. Planning verdict: *
 ## Execution record
 
 November 1: subagent-driven execution authorized. Worktree `C:/Users/Jeff/.codex/worktrees/cfdf/xplane-fdau`, branch `feature/c2-1-measurement-definition`, base `0019d129b5eb20922d39709b7443a171139e59b6`. The plan-scoped ledger is `.superpowers/sdd/2026-11-01-c2-1-measurement-definition/progress.md`. Preflight moves only new-module inventory expectations from Task 4 into Tasks 1 and 3 alongside their modules, so mandatory commit hooks remain green; smoke behavior and documentation remain Task 4. Native checkout newline-only differences were repaired to exact indexed Markdown bytes with an unchanged Git tree and a clean audit. Focused baseline: 74 tests passed.
+
+## Verification closeout
+
+All four tasks and the final fix wave are complete at source `594d7414ec67c323d18e6bdc29a4aa47de118d60`. Independent task/fix/whole-branch reviews closed all load-bearing findings. Full offline hygiene and a fresh external Python 3.12.16 installed-wheel smoke passed; both independently validated artifact pairs have identical SHA-256 hashes. Receipts and raw-input identities are under `.superpowers/sdd/2026-11-01-c2-1-definition/`. Checkout-only newline repair retained the exact Git tree. Existing portability/tooling/STRICT limitations remain explicit in verification.json. User integration choice is pending; main has not been changed.

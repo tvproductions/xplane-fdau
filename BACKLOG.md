@@ -38,12 +38,12 @@ slice receives one focused plan and one independently reviewable outcome.
   `verified` with 4/4 gates and accepted independent review, and is locally
   integrated into main. `C1.5` is `verified` with 4/4 gates and accepted
   independent review, and is locally integrated into main.
-  `C2.1` is the selected canonical child, now `in_progress` under its
+  `C2.1` is the selected canonical child, now `reviewed` under its
   approved [plan](docs/superpowers/plans/2026-11-01-c2-1-measurement-definition.md).
-  Subagent-driven execution was selected on November 1. Implementation is
+  Subagent-driven execution and independent reviews are complete. Implementation is
   isolated on its temporary feature branch. `T3.1` remains independent.
 - Canonical contract design: approved with accepted independent review; `C2.1`
-  has 0/4 delivery gates satisfied. `C2.2` through `C4.4` remain specified with
+  has 4/4 delivery gates satisfied; verification awaits committed evidence. `C2.2` through `C4.4` remain specified with
   zero delivery gates satisfied.
 - Heavy is explicitly selected; Backplane remains disabled. STRICT starter
   acceptance is incomplete, including the external cognitive-library extraction
@@ -76,7 +76,7 @@ The child slices below refine this sequence without weakening or reordering it.
 | `C1.3` | Typed values and content-addressed payload references | `verified` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-10-04-c1-3-typed-values-payload-references.md) | 4/4 | [review](.superpowers/sdd/2026-10-04-c1-3-typed-values-payload-references/review.md) | — | — |
 | `C1.4` | Clock domains, UTC instants, anchors, and simulator timing | `verified` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-10-26-c1-4-clock-domains-utc-anchors-simulator-timing.md) | 4/4 | [review](.superpowers/sdd/2026-10-26-c1-4-timing/review.md) | — | — |
 | `C1.5` | Validity states and acquisition-quality vocabulary | `verified` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-01-c1-5-validity-acquisition-quality.md) | 4/4 | [review](.superpowers/sdd/2026-11-01-c1-5-quality/review.md) | — | — |
-| `C2.1` | Measurement-definition model and semantic invariants | `in_progress` | `C1.3`, `C1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-01-c2-1-measurement-definition.md) | 0/4 | — | — | — |
+| `C2.1` | Measurement-definition model and semantic invariants | `reviewed` | `C1.3`, `C1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-01-c2-1-measurement-definition.md) | 4/4 | [review](.superpowers/sdd/2026-11-01-c2-1-definition/review.md) | — | — |
 | `C2.2` | Measurement catalog, schema, ordering, and references | `specified` | `C2.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C2.3` | Source-binding definition and transform references | `specified` | `C2.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C2.4` | Binding catalog and pure cross-catalog validation | `specified` | `C2.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/5 | — | — | — |
@@ -196,12 +196,12 @@ The child slices below refine this sequence without weakening or reordering it.
 
 ### C2.1 — Measurement-definition model and semantic invariants
 
-- [ ] Representation-specific, unit/unitless, frame/datum/axis, precision,
-      resolution, range, and enumeration invariants pass.
-- [ ] Freshness, interpolation, discontinuity, sensitivity, applicability, and
-      provenance fields are explicit.
-- [ ] Irrelevant representation fields and semantic revision mismatches fail.
-- [ ] Synthetic definitions are immutable, hash-stable, and round-trip.
+- [x] Representation-specific, unit/unitless, frame/datum/axis, precision,
+      resolution, range, and enumeration invariants pass. — Evidence: [verification](.superpowers/sdd/2026-11-01-c2-1-definition/gate-1.md)
+- [x] Freshness, interpolation, discontinuity, sensitivity, applicability, and
+      provenance fields are explicit. — Evidence: [verification](.superpowers/sdd/2026-11-01-c2-1-definition/gate-2.md)
+- [x] Irrelevant representation fields and semantic revision mismatches fail. — Evidence: [verification](.superpowers/sdd/2026-11-01-c2-1-definition/gate-3.md)
+- [x] Synthetic definitions are immutable, hash-stable, and round-trip. — Evidence: [verification](.superpowers/sdd/2026-11-01-c2-1-definition/gate-4.md)
 
 ### C2.2 — Measurement catalog, schema, ordering, and references
 

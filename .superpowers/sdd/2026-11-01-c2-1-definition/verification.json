@@ -1,0 +1,47 @@
+{
+  "source_commit": "594d7414ec67c323d18e6bdc29a4aa47de118d60",
+  "source_tree": "b3a7eef1f92e85611300293e19cbeec6bbd0e311",
+  "raw_input_count": 141,
+  "hygiene_command": "uv run --offline --frozen --all-groups python .codex/skills/hygiene/scripts/hygiene.py",
+  "hygiene_exit_code": 0,
+  "strict_twine_exit_code": 0,
+  "strict_inventory_exit_code": 0,
+  "external_smoke_exit_code": 0,
+  "external_observation": {
+    "python_version": "3.12.16",
+    "python": "C:\\Users\\Jeff\\AppData\\Local\\Temp\\xplane-fdau-c21-259d3556bc9c4cf8a4502de27c52c3e8\\venv\\Scripts\\python.exe",
+    "package_origin": "C:\\Users\\Jeff\\AppData\\Local\\Temp\\xplane-fdau-c21-259d3556bc9c4cf8a4502de27c52c3e8\\venv\\Lib\\site-packages\\xplane_fdau\\__init__.py",
+    "version": "0.1.0",
+    "requires_dist": []
+  },
+  "artifact_hashes": {
+    "wheel_sha256": "b19885408123352f02d3bd35685f917edb73d89bf257620d0963ba6aae0ca370",
+    "sdist_sha256": "610b2f524014c315802110730a82579ea6374b77a3462a3c638633b8c2c46969"
+  },
+  "artifact_pairs_match": true,
+  "successful_temporary_environments_removed": true,
+  "historical_external_paths": {
+    "environment": "C:\\Users\\Jeff\\AppData\\Local\\Temp\\xplane-fdau-c21-259d3556bc9c4cf8a4502de27c52c3e8\\venv",
+    "wheel": "C:\\Users\\Jeff\\AppData\\Local\\Temp\\xplane-fdau-c21-259d3556bc9c4cf8a4502de27c52c3e8\\dist\\xplane_fdau-0.1.0-py3-none-any.whl",
+    "cleaned": true,
+    "sdist": "C:\\Users\\Jeff\\AppData\\Local\\Temp\\xplane-fdau-c21-259d3556bc9c4cf8a4502de27c52c3e8\\dist\\xplane_fdau-0.1.0.tar.gz",
+    "root": "C:\\Users\\Jeff\\AppData\\Local\\Temp\\xplane-fdau-c21-259d3556bc9c4cf8a4502de27c52c3e8",
+    "dist": "C:\\Users\\Jeff\\AppData\\Local\\Temp\\xplane-fdau-c21-259d3556bc9c4cf8a4502de27c52c3e8\\dist",
+    "source_head": "594d7414ec67c323d18e6bdc29a4aa47de118d60",
+    "python": "C:\\Users\\Jeff\\AppData\\Local\\Temp\\xplane-fdau-c21-259d3556bc9c4cf8a4502de27c52c3e8\\venv\\Scripts\\python.exe"
+  },
+  "optional_portability": {
+    "whole_tests_subprocess_scan": "baseline findings, not clean",
+    "unchanged_findings": [
+      "tests/test_backlog_status_report.py:109",
+      "tests/test_backlog_status_report.py:116",
+      "tests/test_fdr_cli.py:315"
+    ],
+    "line_endings_scan": "baseline .gitattributes lacks explicit LF checkout directive; reviewed candidate restored to exact indexed bytes"
+  },
+  "scope_limits": [
+    "Windows Python 3.12.16 execution only",
+    "STRICT adoption and G1/release gates remain open",
+    "C2.2 catalogs and C4.3 shared API closure remain later work"
+  ]
+}

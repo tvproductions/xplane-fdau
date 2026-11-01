@@ -1,5 +1,93 @@
 # Project Handoff
 
+## C1.5 integrated — fresh-session resume, 2026-11-01
+
+**Observed:** 2026-11-01 15:51 UTC, before this requested fresh handoff/sync.
+This section supersedes older resume points and current-state observations;
+retain the sections below as dated history. Jeff approved C1.5's plan and
+native execution with independent review, selected local integration, and now
+requested this fresh handoff and ordinary Git sync. No release authority was
+granted.
+
+**Resume point:** C1.5 is complete, verified with **4/4 gates**, and integrated
+into main. No child is selected. Fresh strict audit found no findings; `next`
+reports `action=write_plan child=C2.1`. C2.1 remains specified with 0/4 gates
+and no implementation plan. After reading AGENTS.md and its authorities and
+rerunning audit/next, read the approved canonical specification linked from
+BACKLOG and draft a single-child C2.1 measurement-definition plan with
+`superpowers:writing-plans` and `gzs-plan-audit`. Obtain plan approval and an
+execution choice before selecting or implementing C2.1. C1.5's execution
+approval does not authorize C2.1 implementation. Stop on audit findings or
+authority drift. Do not repeat the refresh, C1.4, C1.5 or their completed gates
+merely because the session changes; compare relevant inputs and evidence first.
+
+**Git state at observation:** `U:/repos/xp/xplane-fdau`, clean `main` at
+`31931da285683e69f0b835b74b2a5968873af65e`
+(`docs: record verified C1.5 main integration`), six commits ahead and zero
+behind freshly fetched `origin/main` at
+`82b1e81a42eab27c47037bc1dc47c4b4378b9476`. This requested sync will create
+a later HEAD; recheck local/remote state on resume. The C1.5 temporary worktree
+and branch are removed. The unrelated worktree
+`C:/Users/Jeff/.codex/worktrees/c68f/xplane-fdau`, branch
+`chore/dependency-refresh-2026-10-18`, remains at `f81c4c2`, untouched.
+
+**Delivered boundary:** C1.5 adds the owned `ValidityState` and `QualityFlag`
+enums in `xplane_fdau.measurements`, private strict validity/quality-array
+validation, installed smoke coverage and the
+[reference guide](docs/reference/measurement-quality.md). Empty quality does
+not infer validity. Complete sample compatibility, catalog authorization,
+lineage and family loaders remain later C2/C3 work; the standalone enums do
+not claim those validations. C2.1's C1.3 and C1.5 prerequisites are verified.
+
+**Durable evidence:** The
+[completed C1.5 plan](docs/superpowers/plans/2026-11-01-c1-5-validity-acquisition-quality.md),
+[completion](.superpowers/sdd/2026-11-01-c1-5-quality/completion.md),
+[review](.superpowers/sdd/2026-11-01-c1-5-quality/review.md), four gate receipts
+and [main integration record](.superpowers/sdd/2026-11-01-c1-5-quality/integration.md)
+are committed. Independent static whole-branch review found no Critical,
+Important or Minor findings. The reviewer's sandbox could not execute its uv
+checks; executor evidence supplies the observed execution results.
+
+The 709-test suite passed through mandatory hooks; focused feature/API/import/
+documentation tests, strict MkDocs, full offline hygiene and external Python
+3.12.16 wheel-only smoke passed. Main fast-forwarded exactly to reviewed branch
+HEAD `227756a4ace67d7b5bee7849b0e92469f94c6837`, then passed frozen all-group
+sync, lock check, strict backlog audit, both live-state tests, fresh strict
+artifacts and external wheel smoke. All wheel/sdist hashes match the reviewed
+branch. Later changes are integration records only.
+
+The first main raw-input comparison found one newline-only difference in
+`mkdocs.yml` (one branch CRLF became canonical LF; Git content was identical).
+The required **full offline hygiene fallback on main passed** before cleanup.
+The other 207 inputs matched byte-for-byte; main's canonical 208-input snapshot
+remained stable. See the integration record rather than treating the original
+branch's raw configuration hash as main's current byte baseline.
+
+**Local-only evidence:** All 92 feature receipt/execution files were copied
+and hash-verified on main before worktree removal. Raw execution directories
+under `.superpowers/sdd/2026-11-01-c1-5-quality/` and the detailed integration
+receipt `.superpowers/sdd/c1-5-integration-2026-11-01/integration.json` and its
+`main-inputs.json` are local-only, unavailable from a fresh clone. Successful
+external artifact environments and hygiene artifact pairs were removed;
+their recorded paths are historical, not existing inputs. No C1.5 worktree or
+temporary branch needs recreating for closeout.
+
+**Tooling and remaining boundaries:** The reviewed November 1 tool baseline
+is unchanged: Python 3.12.16, uv/uv_build 0.13.6, Ruff 0.17.3 and ty 0.0.95;
+runtime requirements remain empty and support stays `>=3.12,<3.13`. Native
+inventory and actual source revisions were rechecked: starter 0.8.0,
+Superpowers 7.0.1 and gz-skills 0.8.3 match the reviewed pins in
+`.skills-first/bundle.lock.json` and the
+[refresh review](docs/reviews/2026-11-01-coordinated-refresh.md). Verify actual
+fresh-session discovery again on resume; do not update caches or user defaults
+as a planning prerequisite. Heavy remains selected and Backplane disabled.
+Cognitive analysis remains UNKNOWN/deferred, recorded Lizard acceptance
+limitations remain open, STRICT starter acceptance is incomplete, and G1 and
+release gates still wait. The known starter Windows path-separator status
+false positive is not authority to delete the sole project template skill or
+patch shared caches. This handoff/sync closes none of those gaps and creates
+no automatic schedule, tag, package publication or release authority.
+
 ## Coordinated refresh locally integrated — 2026-11-01
 
 **Observed:** 2026-11-01 13:37 UTC, before this requested handoff/sync.

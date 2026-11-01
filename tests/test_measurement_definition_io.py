@@ -403,6 +403,49 @@ class MeasurementDefinitionIOTests(unittest.TestCase):
                 self.assertIs(type(caught.exception), ContractShapeError)
                 self.assertEqual(path, caught.exception.path)
 
+    def test_parser_accepted_deep_input_preserves_shape_precedence(self) -> None:
+        deep_json = "[" * 600 + "0" + "]" * 600
+        # The unchanged parser accepts these documents. Shape must win even
+        # though projection of a rejected title would exceed Python's stack.
+        incomplete = _parse_json_document('{"title":' + deep_json + "}")
+        complete = _parse_json_document(ENTRY.replace(b'"title":"Boolean"', b'"title":' + deep_json.encode("ascii")))
+        for value, path in ((incomplete, "/definition_id"), (complete, "/title")):
+            with self.subTest(path=path), mock.patch.object(self.io, "_definition_entry_build", side_effect=AssertionError("premature model build")):
+                with self.assertRaises(Exception) as caught:
+                    self.io._measurement_definition_from_wire(value, source="deep.json", path="/definitions/2")
+                self.assertIs(type(caught.exception), ContractShapeError)
+                error = cast(FDAUContractError, caught.exception)
+                self.assertEqual("/definitions/2" + path, error.path)
+                self.assertEqual("deep.json", error.source)
+
+    def test_deep_domain_preprocessing_reaches_its_depth_guard(self) -> None:
+        nested = _parse_json_document("[" * 600 + "0" + "]" * 600)
+        with self.assertRaises(Exception) as caught:
+            self.io._definition_entry_domains({"title": nested})
+        self.assertIs(type(caught.exception), CanonicalJSONError)
+        self.assertEqual("/title" + "/0" * 63, cast(FDAUContractError, caught.exception).path)
+
+    def test_stack_safe_duplicates_still_precede_shape_and_domains(self) -> None:
+        # A raw dictionary may mix parser objects and tuples. Scan the whole
+        # input before rejecting a missing identity or a wrong title shape.
+        nested: object = _ObjectPairs((("duplicate", 1), ("duplicate", 2)))
+        for index in range(1600):
+            nested = [nested] if index % 2 else (nested,)
+        with self.assertRaises(Exception) as caught:
+            self.io._measurement_definition_from_wire({"title": nested}, source="deep.json")
+        self.assertIs(type(caught.exception), ContractParseError)
+        error = cast(FDAUContractError, caught.exception)
+        self.assertEqual("/title" + "/0" * 1600 + "/duplicate", error.path)
+        self.assertEqual("deep.json", error.source)
+        # Even without a duplicate, raw deep containers must reach shape.
+        plain: object = 0
+        for _ in range(1600):
+            plain = [plain]
+        with self.assertRaises(Exception) as wrong_shape:
+            self.io._measurement_definition_from_wire({"title": plain})
+        self.assertIs(type(wrong_shape.exception), ContractShapeError)
+        self.assertEqual("/definition_id", cast(FDAUContractError, wrong_shape.exception).path)
+
     def test_both_package_import_orders_in_fresh_processes(self) -> None:
         for order in (("contracts", "measurements"), ("measurements", "contracts")):
             code = "; ".join(f"import xplane_fdau.{name}" for name in order)

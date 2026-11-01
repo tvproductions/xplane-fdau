@@ -107,21 +107,47 @@ def _measurement_definition_bytes(value: MeasurementDefinition) -> bytes:
 
 
 def _plain(value: object, *, stem: str = "definition", tokens: bool = True) -> object:
-    """Retain lexical tokens, or substitute type-only witnesses for shape checks."""
-    if isinstance(value, _NumberToken):
-        return value if tokens else 0.0 if value.is_real else 0
-    if isinstance(value, _ObjectPairs):
-        value = dict(value.pairs)
-    if type(value) is dict:
-        fields = cast(dict[str, object], value)
-        order = _ORDERS.get(stem, ())
-        names = (*[name for name in order if name in fields], *[name for name in fields if name not in order])
-        return {name: _plain(fields[name], stem=name, tokens=tokens) for name in names}
-    if type(value) in (list, tuple):
-        return tuple(_plain(item, stem=stem, tokens=tokens) for item in cast(list[object] | tuple[object, ...], value))
-    if not tokens and value is not None and type(value) not in (str, int, float, bool):
-        return object()  # not an exact JSON primitive or container
-    return value
+    """Project with an explicit stack, retaining tokens until the domain tier.
+
+    Rejected subtrees may be deeper than the contract limit. Copying them must
+    not raise a Python recursion failure before whole-entry shape validation.
+    """
+    pending: list[tuple[object, str, bool]] = [(value, stem, False)]
+    projected: list[object] = []
+    while pending:
+        current, current_stem, expanded = pending.pop()
+        if isinstance(current, _NumberToken):
+            projected.append(current if tokens else 0.0 if current.is_real else 0)
+            continue
+        if isinstance(current, _ObjectPairs):
+            current = dict(current.pairs)
+        if type(current) is dict:
+            fields = cast(dict[str, object], current)
+            order = _ORDERS.get(current_stem, ())
+            names = (*[name for name in order if name in fields], *[name for name in fields if name not in order])
+            if not expanded:
+                pending.append((fields, current_stem, True))
+                pending.extend((fields[name], name, False) for name in reversed(names))
+                continue
+            children = projected[-len(names) :] if names else []
+            if names:
+                del projected[-len(names) :]
+            projected.append(dict(zip(names, children, strict=True)))
+        elif type(current) in (list, tuple):
+            items = cast(list[object] | tuple[object, ...], current)
+            if not expanded:
+                pending.append((items, current_stem, True))
+                pending.extend((item, current_stem, False) for item in reversed(items))
+                continue
+            children = projected[-len(items) :] if items else []
+            if items:
+                del projected[-len(items) :]
+            projected.append(tuple(children))
+        elif not tokens and current is not None and type(current) not in (str, int, float, bool):
+            projected.append(object())  # not an exact JSON primitive or container
+        else:
+            projected.append(current)
+    return projected[0]
 
 
 def _without_hash(fields: Mapping[str, object]) -> dict[str, object]:
@@ -272,18 +298,20 @@ def _definition_entry_build(fields: Mapping[str, object]) -> MeasurementDefiniti
 
 
 def _duplicates(value: object, *, path: str = "") -> None:
-    if isinstance(value, _ObjectPairs):
-        # Validate this inventory with the parser's duplicate checker, then
-        # traverse all accepted container types, including mixed raw inputs.
-        _check_duplicates(_ObjectPairs(tuple((name, None) for name, _ in value.pairs)), source="<memory>", path=path)
-        for name, child in value.pairs:
-            _duplicates(child, path=_pointer(path, name))
-    elif type(value) is dict:
-        for name, child in value.items():
-            _duplicates(child, path=_pointer(path, str(name)))
-    elif type(value) in (list, tuple):
-        for index, child in enumerate(cast(list[object] | tuple[object, ...], value)):
-            _duplicates(child, path=f"{path}/{index}")
+    # Duplicate precedence requires scanning arbitrary rejected subtrees too;
+    # do not impose the later canonical depth limit or use Python recursion.
+    pending: list[tuple[object, str]] = [(value, path)]
+    while pending:
+        current, current_path = pending.pop()
+        if isinstance(current, _ObjectPairs):
+            _check_duplicates(_ObjectPairs(tuple((name, None) for name, _ in current.pairs)), source="<memory>", path=current_path)
+            pending.extend((child, _pointer(current_path, name)) for name, child in reversed(current.pairs))
+        elif type(current) is dict:
+            members = cast(dict[str, object], current)
+            pending.extend((child, _pointer(current_path, str(name))) for name, child in reversed(tuple(members.items())))
+        elif type(current) in (list, tuple):
+            items = cast(list[object] | tuple[object, ...], current)
+            pending.extend((items[index], f"{current_path}/{index}") for index in range(len(items) - 1, -1, -1))
 
 
 def _measurement_definition_from_wire(value: object, *, path: str = "", source: str = "<memory>") -> MeasurementDefinition:

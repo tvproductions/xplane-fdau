@@ -1,5 +1,77 @@
 # Project Handoff
 
+## Coordinated refresh locally integrated — 2026-11-01
+
+**Observed:** 2026-11-01 13:37 UTC, before this requested handoff/sync.
+This section supersedes older current-state and tooling observations below;
+retain those sections as history. Jeff authorized the coordinated refresh,
+selected local integration, and subsequently requested this handoff and ordinary
+Git sync. No release authority was granted.
+
+**Resume point:** The refresh is complete and locally integrated. No product
+child is selected. The strict backlog audit has no findings; `next` reports
+`action=write_plan child=C1.5`. C1.5 remains specified with 0/4 gates. After
+session-entry authorities and a fresh audit/next, read the approved canonical
+contract specification linked from BACKLOG and draft its single-child C1.5
+plan with `superpowers:writing-plans`. Obtain plan approval before selecting
+or implementing it. Stop on audit findings or authority drift. Do not repeat
+the refresh, C1.4, or their completed verification merely because the session
+changes; compare relevant inputs and evidence first.
+
+**Git state at observation:** Main was clean at
+`fdf9d7b18944c6b7eac89e5dec9b17768f6ee6d8`
+(`chore: refresh toolchain and project-scoped starter adoption`), one commit
+ahead of freshly fetched `origin/main`. This handoff's sync will create a later
+HEAD; recheck local/remote state on resume. The temporary refresh worktree and
+branch were removed only after exact fast-forward and main verification passed.
+The unrelated worktree at `C:/Users/Jeff/.codex/worktrees/c68f/xplane-fdau`,
+branch `chore/dependency-refresh-2026-10-18`, remains at `f81c4c2`, untouched.
+
+**Verified baseline:** Python 3.12.16; uv/uv_build 0.13.6; Ruff 0.17.3;
+ty 0.0.95; setup-uv 10.3.3. Runtime dependencies remain empty and support stays
+`>=3.12,<3.13`. Ten locked packages were updated. Four older transitives remain
+explained by Wily/Radon constraints. The old Python download-catalog override
+was removed after disposable provisioning proved uv's built-in catalog works.
+That temporary Python copy was removed; existing Python aliases, PATH and the
+Windows registry were unchanged.
+
+Starter 0.8.0 is selected at `e0b752fcc13b87ec7868fe0b0f85badefdb6bf52`;
+Superpowers 7.0.1 at `2ce8aa15d05bd57213e6f746f953aafb7ded7a8b` and gz-skills
+0.8.3 at `d6acc26e28ca1c4f43e5bb46d8973021d7d006c3` were verified through
+native inventory, actual checkouts and fresh-session discovery. Project-local
+overrides suppress duplicate sources; user configuration stayed byte-identical.
+Heavy selection and disabled Backplane are unchanged. The local installed
+pre-commit launcher now uses the current checkout's locked/all-group uv
+environment, rather than a hard-coded main path; all four hooks remain enabled.
+
+**Evidence:** The committed
+[refresh review](docs/reviews/2026-11-01-coordinated-refresh.md),
+[specification](docs/superpowers/specs/2026-11-01-coordinated-refresh-design.md)
+and [completed crosscutting plan](docs/superpowers/plans/2026-11-01-coordinated-refresh.md)
+record scope, provenance, failures and corrections. Complete offline hygiene,
+all commit hooks, independent review, 693 external source unittest tests and
+wheel-only smoke passed. Final audit covered 133 packages with zero known
+vulnerabilities/adverse statuses. A rebuilt sdist produced an identical wheel.
+Main passed frozen all-group sync, lock check, backlog audit, both live-state
+tests, fresh strict artifacts and external installed-wheel smoke. Its artifact
+hashes exactly match the verified branch.
+
+The integration receipt is
+`.superpowers/sdd/coordinated-refresh-2026-11-01/integration.json`; 55 execution
+receipt files were copied and hash-verified there before worktree removal.
+These receipts are **local-only**, unavailable from a fresh clone. Successful
+matrix and main artifact environments were removed after verification; their
+recorded paths are historical, not existing inputs.
+
+**Open limitations:** Starter `status` has an upstream Windows path-separator
+false positive (`duplicate template update skill at .agents/skills`). Do not
+delete the sole project skill or patch shared caches to silence it; managed
+bytes, actual sources and native discovery passed independently. Cognitive
+analysis remains UNKNOWN/deferred, existing Lizard acceptance limitations remain
+open, STRICT starter acceptance is incomplete, and G1/release gates still wait.
+The refresh and ordinary sync close none of those gates. No automatic schedule,
+upstream issue/PR submission, tag or package publication is authorized.
+
 ## C1.4 locally integrated — 2026-10-26
 
 This section supersedes the earlier C1.4 plan-review resume point below.

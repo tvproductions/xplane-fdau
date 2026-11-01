@@ -1,5 +1,66 @@
 # Project Handoff
 
+## C2.1 plan approved — fresh-session resume, 2026-11-01
+
+**Observed:** 2026-11-01 16:59 UTC, during the requested approval checkpoint,
+fresh handoff and ordinary Git sync. This section supersedes older resume
+instructions; retain the sections below as dated history. Jeff explicitly
+approved the corrected C2.1 plan. The execution method has not been selected.
+
+**Resume point:** Read the approved
+[C2.1 measurement-definition plan](docs/superpowers/plans/2026-11-01-c2-1-measurement-definition.md)
+and its approved canonical specification after the normal session-entry
+authorities. Re-run backlog `audit` and `next`; expected state is C2.1
+`planned`, 0/4 gates, no selected child, and `action=execute_plan child=C2.1`.
+The tool's lifecycle recommendation does not supply the missing execution
+choice. Obtain **native** or **subagent-driven** execution before creating the
+feature worktree, selecting C2.1, or transitioning to in_progress. Native was
+recommended because the four tasks share validation and wire interfaces; that
+recommendation was not a user selection. Do not ask for plan approval again.
+Stop on audit findings or authority drift. No runtime implementation or gate
+evidence has been created for C2.1.
+
+**Decisions preserved in the plan:** Two plan reviews identified and resolved
+three issues. C2.1 keeps measurement-owned private entry serialization and
+public read-only definition hashes, leaving contracts unchanged. Integration
+of the shared convenience APIs remains an explicit C4.3 public API closure
+obligation; the broader architecture/API tension is not claimed resolved.
+Raw entry readers validate plain field mappings through shape, domain, hash,
+semantics, then model construction; competing-error and build-barrier tests
+must prove this order. Constructor signatures place required fields first,
+then optional numeric/enumeration; validation retains its independent semantic
+field order. Catalogs, schemas and public family loaders remain C2.2 work.
+
+**Git state at observation:** Main checkout `U:/repos/xp/xplane-fdau`, HEAD
+`b6f9c820019fc863dbecf030184f18efbc116377`, equal to freshly fetched
+`origin/main`. This sync will create a later commit; recheck HEAD, status and
+remote alignment on resume. The intended save point contains only the new
+approved plan, its BACKLOG registration/planned state, and this handoff. No
+C2.1 feature worktree exists. The unrelated
+`C:/Users/Jeff/.codex/worktrees/c68f/xplane-fdau`, branch
+`chore/dependency-refresh-2026-10-18`, remains at `f81c4c2`, untouched.
+
+**Verification:** The approval-record candidate passed 71 focused governance,
+adherence and documentation unittest checks. Strict backlog/next found no
+findings and returned execute_plan C2.1. Strict MkDocs passed after correcting
+one repository-only BACKLOG link in the plan; its initial failed run remains
+an observed correction, not a pass. `git diff --check` passed. Mandatory
+commit hooks remain enabled, including ty and the full unittest suite; this
+requested sync must pass them before publication. Planning checks are not
+delivery evidence and close none of C2.1's four gates.
+
+**Standing boundaries:** C1.5 remains verified and integrated with 4/4 gates;
+do not repeat it or the completed November 1 refresh. The preceding handoff
+section links its durable evidence and identifies local-only receipts. Python
+3.12.16, standard-library-only runtime and unittest-only testing remain
+binding. Session-entry native inventory and actual checkout revisions matched
+the reviewed starter 0.8.0, Superpowers 7.0.1 and gz-skills 0.8.3 pins; verify
+fresh-session discovery again without refreshing shared caches. Heavy remains
+selected, Backplane disabled, STRICT acceptance incomplete, cognitive analysis
+UNKNOWN/deferred, and recorded Lizard limitations open. G1 and release gates
+remain waiting. This request authorizes ordinary commit/push only; no tag,
+publication, release, other-repository edit or automatic schedule is granted.
+
 ## C1.5 integrated — fresh-session resume, 2026-11-01
 
 **Observed:** 2026-11-01 15:51 UTC, before this requested fresh handoff/sync.

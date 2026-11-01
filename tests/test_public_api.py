@@ -94,6 +94,7 @@ class PublicAPITests(unittest.TestCase):
             "FreshnessSpec",
             "ApplicabilitySelector",
             "MeasurementDefinition",
+            "MeasurementCatalog",
         ]
         self.assertEqual(names, models.__all__)
         self.assertEqual(names, measurements.__all__)

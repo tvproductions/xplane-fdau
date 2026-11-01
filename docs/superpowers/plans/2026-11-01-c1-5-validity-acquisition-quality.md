@@ -150,7 +150,7 @@ This supplies the complete active-Python gate, docs, hooks and fresh strict arti
 - [x] Run the existing release-skill external Python 3.12 installed-wheel smoke procedure on that exact wheel because this slice adds installed imports. Record artifact path, hashes, interpreter and import origin. Do not rerun a broad interpreter matrix or claim release readiness.
 - [x] Record four gate receipts under `.superpowers/sdd/2026-11-01-c1-5-quality/`: gate 1 exact closed validity/independence (Tasks 1–2); gate 2 closed unique ordered flags (Tasks 1–2); gate 3 empty flags/no inferred validity (Tasks 2–3); gate 4 operational vocabulary exclusion (Tasks 1–3). Bind focused tests, complete hygiene, artifact smoke and independent review to the actual candidate. Preserve failed attempts honestly.
 - [x] Through dry-run/digest/apply backlog operations, advance only C1.5 through implemented/reviewed/verified when requirements and committed evidence actually justify each state. Record completion and update plan checkboxes; no gate closes merely because the plan was written.
-- [ ] Use `superpowers:finishing-a-development-branch`. If the user chooses local integration, follow AGENTS.md's exact fast-forward verification and cleanup rules. Keep branch/worktree until main verification passes. No remote sync, tag or publication follows implicitly.
+- [x] Use `superpowers:finishing-a-development-branch`. Jeff selected local integration on November 1. Main fast-forwarded exactly to `227756a4ace67d7b5bee7849b0e92469f94c6837`; frozen sync/lock, both live-state tests, fresh strict artifacts, external wheel smoke and the full offline hygiene fallback passed. The temporary worktree and branch were removed after verification. The integration receipt is `.superpowers/sdd/2026-11-01-c1-5-quality/integration.md`. Remote sync, tags and publication retain separate authority.
 
 ## Planning audit
 
@@ -171,7 +171,7 @@ Intent: approved design's separate evidence axes and exact public ownership. Sco
 | Gate 4: no operational findings/tolerances | Aligned | Task 1 rejected vocabulary; Task 2 contextual rejection; Task 3 guide |
 | Error context, installed surface and required verification | Aligned | Task 2 precedence/path cases; Task 3 smoke; stable closeout |
 
-**Planning audit verdict:** PASS for scoped planning alignment; no missing or drifted scoped requirement identified. The private helper boundary was approved as an implementation choice, not a specification amendment. Approval and completed task steps are recorded above; the completion receipt records review and verification. Managed lifecycle closure is complete: C1.5 is verified with 4/4 gates and its selection is cleared. Local integration awaits the separate user choice.
+**Planning audit verdict:** PASS for scoped planning alignment; no missing or drifted scoped requirement identified. The private helper boundary was approved as an implementation choice, not a specification amendment. Approval and completed task steps are recorded above; the completion receipt records review and verification. Managed lifecycle closure is complete: C1.5 is verified with 4/4 gates and its selection is cleared. Jeff selected local integration; main verification and temporary worktree/branch cleanup are complete.
 
 ## Execution rulings
 
@@ -179,3 +179,5 @@ Intent: approved design's separate evidence axes and exact public ownership. Sco
 - Task 1 also updates the wheel/sdist directory lists in `tests/test_release_tool.py`; their hard-coded fixture inventory lacked the new measurements directory. The runtime release validator stays unchanged.
 - Native checkout CRLF-only differences were restored to exact indexed bytes, preserving all intentional byte fixtures and provenance hashes. This changes no committed baseline content.
 - The exact sixteen-item test input uses equivalent tuple unpacking to satisfy Ruff; it still requires `ContractValidationError` at `/quality/15`.
+
+- Integration verification found a raw-byte mismatch in `mkdocs.yml` only: one branch CRLF was normalized to LF in main, with identical Git content. The required full offline hygiene fallback passed on main; no check was relabeled or omitted. All runtime artifact hashes match the reviewed branch.

@@ -37,7 +37,7 @@ slice receives one focused plan and one independently reviewable outcome.
   `verified` with 4/4 gates and accepted independent review. `C1.4` timing is
   `verified` with 4/4 gates and accepted independent review, and is locally
   integrated into main. `C1.5` is `verified` with 4/4 gates and accepted
-  independent review on its feature branch; local integration is pending.
+  independent review, and is locally integrated into main.
   `C2.1` is the next canonical dependency-ready child; `T3.1` remains independent.
 - Canonical contract design: approved with accepted independent review; `C2.1`
   through `C4.4` remain specified with zero delivery gates satisfied.

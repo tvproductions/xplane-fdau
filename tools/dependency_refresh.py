@@ -109,10 +109,13 @@ def _json_result(runner: Runner, args: tuple[str, ...], root: Path, blockers: li
 
 
 def _preview_resolution(value: dict[str, Any], command: tuple[str, ...], blockers: list[dict[str, object]]) -> dict[str, dict[str, Any]]:
+    # uv 0.13.6 renamed module_owners to modules and nested each owners list.
+    # Ownership is not consumed here; keep both known roots explicit.
+    ownership_key = "modules" if "modules" in value else "module_owners"
     expected = (
         {"schema", "workspace_root", "workspace", "roots", "inverted", "members", "resolution"}
         if command == TREE_COMMAND
-        else {"schema", "workspace_root", "environment", "workspace", "requires_python", "conflicts", "module_owners", "members", "resolution"}
+        else {"schema", "workspace_root", "environment", "workspace", "requires_python", "conflicts", ownership_key, "members", "resolution"}
     )
     if (
         set(value) != expected
@@ -131,7 +134,7 @@ def _preview_resolution(value: dict[str, Any], command: tuple[str, ...], blocker
         not isinstance(value.get("environment"), dict)
         or not isinstance(value.get("requires_python"), str)
         or not isinstance(value.get("conflicts"), dict)
-        or not isinstance(value.get("module_owners"), dict)
+        or not isinstance(value.get(ownership_key), dict)
     ):
         blockers.append({"kind": "source", "command": list(command), "reason": "unknown uv preview schema"})
         return {}

@@ -3,13 +3,10 @@ source_type = "git"
 source = "https://github.com/tvproductions/gz-skills.git"
 ref = "v0.5.0"
 
-[plugins."gz-skills@gz-skills"]
-enabled = false
-
 [marketplaces."skills-first-starter"]
 source_type = "git"
 source = "https://github.com/tvproductions/gz-skills-first-starter.git"
-ref = "c0a6945b2170e1cf5bee3e80738916f5b62d13a5"
+ref = "e0b752fcc13b87ec7868fe0b0f85badefdb6bf52"
 
 [plugins."superpowers@skills-first-starter"]
 enabled = true
@@ -19,3 +16,24 @@ enabled = false
 
 [plugins."gz-skills@skills-first-starter"]
 enabled = true
+
+[plugins."gz-skills@gz-skills"]
+enabled = false
+
+[plugins."superpowers@xplane-health-skills-first"]
+enabled = false
+
+[plugins."gz-skills@xplane-health-skills-first"]
+enabled = false
+
+[plugins."superpowers@ortho4xp-skills-first"]
+enabled = false
+
+[plugins."gz-skills@ortho4xp-skills-first"]
+enabled = false
+
+[plugins."superpowers@xplane-webapi-skills-first"]
+enabled = false
+
+[plugins."gz-skills@xplane-webapi-skills-first"]
+enabled = false

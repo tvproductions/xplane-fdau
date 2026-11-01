@@ -6,6 +6,14 @@ version, full revision and independent component pins live in
 marketplace. `AGENTS.skills-first.md` is its generated routing and policy fragment.
 Project domain authorities and the approved scope amendment remain binding.
 
+The November 1 coordinated refresh selects starter 0.8.0 with Superpowers 7.0.1
+and gz-skills 0.8.3. Its
+[review](../reviews/2026-11-01-coordinated-refresh.md) records the exact source
+revisions and observed native state; the October 25 adoption record remains
+historical acceptance evidence. Reconcile project-only activation through the
+released helper, preserving user defaults. Do not use Codex `plugin add` as a
+project update command because it enables plugins user-wide.
+
 Heavy is an explicit selection in `.gz-skills/settings.json`. Backplane remains
 disabled because readiness is pending. No requirements or delivery state moves
 out of BACKLOG/ROADMAP, and this adoption introduces no gzkit lifecycle.

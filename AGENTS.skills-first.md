@@ -1,9 +1,52 @@
 # Skills-first development stack
 
+These instructions are mandatory adoption requirements. Agents MUST execute the
+prescribed workflow and checks, preserve project authorities, and record evidence
+before claiming completion. Agents MUST NOT replace requirements with convenient
+defaults, skip failed checks, invent acceptance evidence, or treat configuration
+as proof of installation. An unmet requirement remains explicitly incomplete.
+Record an evidenced, owned exception where policy permits one; do not grant
+yourself an exemption. Use the starter's commands and native host procedure.
+
 This adopted template currently supports Python projects only, in both lite and
 full/heavy lanes. Other languages, likely including Go, are future work requiring
 their own reviewed and released baseline; upstream skill portability is not
 evidence of template support for another language.
+
+Use direct `gh` commands for GitHub operations and direct `git` commands for
+repository operations. Do not wrap routine CLI calls in Python. Use Python when
+substantive processing is actually needed, through the prescribed uv-managed
+environment. Run that Python with `uv run --locked python`, honoring the project's
+exact interpreter pin and required uv version.
+
+Install and enable this stack at repository/project scope. Do not install or
+register its plugins or marketplace globally or at user scope. Use project-owned
+native configuration and explicit project-scope installation where supported;
+do not run unscoped install commands that change user defaults. Native clients
+may store downloaded files in a shared user cache; cache location does not grant
+user-wide activation. If the host cannot preserve repository scope, report the
+limitation instead of falling back to a global/user installation.
+Existing global/user installations MAY remain. The project MUST own the selected
+versions, activation and command behavior through repository configuration.
+Project overrides MUST suppress duplicate inherited sources locally; do not
+uninstall global copies or rewrite user settings to make the project work.
+For brownfield repair, preview and apply the reviewed starter's
+`skills-first-starter localize --project <root> --host <codex|claude|opencode>
+--starter-ref <FULL_STARTER_SHA>` with `uv run --locked`; add `--apply` after
+review. The command repairs project activation without changing adoption records
+or global installations. Use `configure --host` for full adoption, not scope repair.
+Keep plugin installation, version updates and enablement separate. Record and
+preserve project enablement and user defaults during updates. In Codex CLI
+0.166.0, `plugin add` unconditionally enables the plugin user-wide, even from
+a project with a local marketplace. Do not use it as a project install, update
+or reinstall command. Verify actual installed revisions and unchanged activation
+scope after native resolution; report unsupported updates as pending.
+On OpenCode 2.2.0, agents MUST use the reviewed starter's
+`skills-first-starter run-opencode --project <root> -- <native arguments>` through
+its locked uv environment. The scoped launcher reconciles configuration and uses
+a private server; plain native startup can let an inherited duplicate ID beat
+the project pin. Global copies remain installed. Do not bypass the launcher and
+claim local precedence without fresh native evidence on the actual host version.
 
 Maximal Astral alignment is required for Python projects under this baseline.
 Read `docs/engineering/astral-alignment.md` in the reviewed starter checkout.
@@ -47,7 +90,17 @@ future adoption but is disabled by default because readiness is incomplete.
 Use existing project backlog and handoff practices in the meantime.
 
 Release planning applies to this adopting project's own versions as well as
-the starter. Use MAJOR.MINOR.PATCH for the project's public contract: after 1.0,
+the starter. A bare scaffold may retain `0.0.0` only as an unpublished placeholder.
+As soon as any original implementation, tests, documentation or configuration
+is added, set the initial project version to **0.1.0**. Do not release
+project-owned work as `0.0.0`. Align package metadata, runtime version output
+and release records before accepting adoption. Correct an unpublished `0.0.0`
+project that already contains original work to `0.1.0`.
+The first substantive release is the first versioned commitment to the project's
+public contract. Declare that contract and release it as `0.1.0`; it may evolve
+under the required 0.x rules without claiming 1.0 stability.
+Preserve existing published versions and tags; never reset or rewrite release
+history. Use MAJOR.MINOR.PATCH for the project's public contract: after 1.0,
 incompatible changes require major, compatible additions or public deprecations
 minor, and compatible fixes patch. During 0.x, additions and changes requiring
 reconciliation increment minor; compatible fixes increment patch. Define the
@@ -67,6 +120,12 @@ separate. Confirm actual discovery before invoking upstream entry skills;
 configuration does not prove loading. Preserve independently versioned upstream
 sources and avoid duplicate plugin/copied-skill discovery.
 
+Backplane owns requirements tracking, labeling, backlog/release monitoring,
+handoffs and lite/heavy mode definitions. Read its mode authority at
+https://github.com/tvproductions/superpowers-backplane/blob/main/docs/superpowers-backplane/modes.md;
+do not define a replacement lifecycle in this template or its helper. The
+starter remains the shared engineering and release policy alignment source;
+see `docs/versioning.md#ecosystem-policy-authority-and-consistency` there.
 Explicitly select lite or heavy through the pinned gz-skills setup workflow;
 missing/null selection means adoption is incomplete. Both lanes require the
 same applicable Python baseline, SemVer/major-release PRDs and adoption/release
@@ -83,9 +142,16 @@ For projects adopting the starter's Python baseline, use the latest stable
 release allowed by `docs/baseline-policy.md` at the recorded starter revision;
 compare newer published policy during maintenance. It defines allowed ranges
 and exception reasons separately from this checkout's tested execution pins.
-Select the latest stable
-release within each explicitly selected Python/tool release family. Python's
-family is 3.14.x normally and 3.12.x for XPPython3-bound code: verify the latest
+Require the latest stable baseline tools across tool families. Review new stable
+families and verify compatibility; an old range or exact pin is not a freshness
+exemption. Required stale/unknown freshness blocks adoption and release acceptance.
+The adopter owns that decision even when gz-skills performs the review. Retained
+older tools need an explicit evidenced exception, owner and dated revisit and
+remain conditional/noncurrent. Check official releases at setup/adoption, before
+each release and scoped maintenance; pin the verified selections afterward. Python's
+family follows the user-directed N-1 rule: one stable minor behind, currently
+3.14.x for ordinary projects. XPPython3-bound code retains its supported 3.12.x
+host exception. This runtime policy does not exempt old tool families. Verify the latest
 stable host-compatible patch from official sources at setup/adoption
 and scoped maintenance, then pin that exact patch for local execution and CI.
 An already-installed version or a `3.14` selector does not prove freshness.
@@ -103,8 +169,13 @@ release acceptance, plus on demand, outside routine hooks and routine CI.
 Retain evidence and reviewed findings; required FAIL/UNKNOWN/stale results block
 strict acceptance. Accepted exceptions are conditional, never 100% conformance.
 Report missing
-tool installation or enforcement as a gap. This rule does not authorize automatic
-upgrades or schedules.
+tool installation or enforcement as a gap. Adopters choose starter updates,
+independent upstream updates or both, and own update timing and verification.
+The starter permits scheduled scans and reviewed update PRs covering standard
+and X-Plane/XPPython3 baselines separately; see
+`docs/baseline-policy.md#scheduled-dependency-scanning` in the reviewed starter
+checkout. No adopter scanning service or schedule is imposed. Automatic merge,
+release publication and native plugin installation require separate authority.
 
 The reviewed Python policy's on-demand tools form the adopter minimum standard,
 independent of the starter helper's needs. Include project-pinned `cohesion` for
@@ -112,7 +183,13 @@ class cohesion analysis; verify its standalone CLI on the selected runtime and
 representative invented classes. Record scopes, scores and reviewed findings;
 record not-applicable scopes with reasons and report missing installation or
 compatibility evidence as gaps. Preserve project-specific thresholds and keep
-cohesion outside hooks and CI gates. See the reviewed starter's
+cohesion outside routine hooks and routine CI. Complexipy is under qualification
+review: known keyword-conditional under-counting means a clean score alone cannot
+pass cognitive acceptance. Read the current qualification evidence before relying
+on that analyzer. The selected replacement direction is gzkit's CPython AST
+scoring approach, preferably through one shared package; qualification and
+distribution must be verified before claiming it is installed or authoritative.
+See the reviewed starter's
 `docs/engineering/python.md` for the full selected tool set and interpretation.
 
 Keep code current with its selected Python family, not just its interpreter pin.
@@ -132,7 +209,8 @@ verified mapping; those workflows do not establish a complete version audit.
 Report missing workflow coverage rather than inventing a starter skill or claiming
 that a current runtime proves current code.
 
-At adoption, scoped upgrades and quarterly on-demand maintenance, check this starter template, Superpowers,
+At setup/adoption, before each release, scoped upgrades and quarterly on-demand
+maintenance, check this starter template, Superpowers,
 Superpowers Backplane and gz-skills independently for upstream updates. Compare
 the recorded starter/component SHAs with official published releases; where no
 release exists, distinguish a reviewed published commit from a stable release.
@@ -149,9 +227,15 @@ Generic maintenance belongs in gz-skills: use its discovered
 `gzs-update-dependencies` for authorized dependency/tool updates and
 `gzs-dependency-risk-audit` for risk assessments. The starter supplies baseline
 policy and stack-specific binding guidance. Do not create a duplicate local
-maintenance skill or generic freshness reporter. The pinned gz-skills v0.8.0
+maintenance skill or generic freshness reporter. The pinned gz-skills v0.8.3
 supplies freshness-only review and template/plugin inventory. Review mode leaves
 pins and environments unchanged; preserve project policy and profile choices.
+End a freshness review with a concrete recommended upgrade batch and an explicit
+offer to apply it. Strongly recommend supported updates that satisfy project
+policy; state targets, benefits, compatibility risks and required checks. Do not
+stop at an inventory or adopt/defer table. If updates are already authorized,
+perform and verify them without asking again. State evidenced deferrals; if
+everything is current, say so instead of inventing an upgrade.
 
 Track the adopted starter's own version and exact SHA in its bundle lock,
 independently of app and upstream plugin versions. Compare reviewed template

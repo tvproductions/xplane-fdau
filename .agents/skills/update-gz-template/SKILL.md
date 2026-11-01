@@ -17,6 +17,11 @@ dirty state; preserve unrelated work. Read `.skills-first/bundle.lock.json` for
 the starter repository, version/full SHA and independent component selections.
 Read `.gz-skills/settings.json` for the explicit lite/heavy choice. Absent or
 legacy provenance stays unknown; do not infer it from today's version label.
+Read the lock's selected native `host`; legacy records without it use Codex.
+Use that host's repository-owned settings. For activation-only repair, follow
+the reviewed starter's `localize --host` procedure; do not rewrite adoption
+provenance or uninstall existing global copies. Installation, version updates
+and enablement MUST remain separate. Project commands MUST preserve local scope.
 
 A request to check or explain updates authorizes review only. Do not sync,
 resolve, install or modify the adopter in review mode. A request to upgrade
@@ -29,8 +34,10 @@ pretending this is an upgrade. A gzkit project retains its separate ecosystem.
 
 ## Find the released target and its instructions
 
-Query the canonical repository's live stable releases through a connected
-GitHub tool or GitHub CLI. For example:
+Query the canonical repository's live stable releases with direct `gh` commands.
+Use direct `git` commands for repository operations. Do not wrap routine CLI
+calls in Python; substantive Python processing must use the prescribed locked,
+uv-managed environment. For example:
 
 ```bash
 gh api repos/tvproductions/gz-skills-first-starter/releases/latest --jq '{tag_name,html_url,published_at}'
@@ -53,7 +60,11 @@ When present at the target, `docs/updating.md` owns the canonical update and
 older-adopter bootstrap method. Reconcile this project skill along with the
 other managed content; adding it alone does not upgrade the adopted baseline.
 
-Compare policy changes as well as pins. Explain what applies to this product,
+Compare policy changes as well as pins. Enforce the target's latest-tooling
+requirement: an old allowed tool family is not proof of currency. Required stale
+or unknown freshness blocks strict acceptance; record any explicit owned
+compatibility exception as conditional/noncurrent. The adopter retains this
+responsibility when composing an upstream maintenance skill. Explain what applies to this product,
 what needs reconciliation and what is deferred. If `gzs-update-dependencies`
 is actually discovered, compose its template-inventory/review or scoped-update
 mode under project policy. Its absence does not prevent reading the release and

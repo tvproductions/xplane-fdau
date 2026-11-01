@@ -80,7 +80,9 @@ verification passes. This does not authorize remote sync, a tag, or release.
 - Read `AGENTS.skills-first.md`, `docs/agents/skills-first.md`, and
   `docs/engineering/python.md`. Their applicable starter engineering obligations
   are mandatory. The approved baseline is recorded in `.skills-first/bundle.lock.json`;
-  the current adoption evidence is `docs/reviews/2026-10-25-strict-heavy-starter-adoption.md`.
+  the current refresh evidence is `docs/reviews/2026-11-01-coordinated-refresh.md`.
+  The outstanding STRICT adoption evidence remains in
+  `docs/reviews/2026-10-25-strict-heavy-starter-adoption.md`.
 - Use the shared `skills-first-starter` marketplace at its reviewed full starter
   revision, with `superpowers@skills-first-starter` and
   `gz-skills@skills-first-starter`. The latter is the sole portable workflow authority.

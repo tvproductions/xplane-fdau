@@ -320,6 +320,23 @@ class DependencyStatusTests(unittest.TestCase):
         report = collect_status(self.fixture.root, self.fixture.runner, self.fixture.opener)
         self.assertIn("unknown uv preview schema", {item.get("reason") for item in report["pre_apply_blockers"]})
 
+    def test_uv_0_13_6_nested_module_owners_preserve_dependency_inventory(self) -> None:
+        del self.fixture.metadata["module_owners"]
+        self.fixture.metadata["modules"] = {"foo": {"owners": [{"package_id": "foo==1.0@registry+https://pypi.org/simple"}]}}
+
+        report = collect_status(self.fixture.root, self.fixture.runner, self.fixture.opener)
+
+        self.assertEqual([], report["pre_apply_blockers"])
+        self.assertEqual({"foo", "universal-only"}, {item["name"] for item in report["dependencies"]})
+
+    def test_malformed_uv_0_13_6_modules_block_status(self) -> None:
+        del self.fixture.metadata["module_owners"]
+        self.fixture.metadata["modules"] = []
+
+        report = collect_status(self.fixture.root, self.fixture.runner, self.fixture.opener)
+
+        self.assertIn("unknown uv preview schema", {item.get("reason") for item in report["pre_apply_blockers"]})
+
 
 class DependencyApplyTests(unittest.TestCase):
     def test_reviewed_update_preserves_exact_uv_backend_and_workflow_inputs(self) -> None:

@@ -16,7 +16,7 @@ _REQUIRED = tuple(name for name in _ORDER if name not in ("title", "scope", "con
 
 
 def _definitions(value: object, phase: int, *, path: str) -> None:
-    from ._definition_io import _definition_entry_semantics
+    from ._definition_io import _definition_entry_semantics, _definition_entry_shape
 
     if _null(value, phase, path=path):
         return
@@ -40,6 +40,8 @@ def _definitions(value: object, phase: int, *, path: str) -> None:
                 raise ContractValidationError("definition pairs must be unique and ordered", path=f"{child_path}/definition_revision")
             previous = (identifier, revision)
             _definition_entry_semantics(fields, path=child_path)
+        elif phase == 0:
+            _definition_entry_shape(dict(fields), path=child_path)
         else:
             _scalar_check(_required(fields, "content_hash", path=child_path), "string", phase, path=f"{child_path}/content_hash")
             _validate_definition_fields({name: child for name, child in fields.items() if name != "content_hash"}, phase, path=child_path)

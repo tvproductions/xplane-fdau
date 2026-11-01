@@ -97,7 +97,13 @@ class PublicAPITests(unittest.TestCase):
             "MeasurementCatalog",
         ]
         self.assertEqual(names, models.__all__)
-        self.assertEqual(names, measurements.__all__)
+        io_names = ["load_measurement_catalog_v1", "loads_measurement_catalog_v1", "dump_measurement_catalog_v1", "dumps_measurement_catalog_v1"]
+        self.assertEqual([*names, *io_names], measurements.__all__)
+        from xplane_fdau.measurements import io
+
+        self.assertEqual(io_names, io.__all__)
+        for name in io_names:
+            self.assertIs(getattr(io, name), getattr(measurements, name))
         for name in names:
             self.assertIs(getattr(models, name), getattr(measurements, name))
             self.assertEqual("xplane_fdau.measurements.models", getattr(models, name).__module__)

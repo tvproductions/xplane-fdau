@@ -1,5 +1,6 @@
 """Measurement definitions and their owned evidence vocabularies."""
 
+from .io import dump_measurement_catalog_v1, dumps_measurement_catalog_v1, load_measurement_catalog_v1, loads_measurement_catalog_v1
 from .models import (
     ApplicabilitySelector,
     AxisSpec,
@@ -34,4 +35,8 @@ __all__ = [  # noqa: RUF022 -- specification ownership order
     "ApplicabilitySelector",
     "MeasurementDefinition",
     "MeasurementCatalog",
+    "load_measurement_catalog_v1",
+    "loads_measurement_catalog_v1",
+    "dump_measurement_catalog_v1",
+    "dumps_measurement_catalog_v1",
 ]

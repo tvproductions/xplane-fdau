@@ -393,6 +393,36 @@ class MeasurementDefinitionTests(unittest.TestCase):
         with self.assertRaises(ContractShapeError):
             RepresentationSpec(kind="fixed_array", element_representation="vector", length=2)
 
+    def test_binary64_triples_for_real_vector_and_real_arrays(self) -> None:
+        from xplane_fdau.contracts import RepresentationSpec
+        from xplane_fdau.measurements._definition_validation import _validate_definition_fields
+
+        representations: tuple[dict[str, Any], ...] = (
+            dict(kind="real"),
+            dict(kind="vector", length=2),
+            dict(kind="fixed_array", element_representation="real", length=2),
+            dict(kind="variable_array", element_representation="real", minimum_length=0, maximum_length=2),
+        )
+        triple: dict[str, Any] = dict(storage_precision_bits=64, resolution=1.0, minimum=0.0, maximum=2.0)
+        for representation in representations:
+            with self.subTest(kind=representation["kind"], case="binary64 acceptance"):
+                numeric = models.NumericSpec(**triple)
+                definition = self.make(representation=RepresentationSpec(**representation), numeric=numeric)
+                self.assertIs(numeric, definition.numeric)
+                for field in ("resolution", "minimum", "maximum"):
+                    self.assertIs(float, type(getattr(numeric, field)))
+                for phase in range(3):
+                    _validate_definition_fields(self.raw() | dict(representation=representation, numeric=triple), phase)
+            # Plain mappings isolate each bound mismatch from NumericSpec's own
+            # constructor, proving the enclosing definition rejects the integer.
+            for field in ("resolution", "minimum", "maximum"):
+                with self.subTest(kind=representation["kind"], integer_field=field):
+                    fields = self.raw() | dict(representation=representation, numeric=triple | {field: 1})
+                    with self.assertRaises(ContractShapeError) as caught:
+                        for phase in range(3):
+                            _validate_definition_fields(fields, phase)
+                    self.assertEqual("/numeric/" + field, caught.exception.path)
+
     def test_metadata_and_collections(self) -> None:
         from xplane_fdau.contracts import ProvenanceSource
 

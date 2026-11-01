@@ -44,11 +44,15 @@ slice receives one focused plan and one independently reviewable outcome.
   [integration record](.superpowers/sdd/2026-11-01-c2-1-definition/integration.md)
   records exact fast-forward verification and cleanup. `T3.1` remains independent.
 - Canonical contract design: approved with accepted independent review; `C2.1`
-  has 4/4 delivery gates satisfied with committed evidence. `C2.2` has an
-  approved [plan](docs/superpowers/plans/2026-11-01-c2-2-measurement-catalog.md)
-  and is `planned` with 0/4 gates; execution is deferred until after handoff
-  and execution-method selection. `C2.3` through `C4.4` remain specified with
-  zero delivery gates satisfied.
+  has 4/4 delivery gates satisfied with committed evidence. `C2.2` has completed
+  its approved [plan](docs/superpowers/plans/2026-11-01-c2-2-measurement-catalog.md)
+  and is `reviewed` with 4/4 passing gates; native execution, independent review,
+  the short-write correction, offline hygiene and external wheel smoke passed.
+  Its [completion](.superpowers/sdd/2026-11-01-c2-2-catalog/completion.md) and
+  [review](.superpowers/sdd/2026-11-01-c2-2-catalog/review.md) await this evidence
+  commit before the guarded verified transition. Main integration remains a
+  separate user choice. `C2.3` through `C4.4` remain specified with zero delivery
+  gates satisfied.
 - Heavy is explicitly selected; Backplane remains disabled. STRICT starter
   acceptance is incomplete, including the external cognitive-library extraction
   prerequisite. C1.4 completion does not close those starter acceptance gaps.
@@ -81,7 +85,7 @@ The child slices below refine this sequence without weakening or reordering it.
 | `C1.4` | Clock domains, UTC instants, anchors, and simulator timing | `verified` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-10-26-c1-4-clock-domains-utc-anchors-simulator-timing.md) | 4/4 | [review](.superpowers/sdd/2026-10-26-c1-4-timing/review.md) | — | — |
 | `C1.5` | Validity states and acquisition-quality vocabulary | `verified` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-01-c1-5-validity-acquisition-quality.md) | 4/4 | [review](.superpowers/sdd/2026-11-01-c1-5-quality/review.md) | — | — |
 | `C2.1` | Measurement-definition model and semantic invariants | `verified` | `C1.3`, `C1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-01-c2-1-measurement-definition.md) | 4/4 | [review](.superpowers/sdd/2026-11-01-c2-1-definition/review.md) | — | — |
-| `C2.2` | Measurement catalog, schema, ordering, and references | `in_progress` | `C2.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-01-c2-2-measurement-catalog.md) | 0/4 | — | — | — |
+| `C2.2` | Measurement catalog, schema, ordering, and references | `reviewed` | `C2.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-01-c2-2-measurement-catalog.md) | 4/4 | [review](.superpowers/sdd/2026-11-01-c2-2-catalog/review.md) | — | — |
 | `C2.3` | Source-binding definition and transform references | `specified` | `C2.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C2.4` | Binding catalog and pure cross-catalog validation | `specified` | `C2.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/5 | — | — | — |
 | `C3.1` | Raw-observation record and schema | `specified` | `C1.3`, `C1.4`, `C1.5`, `C2.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
@@ -209,11 +213,11 @@ The child slices below refine this sequence without weakening or reordering it.
 
 ### C2.2 — Measurement catalog, schema, ordering, and references
 
-- [ ] Catalog ID/revision/hash, authority, provenance, scope, and definition
-      ordering are exact.
-- [ ] Duplicate or noncanonical definition order fails closed.
-- [ ] Version-1 measurement-catalog schema matches runtime shape.
-- [ ] No provider resource identity or stock X-Plane catalog content ships.
+- [x] Catalog ID/revision/hash, authority, provenance, scope, and definition
+      ordering are exact. — Evidence: [verification](.superpowers/sdd/2026-11-01-c2-2-catalog/gate-1.md)
+- [x] Duplicate or noncanonical definition order fails closed. — Evidence: [verification](.superpowers/sdd/2026-11-01-c2-2-catalog/gate-2.md)
+- [x] Version-1 measurement-catalog schema matches runtime shape. — Evidence: [verification](.superpowers/sdd/2026-11-01-c2-2-catalog/gate-3.md)
+- [x] No provider resource identity or stock X-Plane catalog content ships. — Evidence: [verification](.superpowers/sdd/2026-11-01-c2-2-catalog/gate-4.md)
 
 ### C2.3 — Source-binding definition and transform references
 

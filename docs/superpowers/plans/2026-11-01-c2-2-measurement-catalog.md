@@ -1,12 +1,12 @@
 # C2.2 Measurement Catalog Implementation Plan
 
 - **Governance:** active
-- **Status:** in_progress
+- **Status:** completed
 - **Date:** 2026-11-01
 - **Roadmap child:** `C2.2`
 - **Source specification:** `docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md`
 - **Approval:** 2026-11-01 — Jeff / tvproductions; corrected plan approved in chat; execution deferred until after handoff and method selection
-- **Completion evidence:** —
+- **Completion evidence:** `.superpowers/sdd/2026-11-01-c2-2-catalog/completion.md`
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -72,7 +72,7 @@ No new bindings/acquisition modules, other family schemas, conformance manifest/
 - [x] Obtain explicit plan approval. November 1 — Jeff / tvproductions approved the corrected plan and requested a fresh handoff and ordinary Git sync, with execution deferred until afterward. Approval metadata is recorded; the guarded specified → planned transition and approved plan registration passed dry-run/digest/apply and the post-change audit. No child was selected or gate closed.
 - [x] Obtain native or subagent-driven execution choice for C2.2. Native execution with independent review selected in chat on November 1. C2.1's execution choice does not select a method for this child. Recheck authorities, native plugin identities/source revisions, HEAD, worktrees and audit/next; stop on findings or authority drift.
 - [x] Use `superpowers:using-git-worktrees` to create the temporary C2.2 implementation worktree, then select only C2.2 and transition planned → in_progress through guarded operations. Preserve unrelated worktrees and changes.
-- [ ] Check canonical raw input bytes against the indexed baseline before final evidence/artifacts. The C2.1 native checkout exposed CRLF materialization despite clean Git status; use operation-local LF checkout handling or guarded newline-only restoration, not global Git-setting changes. Record tree and raw input identities.
+- [x] Check canonical raw input bytes against the indexed baseline before final evidence/artifacts. The C2.1 native checkout exposed CRLF materialization despite clean Git status; use operation-local LF checkout handling or guarded newline-only restoration, not global Git-setting changes. Record tree and raw input identities.
 
 ## Task 1: Immutable catalog meaning, ordering and identity
 
@@ -233,8 +233,8 @@ uv run --locked --all-groups mkdocs build --strict
 
 ## Stable closeout and four-gate evidence
 
-- [ ] Perform the selected task/whole-branch independent review workflow; close load-bearing findings before acceptance. Preserve negative controls, fixes and scoped re-review evidence. Bind the accepted source commit and raw input hashes to the observed verification result.
-- [ ] Run the complete offline project hygiene gate once on the stable reviewed source:
+- [x] Perform the selected task/whole-branch independent review workflow; close load-bearing findings before acceptance. Preserve negative controls, fixes and scoped re-review evidence. Bind the accepted source commit and raw input hashes to the observed verification result.
+- [x] Run the complete offline project hygiene gate once on the stable reviewed source:
 
 ```powershell
 uv run --offline --frozen --all-groups python .codex/skills/hygiene/scripts/hygiene.py
@@ -242,8 +242,8 @@ uv run --offline --frozen --all-groups python .codex/skills/hygiene/scripts/hygi
 
 This supplies strict backlog/docs, all-files Ruff/format/ty/unittest and fresh strict wheel/sdist checks. Do not separately run the standalone full aggregate on unchanged inputs. Record any existing tooling/portability/STRICT limitations honestly, without treating a feature pass as whole-stack acceptance.
 
-- [ ] From a fresh external Python 3.12 environment, install the exact validated wheel alone with no runtime dependencies and run the existing `tools/installed_smoke.py 0.1.0` outside the checkout. Record artifact SHA-256, selected interpreter patch, installed origins, schema bytes/identity and empty requirements. Preserve failed artifacts; clean successful external environments only after recording proof. No broader minor/platform or release-readiness claim.
-- [ ] Write real receipts under `.superpowers/sdd/2026-11-01-c2-2-catalog/`: gate 1 catalog metadata/hash/ordered entries/exact references (Tasks 1–2), gate 2 duplicate/noncanonical order rejection (Tasks 1–2), gate 3 normative schema/runtime shape and mirrored installed resource (Tasks 3–4), gate 4 provider/resource-field rejection and no stock catalog content in source/artifacts (Tasks 2–4). Never close gates merely because this plan describes them.
+- [x] From a fresh external Python 3.12 environment, install the exact validated wheel alone with no runtime dependencies and run the existing `tools/installed_smoke.py 0.1.0` outside the checkout. Record artifact SHA-256, selected interpreter patch, installed origins, schema bytes/identity and empty requirements. Preserve failed artifacts; clean successful external environments only after recording proof. No broader minor/platform or release-readiness claim.
+- [x] Write real receipts under `.superpowers/sdd/2026-11-01-c2-2-catalog/`: gate 1 catalog metadata/hash/ordered entries/exact references (Tasks 1–2), gate 2 duplicate/noncanonical order rejection (Tasks 1–2), gate 3 normative schema/runtime shape and mirrored installed resource (Tasks 3–4), gate 4 provider/resource-field rejection and no stock catalog content in source/artifacts (Tasks 2–4). Never close gates merely because this plan describes them.
 - [ ] Complete plan tracking and accepted review/completion receipts. Advance only C2.2 implemented/reviewed, record gates through dry-run/digest/apply, commit evidence, then transition verified only when HEAD-backed review/gates justify it. Do not select or implement C2.3 automatically.
 - [ ] Use `superpowers:finishing-a-development-branch` and obtain the user's integration choice. If local integration is selected, use AGENTS.md's exact fast-forward main procedure, including required main checks, fresh strict artifacts and external wheel smoke; preserve raw evidence on main before worktree/branch cleanup. Git sync, tag and publication remain separate.
 
@@ -296,3 +296,16 @@ proof close the stable candidate. This is a correction to the existing binary
 I/O promise, not an expansion into another child. No other Critical, Important
 or Minor finding survived independent review. Shared convenience API closure
 and inherited checkout policy remain outside this child's scope as ledgered.
+
+
+### Verified source closeout — November 1
+
+Source `510a11805bfaa3bb8f59a09489b188a2b5d5173a` passed complete offline hygiene,
+all-files mandatory hooks, strict documentation and exact artifacts. The separate
+external wheel-only Python 3.12.16 smoke and short-write/no-progress controls passed
+with no runtime requirements. Both independently built artifact pairs have equal
+SHA-256 identities; see `.superpowers/sdd/2026-11-01-c2-2-catalog/verification.json`.
+The independent review's one Important finding is closed by the observed test-first
+correction and full suite. Gate/lifecycle registration and final integration choice
+are tracked below the completed source work; no new product child is selected.
+Successful external temporary environments were removed after proof was recorded.

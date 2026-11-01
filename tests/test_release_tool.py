@@ -95,6 +95,7 @@ class ReleaseToolTests(unittest.TestCase):
                 "xplane_fdau/",
                 "xplane_fdau/contracts/",
                 "xplane_fdau/measurements/",
+                "xplane_fdau/schemas/",
                 "xplane_fdau/formats/",
                 "xplane_fdau/formats/xplane_fdr/",
                 "xplane_fdau/formats/xplane_fdr/schemas/",
@@ -139,6 +140,7 @@ class ReleaseToolTests(unittest.TestCase):
                 "xplane_fdau-0.1.0/src/xplane_fdau",
                 "xplane_fdau-0.1.0/src/xplane_fdau/contracts",
                 "xplane_fdau-0.1.0/src/xplane_fdau/measurements",
+                "xplane_fdau-0.1.0/src/xplane_fdau/schemas",
                 "xplane_fdau-0.1.0/src/xplane_fdau/formats",
                 "xplane_fdau-0.1.0/src/xplane_fdau/formats/xplane_fdr",
                 "xplane_fdau-0.1.0/src/xplane_fdau/formats/xplane_fdr/schemas",
@@ -423,3 +425,20 @@ class ReleaseToolTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+    def test_measurement_schema_missing_changed_or_provider_content_fails_artifacts(self) -> None:
+        schema = "xplane_fdau/schemas/measurement-catalog-v1.schema.json"
+        self.assertIn(schema, self._package_files())
+        for wheel_remove, wheel_updates, tar_remove, tar_updates in (
+            ({schema}, {}, set(), {}),
+            (set(), {schema: b"{}\n"}, set(), {}),
+            (set(), {}, {"xplane_fdau-0.1.0/src/" + schema}, {}),
+            (set(), {}, set(), {"xplane_fdau-0.1.0/src/" + schema: b"{}\n"}),
+            (set(), {"xplane_fdau/catalogs/stock-xplane.json": b"{}\n"}, set(), {}),
+            (set(), {"xplane_fdau/providers/resource.json": b"{}\n"}, set(), {}),
+            (set(), {}, set(), {"xplane_fdau-0.1.0/src/xplane_fdau/providers/resource.json": b"{}\n"}),
+        ):
+            with self.subTest(remove=wheel_remove or tar_remove, changed=list(wheel_updates or tar_updates)), tempfile.TemporaryDirectory() as raw:
+                self._make_dist(Path(raw), wheel_remove=wheel_remove, wheel_updates=wheel_updates, tar_remove=tar_remove, tar_updates=tar_updates)
+                with self.assertRaises(release.ReleaseError):
+                    release.check_dist(Path(raw))

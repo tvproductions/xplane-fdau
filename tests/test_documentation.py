@@ -249,3 +249,12 @@ class DocumentationTests(unittest.TestCase):
     def _read_required_text(self, path: Path) -> str:
         self.assertTrue(path.is_file(), path)
         return path.read_text(encoding="utf-8")
+
+    def test_measurement_catalog_schema_is_published_at_its_declared_id(self) -> None:
+        import json
+
+        packaged = ROOT / "src/xplane_fdau/schemas/measurement-catalog-v1.schema.json"
+        published = ROOT / "docs/schemas/measurement-catalog-v1.schema.json"
+        self.assertEqual(packaged.read_bytes(), published.read_bytes())
+        schema = json.loads(packaged.read_bytes())
+        self.assertEqual("https://tvproductions.github.io/xplane-fdau/schemas/measurement-catalog-v1.schema.json", schema["$id"])

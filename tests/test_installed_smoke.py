@@ -321,6 +321,63 @@ class InstalledSmokeTests(unittest.TestCase):
             ):
                 installed_smoke.smoke("0.1.0", checkout=Path("checkout"))
 
+    def test_measurement_catalog_smoke_passes(self) -> None:
+        self.assertTrue(hasattr(installed_smoke, "smoke_measurement_catalog"), "catalog installed smoke is missing")
+        installed_smoke.smoke_measurement_catalog()
+
+    def test_catalog_smoke_detects_broken_serialization(self) -> None:
+        from xplane_fdau.contracts import FDAUContractError
+
+        self.assertTrue(hasattr(installed_smoke, "smoke_measurement_catalog"), "catalog installed smoke is missing")
+        with (
+            mock.patch("xplane_fdau.measurements.dumps_measurement_catalog_v1", return_value=b"{}\n"),
+            self.assertRaises((FDAUContractError, installed_smoke.SmokeError)),
+        ):
+            installed_smoke.smoke_measurement_catalog()
+
+    def test_catalog_smoke_detects_broken_rejection_paths(self) -> None:
+        import json
+
+        from xplane_fdau import measurements
+
+        self.assertTrue(hasattr(installed_smoke, "smoke_measurement_catalog"), "catalog installed smoke is missing")
+        original = measurements.loads_measurement_catalog_v1
+        for selected in ("order", "hash", "version"):
+
+            def accept_invalid(data, *, source="<memory>", selected=selected):
+                raw = json.loads(data)
+                entries = raw.get("definitions", [])
+                pairs = [(d["definition_id"], d["definition_revision"]) for d in entries]
+                matches = (
+                    (selected == "order" and pairs != sorted(pairs))
+                    or (selected == "hash" and raw.get("content_hash") == "0" * 64)
+                    or (selected == "version" and raw.get("schema_version") == 2)
+                )
+                return object() if matches else original(data, source=source)
+
+            with (
+                self.subTest(selected=selected),
+                mock.patch.object(measurements, "loads_measurement_catalog_v1", side_effect=accept_invalid),
+                self.assertRaises(installed_smoke.SmokeError),
+            ):
+                installed_smoke.smoke_measurement_catalog()
+
+    def test_catalog_smoke_detects_corrupt_installed_resource(self) -> None:
+        self.assertTrue(hasattr(installed_smoke, "smoke_measurement_catalog"), "catalog installed smoke is missing")
+        resource = mock.Mock()
+        resource.joinpath.return_value.read_bytes.return_value = b"{}\n"
+        with mock.patch.object(installed_smoke.importlib.resources, "files", return_value=resource), self.assertRaises(installed_smoke.SmokeError):
+            installed_smoke.smoke_measurement_catalog()
+
+    def test_catalog_smoke_is_in_the_installed_flow(self) -> None:
+        self.assertTrue(hasattr(installed_smoke, "smoke_measurement_catalog"), "catalog installed smoke is missing")
+        with (
+            mock.patch.object(installed_smoke, "ensure_outside_checkout"),
+            mock.patch.object(installed_smoke, "smoke_measurement_catalog", side_effect=installed_smoke.SmokeError("catalog sentinel")),
+            self.assertRaisesRegex(installed_smoke.SmokeError, "catalog sentinel"),
+        ):
+            installed_smoke.smoke("0.1.0", checkout=Path("checkout"))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -422,10 +422,6 @@ class ReleaseToolTests(unittest.TestCase):
         self.assertEqual(2, raised.exception.code)
         self.assertIn("invalid choice", errors.getvalue())
 
-
-if __name__ == "__main__":
-    unittest.main()
-
     def test_measurement_schema_missing_changed_or_provider_content_fails_artifacts(self) -> None:
         schema = "xplane_fdau/schemas/measurement-catalog-v1.schema.json"
         self.assertIn(schema, self._package_files())
@@ -442,3 +438,7 @@ if __name__ == "__main__":
                 self._make_dist(Path(raw), wheel_remove=wheel_remove, wheel_updates=wheel_updates, tar_remove=tar_remove, tar_updates=tar_updates)
                 with self.assertRaises(release.ReleaseError):
                     release.check_dist(Path(raw))
+
+
+if __name__ == "__main__":
+    unittest.main()

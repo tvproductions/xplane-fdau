@@ -364,6 +364,113 @@ def _measurement_definition_smoke() -> None:
             raise SmokeError(f"installed reader accepted {message}")
 
 
+def smoke_measurement_catalog() -> None:
+    """Prove installed catalog identity, strict rejection and schema access."""
+    import hashlib
+    import io
+    import json
+    from dataclasses import replace
+
+    from xplane_fdau import measurements
+    from xplane_fdau.contracts import (
+        Authority,
+        ContractHashError,
+        ContractValidationError,
+        DefinitionRef,
+        ProvenanceSource,
+        RepresentationSpec,
+        UnitSpec,
+        UnsupportedContractVersionError,
+    )
+
+    authority = Authority(authority_id="test.authority", authority_revision=1)
+    sources = [ProvenanceSource(source_id="test.source", scope="Synthetic", source_revision=1)]
+    definition = measurements.MeasurementDefinition(
+        definition_id="test.boolean",
+        definition_revision=1,
+        authority=authority,
+        provenance=sources,
+        title="Boolean",
+        description="Boolean meaning",
+        limitations=[],
+        quantity_id="test.state",
+        representation=RepresentationSpec(kind="boolean"),
+        unit=UnitSpec(kind="unitless"),
+        coordinates=measurements.CoordinateSpec(kind="not_applicable"),
+        freshness=measurements.FreshnessSpec(fresh_for_ns=0),
+        interpolation_policy="prohibited",
+        discontinuity_policy="preserve",
+        allowed_validity=["unknown"],
+        allowed_quality=[],
+        sensitivity="unknown",
+        applicability=[],
+    )
+    value = measurements.MeasurementCatalog(
+        contract_family="https://tvproductions.github.io/xplane-fdau/contracts/measurement-catalog",
+        schema_version=1,
+        catalog_id="test.catalog",
+        catalog_revision=1,
+        authority=authority,
+        provenance=sources,
+        definitions=[definition],
+    )
+    if (
+        definition.content_hash != "f54509db50da50bd1c72c59ed3b4ce736d97ff31c16cdc07e5790ccd55a745b9"
+        or value.content_hash != "b1778b9c7eb974c8b52cf3a4d0ea18f11338f55e4e2b5c3eea9a5ff819639366"
+    ):
+        raise SmokeError("installed catalog or definition hash differs from the independent vector")
+    encoded = measurements.dumps_measurement_catalog_v1(value)
+    loaded = measurements.loads_measurement_catalog_v1(encoded)
+    stream = io.BytesIO()
+    measurements.dump_measurement_catalog_v1(value, stream)
+    if stream.getvalue() != encoded or stream.closed:
+        raise SmokeError("installed catalog binary dump differs or closed its stream")
+    stream.seek(0)
+    if measurements.load_measurement_catalog_v1(stream) != loaded or stream.closed:
+        raise SmokeError("installed catalog binary load differs or closed its stream")
+    if loaded != value or loaded.content_hash != value.content_hash or measurements.dumps_measurement_catalog_v1(loaded) != encoded:
+        raise SmokeError("installed catalog round trip differs")
+    before = DefinitionRef(definition_id=definition.definition_id, definition_revision=definition.definition_revision, definition_hash=definition.content_hash)
+    entry = loaded.definitions[0]
+    after = DefinitionRef(definition_id=entry.definition_id, definition_revision=entry.definition_revision, definition_hash=entry.content_hash)
+    if before != after:
+        raise SmokeError("installed catalog lost an exact definition reference")
+    pair = replace(value, definitions=[definition, replace(definition, definition_revision=2)])
+    raw = json.loads(measurements.dumps_measurement_catalog_v1(pair))
+    raw["definitions"].reverse()
+    del raw["content_hash"]
+    # This synthetic vector contains only ASCII strings and integer tokens.
+    raw["content_hash"] = hashlib.sha256(json.dumps(raw, sort_keys=True, separators=(",", ":")).encode("utf-8") + b"\n").hexdigest()
+    try:
+        measurements.loads_measurement_catalog_v1(json.dumps(raw))
+    except ContractValidationError as error:
+        if error.path != "/definitions/1/definition_revision":
+            raise SmokeError("installed catalog ordering rejection lost its path") from error
+    else:
+        raise SmokeError("installed catalog accepted noncanonical definition order")
+    for field, changed, error_type in (("content_hash", "0" * 64, ContractHashError), ("schema_version", 2, UnsupportedContractVersionError)):
+        raw = json.loads(encoded)
+        raw[field] = changed
+        try:
+            measurements.loads_measurement_catalog_v1(json.dumps(raw))
+        except error_type:
+            pass
+        else:
+            raise SmokeError(f"installed catalog accepted invalid {field}")
+    schema_bytes = importlib.resources.files("xplane_fdau.schemas").joinpath("measurement-catalog-v1.schema.json").read_bytes()
+    try:
+        schema = json.loads(schema_bytes)
+    except (ValueError, UnicodeError) as error:
+        raise SmokeError("installed measurement catalog schema is invalid JSON") from error
+    if (
+        schema.get("$id") != "https://tvproductions.github.io/xplane-fdau/schemas/measurement-catalog-v1.schema.json"
+        or schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema"
+        or schema.get("unevaluatedProperties") is not False
+        or not schema_bytes.endswith(b"\n")
+    ):
+        raise SmokeError("installed measurement catalog schema identity or closure differs")
+
+
 def smoke(version: str, *, checkout: Path) -> None:
     """Exercise the installed public API, schema, FDR files, and CLI commands."""
     import xplane_fdau
@@ -387,6 +494,7 @@ def smoke(version: str, *, checkout: Path) -> None:
     _canonical_timing_smoke()
     _measurement_quality_smoke()
     _measurement_definition_smoke()
+    smoke_measurement_catalog()
     schema = importlib.resources.files("xplane_fdau.formats.xplane_fdr").joinpath("schemas/fdr-record-config-v1.schema.json")
     if not schema.is_file() or '"$schema"' not in schema.read_text(encoding="utf-8"):
         raise SmokeError("installed schema resource is unavailable or invalid")

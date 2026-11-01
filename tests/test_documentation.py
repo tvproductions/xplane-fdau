@@ -258,3 +258,24 @@ class DocumentationTests(unittest.TestCase):
         self.assertEqual(packaged.read_bytes(), published.read_bytes())
         schema = json.loads(packaged.read_bytes())
         self.assertEqual("https://tvproductions.github.io/xplane-fdau/schemas/measurement-catalog-v1.schema.json", schema["$id"])
+
+    def test_measurement_catalog_guide_example_and_schema_link(self) -> None:
+        import re
+
+        from xplane_fdau.measurements import MeasurementCatalog
+
+        page = ROOT / "docs/reference/measurement-catalogs.md"
+        self.assertTrue(page.is_file(), "catalog guide is missing")
+        text = page.read_text(encoding="utf-8")
+        namespace: dict[str, object] = {}
+        examples = re.findall(r"```python\n(.*?)```", text, re.DOTALL)
+        self.assertTrue(examples)
+        for example in examples:
+            exec(compile(example, str(page), "exec"), namespace)
+        self.assertIsInstance(namespace["loaded"], MeasurementCatalog)
+        self.assertEqual(namespace["reference_before"], namespace["reference_after"])
+        self.assertEqual((ROOT / "src/xplane_fdau/schemas/measurement-catalog-v1.schema.json").read_bytes(), namespace["schema_bytes"])
+        links = re.findall(r"\]\(([^)]+measurement-catalog-v1.schema.json)\)", text)
+        self.assertTrue(links)
+        for target in links:
+            self.assertTrue((page.parent / target).resolve().is_file())

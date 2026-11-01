@@ -1,5 +1,93 @@
 # Project Handoff
 
+## C2.2 plan approved; C2.1 integrated — fresh-session resume, 2026-11-01
+
+**Observed:** 2026-11-01 22:02 UTC, before the requested approval/handoff save
+point. This section supersedes older resume instructions and current-state
+observations below; retain those sections as dated history. Jeff approved the
+corrected C2.2 plan and requested a fresh handoff and ordinary Git sync, with
+implementation deferred until after handoff. No execution method was selected.
+
+**Resume point:** Read the approved
+[C2.2 measurement-catalog plan](docs/superpowers/plans/2026-11-01-c2-2-measurement-catalog.md)
+and its approved canonical specification after the normal session-entry
+authorities. Re-run strict backlog `audit` and `next`; expected state is C2.2
+`planned`, 0/4 gates, no selected child, and `action=execute_plan child=C2.2`.
+The first unresolved plan checklist item is execution-method selection. Obtain
+**native** or **subagent-driven** execution before creating a feature worktree,
+selecting C2.2 or transitioning it to in_progress. Native was recommended because
+the four tasks share validation interfaces; this was not a user selection.
+Do not ask for plan approval again. Stop on audit findings or authority drift.
+No C2.2 runtime implementation, schema, dependency edit or gate evidence exists.
+
+**Decisions preserved:** Two in-chat plan reviews found three issues, all
+corrected before approval. The exact-reference round-trip test belongs entirely
+to Task 2, allowing Task 1 to pass independently before public I/O exists.
+The construction barrier instruments actual structural-model initializers as
+well as builders, with an injected direct-constructor negative control and a
+valid-load positive control. Root hashing compares only well-formed declared
+hashes, passes a mapping omitting only the root hash to the existing helper,
+retains nested hashes, and defers malformed spelling to its semantic position.
+Competing-error regressions pin the required precedence. The four tasks deliver
+catalog meaning/identity, whole-document staged I/O, the mirrored normative
+schema, then installed proof/guidance. The approved development-only
+`jsonschema==4.26.0` declaration is still future implementation work; that
+version already exists transitively in the lock. Runtime remains stdlib-only.
+Shared convenience APIs remain deferred to C4.3; no new public resolver,
+provider content or acquisition execution is authorized by this child.
+
+**C2.1 completion:** C2.1 is verified with 4/4 gates and integrated into main.
+The [completed plan](docs/superpowers/plans/2026-11-01-c2-1-measurement-definition.md),
+[completion](.superpowers/sdd/2026-11-01-c2-1-definition/completion.md),
+[accepted review](.superpowers/sdd/2026-11-01-c2-1-definition/review.md),
+[verification identities](.superpowers/sdd/2026-11-01-c2-1-definition/verification.json)
+and [main integration record](.superpowers/sdd/2026-11-01-c2-1-definition/integration.md)
+are committed. Independent task/fix/whole-branch review findings are closed.
+Full offline hygiene and external Python 3.12.16 wheel-only smoke passed.
+Main fast-forwarded exactly to reviewed branch HEAD `081538c`, then passed
+frozen sync, lock check, strict backlog audit, both live-state tests, fresh
+strict artifacts and external wheel smoke; both artifact hashes matched the
+reviewed branch. All 141 recorded raw inputs still match. Integration record
+commit `c390e20` passed mandatory hooks. Do not repeat this completed work.
+
+All 146 C2.1 feature evidence files were preserved and hash-verified on main
+before temporary worktree/branch removal. The raw plan ledger at
+`.superpowers/sdd/2026-11-01-c2-1-definition/execution/progress.md` and detailed
+integration evidence at `.superpowers/sdd/c2-1-integration-2026-11-01/` are
+**local-only**, unavailable in a fresh clone. A newline-only difference in a
+committed review report was handled by retaining canonical main bytes and
+preserving original feature bytes separately. Successful external artifact
+environments were removed; their logged paths are historical. The C2.1 feature
+worktree/branch no longer exists and must not be recreated for closeout.
+
+**Git state at observation:** Main checkout `U:/repos/xp/xplane-fdau`, HEAD
+`c390e209025d1c169f0b6b098d9e6aa9032996d3`, ten commits ahead and zero behind
+freshly fetched `origin/main` at `0019d129b5eb20922d39709b7443a171139e59b6`.
+This requested sync publishes the reviewed C2.1 work plus a later C2.2 approval/
+handoff commit; recheck final HEAD, clean status and remote alignment on resume.
+The only new checkpoint edits are this handoff, the approved C2.2 plan and its
+BACKLOG registration/planned state. The unrelated dependency-refresh worktree
+`C:/Users/Jeff/.codex/worktrees/c68f/xplane-fdau` remains on
+`chore/dependency-refresh-2026-10-18` at `f81c4c2`, untouched.
+
+**Verification:** The approval/handoff candidate passed 54 focused model/
+governance/adherence/documentation unittest checks, strict MkDocs and whitespace
+checks. Approval used an inspected dry-run/digest/apply transition with a clear
+post-change audit and no selected child. Fresh strict audit/next found no
+findings and returned `execute_plan C2.2`. The save-point commit must also pass
+mandatory hooks, including ty and full unittest, before this requested push;
+no hook may be bypassed. These planning checks close none of C2.2's gates.
+
+**Standing boundaries:** Python 3.12.16, standard-library-only runtime and
+unittest-only testing remain binding. Native plugin identities, enabled states
+and actual revisions matched reviewed starter 0.8.0, Superpowers 7.0.1 and
+gz-skills 0.8.3 during this session; verify fresh-session discovery without
+refreshing shared caches. Heavy remains selected, Backplane disabled,
+cognitive analysis UNKNOWN/deferred, recorded Lizard limitations open and
+STRICT acceptance incomplete. G1 and release gates remain waiting. This request
+authorizes ordinary commit/push only; no tag, publication, release, other-repo
+edit, automatic schedule or C2.2 implementation before the deferred resume.
+
 ## C2.1 plan approved — fresh-session resume, 2026-11-01
 
 **Observed:** 2026-11-01 16:59 UTC, during the requested approval checkpoint,

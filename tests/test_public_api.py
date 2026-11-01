@@ -55,6 +55,20 @@ SINK_NAMES = {
 
 
 class PublicAPITests(unittest.TestCase):
+    def test_measurement_quality_exports_have_exact_ownership(self) -> None:
+        import xplane_fdau.measurements as measurements
+        from xplane_fdau.measurements import models
+
+        names = ["ValidityState", "QualityFlag"]
+        self.assertEqual(names, models.__all__)
+        self.assertEqual(names, measurements.__all__)
+        for name in names:
+            self.assertIs(getattr(models, name), getattr(measurements, name))
+            self.assertEqual("xplane_fdau.measurements.models", getattr(models, name).__module__)
+            self.assertNotIn(name, contracts.__all__)
+            self.assertFalse(hasattr(contracts, name))
+        self.assertEqual(["__version__"], xplane_fdau.__all__)
+
     def test_timing_exports_have_exact_ownership_and_package_identity(self) -> None:
         from xplane_fdau.contracts import timing
 

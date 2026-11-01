@@ -1,0 +1,27 @@
+{
+  "artifact_hashes_match": true,
+  "candidate": "4b74399991bf1001196f5062070442e96da5ca0b",
+  "external_artifacts": {
+    "sdist": "C:\\Users\\Jeff\\AppData\\Local\\Temp\\xplane-fdau-c15-0c6920586b29460aaeaedb37101409e7\\dist\\xplane_fdau-0.1.0.tar.gz",
+    "sdist_sha256": "bfe6b1456e7a48a9add03e2fddada7a310f920ef02b6c6e3477e462a91f45244",
+    "wheel": "C:\\Users\\Jeff\\AppData\\Local\\Temp\\xplane-fdau-c15-0c6920586b29460aaeaedb37101409e7\\dist\\xplane_fdau-0.1.0-py3-none-any.whl",
+    "wheel_sha256": "d6eaa482565cecdd47990d8df463da8026978f5912761edc0697f77ee02c0ac1"
+  },
+  "hygiene_artifacts": {
+    "sdist": "C:\\Users\\Jeff\\AppData\\Local\\Temp\\xplane-fdau-hygiene-x7lvdofl\\xplane_fdau-0.1.0.tar.gz",
+    "sdist_sha256": "bfe6b1456e7a48a9add03e2fddada7a310f920ef02b6c6e3477e462a91f45244",
+    "wheel": "C:\\Users\\Jeff\\AppData\\Local\\Temp\\xplane-fdau-hygiene-x7lvdofl\\xplane_fdau-0.1.0-py3-none-any.whl",
+    "wheel_sha256": "d6eaa482565cecdd47990d8df463da8026978f5912761edc0697f77ee02c0ac1"
+  },
+  "hygiene_command": "uv run --offline --frozen --all-groups python .codex/skills/hygiene/scripts/hygiene.py",
+  "hygiene_exit_code": 0,
+  "installed_environment": {
+    "origin": "C:\\Users\\Jeff\\AppData\\Local\\Temp\\xplane-fdau-c15-0c6920586b29460aaeaedb37101409e7\\wheel-env\\Lib\\site-packages\\xplane_fdau\\__init__.py",
+    "python": "3.12.16 (main, Oct 26 2026, 14:10:56) [MSC v.1944 64 bit (AMD64)]",
+    "requires_dist": null
+  },
+  "test_cases_discovered": 709,
+  "unchanged_inputs": true,
+  "verification_inputs": 208,
+  "wheel_smoke_exit_code": 0
+}

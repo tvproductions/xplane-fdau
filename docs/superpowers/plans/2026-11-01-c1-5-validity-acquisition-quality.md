@@ -1,12 +1,12 @@
 # C1.5 Validity States and Acquisition Quality Implementation Plan
 
 - **Governance:** active
-- **Status:** in_progress
+- **Status:** completed
 - **Date:** 2026-11-01
 - **Roadmap child:** `C1.5`
 - **Source specification:** `docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md`
 - **Approval:** 2026-11-01 — Jeff / tvproductions; native execution with independent review approved in chat
-- **Completion evidence:** —
+- **Completion evidence:** `.superpowers/sdd/2026-11-01-c1-5-quality/completion.md`
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
@@ -43,7 +43,7 @@ November 1 entry: clean `main` at `82b1e81a42eab27c47037bc1dc47c4b4378b9476`, ma
 
 Native inventory and actual checkouts agree with the reviewed pins: starter 0.8.0 at `e0b752fcc13b87ec7868fe0b0f85badefdb6bf52`, Superpowers 7.0.1 at `2ce8aa15d05bd57213e6f746f953aafb7ded7a8b`, gz-skills 0.8.3 at `d6acc26e28ca1c4f43e5bb46d8973021d7d006c3`. This fresh session discovers the selected entry skills. Heavy is present; Backplane remains disabled. Cognitive acceptance and other recorded STRICT gaps remain open.
 
-Two bounded implementation choices need review:
+Two approved ownership decisions keep the implementation within scope:
 
 - The approved public table places `ValidityState` and `QualityFlag` in `measurements.models`. Export only these delivered names there and from `measurements`; later C2.1 extends that table incrementally. Do not create future model shells or move vocabulary into contracts.
 - C1.5 supplies private scalar/collection validators to make its ordering gates executable without inventing a public quality container. The complete sample compatibility matrix, normalization reasons, lineage corroboration, and measurement authorization checks remain C2/C3 integration work. Separate scalar and collection validation never purport to validate a complete sample.
@@ -138,8 +138,8 @@ uv run --locked --all-groups ty check
 
 ## Stable closeout and gate evidence
 
-- [ ] Perform independent review through `superpowers:requesting-code-review`; resolve findings and record exact candidate identity. Jeff selected native execution with independent whole-branch review on November 1.
-- [ ] Use canonical `gzs-quality-gate`/`gzs-repository-hygiene` with the project adapter. Adding a shipped semantic package changes package layout, so run the full offline hygiene command once at stable closeout:
+- [x] Perform independent review through `superpowers:requesting-code-review`; resolve findings and record exact candidate identity. Jeff selected native execution with independent whole-branch review on November 1.
+- [x] Use canonical `gzs-quality-gate`/`gzs-repository-hygiene` with the project adapter. Adding a shipped semantic package changes package layout, so run the full offline hygiene command once at stable closeout:
 
 ```powershell
 uv run --offline --frozen --all-groups python .codex/skills/hygiene/scripts/hygiene.py
@@ -147,14 +147,14 @@ uv run --offline --frozen --all-groups python .codex/skills/hygiene/scripts/hygi
 
 This supplies the complete active-Python gate, docs, hooks and fresh strict artifact pair; do not additionally run the standalone full gate on the unchanged candidate. Mandatory commit hooks remain mandatory.
 
-- [ ] Run the existing release-skill external Python 3.12 installed-wheel smoke procedure on that exact wheel because this slice adds installed imports. Record artifact path, hashes, interpreter and import origin. Do not rerun a broad interpreter matrix or claim release readiness.
-- [ ] Record four gate receipts under `.superpowers/sdd/2026-11-01-c1-5-quality/`: gate 1 exact closed validity/independence (Tasks 1–2); gate 2 closed unique ordered flags (Tasks 1–2); gate 3 empty flags/no inferred validity (Tasks 2–3); gate 4 operational vocabulary exclusion (Tasks 1–3). Bind focused tests, complete hygiene, artifact smoke and independent review to the actual candidate. Preserve failed attempts honestly.
+- [x] Run the existing release-skill external Python 3.12 installed-wheel smoke procedure on that exact wheel because this slice adds installed imports. Record artifact path, hashes, interpreter and import origin. Do not rerun a broad interpreter matrix or claim release readiness.
+- [x] Record four gate receipts under `.superpowers/sdd/2026-11-01-c1-5-quality/`: gate 1 exact closed validity/independence (Tasks 1–2); gate 2 closed unique ordered flags (Tasks 1–2); gate 3 empty flags/no inferred validity (Tasks 2–3); gate 4 operational vocabulary exclusion (Tasks 1–3). Bind focused tests, complete hygiene, artifact smoke and independent review to the actual candidate. Preserve failed attempts honestly.
 - [ ] Through dry-run/digest/apply backlog operations, advance only C1.5 through implemented/reviewed/verified when requirements and committed evidence actually justify each state. Record completion and update plan checkboxes; no gate closes merely because the plan was written.
 - [ ] Use `superpowers:finishing-a-development-branch`. If the user chooses local integration, follow AGENTS.md's exact fast-forward verification and cleanup rules. Keep branch/worktree until main verification passes. No remote sync, tag or publication follows implicitly.
 
 ## Planning audit
 
-Intent: approved design's separate evidence axes and exact public ownership. Scope: BACKLOG C1.5's four gates. The tables below audit this draft only; implementation evidence is pending.
+Intent: approved design's separate evidence axes and exact public ownership. Scope: BACKLOG C1.5's four gates. The tables record planning alignment; the completion receipt owns execution evidence.
 
 | Intent → scope | Classification | Evidence |
 | --- | --- | --- |
@@ -171,7 +171,7 @@ Intent: approved design's separate evidence axes and exact public ownership. Sco
 | Gate 4: no operational findings/tolerances | Aligned | Task 1 rejected vocabulary; Task 2 contextual rejection; Task 3 guide |
 | Error context, installed surface and required verification | Aligned | Task 2 precedence/path cases; Task 3 smoke; stable closeout |
 
-**Draft audit verdict:** PASS for scoped planning alignment; no missing or drifted scoped requirement identified. The private helper boundary is an implementation choice presented for approval, not a specification amendment. Plan approval, execution selection, implementation, independent review and delivery gates remain pending.
+**Planning audit verdict:** PASS for scoped planning alignment; no missing or drifted scoped requirement identified. The private helper boundary was approved as an implementation choice, not a specification amendment. Approval and completed task steps are recorded above; the completion receipt records review and verification. Managed lifecycle closure and the separate integration choice follow.
 
 ## Execution rulings
 

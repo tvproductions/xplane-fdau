@@ -70,7 +70,7 @@ The child slices below refine this sequence without weakening or reordering it.
 | `C1.2` | Identity, hashing, references, authority, and provenance | `verified` | `C1.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-10-04-c1-2-identity-hashing-references-provenance.md) | 4/4 | [review](.superpowers/sdd/2026-10-04-c1-2-identity-hashing-references-provenance/review.md) | — | — |
 | `C1.3` | Typed values and content-addressed payload references | `verified` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-10-04-c1-3-typed-values-payload-references.md) | 4/4 | [review](.superpowers/sdd/2026-10-04-c1-3-typed-values-payload-references/review.md) | — | — |
 | `C1.4` | Clock domains, UTC instants, anchors, and simulator timing | `verified` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-10-26-c1-4-clock-domains-utc-anchors-simulator-timing.md) | 4/4 | [review](.superpowers/sdd/2026-10-26-c1-4-timing/review.md) | — | — |
-| `C1.5` | Validity states and acquisition-quality vocabulary | `in_progress` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-01-c1-5-validity-acquisition-quality.md) | 0/4 | — | — | — |
+| `C1.5` | Validity states and acquisition-quality vocabulary | `reviewed` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-01-c1-5-validity-acquisition-quality.md) | 4/4 | [review](.superpowers/sdd/2026-11-01-c1-5-quality/review.md) | — | — |
 | `C2.1` | Measurement-definition model and semantic invariants | `specified` | `C1.3`, `C1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C2.2` | Measurement catalog, schema, ordering, and references | `specified` | `C2.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C2.3` | Source-binding definition and transform references | `specified` | `C2.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
@@ -184,10 +184,10 @@ The child slices below refine this sequence without weakening or reordering it.
 
 ### C1.5 — Validity states and acquisition-quality vocabulary
 
-- [ ] Validity is a closed state independent of quality flags.
-- [ ] Quality flags are closed, unique, and lexically ordered.
-- [ ] Empty quality flags do not manufacture validity.
-- [ ] Operational findings and tolerances cannot enter acquisition quality.
+- [x] Validity is a closed state independent of quality flags. — Evidence: [verification](.superpowers/sdd/2026-11-01-c1-5-quality/gate-1.md)
+- [x] Quality flags are closed, unique, and lexically ordered. — Evidence: [verification](.superpowers/sdd/2026-11-01-c1-5-quality/gate-2.md)
+- [x] Empty quality flags do not manufacture validity. — Evidence: [verification](.superpowers/sdd/2026-11-01-c1-5-quality/gate-3.md)
+- [x] Operational findings and tolerances cannot enter acquisition quality. — Evidence: [verification](.superpowers/sdd/2026-11-01-c1-5-quality/gate-4.md)
 
 ### C2.1 — Measurement-definition model and semantic invariants
 

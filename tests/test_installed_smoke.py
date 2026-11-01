@@ -18,6 +18,35 @@ from xplane_fdau.formats.xplane_fdr import FDRReader
 
 
 class InstalledSmokeTests(unittest.TestCase):
+    def test_measurement_quality_smoke_detects_reordered_acceptance(self) -> None:
+        from xplane_fdau.measurements import QualityFlag, _quality
+
+        original = _quality._quality_flags
+
+        def accept_reversed(value: object, *, path: str = "/quality") -> tuple[QualityFlag, ...]:
+            if value == ("stale", "rounded"):
+                return (QualityFlag.STALE, QualityFlag.ROUNDED)
+            return original(value, path=path)
+
+        with mock.patch.object(_quality, "_quality_flags", side_effect=accept_reversed), self.assertRaisesRegex(installed_smoke.SmokeError, "noncanonical"):
+            installed_smoke._measurement_quality_smoke()
+
+    def test_measurement_quality_smoke_detects_duplicate_acceptance(self) -> None:
+        from xplane_fdau.measurements import QualityFlag, _quality
+
+        original = _quality._quality_flags
+
+        def accept_duplicate(value: object, *, path: str = "/quality") -> tuple[QualityFlag, ...]:
+            if value == ("stale", "stale"):
+                return (QualityFlag.STALE, QualityFlag.STALE)
+            return original(value, path=path)
+
+        with mock.patch.object(_quality, "_quality_flags", side_effect=accept_duplicate), self.assertRaisesRegex(installed_smoke.SmokeError, "noncanonical"):
+            installed_smoke._measurement_quality_smoke()
+
+    def test_measurement_quality_smoke_passes(self) -> None:
+        installed_smoke._measurement_quality_smoke()
+
     def test_timing_smoke_detects_incorrect_difference(self) -> None:
         import xplane_fdau.contracts as contracts
 

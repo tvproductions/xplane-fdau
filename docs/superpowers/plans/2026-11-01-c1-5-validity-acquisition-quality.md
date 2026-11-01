@@ -8,7 +8,7 @@
 - **Approval:** 2026-11-01 — Jeff / tvproductions; native execution with independent review approved in chat
 - **Completion evidence:** —
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Deliver the closed validity and acquisition-quality vocabularies and strict quality array-set validation required by C1.5's four gates.
 
@@ -62,9 +62,9 @@ Keep existing contracts, canonical JSON dispatch, import rules, packaging metada
 
 ## Execution entry — after approval
 
-- [ ] Record plan approval and the selected execution method. Recheck handoff authorities, plugin sources, clean status, HEAD, worktrees, and audit/next. Stop on findings or authority drift.
-- [ ] Resolve the draft's clean baseline without silently stashing, discarding, or committing unrelated work. Use `superpowers:using-git-worktrees` to create a temporary C1.5 branch/worktree; record actual path and base HEAD.
-- [ ] With approved authority, use the backlog adapter's dry-run and printed target digest to link this plan, select C1.5 and transition `specified` → `planned` → `in_progress`. Inspect each proposed diff/audit before its matching apply. Do not record gates at entry.
+- [x] Record plan approval and the selected execution method. Recheck handoff authorities, plugin sources, clean status, HEAD, worktrees, and audit/next. Stop on findings or authority drift.
+- [x] Resolve the draft's clean baseline without silently stashing, discarding, or committing unrelated work. Use `superpowers:using-git-worktrees` to create a temporary C1.5 branch/worktree; record actual path and base HEAD.
+- [x] With approved authority, use the backlog adapter's dry-run and printed target digest to link this plan, select C1.5 and transition `specified` → `planned` → `in_progress`. Inspect each proposed diff/audit before its matching apply. Do not record gates at entry.
 
 ## Task 1: Publish the exact owned vocabularies
 
@@ -72,7 +72,7 @@ Keep existing contracts, canonical JSON dispatch, import rules, packaging metada
 
 **Interfaces:** Consumes `enum.StrEnum`. Produces public `ValidityState` and `QualityFlag`, with uppercase member names corresponding exactly to the wire strings below. Both `__all__` lists are exactly `["ValidityState", "QualityFlag"]` in that order.
 
-- [ ] **Step 1: Write failing unittest cases.** `MeasurementQualityVocabularyTests.test_exact_vocabularies` checks `issubclass(..., StrEnum)`, exact member name/value pairs (including `__members__` to detect aliases), and exact enum construction round trips for every spelling. `test_closed_vocabularies` rejects `"VALID"`, `" valid"`, `"within_tolerance"`, `"outside_tolerance"`, `"indeterminate"`, `"warning"`, `"critical"`, and `"finding"` with `ValueError` from direct enum construction. Public API tests assert owning-module/package object identity, exact exports, unchanged root exports, and no measurement re-export from contracts.
+- [x] **Step 1: Write failing unittest cases.** `MeasurementQualityVocabularyTests.test_exact_vocabularies` checks `issubclass(..., StrEnum)`, exact member name/value pairs (including `__members__` to detect aliases), and exact enum construction round trips for every spelling. `test_closed_vocabularies` rejects `"VALID"`, `" valid"`, `"within_tolerance"`, `"outside_tolerance"`, `"indeterminate"`, `"warning"`, `"critical"`, and `"finding"` with `ValueError` from direct enum construction. Public API tests assert owning-module/package object identity, exact exports, unchanged root exports, and no measurement re-export from contracts.
 
 Validity values in declaration order:
 
@@ -88,10 +88,10 @@ out_of_declared_range precision_lost provider_degraded read_error
 reordered rounded saturated stale type_mismatch unavailable
 ```
 
-- [ ] **Step 2: Verify RED.** Run `uv run --locked --all-groups python -m unittest tests.test_measurement_quality tests.test_public_api -v`; require the expected missing measurement-module/name failure before implementation. Investigate unrelated failures.
-- [ ] **Step 3: Implement the two enums and explicit re-exports.** Use uppercase names such as `NOT_APPLICABLE` and `OUT_OF_DECLARED_RANGE`; no aliases, generated registries, inference, or extra public types. Enum constructors themselves retain standard-library exception behavior; contextual contract errors belong to Task 2.
-- [ ] **Step 4: Verify GREEN.** Repeat Step 2, then run the focused static checks below. Expect all commands to exit zero.
-- [ ] **Step 5: Commit the exact Task 1 files** with `feat: add closed measurement validity and quality vocabularies`, after execution authorization and mandatory hooks.
+- [x] **Step 2: Verify RED.** Run `uv run --locked --all-groups python -m unittest tests.test_measurement_quality tests.test_public_api -v`; require the expected missing measurement-module/name failure before implementation. Investigate unrelated failures.
+- [x] **Step 3: Implement the two enums and explicit re-exports.** Use uppercase names such as `NOT_APPLICABLE` and `OUT_OF_DECLARED_RANGE`; no aliases, generated registries, inference, or extra public types. Enum constructors themselves retain standard-library exception behavior; contextual contract errors belong to Task 2.
+- [x] **Step 4: Verify GREEN.** Repeat Step 2, then run the focused static checks below. Expect all commands to exit zero.
+- [x] **Step 5: Commit the exact Task 1 files** with `feat: add closed measurement validity and quality vocabularies`, after execution authorization and mandatory hooks.
 
 ## Task 2: Enforce immutable, ordered acquisition-quality inputs
 
@@ -106,13 +106,13 @@ _quality_flags(value: object, *, path: str = "/quality") -> tuple[QualityFlag, .
 
 Accept exact strings or the corresponding owned enum members. `_quality_flags` accepts only actual list/tuple containers and returns a new immutable tuple of owned members. It rejects strings, bytes, sets, mappings, generators and foreign enum classes. These private adapters will be called by future strict constructors/readers; no model or loader is added here.
 
-- [ ] **Step 1: Write failing unittest cases.** `MeasurementQualityInputTests.test_scalar_and_collection_conversion` checks all four scalar states, all 15 flags, mixed owned-enum/string entries, and exact returned types. `test_empty_flags_do_not_infer_validity` checks `_quality_flags([]) == ()`, all four explicit scalar states remain distinct, and calling `_validity_state()` without a value raises `TypeError`. No combined sample validator or default-valid parameter exists.
-- [ ] **Step 2: Add array-set and boundary tests.** `test_duplicate_and_reverse_order_are_rejected` checks duplicate `stale` at `/quality/1`, reversed `("stale", "rounded")` at `/quality/1`, unchanged caller input after failure, and all 105 distinct reversed flag pairs. Both violations raise `ContractValidationError`. `test_defensive_copy` mutates a valid input list after conversion and checks its returned tuple is unchanged. `test_foreign_types_and_operational_terms` rejects every Task 1 operational term and a foreign `StrEnum` whose value is `stale`, with `ContractShapeError` at the item's path. Non-list/tuple containers fail with `ContractShapeError` at the collection path; null collection/scalar/items fail with `CanonicalJSONError` at their exact paths. Wrong element types, unknown spellings, and foreign enums raise `ContractShapeError`. These expectations follow existing closed-vocabulary validation behavior.
-- [ ] **Step 3: Add precedence/context tests.** `test_shape_precedes_collection_semantics` supplies `["stale", "rounded", 7]` and expects `ContractShapeError` at `/quality/2`, rather than an order error at index 1. With `["stale", "rounded", None]`, require `CanonicalJSONError` at index 2. `test_nested_paths_and_context` passes `path="/samples/2/quality"`, checks its item pointer, `<memory>` source, and absent line/column. All 15 permitted unique flags pass together. `test_sixteen_flags_rejects_duplicate_at_index_15` supplies `tuple(flag.value for flag in QualityFlag) + ("unavailable",)` (the 15 exact flags in Task 1 order followed by a second `unavailable`) and requires `ContractValidationError` with `path == "/quality/15"`; the validator must not truncate or silently deduplicate the input. The finite vocabulary naturally limits successful arrays to 15 entries.
-- [ ] **Step 4: Verify RED.** Run `uv run --locked --all-groups python -m unittest tests.test_measurement_quality -v`; require the expected absent-helper failure.
-- [ ] **Step 5: Implement the two private functions.** Validate container and all element shapes first, canonical null prohibition next, then uniqueness and strict lexical order. Compare `.value` strings, return owned enum members, and report the first offending element within the applicable tier. Reject arbitrary iterables without consuming them. Preserve the supplied RFC 6901 pointer prefix; invent no parser locations or family identity. Do not sort or mutate input and do not infer validity from flags.
-- [ ] **Step 6: Verify GREEN.** Repeat Step 4, then run focused static checks. No full family JSON reader exists yet; future readers must reuse these helpers after their normal envelope/shape/domain stages to preserve constructor/loaded parity.
-- [ ] **Step 7: Commit the exact Task 2 files** with `feat: validate canonical acquisition quality array sets`, retaining mandatory hooks.
+- [x] **Step 1: Write failing unittest cases.** `MeasurementQualityInputTests.test_scalar_and_collection_conversion` checks all four scalar states, all 15 flags, mixed owned-enum/string entries, and exact returned types. `test_empty_flags_do_not_infer_validity` checks `_quality_flags([]) == ()`, all four explicit scalar states remain distinct, and calling `_validity_state()` without a value raises `TypeError`. No combined sample validator or default-valid parameter exists.
+- [x] **Step 2: Add array-set and boundary tests.** `test_duplicate_and_reverse_order_are_rejected` checks duplicate `stale` at `/quality/1`, reversed `("stale", "rounded")` at `/quality/1`, unchanged caller input after failure, and all 105 distinct reversed flag pairs. Both violations raise `ContractValidationError`. `test_defensive_copy` mutates a valid input list after conversion and checks its returned tuple is unchanged. `test_foreign_types_and_operational_terms` rejects every Task 1 operational term and a foreign `StrEnum` whose value is `stale`, with `ContractShapeError` at the item's path. Non-list/tuple containers fail with `ContractShapeError` at the collection path; null collection/scalar/items fail with `CanonicalJSONError` at their exact paths. Wrong element types, unknown spellings, and foreign enums raise `ContractShapeError`. These expectations follow existing closed-vocabulary validation behavior.
+- [x] **Step 3: Add precedence/context tests.** `test_shape_precedes_collection_semantics` supplies `["stale", "rounded", 7]` and expects `ContractShapeError` at `/quality/2`, rather than an order error at index 1. With `["stale", "rounded", None]`, require `CanonicalJSONError` at index 2. `test_nested_paths_and_context` passes `path="/samples/2/quality"`, checks its item pointer, `<memory>` source, and absent line/column. All 15 permitted unique flags pass together. `test_sixteen_flags_rejects_duplicate_at_index_15` supplies `tuple(flag.value for flag in QualityFlag) + ("unavailable",)` (the 15 exact flags in Task 1 order followed by a second `unavailable`) and requires `ContractValidationError` with `path == "/quality/15"`; the validator must not truncate or silently deduplicate the input. The finite vocabulary naturally limits successful arrays to 15 entries.
+- [x] **Step 4: Verify RED.** Run `uv run --locked --all-groups python -m unittest tests.test_measurement_quality -v`; require the expected absent-helper failure.
+- [x] **Step 5: Implement the two private functions.** Validate container and all element shapes first, canonical null prohibition next, then uniqueness and strict lexical order. Compare `.value` strings, return owned enum members, and report the first offending element within the applicable tier. Reject arbitrary iterables without consuming them. Preserve the supplied RFC 6901 pointer prefix; invent no parser locations or family identity. Do not sort or mutate input and do not infer validity from flags.
+- [x] **Step 6: Verify GREEN.** Repeat Step 4, then run focused static checks. No full family JSON reader exists yet; future readers must reuse these helpers after their normal envelope/shape/domain stages to preserve constructor/loaded parity.
+- [x] **Step 7: Commit the exact Task 2 files** with `feat: validate canonical acquisition quality array sets`, retaining mandatory hooks.
 
 ## Task 3: Verify installed ownership and document semantics
 
@@ -120,11 +120,11 @@ Accept exact strings or the corresponding owned enum members. `_quality_flags` a
 
 **Interfaces:** Consumes Tasks 1–2. Produces private `tools.installed_smoke._measurement_quality_smoke() -> None`, invoked by the existing installed verification flow. It raises existing `SmokeError` when required vocabulary/ordering checks fail. No new runtime API.
 
-- [ ] **Step 1: Write failing smoke tests.** Add the three measurement modules to `test_all_installed_runtime_modules_are_discovered_and_imported`'s expected set. Add `test_measurement_quality_smoke_detects_reordered_acceptance`: patch the private helper to accept reversed flags and require `SmokeError`. Add `test_measurement_quality_smoke_passes` for real behavior. Run `uv run --locked --all-groups python -m unittest tests.test_installed_smoke -v` and observe the expected new-module/helper failure.
-- [ ] **Step 2: Implement the smoke check and call it from the existing flow.** Check public package/module identity, exact four and 15 wire values, preservation of explicit `UNKNOWN` with empty quality, and rejection of reversed/duplicate flags through the private helper. Translate an unexpectedly accepted invalid input into `SmokeError`. Import from the installed package, using the existing source-independent smoke procedure.
-- [ ] **Step 3: Write the guide and add its MkDocs reference entry.** Include all exact flag meanings from the approved design, a short ordered tuple example, producer-asserted validity, and empty-quality semantics. State that operational evaluation stays separate and that complete sample compatibility and corroboration arrive in C3. Include MkDocstrings for only the delivered public enums. Do not claim standalone enums are canonical contract documents or add JSON/schema loaders. Review examples against the source and tests; add no phrase-presence snapshot tests.
-- [ ] **Step 4: Verify focused GREEN.** Run `uv run --locked --all-groups python -m unittest tests.test_measurement_quality tests.test_public_api tests.test_installed_smoke tests.test_runtime_import_boundary tests.test_documentation -v`, focused static checks, then `uv run --locked --all-groups mkdocs build --strict`. Expect zero failures and no import boundary changes.
-- [ ] **Step 5: Commit the exact Task 3 files** with `docs: expose and verify measurement quality semantics`, preserving hooks.
+- [x] **Step 1: Write failing smoke tests.** Add the three measurement modules to `test_all_installed_runtime_modules_are_discovered_and_imported`'s expected set. Add `test_measurement_quality_smoke_detects_reordered_acceptance`: patch the private helper to accept reversed flags and require `SmokeError`. Add `test_measurement_quality_smoke_passes` for real behavior. Run `uv run --locked --all-groups python -m unittest tests.test_installed_smoke -v` and observe the expected new-module/helper failure.
+- [x] **Step 2: Implement the smoke check and call it from the existing flow.** Check public package/module identity, exact four and 15 wire values, preservation of explicit `UNKNOWN` with empty quality, and rejection of reversed/duplicate flags through the private helper. Translate an unexpectedly accepted invalid input into `SmokeError`. Import from the installed package, using the existing source-independent smoke procedure.
+- [x] **Step 3: Write the guide and add its MkDocs reference entry.** Include all exact flag meanings from the approved design, a short ordered tuple example, producer-asserted validity, and empty-quality semantics. State that operational evaluation stays separate and that complete sample compatibility and corroboration arrive in C3. Include MkDocstrings for only the delivered public enums. Do not claim standalone enums are canonical contract documents or add JSON/schema loaders. Review examples against the source and tests; add no phrase-presence snapshot tests.
+- [x] **Step 4: Verify focused GREEN.** Run `uv run --locked --all-groups python -m unittest tests.test_measurement_quality tests.test_public_api tests.test_installed_smoke tests.test_runtime_import_boundary tests.test_documentation -v`, focused static checks, then `uv run --locked --all-groups mkdocs build --strict`. Expect zero failures and no import boundary changes.
+- [x] **Step 5: Commit the exact Task 3 files** with `docs: expose and verify measurement quality semantics`, preserving hooks.
 
 ## Focused static checks
 
@@ -138,7 +138,7 @@ uv run --locked --all-groups ty check
 
 ## Stable closeout and gate evidence
 
-- [ ] Perform independent review through `superpowers:requesting-code-review`; resolve findings and record exact candidate identity. Three closely coupled small tasks favor native execution plus one branch review; no execution method has been selected.
+- [ ] Perform independent review through `superpowers:requesting-code-review`; resolve findings and record exact candidate identity. Jeff selected native execution with independent whole-branch review on November 1.
 - [ ] Use canonical `gzs-quality-gate`/`gzs-repository-hygiene` with the project adapter. Adding a shipped semantic package changes package layout, so run the full offline hygiene command once at stable closeout:
 
 ```powershell
@@ -172,3 +172,10 @@ Intent: approved design's separate evidence axes and exact public ownership. Sco
 | Error context, installed surface and required verification | Aligned | Task 2 precedence/path cases; Task 3 smoke; stable closeout |
 
 **Draft audit verdict:** PASS for scoped planning alignment; no missing or drifted scoped requirement identified. The private helper boundary is an implementation choice presented for approval, not a specification amendment. Plan approval, execution selection, implementation, independent review and delivery gates remain pending.
+
+## Execution rulings
+
+- Installed module inventory updates moved to the module-producing tasks so every intermediate commit can pass mandatory full-suite hooks.
+- Task 1 also updates the wheel/sdist directory lists in `tests/test_release_tool.py`; their hard-coded fixture inventory lacked the new measurements directory. The runtime release validator stays unchanged.
+- Native checkout CRLF-only differences were restored to exact indexed bytes, preserving all intentional byte fixtures and provenance hashes. This changes no committed baseline content.
+- The exact sixteen-item test input uses equivalent tuple unpacking to satisfy Ruff; it still requires `ContractValidationError` at `/quality/15`.

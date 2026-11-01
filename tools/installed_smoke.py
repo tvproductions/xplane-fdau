@@ -223,6 +223,49 @@ def _canonical_timing_smoke() -> None:
     raise SmokeError("installed arithmetic accepted unrelated clocks")
 
 
+def _measurement_quality_smoke() -> None:
+    """Verify installed validity ownership and strict acquisition-quality inputs."""
+    import xplane_fdau.measurements as measurements
+    from xplane_fdau.contracts.errors import ContractValidationError
+    from xplane_fdau.measurements import QualityFlag, ValidityState, _quality, models
+
+    for name in ("ValidityState", "QualityFlag"):
+        if getattr(measurements, name) is not getattr(models, name):
+            raise SmokeError("installed measurement vocabulary ownership differs")
+    if tuple(state.value for state in ValidityState) != ("valid", "invalid", "unknown", "not_applicable"):
+        raise SmokeError("installed validity vocabulary differs")
+    if tuple(flag.value for flag in QualityFlag) != (
+        "conversion_failed",
+        "discontinuous",
+        "dropped",
+        "duplicate",
+        "orphaned",
+        "out_of_declared_range",
+        "precision_lost",
+        "provider_degraded",
+        "read_error",
+        "reordered",
+        "rounded",
+        "saturated",
+        "stale",
+        "type_mismatch",
+        "unavailable",
+    ):
+        raise SmokeError("installed acquisition-quality vocabulary differs")
+    if _quality._validity_state("unknown") is not ValidityState.UNKNOWN or _quality._quality_flags(()) != ():
+        raise SmokeError("installed quality validation changed explicit unknown or empty quality")
+    if _quality._quality_flags(("rounded", "stale")) != (QualityFlag.ROUNDED, QualityFlag.STALE):
+        raise SmokeError("installed quality validation changed ordered flags")
+    for noncanonical in (("stale", "rounded"), ("stale", "stale")):
+        try:
+            _quality._quality_flags(noncanonical)
+        except ContractValidationError as error:
+            if error.path != "/quality/1":
+                raise SmokeError("installed quality rejection lost its item path") from error
+        else:
+            raise SmokeError("installed quality validation accepted noncanonical flags")
+
+
 def smoke(version: str, *, checkout: Path) -> None:
     """Exercise the installed public API, schema, FDR files, and CLI commands."""
     import xplane_fdau
@@ -244,6 +287,7 @@ def smoke(version: str, *, checkout: Path) -> None:
     _canonical_identity_smoke()
     _canonical_values_smoke()
     _canonical_timing_smoke()
+    _measurement_quality_smoke()
     schema = importlib.resources.files("xplane_fdau.formats.xplane_fdr").joinpath("schemas/fdr-record-config-v1.schema.json")
     if not schema.is_file() or '"$schema"' not in schema.read_text(encoding="utf-8"):
         raise SmokeError("installed schema resource is unavailable or invalid")

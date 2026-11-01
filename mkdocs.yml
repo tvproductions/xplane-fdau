@@ -28,6 +28,7 @@ nav:
   - Reference:
       - Native FDR API: reference/native-fdr.md
       - Canonical timing: reference/contracts-timing.md
+      - Measurement quality: reference/measurement-quality.md
 
 validation:
   omitted_files: ignore

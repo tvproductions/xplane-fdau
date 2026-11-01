@@ -2,17 +2,20 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import cast
 
 from ..contracts.errors import ContractShapeError
-from ..contracts.values import _OMITTED, _ordered_array
+from ..contracts.provenance import Authority, ProvenanceSource, _authority_wire, _provenance_source_wire
+from ..contracts.values import _OMITTED, PayloadSpec, RepresentationSpec, UnitSpec, _ordered_array, _representation_spec_wire, _unit_spec_wire
 from ._definition_validation import (
     _coordinate_header,
     _validate_applicability_fields,
     _validate_axis_fields,
     _validate_coordinates_fields,
+    _validate_definition_fields,
     _validate_enumeration_fields,
     _validate_enumeration_member_fields,
     _validate_freshness_fields,
@@ -33,6 +36,7 @@ __all__ = [  # noqa: RUF022 -- specification ownership order
     "EnumerationSpec",
     "FreshnessSpec",
     "ApplicabilitySelector",
+    "MeasurementDefinition",
 ]
 
 
@@ -228,3 +232,133 @@ class ApplicabilitySelector:
         fields = {"class_id": self.class_id, "value": self.value}
         for phase in range(3):
             _validate_applicability_fields(fields, phase)
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class MeasurementDefinition:
+    """Complete immutable meaning of one revision of a measurement."""
+
+    definition_id: str
+    definition_revision: int
+    authority: Authority
+    provenance: Sequence[ProvenanceSource]
+    title: str
+    description: str
+    limitations: Sequence[str]
+    quantity_id: str
+    representation: RepresentationSpec
+    unit: UnitSpec
+    coordinates: CoordinateSpec
+    freshness: FreshnessSpec
+    interpolation_policy: InterpolationPolicy | str
+    discontinuity_policy: DiscontinuityPolicy | str
+    allowed_validity: Sequence[ValidityState | str]
+    allowed_quality: Sequence[QualityFlag | str]
+    sensitivity: Sensitivity | str
+    applicability: Sequence[ApplicabilitySelector]
+    numeric: object = _OMITTED
+    enumeration: object = _OMITTED
+
+    def __post_init__(self) -> None:
+        # Copy only supported ordered containers; never consume arbitrary iterables.
+        for name, value in (
+            ("provenance", self.provenance),
+            ("limitations", self.limitations),
+            ("allowed_validity", self.allowed_validity),
+            ("allowed_quality", self.allowed_quality),
+            ("applicability", self.applicability),
+        ):
+            if type(value) in (list, tuple):
+                object.__setattr__(self, name, tuple(value))
+        fields = _definition_fields(self)
+        for phase in range(3):
+            _validate_definition_fields(fields, phase)
+        object.__setattr__(self, "interpolation_policy", InterpolationPolicy(self.interpolation_policy))
+        object.__setattr__(self, "discontinuity_policy", DiscontinuityPolicy(self.discontinuity_policy))
+        object.__setattr__(self, "sensitivity", Sensitivity(self.sensitivity))
+        object.__setattr__(self, "allowed_validity", tuple(ValidityState(item) for item in self.allowed_validity))
+        object.__setattr__(self, "allowed_quality", tuple(QualityFlag(item) for item in self.allowed_quality))
+
+
+def _unowned(value: object) -> object:
+    """Retain null for its domain phase; reject raw model substitutes at shape."""
+    return None if value is None else object()
+
+
+def _definition_fields(value: MeasurementDefinition) -> dict[str, object]:
+    """Project owned nested models explicitly without constructing replacements."""
+    authority = _authority_wire(value.authority) if type(value.authority) is Authority else _unowned(value.authority)
+    provenance: object = value.provenance
+    if type(provenance) is tuple:
+        provenance = tuple(_provenance_source_wire(item) if type(item) is ProvenanceSource else _unowned(item) for item in provenance)
+    representation: object = _unowned(value.representation)
+    if type(value.representation) is RepresentationSpec:
+        representation = _representation_spec_wire(value.representation)
+        if value.representation.payload is not _OMITTED and type(value.representation.payload) is not PayloadSpec:
+            representation["payload"] = _unowned(value.representation.payload)
+    unit = _unit_spec_wire(value.unit) if type(value.unit) is UnitSpec else _unowned(value.unit)
+    coordinates: object = _unowned(value.coordinates)
+    if type(value.coordinates) is CoordinateSpec:
+        coordinates = cast(dict[str, object], {"kind": value.coordinates.kind})
+        for name, child in (
+            ("reference_frame_id", value.coordinates.reference_frame_id),
+            ("datum_id", value.coordinates.datum_id),
+            ("handedness", value.coordinates.handedness),
+        ):
+            if child is not _OMITTED:
+                coordinates[name] = child
+        if value.coordinates.axes is not _OMITTED:
+            coordinates["axes"] = tuple(
+                {"axis_id": axis.axis_id, "direction": axis.direction, "sign_convention": axis.sign_convention}
+                for axis in cast(tuple[AxisSpec, ...], value.coordinates.axes)
+            )
+    freshness: object = _unowned(value.freshness)
+    if type(value.freshness) is FreshnessSpec:
+        freshness = {
+            name: child
+            for name, child in (("fresh_for_ns", value.freshness.fresh_for_ns), ("stale_after_ns", value.freshness.stale_after_ns))
+            if child is not _OMITTED
+        }
+    applicability: object = value.applicability
+    if type(applicability) is tuple:
+        applicability = tuple(
+            {"class_id": item.class_id, "value": item.value} if type(item) is ApplicabilitySelector else _unowned(item) for item in applicability
+        )
+    fields = dict(
+        definition_id=value.definition_id,
+        definition_revision=value.definition_revision,
+        authority=authority,
+        provenance=provenance,
+        title=value.title,
+        description=value.description,
+        limitations=value.limitations,
+        quantity_id=value.quantity_id,
+        representation=representation,
+        unit=unit,
+        coordinates=coordinates,
+        freshness=freshness,
+        interpolation_policy=value.interpolation_policy,
+        discontinuity_policy=value.discontinuity_policy,
+        allowed_validity=value.allowed_validity,
+        allowed_quality=value.allowed_quality,
+        sensitivity=value.sensitivity,
+        applicability=applicability,
+    )
+    if value.numeric is not _OMITTED:
+        numeric: object = _unowned(value.numeric)
+        if type(value.numeric) is NumericSpec:
+            numeric = cast(dict[str, object], {"storage_precision_bits": value.numeric.storage_precision_bits, "resolution": value.numeric.resolution})
+            for name, child in (("minimum", value.numeric.minimum), ("maximum", value.numeric.maximum)):
+                if child is not _OMITTED:
+                    numeric[name] = child
+        fields["numeric"] = numeric
+    if value.enumeration is not _OMITTED:
+        enumeration: object = _unowned(value.enumeration)
+        if type(value.enumeration) is EnumerationSpec:
+            enumeration = {
+                "members": tuple(
+                    {"code": item.code, "label": item.label, "kind": item.kind} for item in cast(tuple[EnumerationMember, ...], value.enumeration.members)
+                )
+            }
+        fields["enumeration"] = enumeration
+    return fields

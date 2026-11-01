@@ -176,3 +176,268 @@ def _validate_applicability_fields(fields: Mapping[str, object], phase: int, *, 
     _fields(fields, ("class_id", "value"), (), path=path)
     _text_field(_required(fields, "class_id", path=path), phase, path=f"{path}/class_id")
     _text_field(_required(fields, "value", path=path), phase, path=f"{path}/value", maximum=256)
+
+
+_DEFINITION_REQUIRED = (
+    "definition_id",
+    "definition_revision",
+    "authority",
+    "provenance",
+    "title",
+    "description",
+    "limitations",
+    "quantity_id",
+    "representation",
+    "unit",
+    "coordinates",
+    "freshness",
+    "interpolation_policy",
+    "discontinuity_policy",
+    "allowed_validity",
+    "allowed_quality",
+    "sensitivity",
+    "applicability",
+)
+_DEFINITION_ORDER = (*_DEFINITION_REQUIRED[:11], "numeric", "enumeration", *_DEFINITION_REQUIRED[11:])
+
+
+def _validate_authority_fields(fields: Mapping[str, object], phase: int, *, path: str) -> None:
+    from ..contracts._identity_validation import _revision
+
+    _fields(fields, ("authority_id", "authority_revision"), (), path=path)
+    _text_field(_required(fields, "authority_id", path=path), phase, path=f"{path}/authority_id")
+    value = _required(fields, "authority_revision", path=path)
+    _scalar_check(value, "integer", min(phase, 1), path=f"{path}/authority_revision")
+    if phase == 2:
+        _revision(value, path=f"{path}/authority_revision")
+
+
+def _validate_provenance_fields(fields: Mapping[str, object], phase: int, *, path: str, identities: set[object]) -> None:
+    from ..contracts._identity_validation import _revision, _sha256, _version_text
+
+    _fields(fields, ("source_id", "scope"), ("source_revision", "source_version", "locator", "sha256"), path=path)
+    for name, maximum in (("source_id", None), ("scope", 1024), ("source_revision", None), ("source_version", 128), ("locator", 2048), ("sha256", 64)):
+        if name not in fields and name not in ("source_id", "scope"):
+            continue
+        value = _required(fields, name, path=path)
+        child_path = f"{path}/{name}"
+        if name == "source_revision":
+            _scalar_check(value, "integer", min(phase, 1), path=child_path)
+            if phase == 2:
+                _revision(value, path=child_path)
+        else:
+            _text_field(value, phase, path=child_path, maximum=maximum)
+            if phase == 2 and name == "source_version":
+                _version_text(value, path=child_path)
+            if phase == 2 and name == "sha256":
+                _sha256(value, path=child_path)
+        if phase == 2 and name == "scope" and "source_revision" not in fields and "source_version" not in fields:
+            raise ContractValidationError("provenance requires revision or version", path=f"{path}/source_revision")
+        if phase == 2 and name == "source_version" and "source_revision" in fields:
+            raise ContractValidationError("provenance cannot have revision and version", path=child_path)
+        if phase == 2 and ((name == "source_revision" and "source_version" not in fields) or (name == "source_version" and "source_revision" not in fields)):
+            key = (fields["source_id"], name, value)
+            if key in identities:
+                raise ContractValidationError("duplicate provenance identity", path=path)
+            identities.add(key)
+
+
+def _validate_representation_fields(fields: Mapping[str, object], phase: int, *, path: str) -> None:
+    from ..contracts.values import ScalarRepresentation, ValueRepresentation, _array_set_check
+
+    inventory = ("element_representation", "length", "minimum_length", "maximum_length", "payload")
+    _fields(fields, ("kind",), inventory, path=path)
+    kind = _required(fields, "kind", path=path)
+    if not _null(kind, phase, path=f"{path}/kind"):
+        kind = _tag(kind, ValueRepresentation, path=f"{path}/kind")
+    selected = {
+        "vector": ("length",),
+        "fixed_array": ("element_representation", "length"),
+        "variable_array": ("element_representation", "minimum_length", "maximum_length"),
+        "referenced_bytes": ("payload",),
+    }.get(cast(str, kind), ())
+    for name in inventory:
+        child_path = f"{path}/{name}"
+        if kind is not None:
+            if name not in selected:
+                if name in fields:
+                    raise ContractShapeError("irrelevant representation property", path=child_path)
+                continue
+            value = _required(fields, name, path=path)
+        elif name in fields:
+            value = fields[name]
+        else:
+            continue
+        if _null(value, phase, path=child_path):
+            continue
+        if name == "element_representation":
+            _tag(value, ScalarRepresentation, path=child_path)
+        elif name == "payload":
+            payload = cast(Mapping[str, object], value)
+            _fields(payload, ("allowed_media_types", "allowed_storage_roles"), (), path=child_path)
+            for prop in ("allowed_media_types", "allowed_storage_roles"):
+                _array_set_check(_required(payload, prop, path=child_path), phase, path=f"{child_path}/{prop}", media=prop == "allowed_media_types")
+        else:
+            _scalar_check(value, "integer", min(phase, 1), path=child_path)
+            if phase == 2:
+                length = _counter(value, path=child_path)
+                if not (1 if name == "length" else 0) <= length <= (1024 if kind == "vector" else 65535):
+                    raise ContractValidationError("declared length outside range", path=child_path)
+                if name == "minimum_length" and length > cast(int, fields["maximum_length"]):
+                    raise ContractValidationError("minimum exceeds maximum length", path=child_path)
+
+
+def _validate_unit_fields(fields: Mapping[str, object], phase: int, *, path: str, definition: Mapping[str, object]) -> None:
+    _fields(fields, ("kind",), ("quantity_id", "unit_id"), path=path)
+    kind = _required(fields, "kind", path=path)
+    if not _null(kind, phase, path=f"{path}/kind"):
+        kind = _choice(kind, ("unitless", "unit"), path=f"{path}/kind")
+    for name in ("quantity_id", "unit_id"):
+        if kind == "unitless" and name in fields:
+            raise ContractShapeError("irrelevant unit property", path=f"{path}/{name}")
+        if kind == "unit" or name in fields:
+            _text_field(_required(fields, name, path=path), phase, path=f"{path}/{name}")
+            if phase == 2 and name == "quantity_id" and fields[name] != definition["quantity_id"]:
+                raise ContractValidationError("unit quantity differs from definition", path=f"{path}/{name}")
+
+
+def _definition_collection(value: object, name: str, phase: int, *, path: str) -> None:
+    from .models import QualityFlag, ValidityState
+
+    if _null(value, phase, path=path):
+        return
+    items = _ordered_array(value, path=path)
+    if name in ("provenance", "limitations", "applicability") and len(items) > 256:
+        raise ContractShapeError("collection exceeds shape limit", path=path)
+    if phase == 2 and name in ("provenance", "allowed_validity") and not items:
+        raise ContractValidationError("collection must be nonempty", path=path)
+    seen: set[object] = set()
+    previous: str | None = None
+    for index, item in enumerate(items):
+        child_path = f"{path}/{index}"
+        if _null(item, phase, path=child_path):
+            continue
+        key: object = item
+        if name == "limitations":
+            _text_field(item, phase, path=child_path, maximum=1024)
+        elif name in ("allowed_validity", "allowed_quality"):
+            key = _tag(item, ValidityState if name == "allowed_validity" else QualityFlag, path=child_path)
+        else:
+            fields = cast(Mapping[str, object], item)
+            if name == "provenance":
+                _validate_provenance_fields(fields, phase, path=child_path, identities=seen)
+            else:
+                if phase == 2:
+                    # Identity ordering is checked at class_id before the later value.
+                    _fields(fields, ("class_id", "value"), (), path=child_path)
+                    class_id = _identifier(_required(fields, "class_id", path=child_path), path=f"{child_path}/class_id")
+                    if previous is not None and previous >= class_id:
+                        raise ContractValidationError("applicability classes must be unique and ordered", path=f"{child_path}/class_id")
+                    previous = class_id
+                _validate_applicability_fields(fields, phase, path=child_path)
+        if phase == 2 and name not in ("applicability", "provenance"):
+            if key in seen:
+                raise ContractValidationError("duplicate collection item", path=child_path)
+            seen.add(key)
+            if name in ("allowed_validity", "allowed_quality"):
+                current = str(key)
+                if previous is not None and previous >= current:
+                    raise ContractValidationError("array set must be lexically ordered", path=child_path)
+                previous = current
+
+
+def _validate_definition_fields(fields: Mapping[str, object], phase: int, *, path: str = "") -> None:
+    """Validate one plain entry phase without constructing any public model."""
+    from ..contracts._identity_validation import _revision
+    from .models import DiscontinuityPolicy, InterpolationPolicy, Sensitivity
+
+    _fields(fields, _DEFINITION_REQUIRED, ("numeric", "enumeration"), path=path)
+    for name in _DEFINITION_ORDER:
+        if name not in fields and name in ("numeric", "enumeration"):
+            if phase == 2:
+                _definition_cross_field(fields, name, path=path)
+            continue
+        value = _required(fields, name, path=path)
+        child_path = f"{path}/{name}"
+        if _null(value, phase, path=child_path):
+            continue
+        if name in ("definition_id", "quantity_id", "title", "description"):
+            _text_field(value, phase, path=child_path, maximum={"title": 256, "description": 4096}.get(name))
+        elif name == "definition_revision":
+            _scalar_check(value, "integer", min(phase, 1), path=child_path)
+            if phase == 2:
+                _revision(value, path=child_path)
+        elif name in ("provenance", "limitations", "allowed_validity", "allowed_quality", "applicability"):
+            _definition_collection(value, name, phase, path=child_path)
+        elif name in ("interpolation_policy", "discontinuity_policy", "sensitivity"):
+            _tag(
+                value,
+                {"interpolation_policy": InterpolationPolicy, "discontinuity_policy": DiscontinuityPolicy, "sensitivity": Sensitivity}[name],
+                path=child_path,
+            )
+        else:
+            nested = cast(Mapping[str, object], value)
+            if phase == 2 and name in ("numeric", "enumeration"):
+                _definition_cross_field(fields, name, path=path)
+            if phase == 2 and name == "coordinates":
+                _coordinate_header(nested, phase, path=child_path)
+                _definition_cross_field(fields, name, path=path)
+            if name == "unit":
+                if phase == 2:
+                    _definition_cross_field(fields, name, path=path)
+                _validate_unit_fields(nested, phase, path=child_path, definition=fields)
+            elif name == "numeric":
+                _definition_numeric_fields(fields, nested, phase, path=child_path)
+            else:
+                validators = {
+                    "authority": _validate_authority_fields,
+                    "representation": _validate_representation_fields,
+                    "coordinates": _validate_coordinates_fields,
+                    "enumeration": _validate_enumeration_fields,
+                    "freshness": _validate_freshness_fields,
+                }
+                validators[name](nested, phase, path=child_path)
+        if phase == 2 and name == "interpolation_policy":
+            _definition_cross_field(fields, name, path=path)
+
+
+def _definition_numeric_fields(fields: Mapping[str, object], numeric: Mapping[str, object], phase: int, *, path: str) -> None:
+    _fields(numeric, ("storage_precision_bits", "resolution"), ("minimum", "maximum"), path=path)
+    _scalar_check(_required(numeric, "storage_precision_bits", path=path), "integer", min(phase, 1), path=f"{path}/storage_precision_bits")
+    representation = fields.get("representation")
+    kind = representation.get("kind") if isinstance(representation, Mapping) else None
+    scalar = representation.get("element_representation") if isinstance(representation, Mapping) and kind in ("fixed_array", "variable_array") else kind
+    if scalar not in ("integer", "real", "vector") or phase == 2:
+        _validate_numeric_fields(numeric, phase, path=path)
+        return
+    for name in ("resolution", "minimum", "maximum"):
+        if name == "resolution" or name in numeric:
+            _scalar_check(_required(numeric, name, path=path), "integer" if scalar == "integer" else "real", phase, path=f"{path}/{name}")
+
+
+def _definition_cross_field(fields: Mapping[str, object], name: str, *, path: str) -> None:
+    representation = cast(Mapping[str, object], fields["representation"])
+    kind = representation["kind"]
+    scalar = representation.get("element_representation") if kind in ("fixed_array", "variable_array") else kind
+    numeric = scalar in ("integer", "real", "vector")
+    child_path = f"{path}/{name}"
+    if name == "unit":
+        unit = cast(Mapping[str, object], fields["unit"])
+        if not numeric and unit["kind"] != "unitless":
+            raise ContractValidationError("representation requires unitless", path=child_path)
+    elif name == "coordinates":
+        coordinates = cast(Mapping[str, object], fields["coordinates"])
+        if coordinates["kind"] == "applicable":
+            count = len(cast(tuple[object, ...], coordinates["axes"]))
+            if (kind == "vector" and count != representation["length"]) or (kind != "vector" and count > 1):
+                raise ContractValidationError("coordinate axis count differs from representation", path=f"{child_path}/axes")
+    elif name in ("numeric", "enumeration"):
+        needed = numeric if name == "numeric" else scalar == "enumeration"
+        if (name in fields) != needed:
+            raise ContractValidationError("missing or irrelevant representation metadata", path=child_path)
+    elif (
+        name == "interpolation_policy"
+        and fields[name] == "linear"
+        and not (kind in ("real", "vector") or (kind in ("fixed_array", "variable_array") and numeric))
+    ):
+        raise ContractValidationError("linear interpolation is incompatible", path=child_path)

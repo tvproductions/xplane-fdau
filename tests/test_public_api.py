@@ -73,6 +73,7 @@ class PublicAPITests(unittest.TestCase):
             "EnumerationSpec",
             "FreshnessSpec",
             "ApplicabilitySelector",
+            "MeasurementDefinition",
         ]
         self.assertEqual(names, models.__all__)
         self.assertEqual(names, measurements.__all__)
@@ -81,6 +82,7 @@ class PublicAPITests(unittest.TestCase):
             self.assertEqual("xplane_fdau.measurements.models", getattr(models, name).__module__)
             self.assertNotIn(name, contracts.__all__)
             self.assertFalse(hasattr(contracts, name))
+            self.assertFalse(hasattr(xplane_fdau, name))
         self.assertEqual(["__version__"], xplane_fdau.__all__)
 
     def test_timing_exports_have_exact_ownership_and_package_identity(self) -> None:
@@ -155,6 +157,7 @@ class PublicAPITests(unittest.TestCase):
         for name in ("definition_ref", "record_ref", "compute_content_hash", "MeasurementCatalog", "RawObservation", "MeasurementFrame", "load_record"):
             with self.subTest(name=name):
                 self.assertFalse(hasattr(contracts, name))
+            self.assertFalse(hasattr(xplane_fdau, name))
         root = Path(__file__).parents[1] / "src/xplane_fdau/contracts"
         self.assertFalse((root / "schemas").exists())
         self.assertFalse((root / "fixtures").exists())

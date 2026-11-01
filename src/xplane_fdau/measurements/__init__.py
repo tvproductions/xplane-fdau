@@ -10,6 +10,7 @@ from .models import (
     EnumerationSpec,
     FreshnessSpec,
     InterpolationPolicy,
+    MeasurementDefinition,
     NumericSpec,
     QualityFlag,
     Sensitivity,
@@ -30,4 +31,5 @@ __all__ = [  # noqa: RUF022 -- specification ownership order
     "EnumerationSpec",
     "FreshnessSpec",
     "ApplicabilitySelector",
+    "MeasurementDefinition",
 ]

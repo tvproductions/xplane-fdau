@@ -1,11 +1,11 @@
 # C2.1 Measurement Definition Implementation Plan
 
 - **Governance:** active
-- **Status:** approved
+- **Status:** in_progress
 - **Date:** 2026-11-01
 - **Roadmap child:** `C2.1`
 - **Source specification:** `docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md`
-- **Approval:** 2026-11-01 — Jeff / tvproductions; plan approved in chat; execution method pending
+- **Approval:** 2026-11-01 — Jeff / tvproductions; plan approved in chat; subagent-driven execution selected in chat
 - **Completion evidence:** —
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -28,7 +28,7 @@
 - “The root `xplane_fdau.__init__` continues to export only `__version__`.” Export only names delivered by this child from owning packages; no later model shells.
 - Runtime is pure Python and standard-library-only; support remains `>=3.12,<3.13`. Execute through locked all-group uv and the exact `.python-version` selection (currently 3.12.16). Use unittest only; preserve mandatory hooks.
 - No stock catalog entries, provider resource identities, transforms, acquisition, sample validation, simulator I/O, recording, ARINC or FDM implementation. No public definition-entry loader, dynamic serializer registry, caller-code hook, or new contract family.
-- Jeff approved this plan on November 1 and separately requested a fresh handoff and ordinary Git sync. Record only the approved/planned checkpoint; no child is selected and no implementation or delivery gate is started. Execution method remains pending. Release retains separate authorization.
+- Jeff approved this plan and subsequently selected subagent-driven execution on November 1. Execute only C2.1 in its isolated worktree. Local task commits and independent reviews are authorized; integration, further remote sync and release retain separate authorization.
 
 ## Review Focus
 
@@ -71,9 +71,9 @@ Do not edit contracts, schemas, packaging metadata, lockfiles, native FDR, other
 ## Approval checkpoint and execution entry
 
 - [x] Record explicit plan approval: November 1 — Jeff / tvproductions approved the reviewed plan and requested a fresh handoff and ordinary Git sync. This approves the plan; execution choice remains pending.
-- [ ] Obtain the execution choice before starting implementation. Recheck relevant authority, plugin sources, HEAD, worktrees, clean baseline and audit/next. Stop on findings or authority drift. Do not ask for plan approval again solely because the session changed.
-- [ ] Use `superpowers:using-git-worktrees` to create a temporary C2.1 branch/worktree from the synced approved-plan baseline. Do not stash, discard or absorb unrelated changes.
-- [ ] After the execution choice, use backlog dry-run/digest/apply commands to select only C2.1 and transition planned → in_progress. The approval checkpoint links this plan and transitions specified → planned without selecting a child. Inspect every proposed diff and audit. No gate is recorded at entry.
+- [x] Obtain the execution choice before starting implementation. Recheck relevant authority, plugin sources, HEAD, worktrees, clean baseline and audit/next. Stop on findings or authority drift. Do not ask for plan approval again solely because the session changed.
+- [x] Use `superpowers:using-git-worktrees` to create a temporary C2.1 branch/worktree from the synced approved-plan baseline. Do not stash, discard or absorb unrelated changes.
+- [x] After the execution choice, use backlog dry-run/digest/apply commands to select only C2.1 and transition planned → in_progress. The approval checkpoint links this plan and transitions specified → planned without selecting a child. Inspect every proposed diff and audit. No gate is recorded at entry.
 
 ## Task 1: Deliver supporting measurement semantics
 
@@ -216,4 +216,8 @@ The initial self-review PASS was withdrawn after the subsequent plan review iden
 | Model-only validators cannot stage a raw entry before construction | Replace their signatures with plain field-mapping validators; define raw shape/domain/hash/semantic/build interfaces and their exact sequence. | Task 3's competing-error tests and patched-build barrier |
 | Optional definition parameters preceded required parameters | Declare every required parameter first, then numeric/enumeration; retain the separate semantic validation inventory. | Task 2's signature inspection and independent validation-order tests |
 
-Gap list: none within C2.1's four gates after this revision. Planning verdict: **PASS for C2.1 coverage and scope**; Jeff approved the corrected plan on November 1. Execution choice remains pending. Shared public convenience API integration is explicitly deferred, not resolved for the whole C1–C4 design or claimed delivered by this plan. No architecture exception or delivery acceptance is claimed. Self-review checked interface consistency, removed obsolete dispatch edits/tests/examples, semantic/domain precedence, cached-slot compatibility, and all five Review Focus tests.
+Gap list: none within C2.1's four gates after this revision. Planning verdict: **PASS for C2.1 coverage and scope**; Jeff approved the corrected plan on November 1. Jeff selected subagent-driven execution on November 1. Shared public convenience API integration is explicitly deferred, not resolved for the whole C1–C4 design or claimed delivered by this plan. No architecture exception or delivery acceptance is claimed. Self-review checked interface consistency, removed obsolete dispatch edits/tests/examples, semantic/domain precedence, cached-slot compatibility, and all five Review Focus tests.
+
+## Execution record
+
+November 1: subagent-driven execution authorized. Worktree `C:/Users/Jeff/.codex/worktrees/cfdf/xplane-fdau`, branch `feature/c2-1-measurement-definition`, base `0019d129b5eb20922d39709b7443a171139e59b6`. The plan-scoped ledger is `.superpowers/sdd/2026-11-01-c2-1-measurement-definition/progress.md`. Preflight moves only new-module inventory expectations from Task 4 into Tasks 1 and 3 alongside their modules, so mandatory commit hooks remain green; smoke behavior and documentation remain Task 4. Native checkout newline-only differences were repaired to exact indexed Markdown bytes with an unchanged Git tree and a clean audit. Focused baseline: 74 tests passed.

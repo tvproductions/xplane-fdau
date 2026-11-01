@@ -59,7 +59,21 @@ class PublicAPITests(unittest.TestCase):
         import xplane_fdau.measurements as measurements
         from xplane_fdau.measurements import models
 
-        names = ["ValidityState", "QualityFlag"]
+        names = [
+            "ValidityState",
+            "QualityFlag",
+            "EnumerationMemberKind",
+            "InterpolationPolicy",
+            "DiscontinuityPolicy",
+            "Sensitivity",
+            "AxisSpec",
+            "CoordinateSpec",
+            "NumericSpec",
+            "EnumerationMember",
+            "EnumerationSpec",
+            "FreshnessSpec",
+            "ApplicabilitySelector",
+        ]
         self.assertEqual(names, models.__all__)
         self.assertEqual(names, measurements.__all__)
         for name in names:

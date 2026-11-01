@@ -131,6 +131,7 @@ class InstalledSmokeTests(unittest.TestCase):
             "xplane_fdau.measurements",
             "xplane_fdau.measurements.models",
             "xplane_fdau.measurements._quality",
+            "xplane_fdau.measurements._definition_validation",
             "xplane_fdau.formats",
             "xplane_fdau.formats.xplane_fdr",
             "xplane_fdau.formats.xplane_fdr.config",

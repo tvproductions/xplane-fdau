@@ -181,7 +181,7 @@ uv run --offline --frozen --all-groups python .codex/skills/hygiene/scripts/hygi
 
 - [x] Run the release skill's existing external Python 3.12 installed-wheel smoke on the exact validated wheel because installed imports changed. Record wheel/sdist hashes, Python version, import origins and result. No broader Python-minor matrix or release-readiness claim.
 - [x] Record four gate receipts under `.superpowers/sdd/2026-11-01-c2-1-definition/`: gate 1 representation/unit/coordinate/numeric/enum matrix (Tasks 1–2); gate 2 explicit metadata/policies/provenance (Tasks 1–2); gate 3 irrelevant fields and exact semantic identity mismatch rejection (Tasks 2–3); gate 4 immutable hash-stable synthetic round trips (Tasks 3–4). Keep failures and corrections visible. Commit evidence only when it exists.
-- [ ] Through guarded backlog operations advance only C2.1 to implemented/reviewed/verified when review and committed gates justify each transition. Complete plan tracking and completion evidence; do not claim C2.2 schema/catalog delivery.
+- [x] Through guarded backlog operations advance only C2.1 to implemented/reviewed/verified when review and committed gates justify each transition. Complete plan tracking and completion evidence; do not claim C2.2 schema/catalog delivery.
 - [ ] Use `superpowers:finishing-a-development-branch` and obtain the user's integration choice. If local integration is selected, follow AGENTS.md's exact fast-forward procedure and hygiene's focused main checks; keep branch/worktree until main verification passes, then remove them. Remote sync, tagging and publication retain separate authorization.
 
 ## Planning audit
@@ -220,7 +220,7 @@ Gap list: none within C2.1's four gates after this revision. Planning verdict: *
 
 ## Execution record
 
-November 1: subagent-driven execution authorized. Worktree `C:/Users/Jeff/.codex/worktrees/cfdf/xplane-fdau`, branch `feature/c2-1-measurement-definition`, base `0019d129b5eb20922d39709b7443a171139e59b6`. The plan-scoped ledger is `.superpowers/sdd/2026-11-01-c2-1-measurement-definition/progress.md`. Preflight moves only new-module inventory expectations from Task 4 into Tasks 1 and 3 alongside their modules, so mandatory commit hooks remain green; smoke behavior and documentation remain Task 4. Native checkout newline-only differences were repaired to exact indexed Markdown bytes with an unchanged Git tree and a clean audit. Focused baseline: 74 tests passed.
+November 1: subagent-driven execution authorized. Worktree `C:/Users/Jeff/.codex/worktrees/cfdf/xplane-fdau`, branch `feature/c2-1-measurement-definition`, base `0019d129b5eb20922d39709b7443a171139e59b6`. The plan-scoped ledger is preserved locally at `.superpowers/sdd/2026-11-01-c2-1-definition/execution/progress.md` after closeout archive verification. Preflight moves only new-module inventory expectations from Task 4 into Tasks 1 and 3 alongside their modules, so mandatory commit hooks remain green; smoke behavior and documentation remain Task 4. Native checkout newline-only differences were repaired to exact indexed Markdown bytes with an unchanged Git tree and a clean audit. Focused baseline: 74 tests passed.
 
 ## Verification closeout
 

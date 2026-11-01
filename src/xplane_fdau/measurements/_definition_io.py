@@ -114,11 +114,23 @@ def _plain(value: object, *, stem: str = "definition", tokens: bool = True) -> o
     """
     pending: list[tuple[object, str, bool]] = [(value, stem, False)]
     projected: list[object] = []
+    ancestors: set[int] = set()
     while pending:
         current, current_stem, expanded = pending.pop()
         if isinstance(current, _NumberToken):
             projected.append(current if tokens else 0.0 if current.is_real else 0)
             continue
+        original = current
+        if isinstance(current, _ObjectPairs) or type(current) in (dict, list, tuple):
+            if expanded:
+                ancestors.remove(id(current))
+            else:
+                if id(current) in ancestors:
+                    # Preserve ordinary shape order instead of raising during
+                    # projection of a later malformed cyclic subtree.
+                    projected.append(object())
+                    continue
+                ancestors.add(id(current))
         if isinstance(current, _ObjectPairs):
             current = dict(current.pairs)
         if type(current) is dict:
@@ -126,7 +138,7 @@ def _plain(value: object, *, stem: str = "definition", tokens: bool = True) -> o
             order = _ORDERS.get(current_stem, ())
             names = (*[name for name in order if name in fields], *[name for name in fields if name not in order])
             if not expanded:
-                pending.append((fields, current_stem, True))
+                pending.append((original, current_stem, True))
                 pending.extend((fields[name], name, False) for name in reversed(names))
                 continue
             children = projected[-len(names) :] if names else []
@@ -136,7 +148,7 @@ def _plain(value: object, *, stem: str = "definition", tokens: bool = True) -> o
         elif type(current) in (list, tuple):
             items = cast(list[object] | tuple[object, ...], current)
             if not expanded:
-                pending.append((items, current_stem, True))
+                pending.append((original, current_stem, True))
                 pending.extend((item, current_stem, False) for item in reversed(items))
                 continue
             children = projected[-len(items) :] if items else []
@@ -300,18 +312,30 @@ def _definition_entry_build(fields: Mapping[str, object]) -> MeasurementDefiniti
 def _duplicates(value: object, *, path: str = "") -> None:
     # Duplicate precedence requires scanning arbitrary rejected subtrees too;
     # do not impose the later canonical depth limit or use Python recursion.
-    pending: list[tuple[object, str]] = [(value, path)]
+    pending: list[tuple[object, str, bool]] = [(value, path, False)]
+    ancestors: set[int] = set()
     while pending:
-        current, current_path = pending.pop()
+        current, current_path, expanded = pending.pop()
+        if expanded:
+            ancestors.remove(id(current))
+            continue
+        if not isinstance(current, _ObjectPairs) and type(current) not in (dict, list, tuple):
+            continue
+        if id(current) in ancestors:
+            # A back-edge adds no properties to scan. Continue through every
+            # sibling for duplicate priority; shape will reject the cycle.
+            continue
+        ancestors.add(id(current))
+        pending.append((current, current_path, True))
         if isinstance(current, _ObjectPairs):
             _check_duplicates(_ObjectPairs(tuple((name, None) for name, _ in current.pairs)), source="<memory>", path=current_path)
-            pending.extend((child, _pointer(current_path, name)) for name, child in reversed(current.pairs))
+            pending.extend((child, _pointer(current_path, name), False) for name, child in reversed(current.pairs))
         elif type(current) is dict:
             members = cast(dict[str, object], current)
-            pending.extend((child, _pointer(current_path, str(name))) for name, child in reversed(tuple(members.items())))
+            pending.extend((child, _pointer(current_path, str(name)), False) for name, child in reversed(tuple(members.items())))
         elif type(current) in (list, tuple):
             items = cast(list[object] | tuple[object, ...], current)
-            pending.extend((items[index], f"{current_path}/{index}") for index in range(len(items) - 1, -1, -1))
+            pending.extend((items[index], f"{current_path}/{index}", False) for index in range(len(items) - 1, -1, -1))
 
 
 def _measurement_definition_from_wire(value: object, *, path: str = "", source: str = "<memory>") -> MeasurementDefinition:

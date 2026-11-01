@@ -8,6 +8,7 @@ import inspect
 import json
 import subprocess
 import sys
+import textwrap
 import unittest
 from pathlib import Path
 from types import MappingProxyType
@@ -290,6 +291,22 @@ class MeasurementDefinitionIOTests(unittest.TestCase):
         materialized = self.io._definition_entry_domains(shape)
         self.assertIs(type(cast(dict[str, object], materialized["numeric"])["resolution"]), float)
 
+    def test_null_numeric_resolution_constructor_reader_parity(self) -> None:
+        base: dict[str, Any] = json.loads(ENTRY)
+        for bound in ("minimum", "maximum"):
+            fields: dict[str, Any] = dict(storage_precision_bits=64, resolution=None, **{bound: 1.0})
+            wire = base | {"representation": {"kind": "real"}, "numeric": fields}
+            with self.subTest(bound=bound):
+                with self.assertRaises(FDAUContractError) as caught:
+                    models.NumericSpec(**fields)
+                self.assertIs(type(caught.exception), CanonicalJSONError)
+                self.assertEqual("/resolution", caught.exception.path)
+                self.assertFailure(wire, CanonicalJSONError, "/numeric/resolution")
+                self.assertFailure(wire | {"applicability": [{"class_id": "test.class"}]}, ContractShapeError, "/applicability/0/value")
+            with self.subTest(bound=bound, case="true bound shape"):
+                malformed = wire | {"numeric": fields | {bound: True}}
+                self.assertFailure(malformed, ContractShapeError, "/numeric/" + bound)
+
     def test_nested_constructor_reader_error_parity(self) -> None:
         base: dict[str, Any] = json.loads(ENTRY)
         # Each independently signed invalid entry must report the constructor's
@@ -445,6 +462,78 @@ class MeasurementDefinitionIOTests(unittest.TestCase):
             self.io._measurement_definition_from_wire({"title": plain})
         self.assertIs(type(wrong_shape.exception), ContractShapeError)
         self.assertEqual("/definition_id", cast(FDAUContractError, wrong_shape.exception).path)
+
+    def assertBoundedCycleFailure(self, operation: str, container: str, error: str, path: str) -> None:
+        code = textwrap.dedent("""\
+            import json
+            import sys
+            from xplane_fdau.contracts import FDAUContractError
+            from xplane_fdau.contracts._json_parse import _ObjectPairs
+            from xplane_fdau.measurements import _definition_io as io
+
+            operation, container, entry = sys.argv[1:]
+            cycle = {} if container == "dict" else []
+            if container == "dict":
+                cycle["title"] = cycle
+            else:
+                cycle.append(cycle)
+            value = {"title": cycle}
+            if operation == "complete":
+                value = json.loads(entry) | value
+            elif operation == "duplicate":
+                value["applicability"] = _ObjectPairs((("duplicate", 1), ("duplicate", 2)))
+            try:
+                if operation == "shape":
+                    io._definition_entry_shape(value)
+                else:
+                    io._measurement_definition_from_wire(value)
+            except FDAUContractError as error:
+                print(json.dumps([type(error).__name__, error.path]))
+            else:
+                raise AssertionError("cyclic entry accepted")
+            """)
+        # Keep nontermination isolated from the suite; context exit closes both
+        # byte pipes after every success, failure, or killed/reaped timeout.
+        with subprocess.Popen(
+            [sys.executable, "-c", code, operation, container, ENTRY.decode("ascii")],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=False,
+        ) as process:
+            try:
+                stdout, stderr = process.communicate(timeout=2)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                stdout, stderr = process.communicate()
+                self.fail(f"cyclic {container} {operation} exceeded timeout; killed and reaped: " + stderr.decode("utf-8", errors="replace"))
+            self.assertEqual(0, process.returncode, stderr.decode("utf-8", errors="replace"))
+            self.assertEqual([error, path], json.loads(stdout))
+
+    def test_cyclic_raw_containers_terminate_without_masking_earlier_shape(self) -> None:
+        for container in ("dict", "list"):
+            for operation, path in (("incomplete", "/definition_id"), ("complete", "/title"), ("shape", "/definition_id")):
+                with self.subTest(container=container, operation=operation):
+                    self.assertBoundedCycleFailure(operation, container, "ContractShapeError", path)
+
+    def test_duplicate_after_cyclic_subtree_still_has_priority(self) -> None:
+        for container in ("dict", "list"):
+            with self.subTest(container=container):
+                self.assertBoundedCycleFailure("duplicate", container, "ContractParseError", "/applicability/duplicate")
+
+    def test_repeated_acyclic_container_aliases_are_projected_and_accepted(self) -> None:
+        shared: list[object] = []
+        wire = json.loads(ENTRY) | dict(limitations=shared, allowed_quality=shared, applicability=shared)
+        loaded = self.io._measurement_definition_from_wire(wire)
+        self.assertEqual(ENTRY, self.io._measurement_definition_bytes(loaded))
+        shared.append("changed after reading")
+        self.assertEqual(ENTRY, self.io._measurement_definition_bytes(loaded))
+
+        item = {"value": [1]}
+        aliased = {"left": item, "right": item}
+        self.io._duplicates(aliased)
+        projected = self.io._plain(aliased)
+        self.assertEqual({"left": {"value": (1,)}, "right": {"value": (1,)}}, projected)
+        self.assertIsNot(cast(dict[str, object], projected)["left"], cast(dict[str, object], projected)["right"])
 
     def test_both_package_import_orders_in_fresh_processes(self) -> None:
         for order in (("contracts", "measurements"), ("measurements", "contracts")):

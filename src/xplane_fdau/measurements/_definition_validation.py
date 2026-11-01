@@ -107,11 +107,13 @@ def _validate_numeric_fields(fields: Mapping[str, object], phase: int, *, path: 
         if not 1 <= precision <= 64:
             raise ContractValidationError("storage precision outside range", path=f"{path}/storage_precision_bits")
     resolution = _required(fields, "resolution", path=path)
-    domain = "real" if type(resolution) is float else "integer"
     for name in ("resolution", "minimum", "maximum"):
         if name not in fields:
             continue
         value = fields[name]
+        # Null selects no numeric domain. Check each bound's own shape until
+        # the domain phase rejects resolution, without blaming valid bounds.
+        domain = "real" if type(value if resolution is None else resolution) is float else "integer"
         _scalar_check(value, domain, min(phase, 1), path=f"{path}/{name}")
         if phase == 2 and name == "resolution" and cast(int | float, value) <= 0:
             raise ContractValidationError("resolution must be positive", path=f"{path}/resolution")

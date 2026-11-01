@@ -151,6 +151,18 @@ class MeasurementSemanticValueTests(unittest.TestCase):
             with self.subTest(replacement=replacement):
                 self.assertContract(error, path, models.NumericSpec, **(base | replacement))
 
+    def test_null_numeric_resolution_preserves_real_bounds_and_shape_priority(self) -> None:
+        for bound in ("minimum", "maximum"):
+            with self.subTest(bound=bound):
+                with self.assertRaises(FDAUContractError) as caught:
+                    cast(Any, models.NumericSpec)(storage_precision_bits=64, resolution=None, **{bound: 1.0})
+                self.assertIs(type(caught.exception), CanonicalJSONError)
+                self.assertEqual("/resolution", caught.exception.path)
+            for malformed in (True, "1", [], {}):
+                with self.subTest(bound=bound, malformed=malformed):
+                    self.assertContract(ContractShapeError, "/" + bound, models.NumericSpec, storage_precision_bits=64, resolution=None, **{bound: malformed})
+        self.assertContract(ContractShapeError, "/maximum", models.NumericSpec, storage_precision_bits=64, resolution=None, minimum=1.0, maximum=True)
+
     def test_enumeration_metadata_and_frozen_order(self) -> None:
         unknown = models.EnumerationMember(code="test.b", label="Unknown", kind=models.EnumerationMemberKind.UNKNOWN)
         reserved = models.EnumerationMember(code="test.c", label="Reserved", kind="reserved")

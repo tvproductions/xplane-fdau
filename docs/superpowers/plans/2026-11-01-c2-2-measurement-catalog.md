@@ -281,3 +281,18 @@ Self-review checked required-before-optional constructor order separately from s
 Pre-approval draft verification on November 1: 51 focused governance/adherence/documentation unittest checks, strict MkDocs, whitespace checks, strict backlog audit and next-action reporting passed. The first live audit caught a missing required `Completion evidence` metadata field; the header was corrected to the empty draft value and the audit passed. At that observation C2.2 was specified, 0/4 gates, with no selected child. These are planning checks, not runtime delivery evidence; no product, dependency or tool configuration changed.
 
 Approval checkpoint on November 1: Jeff approved the corrected plan, requested a fresh handoff and ordinary Git sync, and deferred implementation until after handoff. C2.2 is now planned with 0/4 gates and no selected child. Native execution was recommended because tasks share validation interfaces; no execution method has been selected. Resume from the approval/execution-entry checklist without requesting plan approval again.
+
+
+### Execution review correction — November 1
+
+The independent whole-branch review of `858a6d2..5a7976c` found one Important
+public stream defect: a short raw binary write returned apparent success with
+an incomplete document. Executor regression tests reproduced the truncation
+and missing zero/None-progress failure before correction. Dump now completes
+partial writes through memoryview slices and raises an I/O error on no progress
+or an invalid count, preserving stream ownership. Focused tests and static
+checks pass; mandatory hook/full offline hygiene and refreshed external artifact
+proof close the stable candidate. This is a correction to the existing binary
+I/O promise, not an expansion into another child. No other Critical, Important
+or Minor finding survived independent review. Shared convenience API closure
+and inherited checkout policy remain outside this child's scope as ledgered.

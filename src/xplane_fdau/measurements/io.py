@@ -71,4 +71,12 @@ def dumps_measurement_catalog_v1(value: MeasurementCatalog) -> bytes:
 
 def dump_measurement_catalog_v1(value: MeasurementCatalog, binary_file: BinaryIO) -> None:
     """Write canonical bytes, leaving ownership and I/O failures with the caller."""
-    binary_file.write(dumps_measurement_catalog_v1(value))
+    data = memoryview(dumps_measurement_catalog_v1(value))
+    offset = 0
+    while offset < len(data):
+        count = binary_file.write(data[offset:])
+        if count is None or count == 0:
+            raise BlockingIOError("binary stream made no write progress")
+        if type(count) is not int or count < 0 or count > len(data) - offset:
+            raise OSError("binary stream returned an invalid write count")
+        offset += count

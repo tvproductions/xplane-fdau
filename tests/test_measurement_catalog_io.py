@@ -327,3 +327,46 @@ class CatalogIOTests(unittest.TestCase):
                 value = catalog(definitions=[definition(**fields)])
                 self.assertEqual(value, self.loads(self.dumps(value)))
                 self.assertEqual(value.content_hash, self.loads(self.dumps(value)).content_hash)
+
+    def test_dump_completes_short_nonseekable_binary_writes(self) -> None:
+        class ShortWriter(io.RawIOBase):
+            def __init__(self) -> None:
+                super().__init__()
+                self.data = bytearray()
+
+            @override
+            def writable(self) -> bool:
+                return True
+
+            @override
+            def write(self, data: Any) -> int:
+                accepted = min(7, len(data))
+                self.data.extend(data[:accepted])
+                return accepted
+
+        stream = ShortWriter()
+        self.addCleanup(stream.close)
+        measurements.dump_measurement_catalog_v1(catalog(), cast(Any, stream))
+        self.assertEqual(GOLDEN_CATALOG, bytes(stream.data))
+        self.assertFalse(stream.closed)
+
+    def test_dump_no_progress_fails_without_closing_stream(self) -> None:
+        class NoProgress(io.RawIOBase):
+            def __init__(self, result: int | None) -> None:
+                super().__init__()
+                self.result = result
+                self.calls = 0
+
+            @override
+            def write(self, data: Any) -> int | None:
+                self.calls += 1
+                if self.calls > 1:
+                    raise AssertionError("retried a write without progress")
+                return self.result
+
+        for count in (0, None, -1, 2**31, True):
+            stream = NoProgress(count)
+            self.addCleanup(stream.close)
+            with self.subTest(count=count), self.assertRaises(OSError):
+                measurements.dump_measurement_catalog_v1(catalog(), cast(Any, stream))
+            self.assertFalse(stream.closed)

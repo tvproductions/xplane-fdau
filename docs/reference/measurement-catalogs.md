@@ -82,7 +82,8 @@ The four explicit versioned APIs are exported by both
 | `dump_measurement_catalog_v1(catalog, binary_file)` | Writes canonical bytes to a caller-owned binary stream |
 
 Streams need not be seekable. Load/dump do not accept paths or text streams and
-never close caller-owned streams. Ordinary I/O errors propagate. `source` is
+never close caller-owned streams. Dump completes partial writes and raises
+`BlockingIOError` if the stream makes no write progress. Ordinary I/O errors propagate. `source` is
 an explicit diagnostic display name; loaders do not infer it from a stream.
 There is no unversioned alias or implicit latest-version loader. Serialization
 uses canonical object-key order, preserves semantic array order, and writes

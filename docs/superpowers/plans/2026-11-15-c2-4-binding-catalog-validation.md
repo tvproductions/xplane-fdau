@@ -1,11 +1,11 @@
 # C2.4 Binding Catalog and Cross-Catalog Validation Implementation Plan
 
 - **Governance:** active
-- **Status:** approved
+- **Status:** in_progress
 - **Date:** 2026-11-15
 - **Roadmap child:** `C2.4`
 - **Source specification:** `docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md`
-- **Approval:** 2026-11-15 — Jeff / tvproductions; corrected plan approved in chat; fresh handoff and ordinary Git sync requested; execution method remains unselected
+- **Approval:** 2026-11-15 — Jeff / tvproductions; corrected plan approved in chat; fresh handoff and ordinary Git sync requested; native execution selected by Jeff on fresh-session resume, 2026-11-15
 - **Completion evidence:** —
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
@@ -69,11 +69,11 @@ Keep entry helpers intact unless a focused regression proves a necessary composi
 ## Approval and execution preflight
 
 - [x] Record Jeff's November 15 approval of the corrected plan and request for a fresh handoff and ordinary Git sync. The in-chat review clarification is incorporated in Task 2 Step 3. Do not request plan approval again.
-- [ ] Obtain the execution choice on resume, before creating a feature worktree, selecting C2.4 or beginning implementation. Native is recommended because all five tasks share catalog projection and staged validation interfaces. Both choices retain fresh independent whole-branch review before completion.
-- [ ] Re-read governing authorities, verify unchanged baseline or reconcile drift, run strict backlog `audit`/`next`, and use `superpowers:using-git-worktrees` for the temporary execution branch. Do not create it during planning. Follow the selected execution skill and unittest test-first workflow.
+- [x] Obtain the execution choice on resume, before creating a feature worktree, selecting C2.4 or beginning implementation. Native is recommended because all five tasks share catalog projection and staged validation interfaces. Both choices retain fresh independent whole-branch review before completion.
+- [x] Re-read governing authorities, verify unchanged baseline or reconcile drift, run strict backlog `audit`/`next`, and use `superpowers:using-git-worktrees` for the temporary execution branch. Do not create it during planning. Follow the selected execution skill and unittest test-first workflow.
 - [x] Register the approved plan and transition C2.4 from `specified` to `planned` through the guarded adapter; leave selection empty for the handoff. The inspected preview/apply used target SHA-256 `4c944d2367d981145291cc7967a140fe8e13fcbb638c7e5a95d70654dee765db`, produced candidate `6b774f17521cc9930b8b8b73fd3b47031c94384ca7b514d5126b0aa9cf102ef4`, and audited with no findings and `action=execute_plan child=C2.4`. Later prose edits leave that lifecycle/selection state unchanged.
-- [ ] On the later authorized execution run, transition/select C2.4 through inspected dry-runs, printed target digests and explicit apply. Expect `planned` -> `in_progress` with C2.3 remaining verified; never alter another child's gates.
-- [ ] Use project-pinned uv 0.13.6 in process PATH and the existing 3.12.16 environment. Preserve existing development versions. Planning/approval/governance checks are not runtime gate evidence.
+- [x] On the later authorized execution run, transition/select C2.4 through inspected dry-runs, printed target digests and explicit apply. Expect `planned` -> `in_progress` with C2.3 remaining verified; never alter another child's gates.
+- [x] Use project-pinned uv 0.13.6 in process PATH and the existing 3.12.16 environment. Preserve existing development versions. Planning/approval/governance checks are not runtime gate evidence.
 
 ## Task 1: Immutable binding catalog and content identity
 

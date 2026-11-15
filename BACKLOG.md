@@ -17,7 +17,7 @@ slice receives one focused plan and one independently reviewable outcome.
   onboarding is approved crosscutting maintenance, with
   [plan](docs/superpowers/plans/2026-10-25-strict-heavy-starter-onboarding.md) and
   [evidence](docs/reviews/2026-10-25-strict-heavy-starter-adoption.md).
-- Active child: —.
+- Active child: `C2.4`.
 - `D1.1`, `D1.2`, and `D1.3` are verified. The statusless external `I1.0`
   handoff condition is eligible for q4xpcc Phase 24A planning reconciliation;
   `T1.3` is verified with 4/4 gates under its approved audit policy
@@ -72,9 +72,10 @@ slice receives one focused plan and one independently reviewable outcome.
   November 15. Jeff approved C2.4's corrected
   [single-child plan](docs/superpowers/plans/2026-11-15-c2-4-binding-catalog-validation.md),
   and its `planned` state and plan link were registered through the guarded
-  adapter. No child is selected; C2.4 has 0/5 gates. Execution-method selection
-  remains pending on resume before worktree creation, selection or
-  implementation. No C2.4 runtime or delivery evidence is claimed.
+  adapter. C2.4 is selected and in progress with 0/5 gates. Jeff selected native
+  execution on resume. Its isolated implementation worktree is
+  `C:/Users/Jeff/.codex/worktrees/b5fd/xplane-fdau`; delivery review and
+  gate evidence remain pending.
 - Heavy is explicitly selected; Backplane remains disabled. STRICT starter
   acceptance is incomplete, including the external cognitive-library extraction
   prerequisite. C1.4 completion does not close those starter acceptance gaps.
@@ -146,7 +147,7 @@ The child slices below refine this sequence without weakening or reordering it.
 | `C2.1` | Measurement-definition model and semantic invariants | `verified` | `C1.3`, `C1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-01-c2-1-measurement-definition.md) | 4/4 | [review](.superpowers/sdd/2026-11-01-c2-1-definition/review.md) | — | — |
 | `C2.2` | Measurement catalog, schema, ordering, and references | `verified` | `C2.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-01-c2-2-measurement-catalog.md) | 4/4 | [review](.superpowers/sdd/2026-11-01-c2-2-catalog/review.md) | — | — |
 | `C2.3` | Source-binding definition and transform references | `verified` | `C2.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-15-c2-3-source-binding-definition.md) | 4/4 | [review](.superpowers/sdd/2026-11-15-c2-3-binding/review.md) | — | — |
-| `C2.4` | Binding catalog and pure cross-catalog validation | `planned` | `C2.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-15-c2-4-binding-catalog-validation.md) | 0/5 | — | — | — |
+| `C2.4` | Binding catalog and pure cross-catalog validation | `in_progress` | `C2.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-15-c2-4-binding-catalog-validation.md) | 0/5 | — | — | — |
 | `C3.1` | Raw-observation record and schema | `specified` | `C1.3`, `C1.4`, `C1.5`, `C2.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C3.2` | Measurement-sample record and schema | `specified` | `C3.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C3.3` | Raw/sample lineage and cross-contract validation | `specified` | `C3.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |

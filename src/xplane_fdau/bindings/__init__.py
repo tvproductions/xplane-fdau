@@ -9,6 +9,7 @@ from .models import (
     FailureCondition,
     FailureDisposition,
     FailurePolicy,
+    SourceBindingCatalog,
     SourceBindingDefinition,
     SourceSpec,
     TransformInput,
@@ -28,4 +29,5 @@ __all__ = [  # noqa: RUF022 -- specification ownership order
     "FailurePolicy",
     "SourceSpec",
     "SourceBindingDefinition",
+    "SourceBindingCatalog",
 ]

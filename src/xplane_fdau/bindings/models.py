@@ -26,6 +26,7 @@ __all__ = [  # noqa: RUF022 -- specification ownership order
     "FailurePolicy",
     "SourceSpec",
     "SourceBindingDefinition",
+    "SourceBindingCatalog",
 ]
 
 
@@ -256,3 +257,64 @@ class SourceBindingDefinition:
         object.__setattr__(self, "acquisition_phase", AcquisitionPhase(self.acquisition_phase))
         object.__setattr__(self, "replay_policy", BindingReplayPolicy(self.replay_policy))
         object.__setattr__(self, "_content_hash", _definition_content_hash(_FAMILY, fields))
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class SourceBindingCatalog:
+    """An immutable, ordered collection of exact source-binding declarations."""
+
+    contract_family: str
+    schema_version: int
+    catalog_id: str
+    catalog_revision: int
+    authority: Authority
+    provenance: Sequence[ProvenanceSource]
+    definitions: Sequence[SourceBindingDefinition]
+    title: object = _OMITTED
+    scope: object = _OMITTED
+    _content_hash: str = field(init=False, repr=False, compare=False)
+
+    @property
+    def content_hash(self) -> str:
+        """Cached identity covering catalog metadata and complete hashed entries."""
+        return self._content_hash
+
+    def __post_init__(self) -> None:
+        from ..contracts._content_hash import _record_content_hash
+        from ._catalog_validation import _validate_catalog_fields
+
+        for name in ("provenance", "definitions"):
+            value = getattr(self, name)
+            if type(value) in (list, tuple):
+                object.__setattr__(self, name, tuple(value))
+        fields = _catalog_fields(self)
+        for phase in range(3):
+            _validate_catalog_fields(fields, phase)
+        object.__setattr__(self, "_content_hash", _record_content_hash(fields))
+
+
+def _catalog_fields(value: SourceBindingCatalog) -> dict[str, object]:
+    """Project exact owned children; null remains available to its domain tier."""
+    from ..contracts.provenance import _authority_wire, _provenance_source_wire
+    from ._model_io import _source_binding_definition_wire, _unowned
+
+    sources: object = value.provenance
+    if type(sources) is tuple:
+        sources = tuple(_provenance_source_wire(item) if type(item) is ProvenanceSource else _unowned(item) for item in sources)
+    entries: object = value.definitions
+    if type(entries) is tuple:
+        entries = tuple(_source_binding_definition_wire(item) if type(item) is SourceBindingDefinition else _unowned(item) for item in entries)
+    fields: dict[str, object] = dict(
+        contract_family=value.contract_family,
+        schema_version=value.schema_version,
+        catalog_id=value.catalog_id,
+        catalog_revision=value.catalog_revision,
+        authority=_authority_wire(value.authority) if type(value.authority) is Authority else _unowned(value.authority),
+        provenance=sources,
+    )
+    for name in ("title", "scope"):
+        child = getattr(value, name)
+        if child is not _OMITTED:
+            fields[name] = child
+    fields["definitions"] = entries
+    return fields

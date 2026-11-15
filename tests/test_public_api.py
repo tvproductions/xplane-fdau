@@ -253,6 +253,7 @@ class BindingPublicAPITests(unittest.TestCase):
             "FailurePolicy",
             "SourceSpec",
             "SourceBindingDefinition",
+            "SourceBindingCatalog",
         ]
         self.assertEqual(names, models.__all__)
         self.assertEqual(names, bindings.__all__)

@@ -256,7 +256,10 @@ class BindingPublicAPITests(unittest.TestCase):
             "SourceBindingCatalog",
         ]
         self.assertEqual(names, models.__all__)
-        self.assertEqual(names, bindings.__all__)
+        self.assertEqual(
+            [*names, "load_source_binding_catalog_v1", "loads_source_binding_catalog_v1", "dump_source_binding_catalog_v1", "dumps_source_binding_catalog_v1"],
+            bindings.__all__,
+        )
         self.assertFalse(hasattr(bindings, "ResourceSelection"))
         for name in names:
             self.assertIs(getattr(models, name), getattr(bindings, name))

@@ -1,5 +1,6 @@
 """Source-binding declarations for transport-free X-Plane evidence."""
 
+from .io import dump_source_binding_catalog_v1, dumps_source_binding_catalog_v1, load_source_binding_catalog_v1, loads_source_binding_catalog_v1
 from .models import (
     AcquisitionPhase,
     BindingInputRef,
@@ -30,4 +31,8 @@ __all__ = [  # noqa: RUF022 -- specification ownership order
     "SourceSpec",
     "SourceBindingDefinition",
     "SourceBindingCatalog",
+    "load_source_binding_catalog_v1",
+    "loads_source_binding_catalog_v1",
+    "dump_source_binding_catalog_v1",
+    "dumps_source_binding_catalog_v1",
 ]

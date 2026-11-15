@@ -273,3 +273,29 @@ class SourceBindingDefinitionIOTests(unittest.TestCase):
             self.assert_failure(fields, ContractShapeError, "/source/" + next(iter(invalid)))
         fields = entry() | {"definition_id": "x" * 300, "limitations": [None]}
         self.assert_failure(fields, CanonicalJSONError, "/limitations/0", identity="x" * 160)
+
+    def test_parameter_domain_checks_keep_their_semantic_position(self) -> None:
+        base = json.loads(self.io._source_binding_definition_bytes(binding(transforms=[transform()])))
+        prefix = "/transforms/0/algorithm/parameters"
+        cases = (
+            ({"a": 1}, prefix + "/a"),
+            ({"a": 1, "test.z": None}, prefix + "/a"),
+            ({"test.a": "x" * 65536, "test.z": None}, prefix + "/test.a"),
+            (nested(33), prefix + "/test.child" * 32),
+        )
+        for parameters, pointer in cases:
+            for later in ("field-null", "parameter-overflow"):
+                fields = copy.deepcopy(base)
+                fields["transforms"][0]["algorithm"]["parameters"] = parameters
+                if later == "field-null":
+                    fields["limitations"] = [None]
+                else:
+                    fields["transforms"][0]["algorithm"]["parameters"] = dict(parameters) | {"test.zz_later": _NumberToken("9223372036854775808", False)}
+                with self.subTest(pointer=pointer, later=later):
+                    self.assert_failure(fields, CanonicalJSONError, pointer)
+        fields = copy.deepcopy(base)
+        fields["definition_id"] = "e\u0301"
+        fields["transforms"][0]["algorithm"]["parameters"] = {"a": 1}
+        self.assert_failure(fields, CanonicalJSONError, "/definition_id", identity="e\u0301")
+        fields["replay_policy"] = 1
+        self.assert_failure(fields, ContractShapeError, "/replay_policy", identity="e\u0301")

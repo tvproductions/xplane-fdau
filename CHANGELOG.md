@@ -4,6 +4,11 @@ All notable changes to this project are documented here.
 
 ## 0.1.0 (Unreleased)
 
+- Added immutable source-binding definitions with exact measurement and algorithm
+  references, local transform graph validation, explicit failure policies and
+  private staged entry interchange. Catalog resolution and algorithm execution
+  remain deferred to their governing children.
+
 - Clarify existing release planning: PRDs guide majors, selected work and
   requirements drive minors, and fixes drive patches. Require explicit scope,
   version rationale and acceptance evidence; preserve current release gates.

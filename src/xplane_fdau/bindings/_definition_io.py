@@ -7,10 +7,10 @@ from collections.abc import Mapping
 from typing import Any, cast
 
 from ..contracts._content_hash import _definition_content_hash
-from ..contracts._identity_validation import _identifier, _revision, _sha256
-from ..contracts._json_parse import _NumberToken, _ObjectPairs
-from ..contracts.canonical_json import _encode_document
-from ..contracts.errors import ContractHashError, ContractShapeError, FDAUContractError
+from ..contracts._identity_validation import _identifier, _revision, _sha256, _text
+from ..contracts._json_parse import _NumberToken, _ObjectPairs, _pointer
+from ..contracts.canonical_json import _check_depth, _encode_document, canonical_bytes
+from ..contracts.errors import CanonicalJSONError, ContractHashError, ContractShapeError, FDAUContractError
 from ..contracts.identity import AlgorithmRef, DefinitionRef
 from ..contracts.provenance import AdapterIdentity, Authority, ProvenanceSource, ProviderIdentity
 from ..contracts.values import PayloadSpec, ShapeSpec, UnitSpec, _scalar_check
@@ -125,8 +125,36 @@ def _binding_entry_shape(value: object, *, path: str = "") -> dict[str, object]:
     return fields
 
 
+def _binding_domain_tree(value: object, *, path: str, depth: int = 1, parameter: bool = False) -> object:
+    """Check parameter domains at their position in the semantic traversal."""
+    if parameter:
+        try:
+            canonical_bytes(value)
+        except FDAUContractError as error:
+            raise type(error)(str(error), path=path + error.path) from None
+        return _domain_tree(value, path=path, depth=depth)
+    if type(value) is dict:
+        _check_depth(depth, parameter=False, path=path)
+        fields = cast(dict[str, object], value)
+        if len(fields) > 65535:
+            raise CanonicalJSONError("object member limit exceeded", path=path)
+        result: dict[str, object] = {}
+        for name, child in fields.items():
+            _text(name, path=path)
+            child_path = _pointer(path, name)
+            result[name] = _binding_domain_tree(child, path=child_path, depth=depth + 1, parameter=name == "parameters")
+        return result
+    if type(value) in (list, tuple):
+        _check_depth(depth, parameter=False, path=path)
+        items = cast(list[object] | tuple[object, ...], value)
+        if len(items) > 65535:
+            raise CanonicalJSONError("array member limit exceeded", path=path)
+        return tuple(_binding_domain_tree(child, path=path + f"/{index}", depth=depth + 1) for index, child in enumerate(items))
+    return _domain_tree(value, path=path, depth=depth)
+
+
 def _binding_entry_domains(fields: Mapping[str, object], *, path: str = "") -> dict[str, object]:
-    result = cast(dict[str, object], _domain_tree(_plain(dict(fields)), path=path))
+    result = cast(dict[str, object], _binding_domain_tree(_plain(dict(fields)), path=path))
     _validate_binding_definition_fields(_without_hash(result), 1, path=path)
     return result
 

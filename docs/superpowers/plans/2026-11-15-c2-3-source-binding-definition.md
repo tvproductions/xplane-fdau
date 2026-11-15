@@ -1,12 +1,12 @@
 # C2.3 Source-Binding Definition Implementation Plan
 
 - **Governance:** active
-- **Status:** in_progress
+- **Status:** completed
 - **Date:** 2026-11-15
 - **Roadmap child:** `C2.3`
 - **Source specification:** `docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md`
 - **Approval:** 2026-11-15 — Jeff / tvproductions; in-chat plan review approved; implementation by the current agent followed by a fresh independent whole-branch review authorized with "proceed"
-- **Completion evidence:** —
+- **Completion evidence:** `.superpowers/sdd/2026-11-15-c2-3-binding/completion.md`
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -149,12 +149,12 @@ uv run --locked --all-groups ty check
 
 ## Stable closeout and four-gate evidence
 
-- [ ] Obtain the selected independent task/whole-branch reviews, address load-bearing findings test-first and bind accepted source/review identities. Do not claim a new design approval, algorithm conformance or C2.4 completion.
-- [ ] New runtime package/modules require one stable full offline hygiene pass: `uv run --offline --frozen --all-groups python .codex/skills/hygiene/scripts/hygiene.py`. It supplies lock/backlog/docs, all-files Ruff/format/ty/unittest and fresh strict artifacts; do not also repeat the standalone aggregate on unchanged inputs. Keep mandatory commit hooks enabled.
-- [ ] Build one fresh external artifact pair with `uv build --offline --no-sources --out-dir <new-external-dir>`; validate with locked Twine `check --strict` and `python tools/release.py check-dist <dir>`. Record hashes. Create a fresh external uv-managed Python 3.12 environment, install only that exact wheel and run `tools/installed_smoke.py 0.1.0` from outside the checkout. Prove import origins, empty runtime requirements and installed bindings; preserve failures and clean only owned successful temporary directories after proof.
-- [ ] Record four real gate receipts under `.superpowers/sdd/2026-11-15-c2-3-binding/`: (1) exact measurement reference identity (Tasks 2–3); (2) explicit source/applicability/dependency/companion/phase/replay declarations and observed-field rejection (Tasks 1–3); (3) immutable data-only transform/calibration references and local graph (Tasks 1–3); (4) closed failure dispositions and irrelevant-field rejection (Tasks 1–3). Gate 2 requires explicit negative controls for observed type/shape fields on SourceSpec and binding entries.
-- [ ] Reconcile delivered scope/version agreement in existing BACKLOG/CHANGELOG; `0.1.0` remains the pending unreleased target unless approved scope changes. Complete this plan's task checkboxes and durable review/completion/verification records. Use guarded lifecycle and gate mutations, committing evidence before HEAD-backed verified transition; do not auto-select C2.4.
-- [ ] Use `superpowers:finishing-a-development-branch` for the user's integration choice. If local integration is selected, follow AGENTS' exact fast-forward main verification, fresh artifacts and external installed smoke; preserve raw evidence before cleanup. Further sync, tags and publication retain separate authorization.
+- [x] Obtain the selected independent task/whole-branch reviews, address load-bearing findings test-first and bind accepted source/review identities. Do not claim a new design approval, algorithm conformance or C2.4 completion.
+- [x] New runtime package/modules require one stable full offline hygiene pass: `uv run --offline --frozen --all-groups python .codex/skills/hygiene/scripts/hygiene.py`. It supplies lock/backlog/docs, all-files Ruff/format/ty/unittest and fresh strict artifacts; do not also repeat the standalone aggregate on unchanged inputs. Keep mandatory commit hooks enabled.
+- [x] Build one fresh external artifact pair with `uv build --offline --no-sources --out-dir <new-external-dir>`; validate with locked Twine `check --strict` and `python tools/release.py check-dist <dir>`. Record hashes. Create a fresh external uv-managed Python 3.12 environment, install only that exact wheel and run `tools/installed_smoke.py 0.1.0` from outside the checkout. Prove import origins, empty runtime requirements and installed bindings; preserve failures and clean only owned successful temporary directories after proof.
+- [x] Record four real gate receipts under `.superpowers/sdd/2026-11-15-c2-3-binding/`: (1) exact measurement reference identity (Tasks 2–3); (2) explicit source/applicability/dependency/companion/phase/replay declarations and observed-field rejection (Tasks 1–3); (3) immutable data-only transform/calibration references and local graph (Tasks 1–3); (4) closed failure dispositions and irrelevant-field rejection (Tasks 1–3). Gate 2 requires explicit negative controls for observed type/shape fields on SourceSpec and binding entries.
+- [x] Reconcile delivered scope/version agreement in existing BACKLOG/CHANGELOG; `0.1.0` remains the pending unreleased target unless approved scope changes. Complete this plan's task checkboxes and durable review/completion/verification records. Use guarded lifecycle and gate mutations, committing evidence before HEAD-backed verified transition; do not auto-select C2.4.
+- [x] Use `superpowers:finishing-a-development-branch` for the user's integration choice. If local integration is selected, follow AGENTS' exact fast-forward main verification, fresh artifacts and external installed smoke; preserve raw evidence before cleanup. Further sync, tags and publication retain separate authorization.
 
 ## Planning audit and self-review
 
@@ -182,3 +182,7 @@ Self-review checks signatures and required/optional constructor order, semantic 
 ## Execution authorization — November 15
 
 Jeff reviewed source uniqueness, transform-validation boundaries and explicit failure policies in chat, then authorized proceeding with the reviewed plan and the proposed current-agent implementation plus fresh final review. Earlier draft/pending-review observations above are historical. Only C2.3 is authorized; integration and further remote synchronization retain separate authorization.
+
+## Completion — November 15
+
+All four tasks passed focused and mandatory full checks. Fresh independent review found one Important parameter-domain ordering defect, reproduced in eight subcases and corrected in the single test-first fix pass. Corrected candidate: 102 focused checks, 850 full unittest checks through offline hygiene, strict artifact validation, external Python 3.12.16 public smoke and installed ordering control passed. Four gate receipts, source-input hashes and accepted review are under `.superpowers/sdd/2026-11-15-c2-3-binding/`. Local integration remains pending user choice; publication remains prohibited.

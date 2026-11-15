@@ -56,12 +56,14 @@ slice receives one focused plan and one independently reviewable outcome.
   Detailed integration receipts are local-only under
   `.superpowers/sdd/c2-2-integration-2026-11-01/`; completion/review receipts above
   are committed. The completed selection was cleared through the guarded adapter
-  on November 15. `C2.3` through `C4.4` remain specified with zero delivery gates.
-- C2.3 planning: the approved canonical design already covers this child. Its
-  [approved implementation plan](docs/superpowers/plans/2026-11-15-c2-3-source-binding-definition.md)
-  is approved for current-agent implementation followed by a fresh independent
-  whole-branch review. No child is selected until isolated execution entry;
-  approval closes no delivery gate.
+  on November 15. C2.4 through C4.4 retain their own delivery gates.
+- C2.3 completes its approved [implementation plan](docs/superpowers/plans/2026-11-15-c2-3-source-binding-definition.md)
+  through current-agent execution and fresh independent whole-branch review,
+  with the parameter-domain ordering finding corrected test-first. Its
+  [completion](.superpowers/sdd/2026-11-15-c2-3-binding/completion.md) and
+  [review](.superpowers/sdd/2026-11-15-c2-3-binding/review.md) bind four gate
+  receipts, corrected source hashes, offline hygiene and external Python
+  3.12.16 installed proof. Local integration remains pending user choice.
 - Heavy is explicitly selected; Backplane remains disabled. STRICT starter
   acceptance is incomplete, including the external cognitive-library extraction
   prerequisite. C1.4 completion does not close those starter acceptance gaps.
@@ -95,10 +97,11 @@ The child slices below refine this sequence without weakening or reordering it.
   ROADMAP's Version 0.1.0 release gates and the approved canonical design plus
   subsequent reviewed A1/R1/P1 requirements govern this selected scope.
 - **Included completed work:** M0 identity/native kernel, B1.1 installed source
-  layout, C1.1–C1.5 foundations, C2.1 definitions and C2.2 catalogs. Verified
+  layout, C1.1–C1.5 foundations, C2.1 definitions, C2.2 catalogs and C2.3
+  source-binding definitions. Verified
   T1/T2 governance and maintenance support those deliveries. Completed children
   are implementation increments within this bundle, not separate releases.
-- **Included remaining work:** C2.3–C2.4, C3.1–C3.5, C4.1–C4.4,
+- **Included remaining work:** C2.4, C3.1–C3.5, C4.1–C4.4,
   A1.1–A1.9, R1.1–R1.7, P1.1–P1.6, then G1. Later children still require
   their own approved specifications and plans before implementation.
 - **Outside this first bundle:** edition-pinned S standards work, F1 FDM/FOQA,
@@ -130,7 +133,7 @@ The child slices below refine this sequence without weakening or reordering it.
 | `C1.5` | Validity states and acquisition-quality vocabulary | `verified` | `C1.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-01-c1-5-validity-acquisition-quality.md) | 4/4 | [review](.superpowers/sdd/2026-11-01-c1-5-quality/review.md) | — | — |
 | `C2.1` | Measurement-definition model and semantic invariants | `verified` | `C1.3`, `C1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-01-c2-1-measurement-definition.md) | 4/4 | [review](.superpowers/sdd/2026-11-01-c2-1-definition/review.md) | — | — |
 | `C2.2` | Measurement catalog, schema, ordering, and references | `verified` | `C2.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-01-c2-2-measurement-catalog.md) | 4/4 | [review](.superpowers/sdd/2026-11-01-c2-2-catalog/review.md) | — | — |
-| `C2.3` | Source-binding definition and transform references | `in_progress` | `C2.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-15-c2-3-source-binding-definition.md) | 0/4 | — | — | — |
+| `C2.3` | Source-binding definition and transform references | `reviewed` | `C2.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-15-c2-3-source-binding-definition.md) | 4/4 | [review](.superpowers/sdd/2026-11-15-c2-3-binding/review.md) | — | — |
 | `C2.4` | Binding catalog and pure cross-catalog validation | `specified` | `C2.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/5 | — | — | — |
 | `C3.1` | Raw-observation record and schema | `specified` | `C1.3`, `C1.4`, `C1.5`, `C2.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C3.2` | Measurement-sample record and schema | `specified` | `C3.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
@@ -265,13 +268,13 @@ The child slices below refine this sequence without weakening or reordering it.
 
 ### C2.3 — Source-binding definition and transform references
 
-- [ ] Each binding pins one exact measurement reference.
-- [ ] Provider/adapter, resource, expected/observed shape boundary, native unit,
+- [x] Each binding pins one exact measurement reference. — Evidence: [verification](.superpowers/sdd/2026-11-15-c2-3-binding/gate-1.md)
+- [x] Provider/adapter, resource, expected/observed shape boundary, native unit,
       applicability, dependencies, companions, phase, and replay policy are
-      explicit.
-- [ ] Transform/calibration references contain identity and data-only parameters,
-      never executable expressions.
-- [ ] Failure dispositions and irrelevant fields fail closed.
+      explicit. — Evidence: [verification](.superpowers/sdd/2026-11-15-c2-3-binding/gate-2.md)
+- [x] Transform/calibration references contain identity and data-only parameters,
+      never executable expressions. — Evidence: [verification](.superpowers/sdd/2026-11-15-c2-3-binding/gate-3.md)
+- [x] Failure dispositions and irrelevant fields fail closed. — Evidence: [verification](.superpowers/sdd/2026-11-15-c2-3-binding/gate-4.md)
 
 ### C2.4 — Binding catalog and pure cross-catalog validation
 

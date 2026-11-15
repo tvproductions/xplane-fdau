@@ -20,6 +20,77 @@ from xplane_fdau.formats.xplane_fdr import FDRReader
 
 
 class InstalledSmokeTests(unittest.TestCase):
+    def test_console_child_non_utf8_stderr_keeps_smoke_failure_context(self) -> None:
+        command = [sys.executable, "-c", "import os; os.write(2, bytes([255])); raise SystemExit(7)"]
+        try:
+            installed_smoke._run(command)
+        except UnicodeError:
+            self.fail("child decoding escaped instead of reporting a SmokeError")
+        except installed_smoke.SmokeError as error:
+            self.assertIn("command failed", str(error))
+            self.assertIn("\ufffd", str(error))
+        else:
+            self.fail("failing child was accepted")
+
+    def test_source_binding_catalog_smoke_runs_public_behavior(self) -> None:
+        self.assertTrue(hasattr(installed_smoke, "smoke_source_binding_catalog"), "binding catalog installed smoke absent")
+        installed_smoke.smoke_source_binding_catalog()
+
+    def test_source_binding_catalog_smoke_detects_ineffective_validation(self) -> None:
+        self.assertTrue(hasattr(installed_smoke, "smoke_source_binding_catalog"), "binding catalog installed smoke absent")
+        import xplane_fdau.bindings as bindings
+        from xplane_fdau.contracts import ContractValidationError
+
+        original = bindings.validate_binding_catalog
+        for target in (
+            "/definitions/0/measurement_ref/definition_hash",
+            "/definitions/0/transforms/0/output_representation",
+            "/definitions/0/failure_policy/stale",
+        ):
+
+            def suppress(bc: Any, mc: Any, *, expected_path: str = target) -> None:
+                try:
+                    original(bc, mc)
+                except ContractValidationError as error:
+                    if error.path != expected_path:
+                        raise
+
+            with (
+                self.subTest(target=target),
+                mock.patch.object(bindings, "validate_binding_catalog", side_effect=suppress),
+                self.assertRaises(installed_smoke.SmokeError),
+            ):
+                installed_smoke.smoke_source_binding_catalog()
+
+    def test_source_binding_catalog_smoke_detects_corrupt_bytes_hash_and_resource(self) -> None:
+        self.assertTrue(hasattr(installed_smoke, "smoke_source_binding_catalog"), "binding catalog installed smoke absent")
+        import xplane_fdau.bindings as bindings
+
+        original = bindings.dumps_source_binding_catalog_v1
+        for corruption in (lambda value: b"{}", lambda value: original(value).replace(b'"content_hash":"', b'"content_hash":"0', 1)):
+            with mock.patch.object(bindings, "dumps_source_binding_catalog_v1", side_effect=corruption), self.assertRaises(installed_smoke.SmokeError):
+                installed_smoke.smoke_source_binding_catalog()
+        with mock.patch("importlib.resources.files") as resources, self.assertRaises(installed_smoke.SmokeError):
+            resources.return_value.joinpath.return_value.read_bytes.return_value = b"{}\n"
+            installed_smoke.smoke_source_binding_catalog()
+        from dataclasses import replace
+
+        load = bindings.loads_source_binding_catalog_v1
+        with (
+            mock.patch.object(bindings, "loads_source_binding_catalog_v1", side_effect=lambda data: replace(load(data), catalog_revision=2)),
+            self.assertRaises(installed_smoke.SmokeError),
+        ):
+            installed_smoke.smoke_source_binding_catalog()
+
+    def test_source_binding_catalog_smoke_is_called_by_installed_flow(self) -> None:
+        self.assertTrue(hasattr(installed_smoke, "smoke_source_binding_catalog"), "binding catalog installed smoke absent")
+        with (
+            mock.patch.object(installed_smoke, "ensure_outside_checkout"),
+            mock.patch.object(installed_smoke, "smoke_source_binding_catalog", side_effect=installed_smoke.SmokeError("catalog sentinel")),
+            self.assertRaisesRegex(installed_smoke.SmokeError, "catalog sentinel"),
+        ):
+            installed_smoke.smoke("0.1.0", checkout=Path("checkout"))
+
     def test_source_binding_smoke_exercises_required_behavior(self) -> None:
         self.assertTrue(hasattr(installed_smoke, "smoke_source_binding_definition"), "source binding smoke is absent")
         import xplane_fdau.bindings as bindings

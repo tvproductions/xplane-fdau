@@ -130,9 +130,9 @@ Keep entry helpers intact unless a focused regression proves a necessary composi
 
 **Interfaces:** Add `smoke_source_binding_catalog() -> None` to the existing installed smoke flow. Use only public catalog/model/I/O/validation APIs and `importlib.resources` schema reads; fixtures are local to the external smoke tool, absent from the runtime package. Do not use private entry readers in the new public catalog smoke.
 
-- [ ] **Step 1 — Add failing smoke and executable-guide controls.** The helper must construct and round-trip direct and transformed catalogs, preserve reference/hash identity, read the installed schema, validate one compatible catalog pair, and reject stale reference hash, incompatible final declaration and unauthorized failure disposition at exact paths. Patch each failure path to accept its targeted bad case and require SmokeError; corrupt emitted bytes/hash/resource access and require failure. Prove the helper is called by the installed flow. Execute guide Python blocks and check their constructed catalog round-trip and cross-validation behavior. Run installed/documentation unittest modules and record failures.
-- [ ] **Step 2 — Implement public smoke and guide.** Show complete runnable synthetic catalog pairs, required/optional constructor order, explicit separate cross-validation, binary streams/canonical bytes, exact references, selector narrowing, failure authorization and opaque transform declarations. State that successful loading alone does not establish cross-catalog compatibility or implemented algorithms. Update the old definition guide's C2.4 future boundary to delivered catalog behavior while retaining C3 sample evaluation, A1.4 execution and C4.3 shared convenience API boundaries. Add MkDocs navigation and schema links; avoid broad README or native FDR rewrites.
-- [ ] **Step 3 — Verify and commit.** Run smoke/documentation tests, the guide examples, common checks, `uv run --locked --all-groups python tools/quality.py docs` and `uv run --locked --all-groups mkdocs build --strict`. Commit exact task files as `docs: explain binding catalog validation`, hooks enabled.
+- [x] **Step 1 — Add failing smoke and executable-guide controls.** The helper must construct and round-trip direct and transformed catalogs, preserve reference/hash identity, read the installed schema, validate one compatible catalog pair, and reject stale reference hash, incompatible final declaration and unauthorized failure disposition at exact paths. Patch each failure path to accept its targeted bad case and require SmokeError; corrupt emitted bytes/hash/resource access and require failure. Prove the helper is called by the installed flow. Execute guide Python blocks and check their constructed catalog round-trip and cross-validation behavior. Run installed/documentation unittest modules and record failures.
+- [x] **Step 2 — Implement public smoke and guide.** Show complete runnable synthetic catalog pairs, required/optional constructor order, explicit separate cross-validation, binary streams/canonical bytes, exact references, selector narrowing, failure authorization and opaque transform declarations. State that successful loading alone does not establish cross-catalog compatibility or implemented algorithms. Update the old definition guide's C2.4 future boundary to delivered catalog behavior while retaining C3 sample evaluation, A1.4 execution and C4.3 shared convenience API boundaries. Add MkDocs navigation and schema links; avoid broad README or native FDR rewrites.
+- [x] **Step 3 — Verify and commit.** Run smoke/documentation tests, the guide examples, common checks, `uv run --locked --all-groups python tools/quality.py docs` and `uv run --locked --all-groups mkdocs build --strict`. Commit exact task files as `docs: explain binding catalog validation`, hooks enabled.
 
 ## Focused verification and stable closeout
 
@@ -176,8 +176,32 @@ Direct `gzs-plan-audit` compares the approved design, C2.4 gates and this draft 
 | Binary stream ownership/progress and independent external installed proof | Aligned | Task 2 Step 1; Task 5; stable closeout |
 | Finite initial release accounting and later-child boundaries | Aligned | Planning baseline; Global Constraints; closeout scope reconciliation |
 
-Self-review covers all five Review Focus items, signature/export consistency, required versus optional constructor order, catalog semantic order versus wire key order, local versus cross-catalog validation, exact direct/final output checks, failure authorization versus later sample disposition selection, whole-document versus parameter depths, and package inventory/artifact implications. No unresolved scope gap or scope expansion is identified. Planning verdict: PASS for scoped alignment. Jeff has approved the corrected plan; execution selection remains pending. Focused planning checks close no delivery gate.
+Self-review covers all five Review Focus items, signature/export consistency, required versus optional constructor order, catalog semantic order versus wire key order, local versus cross-catalog validation, exact direct/final output checks, failure authorization versus later sample disposition selection, whole-document versus parameter depths, and package inventory/artifact implications. No unresolved scope gap or scope expansion is identified. Planning verdict: PASS for scoped alignment. Jeff approved the corrected plan; native execution was selected on resume. Focused planning checks close no delivery gate.
 
 Planning verification on November 15: 87 focused model/adherence/governance/documentation/API unittest checks passed after adding the draft's required completion-evidence header. The strict audit additionally identified that absent evidence must use the managed em-dash marker; approval and completion now use that exact marker. Strict MkDocs passed and documentation coverage was 41.5% against the retained 40% floor. These corrected metadata defects are planning corrections, not delivery evidence. Fresh strict audit/next and whitespace results must be checked on the final draft before handoff for review.
 
-The in-chat plan review's depth clarification is incorporated in Task 2 Step 3: generic 64/65 document-depth boundaries are helper tests, while actual catalog loads exercise the separate 32/33 parameter-depth boundary with enclosing document depth preserved. That correction changed test instructions only, preserving scope and acceptance gates. Jeff subsequently approved the corrected plan and requested the fresh handoff/Git save point; earlier draft/pending-approval observations above are historical. Execution-method selection remains pending and no delivery gate is closed by planning or approval.
+The in-chat plan review's depth clarification is incorporated in Task 2 Step 3: generic 64/65 document-depth boundaries are helper tests, while actual catalog loads exercise the separate 32/33 parameter-depth boundary with enclosing document depth preserved. That correction changed test instructions only, preserving scope and acceptance gates. Jeff subsequently approved the corrected plan and requested the fresh handoff/Git save point; earlier draft/pending-approval observations above are historical. Native execution was selected on resume; planning and approval alone closed no delivery gate.
+
+## Execution ruling — reproducible checkout bytes
+
+A fresh Windows worktree and a disposable checkout both changed the indexed
+architecture, schema and governance evidence from LF to CRLF. The canonical
+portability audit independently identified the missing LF checkout directive.
+Add `eol=lf` to the existing `* text=auto` rule in `.gitattributes`, retaining
+the FDR fixture `-text` exception. This is a narrow verification correction;
+it changes no canonical contract or runtime behavior. Verify fresh checkout
+bytes for the architecture/schema/evidence and the CRLF FDR fixture, then run
+the scoped portability audit and the planned full hygiene gate.
+
+Cost if wrong: checkout line endings of other detected text files in this
+repository change to LF. Binary detection and explicitly excluded native FDR
+fixtures retain their recorded bytes. No user defaults or other worktree is
+edited. The observed before/after proof and this ruling belong in final evidence.
+
+The scoped tool audit also found implicit locale decoding in the existing
+installed-smoke subprocess runner. A real child emitting byte `0xff` produced
+locale-dependent diagnostics. Select UTF-8 with `errors="replace"` in that
+runner and retain the failing-child status/context. The regression runs the
+real child before and after the correction. Cost if wrong: invalid diagnostic
+bytes are represented by replacement characters; command failure remains a
+failure. This affects the verification tool only.

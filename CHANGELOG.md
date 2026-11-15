@@ -4,10 +4,15 @@ All notable changes to this project are documented here.
 
 ## 0.1.0 (Unreleased)
 
+- Added immutable source-binding catalogs, staged public version-1 binary I/O,
+  a mirrored normative schema and pure exact-reference, declaration and failure-
+  authorization validation against an explicitly supplied measurement catalog.
+- Enforce LF checkouts for byte-exact contract resources and provenance evidence;
+  preserve native FDR fixture line separators.
+
 - Added immutable source-binding definitions with exact measurement and algorithm
   references, local transform graph validation, explicit failure policies and
-  private staged entry interchange. Catalog resolution and algorithm execution
-  remain deferred to their governing children.
+  private staged entry interchange. Algorithm execution remains deferred to A1.4.
 
 - Clarify existing release planning: PRDs guide majors, selected work and
   requirements drive minors, and fixes drive patches. Require explicit scope,

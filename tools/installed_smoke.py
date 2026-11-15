@@ -76,7 +76,7 @@ def _command_path() -> Path:
 
 def _run(command: list[str]) -> None:
     launch = ["uv", "run", "--offline", "--no-project", "--python", sys.executable, *command]
-    result = subprocess.run(launch, capture_output=True, text=True, check=False)
+    result = subprocess.run(launch, capture_output=True, text=True, encoding="utf-8", errors="replace", check=False)
     if result.returncode != 0:
         raise SmokeError(f"command failed ({' '.join(command)}): {result.stderr.strip()}")
 
@@ -576,6 +576,171 @@ def smoke_source_binding_definition() -> None:
         raise SmokeError("installed binding accepted an unusable flagged policy")
 
 
+def smoke_source_binding_catalog() -> None:
+    """Prove installed public catalog interchange, compatibility and schema access."""
+    import hashlib
+    import io
+    import json
+    from dataclasses import replace
+
+    from xplane_fdau import bindings, measurements
+    from xplane_fdau.contracts import (
+        AdapterIdentity,
+        AlgorithmRef,
+        Authority,
+        ContractValidationError,
+        DefinitionRef,
+        FDAUContractError,
+        ProvenanceSource,
+        ProviderIdentity,
+        RepresentationSpec,
+        ShapeSpec,
+        UnitSpec,
+        ValueRepresentation,
+    )
+
+    authority = Authority(authority_id="test.authority", authority_revision=1)
+    provenance = [ProvenanceSource(source_id="test.source", scope="Synthetic", source_revision=1)]
+    unit = UnitSpec(kind="unitless")
+    measurement = measurements.MeasurementDefinition(
+        definition_id="test.boolean",
+        definition_revision=1,
+        authority=authority,
+        provenance=provenance,
+        title="Boolean",
+        description="Boolean meaning",
+        limitations=[],
+        quantity_id="test.state",
+        representation=RepresentationSpec(kind="boolean"),
+        unit=unit,
+        coordinates=measurements.CoordinateSpec(kind="not_applicable"),
+        freshness=measurements.FreshnessSpec(fresh_for_ns=0),
+        interpolation_policy="prohibited",
+        discontinuity_policy="preserve",
+        allowed_validity=["unknown"],
+        allowed_quality=[],
+        sensitivity="unknown",
+        applicability=[],
+    )
+    measurement_catalog = measurements.MeasurementCatalog(
+        contract_family="https://tvproductions.github.io/xplane-fdau/contracts/measurement-catalog",
+        schema_version=1,
+        catalog_id="test.measurements",
+        catalog_revision=1,
+        authority=authority,
+        provenance=provenance,
+        definitions=[measurement],
+    )
+    reference = DefinitionRef(
+        definition_id=measurement.definition_id, definition_revision=measurement.definition_revision, definition_hash=measurement.content_hash
+    )
+    source = bindings.SourceSpec(
+        provider=ProviderIdentity(provider_family_id="test.provider", provider_version="1"),
+        adapter=AdapterIdentity(adapter_family_id="test.adapter", adapter_version="1"),
+        resource_kind="test.resource",
+        resource_id="test.primary",
+        declared_representation=ValueRepresentation.BOOLEAN,
+        declared_shape=ShapeSpec(kind="scalar"),
+        native_unit=unit,
+    )
+    reject = bindings.FailureDisposition.REJECT
+    policy = bindings.FailurePolicy(unavailable=reject, orphaned=reject, stale=reject, read_error=reject, type_mismatch=reject, provider_degraded=reject)
+    direct = bindings.SourceBindingDefinition(
+        definition_id="test.direct",
+        definition_revision=1,
+        authority=authority,
+        provenance=provenance,
+        measurement_ref=reference,
+        source=source,
+        applicability=[],
+        dependencies=[],
+        companions=[],
+        transforms=[],
+        failure_policy=policy,
+        acquisition_phase=bindings.AcquisitionPhase.UNKNOWN,
+        replay_policy=bindings.BindingReplayPolicy.PRESERVE,
+        limitations=[],
+    )
+    step = bindings.TransformStep(
+        step_id="test.identity",
+        algorithm=AlgorithmRef(definition_id="test.opaque", definition_revision=1, definition_hash="a" * 64, parameters={"test.marker": 1}),
+        inputs=[bindings.TransformInput(input_id="binding.primary", representation=ValueRepresentation.BOOLEAN, shape=ShapeSpec(kind="scalar"), unit=unit)],
+        output_representation=ValueRepresentation.BOOLEAN,
+        output_shape=ShapeSpec(kind="scalar"),
+        output_unit=unit,
+    )
+    transformed = replace(direct, definition_id="test.transformed", transforms=[step])
+    family = "https://tvproductions.github.io/xplane-fdau/contracts/source-binding-catalog"
+    value = bindings.SourceBindingCatalog(
+        contract_family=family,
+        schema_version=1,
+        catalog_id="test.bindings",
+        catalog_revision=1,
+        authority=authority,
+        provenance=provenance,
+        definitions=[direct, transformed],
+    )
+    try:
+        encoded = bindings.dumps_source_binding_catalog_v1(value)
+        loaded = bindings.loads_source_binding_catalog_v1(encoded)
+        if loaded != value or loaded.content_hash != value.content_hash or bindings.dumps_source_binding_catalog_v1(loaded) != encoded:
+            raise SmokeError("installed binding catalog round trip differs")
+        if loaded.definitions[0].measurement_ref != reference or loaded.definitions[1].transforms[0].algorithm.definition_hash != "a" * 64:
+            raise SmokeError("installed binding catalog lost pinned references")
+        # Independent preimages: this synthetic vector uses only ASCII, integers and Booleans.
+        raw = json.loads(encoded)
+        for entry in raw["definitions"]:
+            body = {key: child for key, child in entry.items() if key != "content_hash"}
+            preimage = dict(contract_family=family, schema_version=1, definition=body)
+            expected = hashlib.sha256(json.dumps(preimage, sort_keys=True, separators=(",", ":")).encode() + b"\n").hexdigest()
+            if expected != entry["content_hash"]:
+                raise SmokeError("installed binding entry hash differs from independent preimage")
+        body = {key: child for key, child in raw.items() if key != "content_hash"}
+        expected = hashlib.sha256(json.dumps(body, sort_keys=True, separators=(",", ":")).encode() + b"\n").hexdigest()
+        if expected != value.content_hash:
+            raise SmokeError("installed binding catalog hash differs from independent preimage")
+        with io.BytesIO() as stream:
+            bindings.dump_source_binding_catalog_v1(value, stream)
+            if stream.closed or stream.getvalue() != encoded:
+                raise SmokeError("installed binding binary dump differs")
+            stream.seek(0)
+            if bindings.load_source_binding_catalog_v1(stream) != loaded or stream.closed:
+                raise SmokeError("installed binding binary load differs")
+        bindings.validate_binding_catalog(loaded, measurement_catalog)
+    except (FDAUContractError, ValueError, UnicodeError) as error:
+        raise SmokeError("installed binding catalog round trip failed") from error
+    bad_reference = replace(direct, measurement_ref=replace(reference, definition_hash="0" * 64))
+    bad_output = replace(transformed, transforms=[replace(step, output_representation=ValueRepresentation.INTEGER)])
+    bad_policy = replace(direct, failure_policy=replace(policy, stale=bindings.FailureDisposition.ACCEPT_WITHOUT_VALUE))
+    for bad, pointer, label in (
+        (bad_reference, "/measurement_ref/definition_hash", "stale reference hash"),
+        (bad_output, "/transforms/0/output_representation", "incompatible final declaration"),
+        (bad_policy, "/failure_policy/stale", "unauthorized failure disposition"),
+    ):
+        candidate = replace(value, definitions=[bad])
+        candidate = bindings.loads_source_binding_catalog_v1(bindings.dumps_source_binding_catalog_v1(candidate))
+        try:
+            bindings.validate_binding_catalog(candidate, measurement_catalog)
+        except ContractValidationError as error:
+            if error.path != "/definitions/0" + pointer:
+                raise SmokeError("installed binding rejection lost its exact path") from error
+        else:
+            raise SmokeError("installed binding catalog accepted " + label)
+    try:
+        data = importlib.resources.files("xplane_fdau.schemas").joinpath("source-binding-catalog-v1.schema.json").read_bytes()
+        schema = json.loads(data)
+    except (OSError, ValueError, UnicodeError) as error:
+        raise SmokeError("installed binding catalog schema is unavailable or invalid") from error
+    if (
+        schema.get("$id") != "https://tvproductions.github.io/xplane-fdau/schemas/source-binding-catalog-v1.schema.json"
+        or schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema"
+        or schema.get("unevaluatedProperties") is not False
+        or not data.endswith(b"\n")
+        or data.endswith(b"\r\n")
+    ):
+        raise SmokeError("installed binding catalog schema identity or closure differs")
+
+
 def smoke(version: str, *, checkout: Path) -> None:
     """Exercise the installed public API, schema, FDR files, and CLI commands."""
     import xplane_fdau
@@ -601,6 +766,7 @@ def smoke(version: str, *, checkout: Path) -> None:
     _measurement_definition_smoke()
     smoke_measurement_catalog()
     smoke_source_binding_definition()
+    smoke_source_binding_catalog()
     schema = importlib.resources.files("xplane_fdau.formats.xplane_fdr").joinpath("schemas/fdr-record-config-v1.schema.json")
     if not schema.is_file() or '"$schema"' not in schema.read_text(encoding="utf-8"):
         raise SmokeError("installed schema resource is unavailable or invalid")

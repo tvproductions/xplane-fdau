@@ -11,6 +11,24 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class DocumentationTests(unittest.TestCase):
+    def test_source_binding_catalog_guide_examples_execute(self) -> None:
+        import re
+
+        from xplane_fdau.bindings import validate_binding_catalog
+
+        page = ROOT / "docs/reference/source-binding-catalogs.md"
+        self.assertTrue(page.is_file(), "binding catalog guide absent")
+        namespace: dict[str, Any] = {}
+        examples = re.findall(r"```python\n(.*?)```", page.read_text(encoding="utf-8"), re.DOTALL)
+        self.assertTrue(examples)
+        for example in examples:
+            exec(compile(example, str(page), "exec"), namespace)
+        self.assertEqual(namespace["binding_catalog"], namespace["restored_catalog"])
+        self.assertEqual(2, len(namespace["binding_catalog"].definitions))
+        self.assertIsNone(validate_binding_catalog(namespace["binding_catalog"], namespace["measurement_catalog"]))
+        self.assertTrue(namespace["stale_reference_rejected"])
+        self.assertIn("reference/source-binding-catalogs.md", (ROOT / "mkdocs.yml").read_text(encoding="utf-8"))
+
     def test_source_binding_guide_example_executes_and_states_boundary(self) -> None:
         import re
 

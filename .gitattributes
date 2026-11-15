@@ -1,5 +1,5 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Auto detect text files and keep LF on check-in and checkout
+* text=auto eol=lf
 
 # Preserve fixture line separators as part of their format contracts.
 tests/fixtures/fdr/*.fdr -text whitespace=cr-at-eol

@@ -128,9 +128,10 @@ limitations. Source semantic order places owner signature and selection before
 declared metadata. Entry reading checks duplicates, complete shape, canonical
 domains, a well-formed declared hash and semantics before construction.
 
-C2.4 will provide the binding catalog, schema and public family I/O, and resolve
-measurement existence/hash, direct/final compatibility, applicability narrowing
-and measurement-authorized failure outcomes. The private entry reader is not a
+C2.4 provides the [binding catalog, schema and public family I/O](source-binding-catalogs.md),
+and separately resolves measurement existence/hash, direct/final compatibility,
+applicability narrowing and measurement-authorized failure outcomes. C3 retains
+sample evaluation; A1.4 retains algorithm execution. The private entry reader is not a
 public interchange API. C4.3 retains the shared convenience API closure:
 `definition_ref`, `record_ref`, `compute_content_hash` and structural-model
 dispatch in public `canonical_bytes` are not introduced here.

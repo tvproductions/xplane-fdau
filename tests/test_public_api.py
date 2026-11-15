@@ -233,3 +233,31 @@ class PublicAPITests(unittest.TestCase):
         if node.module is not None:
             parent.extend(node.module.split("."))
         return ".".join(parent)
+
+
+class BindingPublicAPITests(unittest.TestCase):
+    def test_binding_support_exports_have_exact_ownership(self) -> None:
+        from xplane_fdau import bindings
+        from xplane_fdau.bindings import models
+
+        names = [
+            "CompanionRole",
+            "FailureCondition",
+            "FailureDisposition",
+            "AcquisitionPhase",
+            "BindingReplayPolicy",
+            "BindingInputRef",
+            "CompanionSource",
+            "TransformInput",
+            "TransformStep",
+            "FailurePolicy",
+            "SourceSpec",
+        ]
+        self.assertEqual(names, models.__all__)
+        self.assertEqual(names, bindings.__all__)
+        self.assertFalse(hasattr(bindings, "ResourceSelection"))
+        for name in names:
+            self.assertIs(getattr(models, name), getattr(bindings, name))
+            self.assertEqual("xplane_fdau.bindings.models", getattr(models, name).__module__)
+            self.assertFalse(hasattr(xplane_fdau, name))
+            self.assertFalse(hasattr(contracts, name))

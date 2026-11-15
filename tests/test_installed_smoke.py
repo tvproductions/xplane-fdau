@@ -11,6 +11,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from typing import Any
 from unittest import mock
 
 import xplane_fdau
@@ -19,6 +20,78 @@ from xplane_fdau.formats.xplane_fdr import FDRReader
 
 
 class InstalledSmokeTests(unittest.TestCase):
+    def test_source_binding_smoke_exercises_required_behavior(self) -> None:
+        self.assertTrue(hasattr(installed_smoke, "smoke_source_binding_definition"), "source binding smoke is absent")
+        import xplane_fdau.bindings as bindings
+
+        original = bindings.SourceBindingDefinition
+        calls = []
+
+        def record(**fields):
+            value = original(**fields)
+            calls.append(value)
+            return value
+
+        with mock.patch.object(bindings, "SourceBindingDefinition", side_effect=record):
+            installed_smoke.smoke_source_binding_definition()
+        self.assertEqual([0, 1], [len(value.transforms) for value in calls])
+        self.assertEqual(2, len({value.content_hash for value in calls}))
+
+    def test_source_binding_smoke_detects_corrupt_hash_and_reference(self) -> None:
+        self.assertTrue(hasattr(installed_smoke, "smoke_source_binding_definition"), "source binding smoke is absent")
+        from dataclasses import replace
+
+        import xplane_fdau.bindings as bindings
+
+        original = bindings.SourceBindingDefinition
+
+        def corrupt_hash(**fields):
+            value = original(**fields)
+            object.__setattr__(value, "_content_hash", "0" * 64)
+            return value
+
+        def corrupt_reference(**fields):
+            value = original(**fields)
+            object.__setattr__(value, "measurement_ref", replace(value.measurement_ref, definition_hash="c" * 64))
+            return value
+
+        for corruption in (corrupt_hash, corrupt_reference):
+            with (
+                self.subTest(corruption=corruption),
+                mock.patch.object(bindings, "SourceBindingDefinition", side_effect=corruption),
+                self.assertRaises(installed_smoke.SmokeError),
+            ):
+                installed_smoke.smoke_source_binding_definition()
+
+    def test_source_binding_smoke_is_called_by_installed_flow(self) -> None:
+        self.assertTrue(hasattr(installed_smoke, "smoke_source_binding_definition"), "source binding smoke is absent")
+        with (
+            mock.patch.object(installed_smoke, "ensure_outside_checkout"),
+            mock.patch.object(installed_smoke, "smoke_source_binding_definition", side_effect=installed_smoke.SmokeError("binding sentinel")),
+            self.assertRaisesRegex(installed_smoke.SmokeError, "binding sentinel"),
+        ):
+            installed_smoke.smoke(xplane_fdau.__version__, checkout=Path.cwd())
+
+    def test_source_binding_smoke_detects_ineffective_rejections(self) -> None:
+        self.assertTrue(hasattr(installed_smoke, "smoke_source_binding_definition"), "source binding smoke is absent")
+        import xplane_fdau.bindings as bindings
+
+        original = bindings.SourceBindingDefinition
+
+        def accept_forward(**fields: Any):
+            steps = fields["transforms"]
+            if steps and steps[0].inputs[0].input_id == "test.future":
+                fields = fields | {"transforms": []}
+            return original(**fields)
+
+        with (
+            mock.patch.object(bindings, "SourceBindingDefinition", side_effect=accept_forward),
+            self.assertRaisesRegex(installed_smoke.SmokeError, "forward edge"),
+        ):
+            installed_smoke.smoke_source_binding_definition()
+        with mock.patch.object(bindings.FailurePolicy, "__post_init__"), self.assertRaisesRegex(installed_smoke.SmokeError, "unusable flagged"):
+            installed_smoke.smoke_source_binding_definition()
+
     def test_measurement_definition_smoke_passes(self) -> None:
         self.assertTrue(hasattr(installed_smoke, "_measurement_definition_smoke"), "measurement definition smoke is absent")
         installed_smoke._measurement_definition_smoke()

@@ -5,11 +5,31 @@ from __future__ import annotations
 import hashlib
 import unittest
 from pathlib import Path
+from typing import Any, cast
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 class DocumentationTests(unittest.TestCase):
+    def test_source_binding_guide_example_executes_and_states_boundary(self) -> None:
+        import re
+
+        page = ROOT / "docs/reference/source-binding-definitions.md"
+        self.assertTrue(page.is_file(), "source binding guide is absent")
+        text = page.read_text(encoding="utf-8")
+        namespace: dict[str, object] = {}
+        examples = re.findall(r"```python\n(.*?)```", text, re.DOTALL)
+        self.assertTrue(examples)
+        for example in examples:
+            exec(compile(example, str(page), "exec"), namespace)
+        self.assertEqual(1, len(cast(Any, namespace["converted"]).transforms))
+        for phrase in ("declared", "observed", "C2.4", "C4.3", "constructor", "semantic", "accept_flagged", "synthetic"):
+            self.assertIn(phrase, text)
+        self.assertIn("reference/source-binding-definitions.md", (ROOT / "mkdocs.yml").read_text(encoding="utf-8"))
+        for target in re.findall(r"\]\(([^)#]+)(?:#[^)]*)?\)", text):
+            if "://" not in target:
+                self.assertTrue((page.parent / target).resolve().is_file(), target)
+
     def test_timing_reference_examples_execute_with_exact_precision(self) -> None:
         import re
 

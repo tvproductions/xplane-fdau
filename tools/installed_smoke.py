@@ -471,6 +471,111 @@ def smoke_measurement_catalog() -> None:
         raise SmokeError("installed measurement catalog schema identity or closure differs")
 
 
+def smoke_source_binding_definition() -> None:
+    """Exercise installed binding constructors without a catalog or executor."""
+    from dataclasses import FrozenInstanceError, replace
+
+    import xplane_fdau.bindings as bindings
+    from xplane_fdau.contracts import (
+        AdapterIdentity,
+        AlgorithmRef,
+        Authority,
+        ContractValidationError,
+        DefinitionRef,
+        ProvenanceSource,
+        ProviderIdentity,
+        ShapeSpec,
+        UnitSpec,
+        ValueRepresentation,
+    )
+
+    selection = {"kind": "index", "index": 0}
+    parameters = {"test.factor": [1, 1.0]}
+    unit = UnitSpec(kind="unit", quantity_id="test.length", unit_id="test.feet")
+    source = bindings.SourceSpec(
+        provider=ProviderIdentity(provider_family_id="test.provider", provider_version="1"),
+        adapter=AdapterIdentity(adapter_family_id="test.adapter", adapter_version="1"),
+        resource_kind="test.resource",
+        resource_id="test.primary",
+        resource_selection=selection,
+        declared_representation=ValueRepresentation.REAL,
+        declared_shape=ShapeSpec(kind="scalar"),
+        native_unit=unit,
+    )
+    reference = DefinitionRef(definition_id="test.measurement", definition_revision=1, definition_hash="b" * 64)
+    policy = bindings.FailurePolicy(
+        unavailable=bindings.FailureDisposition.REJECT,
+        orphaned=bindings.FailureDisposition.REJECT,
+        stale=bindings.FailureDisposition.REJECT,
+        read_error=bindings.FailureDisposition.REJECT,
+        type_mismatch=bindings.FailureDisposition.REJECT,
+        provider_degraded=bindings.FailureDisposition.REJECT,
+    )
+    step = bindings.TransformStep(
+        step_id="test.convert",
+        algorithm=AlgorithmRef(definition_id="test.convert", definition_revision=1, definition_hash="a" * 64, parameters=parameters),
+        inputs=[bindings.TransformInput(input_id="binding.primary", representation=ValueRepresentation.REAL, shape=ShapeSpec(kind="scalar"), unit=unit)],
+        output_representation=ValueRepresentation.REAL,
+        output_shape=ShapeSpec(kind="scalar"),
+        output_unit=unit,
+    )
+
+    def make(steps: list[bindings.TransformStep]) -> bindings.SourceBindingDefinition:
+        return bindings.SourceBindingDefinition(
+            definition_id="test.binding",
+            definition_revision=1,
+            authority=Authority(authority_id="test.authority", authority_revision=1),
+            provenance=[ProvenanceSource(source_id="test.source", scope="synthetic", source_revision=1)],
+            measurement_ref=reference,
+            source=source,
+            applicability=[],
+            dependencies=[],
+            companions=[],
+            transforms=steps,
+            failure_policy=policy,
+            acquisition_phase=bindings.AcquisitionPhase.UNKNOWN,
+            replay_policy=bindings.BindingReplayPolicy.PRESERVE,
+            limitations=[],
+        )
+
+    direct, transformed = make([]), make([step])
+    for value, digest in (
+        (direct, "d6478ba9fa8a62118c6f452cd96d74b08737be739177297e26f08ad901aebd40"),
+        (transformed, "4d4ac78007260dc377d69cc4e198f66169e8b2220cf464093fe2ad88c0be1122"),
+    ):
+        if value.content_hash != digest or value.measurement_ref != reference:
+            raise SmokeError("installed binding hash or exact measurement reference differs")
+        try:
+            field_name = "definition_revision"
+            setattr(value, field_name, 2)
+        except FrozenInstanceError:
+            pass
+        else:
+            raise SmokeError("installed binding is mutable")
+    if transformed.transforms[0].algorithm != step.algorithm or step.algorithm.definition_hash != "a" * 64:
+        raise SmokeError("installed binding lost its algorithm reference")
+    selection["index"] = 99
+    parameters["test.factor"].append(2)
+    if source.resource_selection != {"kind": "index", "index": 0} or step.algorithm.parameters != {"test.factor": (1, 1.0)}:
+        raise SmokeError("installed binding retained mutable selection or parameters")
+    if transformed.content_hash != "4d4ac78007260dc377d69cc4e198f66169e8b2220cf464093fe2ad88c0be1122":
+        raise SmokeError("installed binding identity changed after caller mutation")
+    try:
+        make([replace(step, inputs=[replace(step.inputs[0], input_id="test.future")])])
+    except ContractValidationError as error:
+        if error.path != "/transforms/0/inputs/0/input_id":
+            raise SmokeError("installed forward-edge rejection lost its path") from error
+    else:
+        raise SmokeError("installed binding accepted a forward edge")
+    try:
+        replace(policy, unavailable="accept_flagged")
+    except ContractValidationError as error:
+        if error.path != "/unavailable":
+            raise SmokeError("installed failure policy rejection lost its path") from error
+    else:
+        raise SmokeError("installed binding accepted an unusable flagged policy")
+
+
 def smoke(version: str, *, checkout: Path) -> None:
     """Exercise the installed public API, schema, FDR files, and CLI commands."""
     import xplane_fdau
@@ -495,6 +600,7 @@ def smoke(version: str, *, checkout: Path) -> None:
     _measurement_quality_smoke()
     _measurement_definition_smoke()
     smoke_measurement_catalog()
+    smoke_source_binding_definition()
     schema = importlib.resources.files("xplane_fdau.formats.xplane_fdr").joinpath("schemas/fdr-record-config-v1.schema.json")
     if not schema.is_file() or '"$schema"' not in schema.read_text(encoding="utf-8"):
         raise SmokeError("installed schema resource is unavailable or invalid")

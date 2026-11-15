@@ -31,6 +31,7 @@ nav:
       - Measurement quality: reference/measurement-quality.md
       - Measurement definitions: reference/measurement-definitions.md
       - Measurement catalogs: reference/measurement-catalogs.md
+      - Source-binding definitions: reference/source-binding-definitions.md
 
 validation:
   omitted_files: ignore

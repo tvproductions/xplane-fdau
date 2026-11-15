@@ -1,5 +1,113 @@
 # Project Handoff
 
+## C2.3 verified and integrated — fresh-session resume, 2026-11-15
+
+**Observed:** 2026-11-15 21:11 UTC, before this requested handoff/save-point
+commit. This section supersedes older current-state and resume instructions;
+retain the older sections as dated history.
+
+**Resume point:** C2.3 is complete, verified with **4/4 gates**, and integrated
+into clean main. Read AGENTS.md and its authorities, then run the strict backlog
+`audit` and `next`. At this observation C2.3 remains selected, so the expected
+result is no findings and `action=wait child=C2.3`. There is no unfinished C2.3
+implementation or integration step; do not repeat its gates or recreate its
+removed feature branch/worktree.
+
+The next dependency-ready product child is C2.4, **binding catalog and pure
+cross-catalog validation**, currently `specified`, 0/5 gates, with no plan.
+When Jeff requests continuation, use the guarded backlog adapter to clear the
+completed selection: preview `select none --expect-current C2.3`, inspect the
+diff/audit, then repeat with its printed `--target-sha256` and `--apply`.
+Rerun `next`; expect `action=write_plan child=C2.4`. Read its approved canonical
+specification and C2.4 acceptance gates in BACKLOG, then use
+`superpowers:writing-plans` and `gzs-plan-audit` for a single-child plan and
+review it with Jeff. Stop on audit findings or authority drift. This handoff
+does not select C2.4, approve its plan, or authorize implementation.
+
+**Durable evidence:** The [completed C2.3 plan](docs/superpowers/plans/2026-11-15-c2-3-source-binding-definition.md),
+[completion](.superpowers/sdd/2026-11-15-c2-3-binding/completion.md),
+[accepted review](.superpowers/sdd/2026-11-15-c2-3-binding/review.md),
+[verification identities/artifact hashes](.superpowers/sdd/2026-11-15-c2-3-binding/verification.json)
+and [main integration record](.superpowers/sdd/2026-11-15-c2-3-binding/integration.md)
+are committed. The approved design remains
+`docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md`.
+
+C2.3 delivers immutable source-binding/transform/failure declarations, exact
+reference identity, local graph validation, private staged entry I/O and
+installed proof/guidance. The fresh independent review found one Important
+parameter-domain error-ordering defect. Eight competing-error subcases
+reproduced it before the single correction pass; focused 102-test checks,
+850-test full gates, offline hygiene and external Python 3.12.16 wheel proof
+passed. No unresolved Critical/Important finding or deferred minor remains.
+The review receipt distinguishes four reviewer sandbox temp-directory failures
+from successful executor verification. C2.4 owns catalog/schema/public I/O,
+measurement resolution/final compatibility/applicability and failure
+authorization; C3 owns sample evaluation, A1.4 algorithm execution, and C4.3
+the existing shared convenience API closure.
+
+**Integration and local-only evidence:** Main fast-forwarded exactly to verified
+`db3c6935158826131333baf02b21ff0f02a51a4e`, then passed frozen sync, offline
+lock/backlog checks, both prescribed live-state tests, fresh strict artifacts
+and external installed-wheel smoke. Main/branch artifact hashes matched and all
+53 pinned source/tool inputs still matched. Commit `f3d45a1` recorded integration
+and passed mandatory hooks. The temporary worktree/branch and three successful
+owned external proof environments are removed; logged temporary paths are
+historical. Do not recreate them for closeout.
+
+All 83 feature execution evidence files were preserved and hash-verified under
+`.superpowers/sdd/c2-3-integration-2026-11-15-db3c693/execution/`; detailed
+integration logs are in the parent directory. Those raw logs are **local-only**,
+unavailable in a fresh clone. The separate handoff/sync logs are local-only under
+`.superpowers/sdd/2026-11-15-c2-3-handoff-sync-f3d45a1/`.
+The committed integration receipt is portable; its copied raw-report wording
+about a local-only integration record refers to the original raw report in that
+local evidence directory.
+
+**Checkpoint verification:** This requested save point changes HANDOFF.md only.
+Its 26 public-API/documentation unittest checks, strict MkDocs, documentation
+coverage (41.5%, minimum 40%) and whitespace checks passed. Mandatory commit hooks,
+including ty and the full unittest suite, must pass before push. A fresh fetch
+and post-push local/remote alignment check remain required for this save point.
+
+**Git state at observation:** Main checkout `U:/repos/xp/xplane-fdau`, HEAD
+`f3d45a1dc7290a0342e72d237a252d5de5a1d74e`, clean and eight commits ahead,
+zero behind freshly fetched `origin/main` at
+`6fd6cd10ebf144594bfb4ed05b59f84b5080e6b3`. The requested ordinary sync covers
+those eight reviewed/planning/integration commits plus this new handoff commit;
+recheck final HEAD and remote alignment on resume. The unrelated worktree
+`C:/Users/Jeff/.codex/worktrees/c68f/xplane-fdau` on
+`chore/dependency-refresh-2026-10-18` remains at `f81c4c2`, untouched.
+
+**Standing boundaries and open loops:** Python 3.12.16 is the sole supported
+minor line (`>=3.12,<3.13`); runtime stays standard-library-only and tests use
+unittest. Use project-pinned uv 0.13.6 in the process PATH; this host's verified
+executable directory is
+`U:/packages/uv/archive-v0/Z9vNgQj2AxZekAv6/uv-0.13.6.data/scripts`.
+Jeff flagged elapsed time/process overhead during C2.3: use focused checks while
+editing and the documented exact-fast-forward main exception, while keeping
+mandatory hooks enabled.
+
+Adoption records still pin starter 0.8.0/Superpowers 7.0.1/gz-skills 0.8.3.
+Observed native local inventory instead selects enabled
+`superpowers@skills-first-starter` 7.0.2 at
+`22f0b463e7a5e579904dd6211a520321035526f7` and enabled
+`gz-skills@skills-first-starter` 0.10.1 at
+`4c836e3db6d43c495863a2090daaea56585a6ea9`; marketplace checkout HEAD is
+`6a9437946605c15d5da17b38165d1965fe4ded31`. Duplicate sources and Backplane
+remain disabled. No cache/pin/activation refresh was performed or adoption
+alignment claimed. Verify fresh-session discovery and provenance; local
+inventory succeeded despite a sandbox remote-catalog request warning. Heavy
+selection, cognitive UNKNOWN/deferred, recorded Lizard limitations and incomplete
+STRICT acceptance remain as documented.
+
+No published baseline -> pending initial unpublished `0.1.0`, under BACKLOG's
+finite selected vertical-slice scope. Version mirrors agree; C2.3 completes one
+included increment. C2.4/C3/C4/A1/R1/P1/G1 remain; S/F/external/T3.1 remain outside
+that bundle. Release readiness remains gated. This request authorizes the fresh
+handoff and ordinary commit/push only; no tag, package publication, GitHub release,
+other-project edit, automatic schedule or next-child implementation is granted.
+
+
 ## C2.2 plan approved; C2.1 integrated — fresh-session resume, 2026-11-01
 
 **Observed:** 2026-11-01 22:02 UTC, before the requested approval/handoff save

@@ -1,5 +1,83 @@
 # Project Handoff
 
+## C2.4 plan approved — fresh-session resume, 2026-11-15
+
+**Observed:** 2026-11-15 22:40 UTC, before this requested approval/handoff
+save-point commit and ordinary sync. This section supersedes older resume
+instructions; retain the older sections as dated history. Jeff approved the
+corrected C2.4 plan and requested a fresh handoff and Git sync. No execution
+method was selected and no implementation was requested in this checkpoint.
+
+**Resume point:** Read the approved
+[C2.4 binding-catalog/validation plan](docs/superpowers/plans/2026-11-15-c2-4-binding-catalog-validation.md)
+and its [approved canonical specification](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md)
+after normal session-entry authorities. Run strict backlog `audit` and `next`;
+expect no findings, no selected child, C2.4 `planned`, **0/5 gates**, and
+`action=execute_plan child=C2.4`. The first unresolved checklist item is
+**execution-method selection**. Obtain native or subagent-driven execution
+before creating the feature worktree, selecting C2.4 or transitioning it to
+`in_progress`. Native is recommended because the five tasks share projection
+and staged-validation interfaces; that recommendation is not a user selection.
+Do not ask for plan approval again. Stop on audit findings or authority drift.
+
+**Review decision preserved:** Task 2 distinguishes generic document-depth
+64/65 checks, tested directly through the domain helper, from actual catalog
+loading with parameter depth 32/33. Enclosing document depth and catalog-relative
+paths remain preserved. The parameter limit prevents a structurally valid
+catalog from freely nesting to 64, so no loader-level depth-64 acceptance case
+is required. This clarification follows the existing binding-entry tests.
+
+**Approved scope:** Five tasks deliver an immutable SourceBindingCatalog,
+whole-document staged public I/O, pure exact-reference/direct/final-transform
+compatibility and failure authorization, a mirrored normative schema, and
+installed proof/guidance. Loading establishes local validity; explicit
+cross-catalog validation establishes measurement compatibility. Algorithm
+references stay opaque. C3 owns sample evaluation, A1.4 algorithm execution,
+and C4.3 the existing shared convenience API closure. No C2.4 runtime code,
+schema, dependency change or delivery evidence exists yet.
+
+**Completed work:** C2.3 remains verified with 4/4 gates and integrated into
+main. Its [integration record](.superpowers/sdd/2026-11-15-c2-3-binding/integration.md)
+and the preceding handoff section preserve durable proof and local-only evidence
+locations. Do not repeat C2.3 gates or recreate its removed branch/worktree.
+Its completed selection was cleared through inspected dry-run/digest/apply.
+C2.4 approval registration uses the same guarded lifecycle adapter; no child
+is selected by this checkpoint.
+
+**Git state at observation:** Main checkout `U:/repos/xp/xplane-fdau`, HEAD
+`1b2233218979245ffed31172215911cf12dda21d`, equal to freshly fetched
+`origin/main`. The intended save point consists only of BACKLOG.md, the newly
+approved C2.4 plan and this HANDOFF.md update. Recheck final HEAD and remote
+alignment on resume because this commit will advance them. The unrelated
+`C:/Users/Jeff/.codex/worktrees/c68f/xplane-fdau` worktree on
+`chore/dependency-refresh-2026-10-18` remains at `f81c4c2`, untouched.
+
+**Verification:** The corrected draft passed 74 focused governance/adherence/
+documentation unittest checks, strict MkDocs, whitespace and strict backlog
+audit/next; an earlier broader planning pass had 87 checks. Those are planning
+results, not delivery gates. This approval/handoff candidate reruns focused
+checks and must pass mandatory commit hooks, including ty and the full unittest
+suite, before push. Fresh fetch and final ahead=0/behind=0 proof are required
+for the requested sync. Raw save-point logs are local-only under
+`.superpowers/sdd/2026-11-15-c2-4-approval-handoff-sync-1b22332/`; the committed
+plan, backlog and this handoff remain the portable continuity artifacts.
+
+**Standing boundaries:** Python 3.12.16, standard-library-only runtime and
+unittest-only tests remain binding. Use uv 0.13.6; its verified directory is
+`U:/packages/uv/archive-v0/Z9vNgQj2AxZekAv6/uv-0.13.6.data/scripts`.
+Native inventory and checkout revisions still match the preceding handoff's
+Superpowers 7.0.2/gz-skills 0.10.1 observations; adoption pins remain older and
+unreconciled. Duplicate sources and Backplane remain disabled; no plugin refresh
+or adoption alignment is claimed. Heavy selection does not close incomplete
+STRICT acceptance, cognitive UNKNOWN/deferred or the recorded Lizard gaps.
+
+No published baseline -> pending initial unpublished `0.1.0`, governed by
+BACKLOG's finite C/A/R/P vertical-slice scope through G1. Version mirrors agree;
+C2.4/C3/C4/A1/R1/P1/G1 remain delivery work and S/F/external/T3.1 remain outside
+this bundle. The current request authorizes this handoff and ordinary commit/
+push only. No tag, package publication, GitHub release, other-project edit,
+automatic schedule or C2.4 implementation is authorized by this save point.
+
 ## C2.3 verified and integrated — fresh-session resume, 2026-11-15
 
 **Observed:** 2026-11-15 21:11 UTC, before this requested handoff/save-point

@@ -6,8 +6,17 @@ from collections.abc import Mapping
 from enum import StrEnum
 from typing import cast
 
-from ..contracts.identity import AlgorithmRef, _algorithm_ref_wire
-from ..contracts.provenance import AdapterIdentity, ProviderIdentity, _adapter_wire, _provider_wire
+from ..contracts.identity import AlgorithmRef, DefinitionRef, _algorithm_ref_wire, _definition_ref_wire
+from ..contracts.provenance import (
+    AdapterIdentity,
+    Authority,
+    ProvenanceSource,
+    ProviderIdentity,
+    _adapter_wire,
+    _authority_wire,
+    _provenance_source_wire,
+    _provider_wire,
+)
 from ..contracts.values import (
     _OMITTED,
     PayloadSpec,
@@ -19,7 +28,20 @@ from ..contracts.values import (
     _shape_spec_wire,
     _unit_spec_wire,
 )
-from .models import BindingInputRef, CompanionRole, CompanionSource, FailureDisposition, FailurePolicy, SourceSpec, TransformInput, TransformStep
+from ..measurements.models import ApplicabilitySelector
+from .models import (
+    AcquisitionPhase,
+    BindingInputRef,
+    BindingReplayPolicy,
+    CompanionRole,
+    CompanionSource,
+    FailureDisposition,
+    FailurePolicy,
+    SourceBindingDefinition,
+    SourceSpec,
+    TransformInput,
+    TransformStep,
+)
 
 
 def _unowned(value: object) -> object:
@@ -102,3 +124,43 @@ def _failure_policy_wire(value: FailurePolicy) -> dict[str, object]:
         name: _tag_wire(getattr(value, name), FailureDisposition)
         for name in ("unavailable", "orphaned", "stale", "read_error", "type_mismatch", "provider_degraded")
     }
+
+
+def _source_binding_definition_wire(value: SourceBindingDefinition, *, include_hash: bool = True) -> dict[str, object]:
+    """Project exact owned children without consulting any external catalog."""
+    provenance: object = value.provenance
+    if type(provenance) is tuple:
+        provenance = tuple(_provenance_source_wire(item) if type(item) is ProvenanceSource else _unowned(item) for item in provenance)
+    applicability: object = value.applicability
+    if type(applicability) is tuple:
+        applicability = tuple(
+            dict(class_id=item.class_id, value=item.value) if type(item) is ApplicabilitySelector else _unowned(item) for item in applicability
+        )
+    dependencies: object = value.dependencies
+    if type(dependencies) is tuple:
+        dependencies = tuple(_binding_input_ref_wire(item) if type(item) is BindingInputRef else _unowned(item) for item in dependencies)
+    companions: object = value.companions
+    if type(companions) is tuple:
+        companions = tuple(_companion_source_wire(item) if type(item) is CompanionSource else _unowned(item) for item in companions)
+    transforms: object = value.transforms
+    if type(transforms) is tuple:
+        transforms = tuple(_transform_step_wire(item) if type(item) is TransformStep else _unowned(item) for item in transforms)
+    result: dict[str, object] = dict(
+        definition_id=value.definition_id,
+        definition_revision=value.definition_revision,
+        authority=_authority_wire(value.authority) if type(value.authority) is Authority else _unowned(value.authority),
+        provenance=provenance,
+        measurement_ref=_definition_ref_wire(value.measurement_ref) if type(value.measurement_ref) is DefinitionRef else _unowned(value.measurement_ref),
+        source=_source_spec_wire(value.source) if type(value.source) is SourceSpec else _unowned(value.source),
+        applicability=applicability,
+        dependencies=dependencies,
+        companions=companions,
+        transforms=transforms,
+        failure_policy=_failure_policy_wire(value.failure_policy) if type(value.failure_policy) is FailurePolicy else _unowned(value.failure_policy),
+        acquisition_phase=_tag_wire(value.acquisition_phase, AcquisitionPhase),
+        replay_policy=_tag_wire(value.replay_policy, BindingReplayPolicy),
+        limitations=value.limitations,
+    )
+    if include_hash:
+        result["content_hash"] = value.content_hash
+    return result

@@ -65,3 +65,26 @@ def failure(**changes: Any) -> Any:
     fields = dict.fromkeys(("unavailable", "orphaned", "stale", "read_error", "type_mismatch", "provider_degraded"), "reject")
     fields.update(changes)
     return model("FailurePolicy")(**fields)
+
+
+def binding(**changes: Any) -> Any:
+    from xplane_fdau.contracts.identity import DefinitionRef
+    from xplane_fdau.contracts.provenance import Authority, ProvenanceSource
+
+    fields: dict[str, Any] = dict(
+        definition_id="test.binding",
+        definition_revision=1,
+        authority=Authority(authority_id="test.authority", authority_revision=1),
+        provenance=[ProvenanceSource(source_id="test.source", scope="synthetic", source_revision=1)],
+        measurement_ref=DefinitionRef(definition_id="test.measurement", definition_revision=1, definition_hash="b" * 64),
+        source=source(),
+        applicability=[],
+        dependencies=[],
+        companions=[],
+        transforms=[],
+        failure_policy=failure(),
+        acquisition_phase="unknown",
+        replay_policy="preserve",
+        limitations=[],
+    )
+    return model("SourceBindingDefinition")(**(fields | changes))

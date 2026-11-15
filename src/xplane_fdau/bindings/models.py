@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from types import MappingProxyType
 
-from ..contracts.identity import AlgorithmRef
-from ..contracts.provenance import AdapterIdentity, ProviderIdentity
+from ..contracts._content_hash import _definition_content_hash
+from ..contracts.identity import AlgorithmRef, DefinitionRef
+from ..contracts.provenance import AdapterIdentity, Authority, ProvenanceSource, ProviderIdentity
 from ..contracts.values import _OMITTED, ShapeSpec, UnitSpec, ValueRepresentation
+from ..measurements.models import ApplicabilitySelector
 
 __all__ = [  # noqa: RUF022 -- specification ownership order
     "CompanionRole",
@@ -23,6 +25,7 @@ __all__ = [  # noqa: RUF022 -- specification ownership order
     "TransformStep",
     "FailurePolicy",
     "SourceSpec",
+    "SourceBindingDefinition",
 ]
 
 
@@ -212,3 +215,44 @@ class FailurePolicy:
             _validate_failure_policy_fields(fields, phase)
         for name, value in fields.items():
             object.__setattr__(self, name, FailureDisposition(value))
+
+
+@dataclass(frozen=True, slots=True, kw_only=True)
+class SourceBindingDefinition:
+    """An immutable exact source-to-measurement declaration and local graph."""
+
+    definition_id: str
+    definition_revision: int
+    authority: Authority
+    provenance: Sequence[ProvenanceSource]
+    measurement_ref: DefinitionRef
+    source: SourceSpec
+    applicability: Sequence[ApplicabilitySelector]
+    dependencies: Sequence[BindingInputRef]
+    companions: Sequence[CompanionSource]
+    transforms: Sequence[TransformStep]
+    failure_policy: FailurePolicy
+    acquisition_phase: AcquisitionPhase
+    replay_policy: BindingReplayPolicy
+    limitations: Sequence[str]
+    _content_hash: str = field(init=False, repr=False, compare=False)
+
+    @property
+    def content_hash(self) -> str:
+        """Cached source-binding-family definition identity."""
+        return self._content_hash
+
+    def __post_init__(self) -> None:
+        from ._definition_validation import _FAMILY, _validate_binding_definition_fields
+        from ._model_io import _source_binding_definition_wire
+
+        for name in ("provenance", "applicability", "dependencies", "companions", "transforms", "limitations"):
+            value = getattr(self, name)
+            if type(value) in (list, tuple):
+                object.__setattr__(self, name, tuple(value))
+        fields = _source_binding_definition_wire(self, include_hash=False)
+        for phase in range(3):
+            _validate_binding_definition_fields(fields, phase)
+        object.__setattr__(self, "acquisition_phase", AcquisitionPhase(self.acquisition_phase))
+        object.__setattr__(self, "replay_policy", BindingReplayPolicy(self.replay_policy))
+        object.__setattr__(self, "_content_hash", _definition_content_hash(_FAMILY, fields))

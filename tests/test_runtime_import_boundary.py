@@ -2,12 +2,33 @@
 
 from __future__ import annotations
 
+import ast
 import unittest
+from importlib.util import resolve_name
 from pathlib import Path
 
 from tools.runtime_imports import runtime_import_violations
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _domain_edges(source: str, package: str) -> list[str]:
+    forbidden = {"measurements", "bindings", "acquisition"} if package == "contracts" else {"acquisition", "formats", "sinks", "cli"}
+    edges = []
+    for node in ast.walk(ast.parse(source)):
+        names: list[str] = []
+        if isinstance(node, ast.Import):
+            names = [alias.name for alias in node.names]
+        elif isinstance(node, ast.ImportFrom):
+            base = node.module or ""
+            if node.level:
+                base = resolve_name("." * node.level + base, "xplane_fdau." + package)
+            names = [base, *(base + "." + alias.name for alias in node.names)]
+        for name in names:
+            parts = name.split(".")
+            if len(parts) > 1 and parts[0] == "xplane_fdau" and parts[1] in forbidden:
+                edges.append(name)
+    return edges
 
 
 class RuntimeImportBoundaryTests(unittest.TestCase):
@@ -100,6 +121,27 @@ importlib.resources.files("xplane_fdau")
                 violations = runtime_import_violations(source)
                 self.assertTrue(violations)
                 self.assertIn("dynamic import", violations[0])
+
+    def test_domain_dependency_directions(self) -> None:
+        """Contracts stay inward; bindings cannot acquire or emit samples."""
+        for package in ("contracts", "bindings"):
+            for path in sorted((ROOT / "src/xplane_fdau" / package).rglob("*.py")):
+                with self.subTest(path=path):
+                    self.assertEqual([], _domain_edges(path.read_text(encoding="utf-8"), package))
+
+    def test_domain_guard_detects_absolute_and_relative_edges(self) -> None:
+        for package, source in (
+            ("contracts", "import xplane_fdau.bindings.models"),
+            ("contracts", "from ..measurements import models"),
+            ("contracts", "from .. import bindings"),
+            ("bindings", "from .. import acquisition"),
+            ("bindings", "from xplane_fdau.formats import xplane_fdr"),
+            ("bindings", "import xplane_fdau.sinks"),
+            ("bindings", "from ..cli import main"),
+        ):
+            with self.subTest(package=package, source=source):
+                self.assertTrue(_domain_edges(source, package))
+        self.assertEqual([], _domain_edges("from ..contracts import values", "bindings"))
 
 
 if __name__ == "__main__":

@@ -126,14 +126,23 @@ def _validate_unit_fields(value: object, phase: int, *, path: str, numeric: bool
             _text_field(_required(fields, name, path=path), phase, path=path + "/" + name)
 
 
-def _validate_value_fields(fields: Mapping[str, object], phase: int, names: tuple[str, str, str, str, str], *, path: str) -> None:
+def _validate_value_fields(
+    fields: Mapping[str, object],
+    phase: int,
+    names: tuple[str, str, str, str, str],
+    *,
+    path: str,
+    expected: Mapping[str, object] | None = None,
+) -> None:
     rep_name, element_name, payload_name, shape_name, unit_name = names
     representation = _required(fields, rep_name, path=path)
     if not _null(representation, phase, path=path + "/" + rep_name):
         representation = _tag(representation, ValueRepresentation, path=path + "/" + rep_name)
+    if phase == 2 and expected is not None and representation != expected["representation"]:
+        raise ContractValidationError("input representation differs from resolved declaration", path=path + "/" + rep_name)
     array = representation in ("fixed_array", "variable_array")
     element: object = None
-    for name, needed in ((element_name, array), (payload_name, representation == "referenced_bytes")):
+    for name, needed, expected_name in ((element_name, array, "element_representation"), (payload_name, representation == "referenced_bytes", "payload")):
         if representation is not None:
             if not needed:
                 if name in fields:
@@ -150,9 +159,17 @@ def _validate_value_fields(fields: Mapping[str, object], phase: int, names: tupl
             element = _tag(value, ScalarRepresentation, path=path + "/" + name)
         else:
             _validate_payload_fields(value, phase, path=path + "/" + name)
-    _validate_shape_fields(_required(fields, shape_name, path=path), phase, path=path + "/" + shape_name, representation=representation)
+        if phase == 2 and expected is not None and value != expected[expected_name]:
+            raise ContractValidationError("input declaration differs from resolved value", path=path + "/" + name)
+    shape = _required(fields, shape_name, path=path)
+    _validate_shape_fields(shape, phase, path=path + "/" + shape_name, representation=representation)
+    if phase == 2 and expected is not None and shape != expected["shape"]:
+        raise ContractValidationError("input shape differs from resolved declaration", path=path + "/" + shape_name)
     numeric = representation in ("integer", "real", "vector") or (array and element in ("integer", "real"))
-    _validate_unit_fields(_required(fields, unit_name, path=path), phase, path=path + "/" + unit_name, numeric=numeric)
+    unit = _required(fields, unit_name, path=path)
+    _validate_unit_fields(unit, phase, path=path + "/" + unit_name, numeric=numeric)
+    if phase == 2 and expected is not None and unit != expected["unit"]:
+        raise ContractValidationError("input unit differs from resolved declaration", path=path + "/" + unit_name)
 
 
 def _validate_source_fields(fields: Mapping[str, object], phase: int, *, path: str = "") -> None:

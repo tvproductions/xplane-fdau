@@ -16,6 +16,7 @@ from .models import (
     TransformInput,
     TransformStep,
 )
+from .validation import validate_binding_catalog
 
 __all__ = [  # noqa: RUF022 -- specification ownership order
     "CompanionRole",
@@ -35,4 +36,5 @@ __all__ = [  # noqa: RUF022 -- specification ownership order
     "loads_source_binding_catalog_v1",
     "dump_source_binding_catalog_v1",
     "dumps_source_binding_catalog_v1",
+    "validate_binding_catalog",
 ]

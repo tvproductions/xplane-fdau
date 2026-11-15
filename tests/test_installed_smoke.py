@@ -283,6 +283,7 @@ class InstalledSmokeTests(unittest.TestCase):
             "xplane_fdau.bindings._definition_io",
             "xplane_fdau.bindings._catalog_io",
             "xplane_fdau.bindings.io",
+            "xplane_fdau.bindings.validation",
             "xplane_fdau.bindings._catalog_validation",
             "xplane_fdau.measurements",
             "xplane_fdau.measurements.models",

@@ -4,6 +4,10 @@ All notable changes to this project are documented here.
 
 ## 0.1.0 (Unreleased)
 
+- Clarify existing release planning: PRDs guide majors, selected work and
+  requirements drive minors, and fixes drive patches. Require explicit scope,
+  version rationale and acceptance evidence; preserve current release gates.
+
 - Added a strict repository backlog audit to `audit`, `status`, and version-1
   JSON, including contextual structural, artifact, lifecycle, and Git evidence
   findings. Git observation preserves index bytes; command output uses UTF-8

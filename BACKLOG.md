@@ -63,7 +63,11 @@ slice receives one focused plan and one independently reviewable outcome.
   [completion](.superpowers/sdd/2026-11-15-c2-3-binding/completion.md) and
   [review](.superpowers/sdd/2026-11-15-c2-3-binding/review.md) bind four gate
   receipts, corrected source hashes, offline hygiene and external Python
-  3.12.16 installed proof. Local integration remains pending user choice.
+  3.12.16 installed proof. [Local integration](.superpowers/sdd/2026-11-15-c2-3-binding/integration.md)
+  fast-forwarded main exactly to the verified branch, passed focused main and
+  external installed-wheel checks, and removed the temporary worktree/branch.
+  Raw integration and execution evidence remains local-only under
+  `.superpowers/sdd/c2-3-integration-2026-11-15-db3c693/`.
 - Heavy is explicitly selected; Backplane remains disabled. STRICT starter
   acceptance is incomplete, including the external cognitive-library extraction
   prerequisite. C1.4 completion does not close those starter acceptance gaps.

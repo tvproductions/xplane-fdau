@@ -1,12 +1,12 @@
 # C2.4 Binding Catalog and Cross-Catalog Validation Implementation Plan
 
 - **Governance:** active
-- **Status:** in_progress
+- **Status:** completed
 - **Date:** 2026-11-15
 - **Roadmap child:** `C2.4`
 - **Source specification:** `docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md`
 - **Approval:** 2026-11-15 — Jeff / tvproductions; corrected plan approved in chat; fresh handoff and ordinary Git sync requested; native execution selected by Jeff on fresh-session resume, 2026-11-15
-- **Completion evidence:** —
+- **Completion evidence:** `.superpowers/sdd/2026-11-15-c2-4-binding-catalog/completion.md`
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -147,12 +147,12 @@ uv run --locked --all-groups ty check
 
 The Ruff commands include all test files so they work at every task boundary, before later test modules exist. Every command must exit zero.
 
-- [ ] Obtain selected independent reviews and resolve load-bearing findings test-first before acceptance. Bind review to exact source hashes; make no algorithm-conformance or C3 completion claim.
-- [ ] Run one stable complete offline hygiene pass: `uv run --offline --frozen --all-groups python .codex/skills/hygiene/scripts/hygiene.py`. It supplies lock/backlog/docs, all-files hooks/full unittest and one fresh strict artifact pair. Do not duplicate the aggregate on the unchanged candidate.
-- [ ] For source/installed parity, build a fresh external artifact pair with `uv build --offline --no-sources --out-dir <new-owned-external-dir>`, run locked Twine `check --strict` and `python tools/release.py check-dist <dir>`, and record exact hashes. In a fresh external uv-managed Python 3.12.16 environment install only that wheel and run the existing `tools/installed_smoke.py 0.1.0` from outside the checkout. Prove import origins, installed schema and empty runtime requirements. Preserve failed environments; clean only safely resolved owned successful paths. No other Python minor is required.
-- [ ] Commit durable completion/review/verification identities and five gate receipts under `.superpowers/sdd/2026-11-15-c2-4-binding-catalog/`: (1) catalog identity/order/schema/hashes, Tasks 1/2/4; (2) exact missing/hash reference errors, Task 3; (3) direct representation/shape/unit/payload/applicability, Task 3; (4) failure authorization matrix, Task 3; (5) transformed final declaration/local graph and no execution, Tasks 2/3/4. Bind installed proof to the same candidate/artifacts.
-- [ ] Complete this plan's task checkboxes and reconcile included completed/remaining/deferred scope in BACKLOG/CHANGELOG, retaining unpublished `0.1.0` and all release gates. Use guarded lifecycle/evidence mutations with committed proof before verified transition. Do not auto-select C3.1.
-- [ ] Use `superpowers:finishing-a-development-branch` for the integration choice. If Jeff selects local integration, follow AGENTS' exact fast-forward path: recorded passing HEAD, clean worktrees, ff-only without pull, equal main HEAD, focused offline main checks/fresh artifacts and external installed smoke. Preserve evidence before worktree/branch cleanup. Remote synchronization and publication require separate authority.
+- [x] Obtain selected independent reviews and resolve load-bearing findings test-first before acceptance. Bind review to exact source hashes; make no algorithm-conformance or C3 completion claim.
+- [x] Run one stable complete offline hygiene pass: `uv run --offline --frozen --all-groups python .codex/skills/hygiene/scripts/hygiene.py`. It supplies lock/backlog/docs, all-files hooks/full unittest and one fresh strict artifact pair. Do not duplicate the aggregate on the unchanged candidate.
+- [x] For source/installed parity, build a fresh external artifact pair with `uv build --offline --no-sources --out-dir <new-owned-external-dir>`, run locked Twine `check --strict` and `python tools/release.py check-dist <dir>`, and record exact hashes. In a fresh external uv-managed Python 3.12.16 environment install only that wheel and run the existing `tools/installed_smoke.py 0.1.0` from outside the checkout. Prove import origins, installed schema and empty runtime requirements. Preserve failed environments; clean only safely resolved owned successful paths. No other Python minor is required.
+- [x] Commit durable completion/review/verification identities and five gate receipts under `.superpowers/sdd/2026-11-15-c2-4-binding-catalog/`: (1) catalog identity/order/schema/hashes, Tasks 1/2/4; (2) exact missing/hash reference errors, Task 3; (3) direct representation/shape/unit/payload/applicability, Task 3; (4) failure authorization matrix, Task 3; (5) transformed final declaration/local graph and no execution, Tasks 2/3/4. Bind installed proof to the same candidate/artifacts.
+- [x] Complete this plan's task checkboxes and reconcile included completed/remaining/deferred scope in BACKLOG/CHANGELOG, retaining unpublished `0.1.0` and all release gates. Use guarded lifecycle/evidence mutations with committed proof before verified transition. Do not auto-select C3.1.
+- [x] Use `superpowers:finishing-a-development-branch` for the integration choice. If Jeff selects local integration, follow AGENTS' exact fast-forward path: recorded passing HEAD, clean worktrees, ff-only without pull, equal main HEAD, focused offline main checks/fresh artifacts and external installed smoke. Preserve evidence before worktree/branch cleanup. Remote synchronization and publication require separate authority.
 
 ## Planning audit and self-review
 
@@ -205,3 +205,7 @@ runner and retain the failing-child status/context. The regression runs the
 real child before and after the correction. Cost if wrong: invalid diagnostic
 bytes are represented by replacement characters; command failure remains a
 failure. This affects the verification tool only.
+
+## Execution closeout — 2026-11-15
+
+All five tasks completed at technical candidate `9efe2701e3ef55344cdde7dba12eee64d17e3364`. Independent review accepted with zero findings, full offline hygiene exited 0, and strict external artifacts plus Python 3.12.16 installed-wheel proof passed. Completion receipts pin source inputs and artifacts. Lifecycle receipt commits change governance only. Integration remains a separate user choice; the finishing workflow is active and will present the required integration choice after the final evidence commit.

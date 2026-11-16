@@ -72,10 +72,12 @@ slice receives one focused plan and one independently reviewable outcome.
   November 15. Jeff approved C2.4's corrected
   [single-child plan](docs/superpowers/plans/2026-11-15-c2-4-binding-catalog-validation.md),
   and its `planned` state and plan link were registered through the guarded
-  adapter. C2.4 is selected and in progress with 0/5 gates. Jeff selected native
-  execution on resume. Its isolated implementation worktree is
-  `C:/Users/Jeff/.codex/worktrees/b5fd/xplane-fdau`; delivery review and
-  gate evidence remain pending.
+  adapter. Native execution completed all five tasks. Its
+  [completion](.superpowers/sdd/2026-11-15-c2-4-binding-catalog/completion.md) and
+  [review](.superpowers/sdd/2026-11-15-c2-4-binding-catalog/review.md) bind accepted
+  independent review, full offline hygiene and external Python 3.12.16 installed
+  proof. Read the managed inventory for lifecycle/gate state. The isolated
+  `feature/c2-4-binding-catalog` branch remains pending the integration choice.
 - Heavy is explicitly selected; Backplane remains disabled. STRICT starter
   acceptance is incomplete, including the external cognitive-library extraction
   prerequisite. C1.4 completion does not close those starter acceptance gaps.
@@ -110,10 +112,11 @@ The child slices below refine this sequence without weakening or reordering it.
   subsequent reviewed A1/R1/P1 requirements govern this selected scope.
 - **Included completed work:** M0 identity/native kernel, B1.1 installed source
   layout, C1.1–C1.5 foundations, C2.1 definitions, C2.2 catalogs and C2.3
-  source-binding definitions. Verified
+  source-binding definitions, plus C2.4 binding catalogs and pure cross-catalog
+  validation. Verified
   T1/T2 governance and maintenance support those deliveries. Completed children
   are implementation increments within this bundle, not separate releases.
-- **Included remaining work:** C2.4, C3.1–C3.5, C4.1–C4.4,
+- **Included remaining work:** C3.1–C3.5, C4.1–C4.4,
   A1.1–A1.9, R1.1–R1.7, P1.1–P1.6, then G1. Later children still require
   their own approved specifications and plans before implementation.
 - **Outside this first bundle:** edition-pinned S standards work, F1 FDM/FOQA,
@@ -122,7 +125,7 @@ The child slices below refine this sequence without weakening or reordering it.
   capabilities need coherent later release bundles, not an enlarged 0.1.0.
 - **Compatibility and target rationale:** these are selected first-release
   capabilities with no published canonical consumer contract to migrate. C2.3
-  continues that approved scope, and C2.4 planning serves its already-included
+  and completed C2.4 continue that approved scope and deliver the already-included
   catalog/validation requirement, so reuse the adequate unpublished `0.1.0`
   target. Python remains `>=3.12,<3.13`; runtime requirements remain empty.
   Metadata, runtime version, lock metadata and CHANGELOG agree on `0.1.0`.
@@ -147,7 +150,7 @@ The child slices below refine this sequence without weakening or reordering it.
 | `C2.1` | Measurement-definition model and semantic invariants | `verified` | `C1.3`, `C1.5` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-01-c2-1-measurement-definition.md) | 4/4 | [review](.superpowers/sdd/2026-11-01-c2-1-definition/review.md) | — | — |
 | `C2.2` | Measurement catalog, schema, ordering, and references | `verified` | `C2.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-01-c2-2-measurement-catalog.md) | 4/4 | [review](.superpowers/sdd/2026-11-01-c2-2-catalog/review.md) | — | — |
 | `C2.3` | Source-binding definition and transform references | `verified` | `C2.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-15-c2-3-source-binding-definition.md) | 4/4 | [review](.superpowers/sdd/2026-11-15-c2-3-binding/review.md) | — | — |
-| `C2.4` | Binding catalog and pure cross-catalog validation | `in_progress` | `C2.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-15-c2-4-binding-catalog-validation.md) | 0/5 | — | — | — |
+| `C2.4` | Binding catalog and pure cross-catalog validation | `reviewed` | `C2.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-15-c2-4-binding-catalog-validation.md) | 5/5 | [review](.superpowers/sdd/2026-11-15-c2-4-binding-catalog/review.md) | — | — |
 | `C3.1` | Raw-observation record and schema | `specified` | `C1.3`, `C1.4`, `C1.5`, `C2.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C3.2` | Measurement-sample record and schema | `specified` | `C3.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C3.3` | Raw/sample lineage and cross-contract validation | `specified` | `C3.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
@@ -291,13 +294,13 @@ The child slices below refine this sequence without weakening or reordering it.
 
 ### C2.4 — Binding catalog and pure cross-catalog validation
 
-- [ ] Binding catalog identity, ordering, uniqueness, schema, and hashes pass.
-- [ ] Missing or mismatched measurement references fail.
-- [ ] Direct bindings enforce unit/representation/shape/payload/applicability parity.
-- [ ] Failure dispositions incompatible with measurement quality or validity
-      authorization fail during cross-catalog validation.
-- [ ] Transformed bindings validate declarations without executing or claiming algorithm
-      conformance.
+- [x] Binding catalog identity, ordering, uniqueness, schema, and hashes pass. — Evidence: [verification](.superpowers/sdd/2026-11-15-c2-4-binding-catalog/gate-1.md)
+- [x] Missing or mismatched measurement references fail. — Evidence: [verification](.superpowers/sdd/2026-11-15-c2-4-binding-catalog/gate-2.md)
+- [x] Direct bindings enforce unit/representation/shape/payload/applicability parity. — Evidence: [verification](.superpowers/sdd/2026-11-15-c2-4-binding-catalog/gate-3.md)
+- [x] Failure dispositions incompatible with measurement quality or validity
+      authorization fail during cross-catalog validation. — Evidence: [verification](.superpowers/sdd/2026-11-15-c2-4-binding-catalog/gate-4.md)
+- [x] Transformed bindings validate declarations without executing or claiming algorithm
+      conformance. — Evidence: [verification](.superpowers/sdd/2026-11-15-c2-4-binding-catalog/gate-5.md)
 
 ### C3.1 — Raw-observation record and schema
 

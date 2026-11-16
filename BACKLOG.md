@@ -76,8 +76,12 @@ slice receives one focused plan and one independently reviewable outcome.
   [completion](.superpowers/sdd/2026-11-15-c2-4-binding-catalog/completion.md) and
   [review](.superpowers/sdd/2026-11-15-c2-4-binding-catalog/review.md) bind accepted
   independent review, full offline hygiene and external Python 3.12.16 installed
-  proof. Read the managed inventory for lifecycle/gate state. The isolated
-  `feature/c2-4-binding-catalog` branch remains pending the integration choice.
+  proof. C2.4 is verified with 5/5 gates and locally integrated into main. Its
+  [integration record](.superpowers/sdd/2026-11-15-c2-4-binding-catalog/integration.md)
+  records the exact fast-forward, passing focused main checks, matching artifacts,
+  external installed-wheel proof and temporary worktree/branch cleanup. Raw
+  integration evidence remains local-only under
+  `.superpowers/sdd/c2-4-integration-2026-11-15-f58329b/`.
 - Heavy is explicitly selected; Backplane remains disabled. STRICT starter
   acceptance is incomplete, including the external cognitive-library extraction
   prerequisite. C1.4 completion does not close those starter acceptance gaps.

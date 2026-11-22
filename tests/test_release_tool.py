@@ -458,6 +458,21 @@ class ReleaseToolTests(unittest.TestCase):
                 with self.assertRaises(release.ReleaseError):
                     release.check_dist(Path(raw))
 
+    def test_raw_observation_schema_is_required_exactly_in_both_artifacts(self) -> None:
+        schema = "xplane_fdau/schemas/raw-observation-v1.schema.json"
+        archived = "xplane_fdau-0.1.0/src/" + schema
+        self.assertIn(schema, set(self._package_files()))
+        for wheel_remove, wheel_updates, tar_remove, tar_updates in (
+            ({schema}, {}, set(), {}),
+            (set(), {schema: b"{}\n"}, set(), {}),
+            (set(), {}, {archived}, {}),
+            (set(), {}, set(), {archived: b"{}\n"}),
+        ):
+            with self.subTest(remove=wheel_remove or tar_remove, changed=list(wheel_updates or tar_updates)), tempfile.TemporaryDirectory() as raw:
+                self._make_dist(Path(raw), wheel_remove=wheel_remove, wheel_updates=wheel_updates, tar_remove=tar_remove, tar_updates=tar_updates)
+                with self.assertRaises(release.ReleaseError):
+                    release.check_dist(Path(raw))
+
 
 if __name__ == "__main__":
     unittest.main()

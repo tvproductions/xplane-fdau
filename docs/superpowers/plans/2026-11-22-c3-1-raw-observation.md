@@ -1,7 +1,7 @@
 # C3.1 Raw Observation Record and Schema Implementation Plan
 
 - **Governance:** active
-- **Status:** approved
+- **Status:** in_progress
 - **Date:** 2026-11-22
 - **Roadmap child:** `C3.1`
 - **Source specification:** `docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md`

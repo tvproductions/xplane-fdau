@@ -17,7 +17,7 @@ slice receives one focused plan and one independently reviewable outcome.
   onboarding is approved crosscutting maintenance, with
   [plan](docs/superpowers/plans/2026-10-25-strict-heavy-starter-onboarding.md) and
   [evidence](docs/reviews/2026-10-25-strict-heavy-starter-adoption.md).
-- Active child: —.
+- Active child: `C3.1`.
 - `D1.1`, `D1.2`, and `D1.3` are verified. The statusless external `I1.0`
   handoff condition is eligible for q4xpcc Phase 24A planning reconciliation;
   `T1.3` is verified with 4/4 gates under its approved audit policy
@@ -153,7 +153,7 @@ recalculate its version from the published baseline and the selected scope.
 | `C2.2` | Measurement catalog, schema, ordering, and references | `verified` | `C2.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-01-c2-2-measurement-catalog.md) | 4/4 | [review](.superpowers/sdd/2026-11-01-c2-2-catalog/review.md) | — | — |
 | `C2.3` | Source-binding definition and transform references | `verified` | `C2.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-15-c2-3-source-binding-definition.md) | 4/4 | [review](.superpowers/sdd/2026-11-15-c2-3-binding/review.md) | — | — |
 | `C2.4` | Binding catalog and pure cross-catalog validation | `verified` | `C2.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-15-c2-4-binding-catalog-validation.md) | 5/5 | [review](.superpowers/sdd/2026-11-15-c2-4-binding-catalog/review.md) | — | — |
-| `C3.1` | Raw-observation record and schema | `planned` | `C1.3`, `C1.4`, `C1.5`, `C2.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-22-c3-1-raw-observation.md) | 0/4 | — | — | — |
+| `C3.1` | Raw-observation record and schema | `in_progress` | `C1.3`, `C1.4`, `C1.5`, `C2.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-22-c3-1-raw-observation.md) | 0/4 | — | — | — |
 | `C3.2` | Measurement-sample record and schema | `specified` | `C3.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C3.3` | Raw/sample lineage and cross-contract validation | `specified` | `C3.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C3.4` | Measurement-frame record and schema | `specified` | `C3.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |

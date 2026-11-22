@@ -265,15 +265,8 @@ class DocumentationTests(unittest.TestCase):
             self.assertIn(required, handoff)
         self.assertIn("## 0.1.0 (Unreleased)", changelog)
         self.assertNotIn("## 0.1.0 (Released)", changelog)
-        for required in (
-            "measurement, binding, observation, sample, frame, timing, and quality contracts",
-            "acquisition profiles, demand resolution, continuity, and generic fan-out",
-            "canonical archive, manifest, recovery, and deterministic replay",
-            "canonical samples to the native FDR sink with explicit loss reporting",
-            "ARINC",
-            "FDM/FOQA",
-        ):
-            self.assertIn(required, backlog_prose)
+        self.assertIn("Deliver the canonical contract kernel through `C4.4`", backlog_prose)
+        self.assertIn("C4.4 is the release readiness milestone", backlog_prose)
 
     def _published_text(self) -> str:
         paths = (

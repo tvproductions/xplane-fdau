@@ -1,7 +1,7 @@
 # xplane-fdau Backlog
 
 - **Status:** Active delivery ledger and Superpowers entry point
-- **Updated:** 2026-11-15
+- **Updated:** 2026-11-22
 
 Read `ROADMAP.md` for architecture order and dependencies. Then use this file to
 select one primary child slice whose prerequisites are verified. Each child
@@ -17,7 +17,7 @@ slice receives one focused plan and one independently reviewable outcome.
   onboarding is approved crosscutting maintenance, with
   [plan](docs/superpowers/plans/2026-10-25-strict-heavy-starter-onboarding.md) and
   [evidence](docs/reviews/2026-10-25-strict-heavy-starter-adoption.md).
-- Active child: `C2.4`.
+- Active child: —.
 - `D1.1`, `D1.2`, and `D1.3` are verified. The statusless external `I1.0`
   handoff condition is eligible for q4xpcc Phase 24A planning reconciliation;
   `T1.3` is verified with 4/4 gates under its approved audit policy
@@ -93,53 +93,51 @@ slice receives one focused plan and one independently reviewable outcome.
 
 ## Canonical release boundary
 
-Before any release, separately reviewed increments must implement:
+The ROADMAP planned release milestones assign four capability bundles to
+backlog completion through C4.4, A1.9, R1.7, and P1.6 with G1. At each child
+closeout, reconcile completed and remaining work in the selected release
+record. When its milestones are verified, review the candidate against that
+release's acceptance and publication gates. Before selecting the next release,
+recalculate its version from the published baseline and the selected scope.
 
-1. measurement, binding, observation, sample, frame, timing, and quality contracts;
-2. acquisition profiles, demand resolution, continuity, and generic fan-out;
-3. the canonical archive, manifest, recovery, and deterministic replay; and
-4. projection from canonical samples to the native FDR sink with explicit loss
-   reporting.
+### Selected first-release scope and version decision — 2026-11-22
 
-The child slices below refine this sequence without weakening or reordering it.
-
-### Selected first-release scope and version decision — 2026-11-15
-
-- **Published baseline -> pending target:** no published baseline -> initial
-  `0.1.0`. `git ls-remote --tags origin` returned no tags and GitHub's release
-  list returned `[]` on November 15. This corroborates the November 1 review;
-  development metadata alone is not publication evidence.
-- **Finite outcome:** one transport-free X-Plane FDAU vertical slice: canonical
-  contracts, acquisition and continuity/fan-out, canonical recording/recovery/
-  replay, and explicit lossy projection to the existing native FDR sink.
-  ROADMAP's Version 0.1.0 release gates and the approved canonical design plus
-  subsequent reviewed A1/R1/P1 requirements govern this selected scope.
-- **Included completed work:** M0 identity/native kernel, B1.1 installed source
-  layout, C1.1–C1.5 foundations, C2.1 definitions, C2.2 catalogs and C2.3
-  source-binding definitions, plus C2.4 binding catalogs and pure cross-catalog
-  validation. Verified
-  T1/T2 governance and maintenance support those deliveries. Completed children
-  are implementation increments within this bundle, not separate releases.
-- **Included remaining work:** C3.1–C3.5, C4.1–C4.4,
-  A1.1–A1.9, R1.1–R1.7, P1.1–P1.6, then G1. Later children still require
-  their own approved specifications and plans before implementation.
-- **Outside this first bundle:** edition-pinned S standards work, F1 FDM/FOQA,
-  external consumer adoption and independent T3.1 tooling. Their existing
-  roadmap dependencies and lifecycle statuses remain authoritative; later
-  capabilities need coherent later release bundles, not an enlarged 0.1.0.
-- **Compatibility and target rationale:** these are selected first-release
-  capabilities with no published canonical consumer contract to migrate. C2.3
-  and completed C2.4 continue that approved scope and deliver the already-included
-  catalog/validation requirement, so reuse the adequate unpublished `0.1.0`
-  target. Python remains `>=3.12,<3.13`; runtime requirements remain empty.
-  Metadata, runtime version, lock metadata and CHANGELOG agree on `0.1.0`.
-  No 1.0 major is being planned; a future 1.0 requires its own new PRD.
-- **Acceptance and publication:** all selected runtime children must be verified
-  and independently reviewed, G1 must reconcile the complete vertical slice,
-  supported Python 3.12 source/installed-artifact and applicable release
-  acceptance evidence must pass, and a separate release review must authorize
-  publication. G1 and STRICT acceptance remain incomplete. This planning work
-  changes neither release gates nor publication authority.
+- **Baseline and target.** No published baseline, confirmed November 22 by
+  `git ls-remote --tags origin` and the empty GitHub release list. The pending
+  first release remains `0.1.0`.
+- **Outcome.** Deliver the canonical contract kernel through `C4.4`, including
+  measurement and binding catalogs, raw observations, samples, frames, timing,
+  quality, schemas, and conformance fixtures. The existing native FDR kernel
+  remains available. ROADMAP and the approved canonical design govern the bundle.
+- **Completed.** M0, B1.1, C1.1–C1.5 and C2.1–C2.4 are verified. C2.4 closes
+  the catalog epic and satisfies the final dependency for C3.1.
+- **Remaining.** C3.1–C3.5 and C4.1–C4.4 are included. C4.4 is the release
+  readiness milestone once the required reviews and evidence are complete.
+- **Later bundles.** Acquisition is planned for `0.2.0`, recording and replay
+  for `0.3.0`, and native projection with G1 for `0.4.0`. Standards, FDM/FOQA,
+  external consumer adoption and T3.1 remain outside these selected bundles.
+  Their existing dependencies govern their delivery.
+- **Compatibility and version.** The first release defines canonical wire
+  version 1 with no published consumer contract to migrate. Python remains
+  `>=3.12,<3.13` and runtime requirements remain empty. Metadata, runtime,
+  lock metadata and CHANGELOG agree on `0.1.0`.
+- **Acceptance.** Verify and independently review the included children, pass
+  source and installed-wheel checks on Python 3.12, and satisfy applicable
+  release acceptance including STRICT evidence. Publication requires a separate
+  approved release decision. STRICT acceptance remains incomplete.
+- **Release authorization workflow.** Before the first publication decision,
+  review and update the [T1.3 audited release policy](docs/superpowers/specs/2026-09-05-t1-3-audit-policy-supplement-design.md#release-prohibition-as-an-audited-contract)
+  and its backlog tooling. The current audit requires an open publication
+  checkbox and rejects `released` child state. The replacement needs to verify
+  authorization and published tag/revision/artifact evidence for the selected
+  bundle while retaining a fail-closed path for unapproved publication. The
+  backlog adapter remains separate from the publishing operation.
+- **Version-specific tooling.** The release validator, CI, readiness workflow
+  and installed-smoke invocations contain `0.1.0` literals. Before adopting
+  the first successor target, make those checks derive the candidate version
+  from project metadata and continue to reject disagreement with the runtime
+  version, lock and artifacts. Verify the existing `0.1.0` behavior and a
+  second version in the focused release-tool and workflow suites.
 
 ## Local child inventory
 
@@ -155,7 +153,7 @@ The child slices below refine this sequence without weakening or reordering it.
 | `C2.2` | Measurement catalog, schema, ordering, and references | `verified` | `C2.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-01-c2-2-measurement-catalog.md) | 4/4 | [review](.superpowers/sdd/2026-11-01-c2-2-catalog/review.md) | — | — |
 | `C2.3` | Source-binding definition and transform references | `verified` | `C2.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-15-c2-3-source-binding-definition.md) | 4/4 | [review](.superpowers/sdd/2026-11-15-c2-3-binding/review.md) | — | — |
 | `C2.4` | Binding catalog and pure cross-catalog validation | `verified` | `C2.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-15-c2-4-binding-catalog-validation.md) | 5/5 | [review](.superpowers/sdd/2026-11-15-c2-4-binding-catalog/review.md) | — | — |
-| `C3.1` | Raw-observation record and schema | `specified` | `C1.3`, `C1.4`, `C1.5`, `C2.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
+| `C3.1` | Raw-observation record and schema | `planned` | `C1.3`, `C1.4`, `C1.5`, `C2.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-22-c3-1-raw-observation.md) | 0/4 | — | — | — |
 | `C3.2` | Measurement-sample record and schema | `specified` | `C3.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C3.3` | Raw/sample lineage and cross-contract validation | `specified` | `C3.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C3.4` | Measurement-frame record and schema | `specified` | `C3.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
@@ -382,9 +380,8 @@ The child slices below refine this sequence without weakening or reordering it.
 - [ ] Installed-wheel smoke passes on supported Python 3.12 outside the
       checkout.
 - [ ] Independent review has no unresolved load-bearing finding.
-- [ ] Version `0.1.0` remains unreleased and no release tag or package
-      publication occurs; separately authorized routine Git sync does not
-      satisfy or violate this release gate.
+- [ ] Record the exact `0.1.0` candidate revision and artifact hashes for the
+      separate release review and publication decision.
 
 ### D1.1 — Canonical C1–C4 design approval
 

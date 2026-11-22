@@ -1,7 +1,7 @@
 # xplane-fdau Roadmap
 
 - **Status:** Active planning authority
-- **Updated:** 2026-08-22
+- **Updated:** 2026-11-22
 - **Decision owner:** Jeff / tvproductions
 
 ## Purpose
@@ -86,7 +86,7 @@ M0 Identity and native FDR kernel                                      verified
                      |
                      +-> G1 Independent vertical-slice review
                           |
-                          +-> separate 0.1.0 release decision
+                          +-> separate full-pipeline publication decision
 
 Later local capability branches:
 
@@ -210,7 +210,7 @@ C/A/R/P delivery order, G1, adoption boundaries, or release gates.
 
 ### G1 — Canonical vertical-slice review
 
-`G1` is a release gate, not an implementation epic. It begins only after
+`G1` gates the planned `0.4.0` vertical-slice release. It begins only after
 `C4.4`, `A1.9`, `R1.7`, and `P1.6` are verified. It reconciles identity,
 timing, quality, lineage, continuity, recovery, replay, projection loss, source
 artifacts, and installed artifacts before a separate release decision.
@@ -305,17 +305,36 @@ alignment. Release publication remains a separate decision.
 | --- | --- | --- |
 | `T3.1` | Guarded Git synchronization adapter | `T2.1` |
 
+## Planned release milestones
+
+The completion of each selected backlog bundle triggers review of its release
+candidate. The dates of those reviews follow verified backlog evidence.
+
+| Target | Included backlog work | Release milestone | Delivered outcome |
+| --- | --- | --- | --- |
+| `0.1.0` | M0, B1.1, C1.1–C4.4 | `C4.4` | Canonical contract kernel with schemas and conformance fixtures, alongside the existing native FDR kernel |
+| `0.2.0` | A1.1–A1.9 | `A1.9` | Acquisition-session orchestration, continuity, and fan-out |
+| `0.3.0` | R1.1–R1.7 | `R1.7` | Canonical recording, recovery, and deterministic replay |
+| `0.4.0` | P1.1–P1.6, G1 | `P1.6` and `G1` | End-to-end projection into native X-Plane FDR with explicit loss reporting and full vertical-slice reconciliation |
+
+`0.1.0` is the selected first release. Later targets are planning forecasts.
+Reconcile each successor's version against the actual published baseline when
+selecting that release. A bundle's included children must be verified and
+independently reviewed. Each candidate needs supported Python 3.12 source and
+installed-artifact evidence, applicable release acceptance, and separate
+publication approval. BACKLOG records the active scope and acceptance evidence.
+
 ## Version 0.1.0 release gates
 
 - [x] Correct repository, distribution, package, CLI, documentation, schema,
       workflow, and artifact identity.
 - [x] Native X-Plane FDR isolated as a deliberately lossy format and sink.
 - [ ] `C1.1` through `C4.4` verified and independently reviewed.
-- [ ] `A1.1` through `A1.9` verified and independently reviewed.
-- [ ] `R1.1` through `R1.7` verified and independently reviewed.
-- [ ] `P1.1` through `P1.6` verified and independently reviewed.
-- [ ] `G1` reconciles the complete canonical vertical slice.
 - [ ] Source and installed-wheel verification passes on supported Python 3.12.
+- [ ] Applicable release acceptance evidence, including STRICT, passes on the
+      exact release candidate.
+- [ ] Reviewed backlog policy supports recording authorized publication and
+      its evidence for the selected bundle.
 - [ ] A separate release review authorizes publication.
 
 No checked gate authorizes release by itself.

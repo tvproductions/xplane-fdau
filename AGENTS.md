@@ -30,10 +30,11 @@
   for the selected or first dependency-ready local child. Read
   `.codex/skills/backlog-status/SKILL.md` for status, resume, adherence,
   next-action, or controlled state requests.
-- The next release remains prohibited until a reviewed canonical vertical slice
-  is complete. Tags, package publication, and GitHub releases remain separately
-  gated; an explicitly requested ordinary Git sync does not grant release
-  authority.
+- Use the release milestones in ROADMAP.md and the selected release scope in
+  BACKLOG.md. The first `0.1.0` release requires verified canonical contract
+  closure through `C4.4`. G1 gates the later full vertical-slice release.
+  Tags, package publication, and GitHub releases require separate authorization.
+  An explicitly requested ordinary Git sync grants ordinary sync authority.
 
 ## Testing
 
@@ -216,16 +217,24 @@ A selected target does not assert readiness or authorize publication. Use the
 canonical policy's required-version-decision-procedure; keep the record in
 existing project authorities rather than creating another tracker.
 
-### November 1, 2026 local release-accounting review
+### November 22, 2026 local release cadence decision
+
+Jeff approved moving the first release boundary to C4.4. The verified
+contract kernel is selected for the initial unpublished `0.1.0`. ROADMAP.md
+assigns acquisition, recording and replay, and full projection/reconciliation
+to successive planned minor bundles. Keep the completed and remaining work
+current in BACKLOG.md at each child closeout. Verified bundle milestones
+trigger candidate review. Keep applicable release acceptance and publication
+approval separate from the development lifecycle. G1 applies to the release
+containing end-to-end canonical-to-native projection.
+
+### November 1, 2026 local release-accounting review (historical)
 
 Development 0.1.0 remains unpublished: no local release tags or GitHub releases
-were found on 2026-11-01. ROADMAP.md and BACKLOG.md explicitly gate the first
-release on the canonical vertical slice and G1. Retain that gate and selected
-first-release requirements; completed children are implementation increments, not
-automatic minor releases. Record the remaining selected scope and later/deferred
-work in those existing authorities. Any proposed earlier release requires an
-explicit scope decision; this policy correction does not select or transition a
-child, amend an approved plan or change release readiness.
+were found on 2026-11-01. At that review, ROADMAP.md and BACKLOG.md gated the
+first release on the full canonical vertical slice and G1. The November 22
+decision above supersedes that first-release boundary. Child closeout remains
+an implementation increment and updates the selected bundle's progress.
 
 Reviewed source: starter base commit
 `8d090f88bf45b9a755808a62c1445beeb005daff` plus the authorized, uncommitted

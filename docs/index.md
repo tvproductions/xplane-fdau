@@ -10,6 +10,10 @@ compatibility target is the Python 3.12 minor line, matching XPPython3's
 embedded interpreter. An exact patch-version pin belongs to the client.
 The project does not import a Web API client, XPPython3, `xp`, or XPLM.
 
+The first release will deliver the canonical contract kernel through `C4.4`.
+Acquisition, canonical recording and replay, and the end-to-end native FDR
+projection are planned for successive minor releases.
+
 ## Core boundary
 
 The core owns canonical FDAU semantics and artifacts, recording, recovery,

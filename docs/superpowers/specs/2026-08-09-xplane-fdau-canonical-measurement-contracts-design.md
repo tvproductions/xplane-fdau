@@ -32,9 +32,10 @@ fixtures are the language-neutral wire authority. Frozen Python values, strict
 loaders, serializers, and semantic validators implement that authority using
 only the standard library.
 
-Version `0.1.0` remains unreleased. The release prohibition remains in force
-until the complete canonical vertical slice named by `HANDOFF.md` exists and is
-independently reviewed.
+Version `0.1.0` remains unreleased. Under the approved November 22 release
+scope decision, C4.4 supplies the contract-kernel delivery milestone. ROADMAP
+and BACKLOG govern candidate acceptance and separate publication approval.
+G1 applies to the later complete canonical vertical slice.
 
 ## Decision summary
 
@@ -1962,7 +1963,8 @@ satisfies its exact acceptance subsection below.
 - Installed-wheel smoke passes on supported Python 3.12 outside the
   checkout.
 - Independent review has no unresolved load-bearing finding.
-- Version `0.1.0` remains unreleased and no release tag or package publication occurs; separately authorized routine Git sync does not satisfy or violate this release gate.
+- Record the exact `0.1.0` candidate revision and artifact hashes for the
+  separate release review and publication decision.
 
 ## Required following increments
 

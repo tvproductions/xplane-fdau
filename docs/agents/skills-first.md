@@ -43,8 +43,10 @@ Product versions follow SemVer independently of template and plugin versions.
 Every major release, including 1.0.0, requires a newly written and reviewed PRD in
 FDAU planning authority, linked from the existing release/backlog record. Minor
 releases collect coherent selected work and compatibility notes; patches preserve
-compatibility. G1 remains waiting for the canonical vertical slice. Git sync,
-integration, tagging and publication retain their separate authorization gates.
+compatibility. ROADMAP and BACKLOG define a release cadence tied to verified
+backlog milestones. C4.4 gates the first contract-kernel release. G1 gates the
+later full vertical-slice release. Git sync, integration, tagging and
+publication retain their separate authorization gates.
 
 The [Python engineering policy](../engineering/python.md) supplies executable
 commands and measurement obligations. Historical plugin-only adoption evidence

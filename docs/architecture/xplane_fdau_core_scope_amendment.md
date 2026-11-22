@@ -257,8 +257,10 @@ dependency-refresh workflow.
 
 ## Roadmap consequences
 
-The canonical vertical-slice release gate remains unchanged. This amendment
-does not pull ARINC or FOQA implementation into the first release gate.
+The November 22 release scope decision places G1 at the full vertical-slice
+milestone and sets the first release boundary at canonical contract closure
+through C4.4. ROADMAP.md and BACKLOG.md govern release sequencing. ARINC and
+FOQA retain their roadmap dependencies outside the selected release bundles.
 
 The roadmap and backlog implement this decision as follows:
 

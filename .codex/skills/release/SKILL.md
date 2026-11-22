@@ -31,7 +31,9 @@ applicable deeper analysis, source-independent sdist-to-wheel build and A01–A1
 proof in `docs/engineering/python.md` on the actual candidate. Required failed,
 unknown or stale evidence blocks STRICT acceptance. Product SemVer is separate
 from the template; every major, including 1.0.0, requires its newly reviewed PRD.
-G1 and canonical vertical-slice prerequisites remain binding.
+Use the selected release scope in BACKLOG.md and the milestone in ROADMAP.md.
+The first release requires canonical contract closure at C4.4. Apply G1 when
+verifying readiness of the full vertical-slice release.
 
 ## Installed Matrix
 
@@ -40,6 +42,5 @@ For Python 3.12, create an isolated environment outside the checkout, install th
 ## Authorization Gate
 
 Stop after reporting local readiness and immutable artifact names and SHA-256
-hashes. Do not tag, publish to PyPI, or create a GitHub release; the canonical
-vertical slice must be complete and release publication must be separately
-authorized first.
+hashes. Tags, PyPI publication and a GitHub release each require the selected
+release's acceptance criteria and separate authorization.

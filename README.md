@@ -34,8 +34,9 @@ ARINC recorder format.
 Development toward the canonical FDAU architecture is tracked in the
 [roadmap](ROADMAP.md). The [delivery backlog](BACKLOG.md) records stable slice
 IDs, dependencies, specification and plan links, status, and measurable
-acceptance gates. Version `0.1.0` remains unreleased until the canonical
-vertical-slice release gates are independently verified.
+acceptance gates. The first `0.1.0` release targets the verified canonical
+contract kernel through `C4.4`. Acquisition, recording and replay, and the
+full native FDR projection follow in successive planned minor releases.
 The [backlog method guide](docs/project/backlog-method.md) explains the
 designations, evidence rules, and how to adapt the approach elsewhere.
 

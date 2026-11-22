@@ -166,9 +166,9 @@ user interface or command while using this library's session API.
 
 ## XPPython3 installation
 
-When a release is authorized, install its wheel into XPPython3's supported
-Python environment using its supported pip facilities, and pin or bound the
-compatible package version in the consuming project. Version `0.1.0` is
-unreleased. A consumer plugin constructs samples and submits them from its
-chosen flight-loop callback; this library does not bundle simulator integration
-or invoke an installer itself.
+After FDAU is released to PyPI, the plugin build verifies an exact wheel by
+version and SHA-256 and includes its complete `xplane_fdau` package in the
+plugin folder. Installing the plugin supplies FDAU to XPPython3's embedded
+Python 3.12 interpreter. The selected folder layout and pending host checks
+are described in the [deployment overview](../index.md#xppython3-plugin-deployment).
+The client controls when it captures and submits native FDR samples.

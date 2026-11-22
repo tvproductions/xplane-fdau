@@ -108,6 +108,35 @@ deployment receipt.
 
 ## Future deployment proof — undelivered
 
+The selected mode for an XPPython3 plugin build is `reproducibly_bundled`.
+After FDAU is published to PyPI, the plugin build uses its exact version and
+hash-pinned wheel to supply the complete `xplane_fdau` package. The build
+assembles the dependency from the verified release artifact and records its
+provenance in the deployment receipt. Installing the plugin supplies FDAU.
+Verify first startup and FDAU-backed acquisition inside a clean XPPython3
+installation with networking disabled. Both the plugin and the FDAU runtime
+use the Python standard library.
+
+On November 22, 2026, Jeff selected the documented
+`PythonPlugins/PI_<name>/` layout for XPPython3 plugin bundles, with first
+qualification on 4.8.0. Ship the `PI_` entry point and the verified FDAU files
+in a single plugin folder. Record the actual FDAU module origin at startup.
+XPPython3 describes this as a deployment change. See the
+[4.8.0 release notes](https://xppython3.readthedocs.io/en/latest/changelog.html#nov-2026)
+and [plugin layout](https://xppython3.readthedocs.io/en/latest/usage/add_plugin.html#pi-file-or-pi-directory).
+
+Verify import origin when two plugins carry different FDAU pins. Load them in
+both orders. Each plugin must either resolve its verified bundle or give a clear
+dependency error before starting acquisition. XPPython3 can reuse a module
+already loaded under the same import name. If both versions must run together,
+evaluate plugin-private import names and verify in-package imports and resource
+access while retaining the wheel-derived file inventory. A standalone probe
+using the Python 3.12.2 executable shipped with XPPython3 4.7.1 imported the
+acquisition package under a private name but exposed an absolute self-import
+in the native FDR sink. Complete the in-simulator import and coexistence proof
+with the actual bundle on 4.8.0. See the
+[XPPython3 import guidance](https://xppython3.readthedocs.io/en/latest/development/import.html).
+
 A consumer must obtain an `ExpectedDeploymentPin` independently from a trusted
 build input or signed/reviewed release index, never from the candidate wheel or
 delivered namespace. It pins exact distribution version and source revision;

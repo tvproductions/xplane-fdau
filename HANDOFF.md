@@ -1,5 +1,55 @@
 # Project Handoff
 
+## C3.2 draft ready for review and client deployment decisions recorded — 2026-11-22
+
+**Observed at 23:29 UTC on local `main`** at
+`a56489793ad57db35141cec5cb82439f3b6dd68e` before this requested save point.
+A fresh fetch showed `main` and `origin/main` aligned. This section is the
+resume point. Earlier sections record dated history.
+
+**Resume point.** Read the AGENTS.md session-entry authorities and run strict
+backlog `audit` and `next`. Expect no findings, no active child, and
+`action=write_plan child=C3.2`. C3.2 is `specified` at 0/4. The
+[C3.2 plan draft](docs/superpowers/plans/2026-11-22-c3-2-measurement-sample.md)
+already exists. Resume reviewing it in chat with Jeff. Obtain approval of the
+complete plan and an execution-method choice before registration, selection
+or implementation. Jeff agreed to keep integer nanoseconds for the host age
+unit, keep failed normalization absent, preserve stale values with the
+appropriate validity and quality, and verify nested observation hashes.
+The exact freshness comparison remains C3.3 work.
+
+**Settled client and deployment decisions.** The common FDAU port contract
+applies to all eligible clients. Web API and XPPython3 are live integration
+profiles. The entire FDAU runtime and deployed XPPython3 plug-in use the
+Python 3.12 standard library. A separately deployed Web API adapter may use
+Pydantic and translates into FDAU-owned values. Plugin builds use a complete,
+byte-identical FDAU package from the version- and SHA-256-pinned PyPI wheel.
+Jeff selected `Resources/plugins/PythonPlugins/PI_<name>/`, first to be
+qualified on XPPython3 4.8.0. See the [FDAU overview](docs/index.md#xppython3-plugin-deployment),
+[scope amendment](docs/architecture/xplane_fdau_core_scope_amendment.md#python-compatibility-policy)
+and [deployment handoff](docs/architecture/q4xpcc_phase_24a_contract_handoff.md#future-deployment-proof-undelivered).
+
+**Open proof and future work.** XPPython3 4.8.0 documents the folder layout.
+The local simulator last ran 4.7.1 with embedded Python 3.12.2. A standalone
+probe with that executable imported acquisition under a private name and
+exposed an absolute self-import in the native FDR sink. The packaged build
+still needs offline startup, verified import origin, and two differently
+pinned plugins in both load orders inside 4.8.0. The
+[client contract draft](docs/superpowers/specs/2026-11-22-xplane-fdau-live-client-contract-design.md)
+proposes a typed notice for known pre-ingress capture loss. Its wire shape
+and outcome rules require review before governing A1.5/A1.7/A1.9. C4.3 work
+will close the documented direct and transitive import-check coverage gap.
+
+**Verification and scope.** Earlier in this session, 93 focused tests, strict
+MkDocs and backlog audit passed, followed by 29 focused tests and strict
+MkDocs on the deployment edits. Recheck the final save point and mandatory
+commit hooks. The selected initial release remains unpublished `0.1.0`,
+with no remote tags or GitHub releases observed on this fetch. C4.4 and the
+existing release acceptance gates govern it. The user authorized this FDAU
+handoff and ordinary Git sync. The sibling `gz-starter` checkout has one
+local Python engineering policy edit at base `f8e5200` and needs its own
+sync request. The FDAU dependency-refresh worktree remains at `f81c4c2`.
+
 ## C3.1 integrated and C3.2 planning next — 2026-11-22
 
 **Observed 2026-11-22 20:22 UTC on local main** at

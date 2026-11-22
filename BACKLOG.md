@@ -82,6 +82,10 @@ slice receives one focused plan and one independently reviewable outcome.
   external installed-wheel proof and temporary worktree/branch cleanup. Raw
   integration evidence remains local-only under
   `.superpowers/sdd/c2-4-integration-2026-11-15-f58329b/`.
+- C4.3 verification covers the approved inward dependency direction for all
+  four canonical packages. Check direct and transitive paths into formats,
+  sinks and CLI, with negative controls for a `measurements` edge and a
+  canonical package reaching an adapter through another module.
 - Heavy is explicitly selected; Backplane remains disabled. STRICT starter
   acceptance is incomplete, including the external cognitive-library extraction
   prerequisite. C1.4 completion does not close those starter acceptance gaps.

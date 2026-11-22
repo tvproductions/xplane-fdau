@@ -26,6 +26,16 @@ XPLM callbacks, plugin lifecycle, Web API transport, connections, discovery,
 and scheduling. Both q4xpcc and clients built on `xplane-webapi` can therefore
 share one standard-library implementation of the domain and standards rules.
 
+## XPPython3 plugin deployment
+
+The selected layout is `Resources/plugins/PythonPlugins/PI_<name>/`, with first
+qualification planned on XPPython3 4.8.0. After FDAU is released to PyPI, the
+plugin build verifies a version- and hash-pinned wheel and bundles its complete
+`xplane_fdau` package beside the entry point. Installing the plugin supplies
+FDAU for the embedded Python 3.12 runtime. Offline startup and the effective
+import origin still require in-simulator verification. See the
+[deployment checks](architecture/q4xpcc_phase_24a_contract_handoff.md#future-deployment-proof-undelivered).
+
 ## Native FDR boundary
 
 Native FDR parsing, models, deterministic canonical v4 writing, profiles,

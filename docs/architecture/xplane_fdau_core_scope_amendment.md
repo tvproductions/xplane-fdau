@@ -79,6 +79,24 @@ performs both ingress and egress. Calling these projects clients is important:
 it preserves dependency inversion and prevents transport details from becoming
 the core's organizing model.
 
+### Client contract at a glance
+
+Configure an FDAU session, then submit observations or subscribe to its outputs.
+Every capture client identifies its source, preserves the evidence it actually
+received, and declares the capabilities it can supply. Web API and XPPython3
+are live integration profiles of the same contract. Clients own simulator
+access and worker scheduling. FDAU owns the synchronous acquisition rules,
+normalization, provenance, quality, continuity and delivery outcomes. FDAU
+sinks distinguish acceptance, delivery, checkpoint coverage and publication.
+Replay, formats and FDM/FOQA analysis consume the same canonical evidence.
+
+Keep concrete capture, storage, SDK, transport and scheduling types at their
+owning boundaries. The core defines the ports and the data that cross them.
+Verify direct and indirect dependencies and exercise source and sink
+substitution at the public interface. The design for the exact known
+capture-loss notification and its acceptance cases is tracked in the
+[live client contract draft](../superpowers/specs/2026-11-22-xplane-fdau-live-client-contract-design.md).
+
 ## Core ownership
 
 This distribution is the home for reusable X-Plane flight-data behavior:
@@ -250,6 +268,20 @@ compatible with, that process's embedded interpreter. An external
 `xplane-webapi` client may use Python 3.12 when composing with this core.
 The concrete XPPython3 client owns any exact interpreter pin needed for its
 deployable plugin artifact.
+
+On November 22, 2026, Jeff reaffirmed the standard-library-only runtime for
+the entire FDAU distribution, including package-owned ports and sinks. The
+XPPython3 plugin and its FDAU dependency both run on the host's Python 3.12
+standard library. PyPI is the planned publication source for the FDAU wheel.
+An adopting plugin's build must verify an exact published wheel against its
+version and independently recorded SHA-256 pin, then reproducibly bundle the
+complete `xplane_fdau` package from that wheel. The build records the artifact
+pin and verifies the bundled package inventory. Installing the plugin supplies
+its FDAU dependency. The adopter demonstrates that its delivered build can
+start FDAU-backed acquisition offline inside XPPython3 using the bundled
+package. Independently deployed Web API clients may use Pydantic under their
+own dependency policy and translate their models into FDAU-owned values before
+calling the port.
 
 This compatibility policy is separate from the repository's minimum `uv` CLI
 version. The minimum should not hard-pin an old release or impede the governed

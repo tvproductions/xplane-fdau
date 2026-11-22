@@ -93,6 +93,7 @@ class ReleaseToolTests(unittest.TestCase):
         with zipfile.ZipFile(wheel, "w") as archive:
             for name in (
                 "xplane_fdau/",
+                "xplane_fdau/acquisition/",
                 "xplane_fdau/contracts/",
                 "xplane_fdau/bindings/",
                 "xplane_fdau/measurements/",
@@ -139,6 +140,7 @@ class ReleaseToolTests(unittest.TestCase):
             for name in (
                 "xplane_fdau-0.1.0/src",
                 "xplane_fdau-0.1.0/src/xplane_fdau",
+                "xplane_fdau-0.1.0/src/xplane_fdau/acquisition",
                 "xplane_fdau-0.1.0/src/xplane_fdau/contracts",
                 "xplane_fdau-0.1.0/src/xplane_fdau/bindings",
                 "xplane_fdau-0.1.0/src/xplane_fdau/measurements",

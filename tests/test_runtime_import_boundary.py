@@ -13,7 +13,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def _domain_edges(source: str, package: str) -> list[str]:
-    forbidden = {"measurements", "bindings", "acquisition"} if package == "contracts" else {"acquisition", "formats", "sinks", "cli"}
+    forbidden = {"measurements", "bindings", "acquisition"} if package == "contracts" else {"formats", "sinks", "cli"}
+    if package == "bindings":
+        forbidden.add("acquisition")
     edges = []
     for node in ast.walk(ast.parse(source)):
         names: list[str] = []
@@ -124,7 +126,7 @@ importlib.resources.files("xplane_fdau")
 
     def test_domain_dependency_directions(self) -> None:
         """Contracts stay inward; bindings cannot acquire or emit samples."""
-        for package in ("contracts", "bindings"):
+        for package in ("contracts", "bindings", "acquisition"):
             for path in sorted((ROOT / "src/xplane_fdau" / package).rglob("*.py")):
                 with self.subTest(path=path):
                     self.assertEqual([], _domain_edges(path.read_text(encoding="utf-8"), package))
@@ -138,6 +140,9 @@ importlib.resources.files("xplane_fdau")
             ("bindings", "from xplane_fdau.formats import xplane_fdr"),
             ("bindings", "import xplane_fdau.sinks"),
             ("bindings", "from ..cli import main"),
+            ("acquisition", "from ..formats import xplane_fdr"),
+            ("acquisition", "from .. import sinks"),
+            ("acquisition", "import xplane_fdau.cli"),
         ):
             with self.subTest(package=package, source=source):
                 self.assertTrue(_domain_edges(source, package))

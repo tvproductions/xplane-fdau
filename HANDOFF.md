@@ -1,5 +1,91 @@
 # Project Handoff
 
+## C2.4 verified and integrated — fresh-session resume, 2026-11-22
+
+**Observed:** 2026-11-22 13:53 UTC, before this requested handoff/save-point
+commit and ordinary Git sync. This section supersedes older resume instructions;
+retain them as dated history.
+
+**Resume point:** C2.4 is complete, verified with **5/5 gates**, and integrated
+into main. Read the normal session-entry authorities, then run strict backlog
+`audit` and `next`. Expect no findings and `action=wait child=C2.4`, because the
+completed child remains selected. No C2.4 implementation, review, integration or
+cleanup step remains. Do not repeat its delivery gates or recreate its removed
+feature branch/worktree. Stop on audit findings or authority drift.
+
+When Jeff authorizes continuation, the next dependency-ready product child is
+**C3.1, raw-observation record and schema**, currently `specified`, 0/4 gates,
+with no implementation plan. First preview
+`select none --expect-current C2.4` through the backlog adapter; inspect the
+diff/audit, then apply only with its printed target digest. Rerun `next` and
+expect `action=write_plan child=C3.1`. Read the approved canonical specification
+and C3.1 gates, then use `superpowers:writing-plans` and `gzs-plan-audit` for one
+child's plan. This handoff does not clear selection, select C3.1, approve a new
+plan or authorize implementation.
+
+**Durable evidence:** The [completed C2.4 plan](docs/superpowers/plans/2026-11-15-c2-4-binding-catalog-validation.md),
+[completion](.superpowers/sdd/2026-11-15-c2-4-binding-catalog/completion.md),
+[accepted review](.superpowers/sdd/2026-11-15-c2-4-binding-catalog/review.md),
+[verification identities](.superpowers/sdd/2026-11-15-c2-4-binding-catalog/verification.json)
+and [integration record](.superpowers/sdd/2026-11-15-c2-4-binding-catalog/integration.md)
+bind the five acceptance gates and exact source/artifact identities. Jeff chose
+native execution and then option 1, local integration. Independent review found
+no unresolved issue or deferred minor. The agent's six rulings and their costs
+are preserved in completion evidence; algorithm execution remains A1.4, sample
+evaluation C3, and shared convenience dispatch C4.3.
+
+Main fast-forwarded exactly to verified branch `f58329b21459aa14c9a16bb178f5ee4847f56a6c`.
+Full branch offline hygiene and mandatory hooks passed. All 11 focused main
+verification commands passed, including strict fresh wheel/sdist validation and
+external Python 3.12.16 installed-wheel smoke; artifact hashes matched the
+branch. The integration-record commit is `3f97b62284367a4ee3a182a75276f6a268c3bdcc`.
+On November 22 all 144 pinned verification inputs and all 108 preserved execution
+files still matched their SHA-256 identities; strict backlog audit/next remained
+clean. Historical November 15 gates are not new November 22 artifact executions.
+
+Raw execution evidence and its manifest are **local-only** under
+`.superpowers/sdd/2026-11-15-c2-4-binding-catalog/execution/` and its parent.
+Integration logs, cleanup proof and the retained artifact pair are local-only
+under `.superpowers/sdd/c2-4-integration-2026-11-15-f58329b/`. These paths were
+verified here; another checkout must use the committed receipts and reproduce
+any newly required proof. Both successful external proof environments and the
+temporary b5fd worktree/feature branch were removed after verified preservation.
+
+**Git state:** Main checkout `U:/repos/xp/xplane-fdau` was clean at `3f97b62`.
+A fresh fetch found eight commits ahead of `origin/main`, zero behind. This
+requested save point adds only this HANDOFF.md update before ordinary commit and
+push; recheck final HEAD and remote alignment on resume. No reconciliation is
+currently needed. The unrelated c68f dependency-refresh worktree remains at
+`f81c4c2`, untouched. Save-point logs are local-only under
+`.superpowers/sdd/2026-11-22-c2-4-handoff-sync-3f97b62/`.
+
+**Verification for this save point:** 85 focused documentation/API and
+backlog-adherence/governance unittest checks passed; strict MkDocs, documentation
+coverage (41.7% against 40%) and whitespace checks passed. The entry backlog audit
+was clean. Mandatory commit hooks, including ty and the full unittest suite,
+remain required before push. Fetch again before push and afterward; completion requires
+the intended commit on origin, ahead=0/behind=0 and a clean worktree. The current
+change is continuity documentation, not a source/package or release change.
+
+**Standing boundaries:** Python 3.12.16, unittest only, standard-library-only
+runtime, and uv 0.13.6 remain binding. Its verified executable directory is
+`U:/packages/uv/archive-v0/Z9vNgQj2AxZekAv6/uv-0.13.6.data/scripts`.
+Native inventory still selects enabled Superpowers 7.0.2 and gz-skills 0.10.1
+from skills-first-starter, with actual cached revisions matching their pins.
+Duplicate sources and Backplane remain disabled. The sandboxed remote plugin
+catalog lookup warned; local owning-plugin inventory and checkout identities
+were verified. No plugin refresh, adoption-pin reconciliation or STRICT
+acceptance is claimed; cognitive UNKNOWN and recorded Lizard gaps remain open.
+
+Fresh November 22 remote tag/release checks again found no published baseline
+-> pending initial unpublished **0.1.0**, governed by BACKLOG's finite vertical
+slice. Version mirrors agree; C2.4 is included completed work, while
+C3/C4/A1/R1/P1/G1 remain included delivery work. S/F/external adoption/T3.1 remain
+outside this bundle. No published contract migration or version increment is
+required. Jeff's current request authorizes this handoff and ordinary commit/push;
+it does not authorize a tag, package publication, GitHub release, other-project
+change, schedule or new child implementation. G1 and release/STRICT gates remain.
+
 ## C2.4 plan approved — fresh-session resume, 2026-11-15
 
 **Observed:** 2026-11-15 22:40 UTC, before this requested approval/handoff

@@ -55,13 +55,18 @@ SINK_NAMES = {
 
 
 class PublicAPITests(unittest.TestCase):
-    def test_acquisition_exports_only_owned_raw_observation_models(self) -> None:
+    def test_acquisition_exports_only_owned_raw_observation_models_and_io(self) -> None:
         import xplane_fdau.acquisition as acquisition
+        import xplane_fdau.acquisition.io as io
         import xplane_fdau.acquisition.models as models
 
         expected = ["RawAbsentReason", "ObservationStatus", "RawValueEvidence", "RawObservation"]
+        expected_io = ["load_raw_observation_v1", "loads_raw_observation_v1", "dump_raw_observation_v1", "dumps_raw_observation_v1"]
         self.assertEqual(expected, models.__all__)
-        self.assertEqual(expected, acquisition.__all__)
+        self.assertEqual(expected_io, io.__all__)
+        self.assertEqual(expected + expected_io, acquisition.__all__)
+        for name in expected_io:
+            self.assertIs(getattr(io, name), getattr(acquisition, name))
         for name in expected:
             self.assertIs(getattr(models, name), getattr(acquisition, name))
         self.assertEqual(["__version__"], xplane_fdau.__all__)

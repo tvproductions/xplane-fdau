@@ -162,6 +162,26 @@ class RawObservationSchemaTests(unittest.TestCase):
                 timing = dict(raw["timing"], **{owner: dict(raw["timing"][owner], unknown=True)})
                 self.assertFalse(self.validator.is_valid(dict(raw, timing=timing)))
 
+    def test_schema_shape_and_runtime_semantics_have_distinct_proofs(self) -> None:
+        from xplane_fdau.acquisition import loads_raw_observation_v1
+        from xplane_fdau.contracts import ContractHashError, ContractShapeError, ContractValidationError
+
+        from .test_raw_observation_io import signed
+
+        original = raw_observation_wire()
+        bad_hash = dict(original, content_hash="0" * 64)
+        unordered = dict(original, applicability_context=[{"class_id": "test.z", "value": "a"}, {"class_id": "test.a", "value": "b"}])
+        integer_real = dict(original, observed_representation="real", value_evidence={"kind": "inline", "value": {"representation": "real", "value": 1}})
+        for rejected, data, expected in (
+            (bad_hash, json.dumps(bad_hash), ContractHashError),
+            (unordered, signed(unordered), ContractValidationError),
+            (integer_real, signed(integer_real), ContractShapeError),
+        ):
+            with self.subTest(error=expected):
+                self.validator.validate(rejected)
+                with self.assertRaises(expected):
+                    loads_raw_observation_v1(data)
+
 
 if __name__ == "__main__":
     unittest.main()

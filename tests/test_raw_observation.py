@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import unittest
+from collections import UserList
 from dataclasses import FrozenInstanceError, replace
 from typing import Any, cast
 
@@ -219,6 +220,24 @@ class RawObservationTests(unittest.TestCase):
         with self.assertRaises(ContractValidationError) as caught:
             raw_record(timing=mismatched)
         self.assertEqual("/timing/receipt_clock/producer_instance_id", caught.exception.path)
+
+    def test_ordered_sequences_are_defensively_copied(self) -> None:
+        selector = ApplicabilitySelector(class_id="test.aircraft", value="example")
+        context = UserList([selector])
+        limitations = UserList(["first"])
+        observation = raw_record(observed_shape=range(0), applicability_context=context, limitations=limitations)
+        identity = observation.content_hash
+        context.clear()
+        limitations.append("second")
+
+        self.assertEqual((), observation.observed_shape)
+        self.assertEqual((selector,), observation.applicability_context)
+        self.assertEqual(("first",), observation.limitations)
+        self.assertEqual(identity, observation.content_hash)
+        for value in ("", b"", bytearray(), memoryview(b""), {}, set(), iter(())):
+            with self.subTest(value=type(value)), self.assertRaises(ContractShapeError) as caught:
+                raw_record(observed_shape=value)
+            self.assertEqual("/observed_shape", caught.exception.path)
 
     def test_limits_and_ordering(self) -> None:
         first = ApplicabilitySelector(class_id="test.a", value="one")

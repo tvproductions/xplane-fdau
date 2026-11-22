@@ -278,6 +278,79 @@ class RawObservationIOTests(unittest.TestCase):
         wrong = dict(timing, receipt_clock=dict(timing["receipt_clock"], producer_instance_id=uid(8)), receipt_utc="not-a-timestamp")
         self.error(ContractValidationError, "/timing/receipt_clock/producer_instance_id", signed(dict(original, timing=wrong)))
 
+    def test_null_inline_tags_still_require_possible_value_shapes(self) -> None:
+        raw = raw_observation_wire()
+        cases = (
+            (None, {}, ContractShapeError, "/value"),
+            (None, [False, {}], ContractShapeError, "/value/1"),
+            (None, [False, []], ContractShapeError, "/value/1"),
+            (None, False, CanonicalJSONError, "/representation"),
+            ("variable_array", [{"representation": {}}], ContractShapeError, "/value/0"),
+            ("variable_array", [1], CanonicalJSONError, "/element_representation"),
+        )
+        for representation, value, error, pointer in cases:
+            with self.subTest(representation=representation, pointer=pointer):
+                inline = {"representation": representation, "value": value}
+                if representation is not None:
+                    inline["element_representation"] = None
+                invalid = dict(raw, value_evidence={"kind": "inline", "value": inline})
+                self.error(error, "/value_evidence/value" + pointer, json.dumps(invalid))
+
+    def test_competing_nested_semantics_follow_property_order(self) -> None:
+        raw = raw_observation_wire()
+        inline = {"kind": "inline", "value": {"representation": "enumeration", "value": "invalid-code"}}
+        payload = {
+            "kind": "payload",
+            "payload": {
+                "media_type": "invalid",
+                "byte_length": 0,
+                "sha256": "f" * 64,
+                "storage_role": "test.raw",
+                "retention_status": "retained",
+            },
+        }
+        context = [{"class_id": "test.z", "value": "last"}, {"class_id": "test.a", "value": ""}]
+        for pointer, invalid in (
+            ("/value_evidence/value/representation", dict(raw, value_evidence=inline)),
+            ("/value_evidence/kind", dict(raw, value_evidence=payload)),
+            ("/applicability_context/1/class_id", dict(raw, applicability_context=context)),
+        ):
+            with self.subTest(pointer=pointer):
+                self.error(ContractValidationError, pointer, signed(invalid))
+
+    def test_source_domain_cannot_alias_receipt_domain(self) -> None:
+        raw = raw_observation_wire()
+        timing = cast(dict[str, Any], raw["timing"])
+        source = {
+            "clock": dict(timing["receipt_clock"], kind="source", unit="millisecond"),
+            "reading": {"clock_domain_id": uid(6), "value": 100},
+        }
+        invalid = dict(raw, timing=dict(timing, source_timing=source))
+        pointer = "/timing/source_timing/clock/clock_domain_id"
+        with patch.object(RawObservation, "__init__", side_effect=AssertionError("premature construction")):
+            self.error(ContractValidationError, pointer, signed(invalid))
+
+        receipt = minimum_timing()
+        source_clock = replace(receipt.receipt_clock, kind="source", unit="millisecond")
+        source_timing = SourceTiming(clock=source_clock, reading=ClockReading(clock_domain_id=uid(6), value=100))
+        with self.assertRaises(ContractValidationError) as caught:
+            raw_record(timing=replace(receipt, source_timing=source_timing))
+        self.assertEqual(pointer, caught.exception.path)
+
+    def test_constructor_envelope_follows_shape_and_domain_checks(self) -> None:
+        for field, value in (("contract_family", "unsupported"), ("schema_version", 2)):
+            arguments = {field: value}
+            with self.subTest(field=field):
+                with self.assertRaises(ContractShapeError) as shape:
+                    raw_record(sequence=True, **arguments)
+                self.assertEqual("/sequence", shape.exception.path)
+                with self.assertRaises(CanonicalJSONError) as domain:
+                    raw_record(resource_id="e\u0301", **arguments)
+                self.assertEqual("/resource_id", domain.exception.path)
+                with self.assertRaises(ContractValidationError) as semantic:
+                    raw_record(**arguments)
+                self.assertEqual("/" + field, semantic.exception.path)
+
     def test_numeric_tokens_remain_distinct_from_decoded_numbers(self) -> None:
         raw = dict(
             raw_observation_wire(), observed_representation="real", value_evidence={"kind": "inline", "value": {"representation": "real", "value": 1.25}}

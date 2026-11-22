@@ -12,7 +12,7 @@ from ..contracts._timing_validation import _check as _check_timing
 from ..contracts._timing_validation import _context_expectations
 from ..contracts._value_io import _domains as _value_domains
 from ..contracts._value_io import _shape as _value_shape
-from ..contracts.errors import CanonicalJSONError, ContractShapeError, ContractValidationError, FDAUContractError, UnsupportedContractVersionError
+from ..contracts.errors import CanonicalJSONError, ContractShapeError, ContractValidationError, FDAUContractError
 from ..contracts.values import _OMITTED, ScalarRepresentation, ValueRepresentation, _inline_check, _media_type, _ordered_array, _scalar_check
 from ..measurements._definition_validation import _validate_applicability_fields
 from .models import ObservationStatus, RawAbsentReason
@@ -133,12 +133,14 @@ def _applicability(value: object, phase: int, *, path: str) -> None:
         if _null(selector, phase, path=location):
             continue
         fields = _mapping(selector, path=location)
-        _validate_applicability_fields(fields, phase, path=location)
-        if phase == 2:
-            class_id = cast(str, fields["class_id"])
-            if class_id <= previous:
-                raise ContractValidationError("applicability keys must be unique and ordered", path=location + "/class_id")
-            previous = class_id
+        if phase != 2:
+            _validate_applicability_fields(fields, phase, path=location)
+            continue
+        class_id = _identifier(fields["class_id"], path=location + "/class_id")
+        if class_id <= previous:
+            raise ContractValidationError("applicability keys must be unique and ordered", path=location + "/class_id")
+        previous = class_id
+        _nfc_text(fields["value"], path=location + "/value", maximum=256)
 
 
 def _limitations(value: object, phase: int, *, path: str) -> None:
@@ -207,6 +209,17 @@ def _nested_value(value: object, variant: str, phase: int, *, path: str) -> None
         _identifier(fields["storage_role"], path=path + "/storage_role")
 
 
+def _untyped_inline_shape(value: object, *, array: bool, path: str) -> None:
+    if value is None:
+        return
+    if array or type(value) in (list, tuple):
+        for index, item in enumerate(_ordered_array(value, path=path)):
+            if type(item) not in (str, bool, int, float, type(None)):
+                raise ContractShapeError("expected inline scalar", path=f"{path}/{index}")
+    elif type(value) not in (str, bool, int, float):
+        raise ContractShapeError("expected inline scalar or array", path=path)
+
+
 def _nested_value_shape(fields: Mapping[str, object], stem: str, *, path: str) -> None:
     # A null discriminant belongs to the canonical-domain tier. Inspect the
     # remaining shape wherever it is known without that discriminant.
@@ -216,13 +229,13 @@ def _nested_value_shape(fields: Mapping[str, object], stem: str, *, path: str) -
     if stem == "inline_value":
         tag = shadow.get("representation", _OMITTED)
         if tag is None:
-            _required(shadow, "value", path=path)
+            value = _required(shadow, "value", path=path)
+            _untyped_inline_shape(value, array=False, path=path + "/value")
             _reject_unknown(shadow, ("representation", "element_representation", "value"), path=path)
             return
         if isinstance(tag, str) and tag in _ARRAY_REPRESENTATIONS and shadow.get("element_representation", _OMITTED) is None:
-            array = _required(shadow, "value", path=path)
-            if array is not None:
-                _ordered_array(array, path=path + "/value")
+            value = _required(shadow, "value", path=path)
+            _untyped_inline_shape(value, array=True, path=path + "/value")
             _reject_unknown(shadow, ("representation", "element_representation", "value"), path=path)
             return
     _value_shape(shadow, stem, path=path)
@@ -254,8 +267,8 @@ def _validate_evidence_fields(fields: Mapping[str, object], phase: int, *, path:
 def _envelope(value: object, name: str, phase: int, *, path: str) -> None:
     integer = name == "schema_version"
     _scalar_check(value, "integer" if integer else "string", min(phase, 1), path=path)
-    if phase == 0 and value != (1 if integer else _FAMILY):
-        raise UnsupportedContractVersionError("unsupported contract family or version", path=path)
+    if phase == 2 and value != (1 if integer else _FAMILY):
+        raise ContractValidationError("unsupported raw observation family or version", path=path)
 
 
 def _text_field(value: object, name: str, phase: int, *, path: str) -> None:
@@ -279,6 +292,13 @@ def _timing(value: object, fields: Mapping[str, object], phase: int, *, path: st
         expectations = _context_expectations(timing, "observation_timing", path=path)
         producer = _mapping(fields["producer"], path="/producer")
         expectations[path + "/receipt_clock/producer_instance_id"] = (producer["producer_instance_id"],)
+        if "source_timing" in timing:
+            receipt = _mapping(timing["receipt_clock"], path=path + "/receipt_clock")
+            source = _mapping(timing["source_timing"], path=path + "/source_timing")
+            clock = _mapping(source["clock"], path=path + "/source_timing/clock")
+            if clock["clock_domain_id"] == receipt["clock_domain_id"]:
+                # A conflicting identity has no allowed value at this leaf.
+                expectations[path + "/source_timing/clock/clock_domain_id"] = ()
     _check_timing(timing, "observation_timing", phase, path=path, expectations=expectations)
 
 
@@ -303,9 +323,9 @@ def _validate_field(fields: Mapping[str, object], name: str, value: object, phas
     elif name == "observed_element_representation":
         _closed(value, _SCALARS, phase, path=location)
     elif name == "value_evidence":
-        _validate_evidence_fields(_mapping(value, path=location), phase, path=location)
         if phase == 2:
             _local_evidence_metadata(fields, path=location)
+        _validate_evidence_fields(_mapping(value, path=location), phase, path=location)
     elif name == "timing":
         _timing(value, fields, phase, path=location)
     elif name == "applicability_context":

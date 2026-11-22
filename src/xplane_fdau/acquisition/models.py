@@ -96,7 +96,7 @@ class RawObservation:
 
         for name in ("observed_shape", "applicability_context", "limitations"):
             value = getattr(self, name)
-            if type(value) in (list, tuple):
+            if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray, memoryview)):
                 object.__setattr__(self, name, tuple(value))
         selection = self.resource_selection
         if isinstance(selection, Mapping):

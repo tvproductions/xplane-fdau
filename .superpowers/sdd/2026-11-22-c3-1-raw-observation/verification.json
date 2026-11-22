@@ -1,0 +1,90 @@
+{
+  "child": "C3.1",
+  "date": "2026-11-22",
+  "environment": {
+    "pending_release": "0.1.0",
+    "platform": "Windows",
+    "python": "3.12.16",
+    "uv": "0.13.6"
+  },
+  "execution_log_sha256": {
+    "external-artifacts.json": "6ffec4c793ce837137ac1eaaff28973a8034b91864cebc3279c82e903d31ccfc",
+    "external-build.log": "183bc27a78102215b0e24ed44a3fe56223c026eabc90670f5001c65ca37b9c4b",
+    "external-installed-metadata.log": "eabeffcc6eca6ecd91197fb9069d2604129202293a3ea4433b8aeadd816d4e29",
+    "external-installed-smoke.log": "da868f8d5b82a5242d4ec46a06b762739f32475ea353e75407e68acbbe993532",
+    "external-inventory.log": "ab3a7ec8b3b0b1bf5f41051529c5fceb08263745f674e86760f4c55c8adfa090",
+    "external-proof.log": "582d7ad99dc4bb2cfe77076127222b66b8899f81b285d984d4e54b53586ba35a",
+    "external-twine.log": "eb64aeb6a5499506b924ed4487afa586aaffe59a3da4ec92f5f9395918218d40",
+    "external-venv.log": "aadc4cf2c1ed6ff39d043ac983ab3979e67a66a53b1820560f6d83a7ca60d55a",
+    "external-wheel-install.log": "a86771ca89a7d6a2b7f2b1183f3b4ba1c06cb268bd8b1d8672bc545dc6f6b4ca",
+    "hygiene.log": "4f86a888d77ccd1d122989aa86427181ac415812ff37c7b954d5ea921267bc16",
+    "review-commit.log": "bb5610ef92d18a5eece2ad934df9d4abf420f321f9d87530f3541df5b2898bab",
+    "review-green.log": "f26bde61871121661539520bb3dd73b782fd0156c038d76e98655c420a09d53c",
+    "review-red-null-shape.log": "60f1fd7e7d0ba0075f41fbd46c5cc092b4aadf40675b2f278aca33e2308c7c01",
+    "review-red-sequence.log": "297658e7ecc55d00aea363e512a1a10f25775fc385349c004853333d839abe97",
+    "review-red.log": "e0b850c2a0e878c06ab0825ba276f13a8b425385daaa02152d918f97a2c9d311"
+  },
+  "external_proof": {
+    "artifacts": {
+      "xplane_fdau-0.1.0-py3-none-any.whl": {
+        "bytes": 122219,
+        "sha256": "183b8883d2cf8f49b80ddefe419463c136b5e8800861b0b41c419a7c2e39e016"
+      },
+      "xplane_fdau-0.1.0.tar.gz": {
+        "bytes": 92931,
+        "sha256": "ad957403ec1848156d385b9c659ce987f666a2f03451ca04b4b2feed24123ad0"
+      }
+    },
+    "directory": "C:\\Users\\Jeff\\AppData\\Local\\Temp\\xplane-fdau-c31-installed-38596ef3cddb48fe8d8f270411c7e4de",
+    "installed_distribution": "xplane-fdau 0.1.0",
+    "installed_runtime_requirements": [],
+    "schema_sha256": "bba3e0c0a6f63892e47a8221de329b490806f5de012a34802d0fd7d76c641025"
+  },
+  "hygiene": {
+    "command": "uv run --offline --frozen --all-groups python .codex/skills/hygiene/scripts/hygiene.py",
+    "exit": 0,
+    "log": "execution/hygiene.log"
+  },
+  "review": {
+    "deferred": [],
+    "fixed_in": "62563568f175d33c72f32b1841f3a63d005f439b",
+    "independent_focused_tests": 22,
+    "independent_wire_matrix_cases": 90,
+    "initial_grades": {
+      "critical": 0,
+      "important": 4,
+      "minor": 1
+    },
+    "post_fix_focused_tests": 22,
+    "reviewer": "gpt-6.2-astra, high reasoning, fresh context"
+  },
+  "revision": {
+    "base": "580ec58e78fadb1ca6de89a57f921a0e80d3541c",
+    "reviewed": "b54bc02b5487c21ba3f8dec496be2840971ee054",
+    "reviewed_tree": "c0d10554e5d5201aec81fc3c684c7b430c48601d",
+    "verified": "62563568f175d33c72f32b1841f3a63d005f439b",
+    "verified_tree": "1282a30530f8a90cffb8cda0be94a719e7a742d2"
+  },
+  "technical_input_sha256": {
+    "docs/reference/raw-observations.md": "a728f55bd8c11a4997ff65aa6687be003690e007e0bb9cb51e1a05729fb75a97",
+    "docs/schemas/raw-observation-v1.schema.json": "bba3e0c0a6f63892e47a8221de329b490806f5de012a34802d0fd7d76c641025",
+    "mkdocs.yml": "b033d6d5d62461469e1d193ba5d218a197b24a385328739346636cdcd1a89dd6",
+    "src/xplane_fdau/acquisition/__init__.py": "670ffe1a2fe6bcdc2cddb81b7b30219b137b1af1c2d841ea0239e8faa19f4425",
+    "src/xplane_fdau/acquisition/_raw_io.py": "84a3ff0a5dfb57676115d00fb9f774fc9dc15381ec4a86360ea08fa058168675",
+    "src/xplane_fdau/acquisition/_raw_validation.py": "779b7f6c3dd82ad0e9ab42226145f9b164ca3ddbd4ddf120b66658ff5a46d1e6",
+    "src/xplane_fdau/acquisition/_raw_wire.py": "a89c380dcaa2730442a0433e394cd9c86a17b08509d8b66de6e71eff1901df5d",
+    "src/xplane_fdau/acquisition/io.py": "f8892cfeb4a0c420bf210724a2ca839b0da202cfc523c6b77d1fa98da73c12dc",
+    "src/xplane_fdau/acquisition/models.py": "f5ae41166097a3fa43045d84fee7b2bed41ffa34bb2ae80c8e83a5fe208b0ddf",
+    "src/xplane_fdau/schemas/raw-observation-v1.schema.json": "bba3e0c0a6f63892e47a8221de329b490806f5de012a34802d0fd7d76c641025",
+    "tests/raw_observation_support.py": "fc913e379fdf54df6747c300b3447b764af9aa7340d24581580b2caa0d752c0f",
+    "tests/test_documentation.py": "5fbdfc96776cf6732b8f39cabfb835260bb534b3a1cb80a897675d463b3b7c0c",
+    "tests/test_installed_smoke.py": "ff9a5e89d32ca90c2ea6c30dd2fdb72b516bc4a2b44e830cdc8bcf4212a01045",
+    "tests/test_public_api.py": "3b45ee2b9eb2cd609019deee0b26e91f914683de70529e5382ebffe4b37cb979",
+    "tests/test_raw_observation.py": "87ffe65ede825a010e8532ce5bf651179dcbd3da6c29af16a9b15620cccbcac7",
+    "tests/test_raw_observation_io.py": "baa8dc2e70c928c4b6420cd6c08afb5cb10645a758676cf7501ea8e637d9496b",
+    "tests/test_raw_observation_schema.py": "e5ec71869c961107598b7dc322c9492d38c2d1b5065850cebdf0b1357be485be",
+    "tests/test_release_tool.py": "140818cc9790d7991f4c7d7b4a72fcff0bf9ee0337138fc941b0499a128938b1",
+    "tests/test_runtime_import_boundary.py": "05ac10a1895ff6b2ef61edd73ccb566b3d96048981882bea96b84c4900a060a5",
+    "tools/installed_smoke.py": "fe3065d330feecb81820b56bad76f8afc6a549f82d3f52a491e2bd42b195fe52"
+  }
+}

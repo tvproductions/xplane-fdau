@@ -11,6 +11,25 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class DocumentationTests(unittest.TestCase):
+    def test_raw_observation_guide_round_trips_and_links_schema(self) -> None:
+        import json
+        import re
+
+        page = ROOT / "docs/reference/raw-observations.md"
+        self.assertTrue(page.is_file(), "raw-observation reference absent")
+        text = page.read_text(encoding="utf-8")
+        namespace: dict[str, Any] = {}
+        examples = re.findall(r"\x60\x60\x60python\n(.*?)\x60\x60\x60", text, re.DOTALL)
+        self.assertTrue(examples)
+        for example in examples:
+            exec(compile(example, str(page), "exec"), namespace)
+        self.assertEqual(namespace["observation"], namespace["restored"])
+        self.assertIs(False, namespace["restored"].value_evidence.value.value)
+        self.assertEqual("absent", namespace["unavailable"].value_evidence.kind)
+        self.assertNotIn("source_timing", json.loads(namespace["wire"])["timing"])
+        self.assertIn("../schemas/raw-observation-v1.schema.json", text)
+        self.assertIn("reference/raw-observations.md", (ROOT / "mkdocs.yml").read_text(encoding="utf-8"))
+
     def test_source_binding_catalog_guide_examples_execute(self) -> None:
         import re
 

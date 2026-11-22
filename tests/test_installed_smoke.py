@@ -20,6 +20,56 @@ from xplane_fdau.formats.xplane_fdr import FDRReader
 
 
 class InstalledSmokeTests(unittest.TestCase):
+    def test_raw_observation_smoke_runs_public_behavior(self) -> None:
+        self.assertTrue(hasattr(installed_smoke, "smoke_raw_observation"), "raw-observation installed smoke absent")
+        installed_smoke.smoke_raw_observation()
+
+    def test_raw_observation_smoke_is_called_by_installed_flow(self) -> None:
+        self.assertTrue(hasattr(installed_smoke, "smoke_raw_observation"), "raw-observation installed smoke absent")
+        with (
+            mock.patch.object(installed_smoke, "ensure_outside_checkout"),
+            mock.patch.object(installed_smoke, "smoke_raw_observation", side_effect=installed_smoke.SmokeError("raw smoke sentinel")),
+            self.assertRaisesRegex(installed_smoke.SmokeError, "raw smoke sentinel"),
+        ):
+            installed_smoke.smoke("0.1.0", checkout=Path("checkout"))
+
+    def test_raw_observation_smoke_detects_corrupt_bytes_and_schema(self) -> None:
+        self.assertTrue(hasattr(installed_smoke, "smoke_raw_observation"), "raw-observation installed smoke absent")
+        import xplane_fdau.acquisition as acquisition
+
+        original = acquisition.dumps_raw_observation_v1
+        for corruption in (
+            lambda value: b"{}",
+            lambda value: original(value).replace(value.content_hash.encode("ascii"), b"0" * 64, 1),
+        ):
+            with mock.patch.object(acquisition, "dumps_raw_observation_v1", side_effect=corruption), self.assertRaises(installed_smoke.SmokeError):
+                installed_smoke.smoke_raw_observation()
+        with mock.patch("importlib.resources.files", side_effect=FileNotFoundError("missing schema")), self.assertRaises(installed_smoke.SmokeError):
+            installed_smoke.smoke_raw_observation()
+
+    def test_raw_observation_smoke_detects_ineffective_status_and_timing_checks(self) -> None:
+        self.assertTrue(hasattr(installed_smoke, "smoke_raw_observation"), "raw-observation installed smoke absent")
+        import xplane_fdau.acquisition as acquisition
+        from xplane_fdau.contracts import ContractValidationError
+
+        original = acquisition.loads_raw_observation_v1
+        for expected_path in ("/value_evidence/kind", "/timing/receipt_clock/producer_instance_id"):
+
+            def suppress(data: str | bytes, *, source: str = "<memory>", target: str = expected_path) -> Any:
+                try:
+                    return original(data, source=source)
+                except ContractValidationError as error:
+                    if error.path != target:
+                        raise
+                    return None
+
+            with (
+                self.subTest(path=expected_path),
+                mock.patch.object(acquisition, "loads_raw_observation_v1", side_effect=suppress),
+                self.assertRaises(installed_smoke.SmokeError),
+            ):
+                installed_smoke.smoke_raw_observation()
+
     def test_console_child_non_utf8_stderr_keeps_smoke_failure_context(self) -> None:
         command = [sys.executable, "-c", "import os; os.write(2, bytes([255])); raise SystemExit(7)"]
         try:

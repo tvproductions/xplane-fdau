@@ -741,6 +741,147 @@ def smoke_source_binding_catalog() -> None:
         raise SmokeError("installed binding catalog schema identity or closure differs")
 
 
+def smoke_raw_observation() -> None:
+    """Verify installed raw-observation bytes, validation, and schema access."""
+    import json
+    from collections.abc import Mapping
+    from dataclasses import replace
+    from hashlib import sha256
+    from io import BytesIO
+
+    from xplane_fdau import acquisition
+    from xplane_fdau.contracts import (
+        AdapterIdentity,
+        ClockDomain,
+        ClockReading,
+        ContractValidationError,
+        FDAUContractError,
+        InlineValue,
+        ObservationTiming,
+        PayloadReference,
+        ProducerIdentity,
+        ProviderIdentity,
+        UtcInstant,
+    )
+
+    family = "https://tvproductions.github.io/xplane-fdau/contracts/raw-observation"
+    producer = ProducerIdentity(implementation_id="test.producer", implementation_version="1", producer_instance_id="00000000-0000-4000-8000-000000000002")
+    domain = ClockDomain(
+        clock_domain_id="00000000-0000-4000-8000-000000000006",
+        kind="host_monotonic",
+        unit="nanosecond",
+        resolution=1,
+        origin="test",
+        scope="test",
+        producer_instance_id=producer.producer_instance_id,
+    )
+    first = acquisition.RawObservation(
+        contract_family=family,
+        schema_version=1,
+        observation_id="00000000-0000-4000-8000-000000000001",
+        producer=producer,
+        provider=ProviderIdentity(provider_family_id="test.provider", provider_version="1"),
+        adapter=AdapterIdentity(adapter_family_id="test.adapter", adapter_version="1"),
+        session_id="00000000-0000-4000-8000-000000000003",
+        stream_id="00000000-0000-4000-8000-000000000004",
+        epoch_id="00000000-0000-4000-8000-000000000005",
+        sequence=0,
+        connection_generation=0,
+        source_generation=0,
+        resource_kind="test.resource",
+        resource_id="test/source",
+        observed_shape=(),
+        observed_representation="boolean",
+        value_evidence=acquisition.RawValueEvidence(kind="inline", value=InlineValue(representation="boolean", value=False)),
+        timing=ObservationTiming(
+            receipt_clock=domain,
+            receipt_reading=ClockReading(clock_domain_id=domain.clock_domain_id, value=0),
+            receipt_utc=UtcInstant(value="2026-11-22T00:00:00.123456789Z"),
+        ),
+        applicability_context=(),
+        status="ok",
+        limitations=(),
+    )
+    payload = replace(
+        first,
+        observation_id="00000000-0000-4000-8000-000000000007",
+        sequence=1,
+        observed_representation="referenced_bytes",
+        value_evidence=acquisition.RawValueEvidence(
+            kind="payload",
+            payload=PayloadReference(
+                media_type="application/octet-stream", byte_length=0, sha256="f" * 64, storage_role="test.raw", retention_status="intentionally_omitted"
+            ),
+        ),
+    )
+    absent = replace(
+        first,
+        observation_id="00000000-0000-4000-8000-000000000008",
+        sequence=2,
+        status="unavailable",
+        value_evidence=acquisition.RawValueEvidence(kind="absent", reason="unavailable"),
+    )
+
+    def ascii_document(fields: dict[str, object]) -> bytes:
+        return (json.dumps(fields, sort_keys=True, separators=(",", ":")) + "\n").encode("ascii")
+
+    def signed(fields: Mapping[str, object]) -> bytes:
+        body = {name: value for name, value in fields.items() if name != "content_hash"}
+        return ascii_document(body | {"content_hash": sha256(ascii_document(body)).hexdigest()})
+
+    for observation in (first, payload, absent):
+        try:
+            data = acquisition.dumps_raw_observation_v1(observation)
+            fields = json.loads(data)
+            if type(fields) is not dict or signed(fields) != data or fields["content_hash"] != observation.content_hash:
+                raise SmokeError("installed raw observation bytes or hash differ")
+            with BytesIO() as stream:
+                acquisition.dump_raw_observation_v1(observation, stream)
+                if stream.closed or stream.getvalue() != data:
+                    raise SmokeError("installed raw observation binary dump differs")
+                stream.seek(0)
+                if acquisition.load_raw_observation_v1(stream) != observation or stream.closed:
+                    raise SmokeError("installed raw observation binary round trip differs")
+            if acquisition.loads_raw_observation_v1(data) != observation:
+                raise SmokeError("installed raw observation round trip differs")
+            if fields["timing"]["receipt_utc"] != first.timing.receipt_utc.value or "source_timing" in fields["timing"]:
+                raise SmokeError("installed raw observation lost receipt timing or added source timing")
+            if observation is first and sha256(data).hexdigest() != "03b6b3039898418347fc681448134333fdc5a7900650bbeea5ab5f11bb879c03":
+                raise SmokeError("installed raw observation differs from independent byte vector")
+        except (FDAUContractError, KeyError, TypeError, ValueError) as error:
+            raise SmokeError("installed raw observation interchange failed") from error
+
+    original = json.loads(acquisition.dumps_raw_observation_v1(first))
+    incompatible_status = dict(original, status="unavailable")
+    wrong_clock = dict(original["timing"]["receipt_clock"], producer_instance_id="00000000-0000-4000-8000-000000000009")
+    incompatible_timing = dict(original, timing=dict(original["timing"], receipt_clock=wrong_clock))
+    for fields, path in ((incompatible_status, "/value_evidence/kind"), (incompatible_timing, "/timing/receipt_clock/producer_instance_id")):
+        try:
+            acquisition.loads_raw_observation_v1(signed(fields))
+        except ContractValidationError as error:
+            if error.path != path:
+                raise SmokeError("installed raw observation reported the wrong validation path") from error
+        except FDAUContractError as error:
+            raise SmokeError("installed raw observation reported the wrong error class") from error
+        else:
+            raise SmokeError("installed raw observation accepted an invalid status or timing claim")
+
+    name = "raw-observation-v1.schema.json"
+    try:
+        schema_bytes = importlib.resources.files("xplane_fdau.schemas").joinpath(name).read_bytes()
+        schema = json.loads(schema_bytes)
+    except (OSError, ValueError) as error:
+        raise SmokeError("installed raw observation schema is unavailable or invalid") from error
+    if (
+        type(schema) is not dict
+        or schema.get("$id") != "https://tvproductions.github.io/xplane-fdau/schemas/" + name
+        or schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema"
+        or schema.get("unevaluatedProperties") is not False
+        or not schema_bytes.endswith(b"\n")
+    ):
+        raise SmokeError("installed raw observation schema identity or closure differs")
+
+
 def smoke(version: str, *, checkout: Path) -> None:
     """Exercise the installed public API, schema, FDR files, and CLI commands."""
     import xplane_fdau
@@ -767,6 +908,7 @@ def smoke(version: str, *, checkout: Path) -> None:
     smoke_measurement_catalog()
     smoke_source_binding_definition()
     smoke_source_binding_catalog()
+    smoke_raw_observation()
     schema = importlib.resources.files("xplane_fdau.formats.xplane_fdr").joinpath("schemas/fdr-record-config-v1.schema.json")
     if not schema.is_file() or '"$schema"' not in schema.read_text(encoding="utf-8"):
         raise SmokeError("installed schema resource is unavailable or invalid")

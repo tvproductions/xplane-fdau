@@ -33,6 +33,7 @@ nav:
       - Measurement catalogs: reference/measurement-catalogs.md
       - Source-binding definitions: reference/source-binding-definitions.md
       - Source-binding catalogs: reference/source-binding-catalogs.md
+      - Raw observations: reference/raw-observations.md
 
 validation:
   omitted_files: ignore

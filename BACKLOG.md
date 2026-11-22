@@ -109,10 +109,12 @@ recalculate its version from the published baseline and the selected scope.
   measurement and binding catalogs, raw observations, samples, frames, timing,
   quality, schemas, and conformance fixtures. The existing native FDR kernel
   remains available. ROADMAP and the approved canonical design govern the bundle.
-- **Completed.** M0, B1.1, C1.1–C1.5 and C2.1–C2.4 are verified. C2.4 closes
-  the catalog epic and satisfies the final dependency for C3.1.
-- **Remaining.** C3.1–C3.5 and C4.1–C4.4 are included. C4.4 is the release
-  readiness milestone once the required reviews and evidence are complete.
+- **Completed.** M0, B1.1, C1.1–C1.5, C2.1–C2.4 and C3.1 are verified. C3.1
+  delivers the raw-observation record and schema with
+  [four verified gates](.superpowers/sdd/2026-11-22-c3-1-raw-observation/completion.md).
+- **Remaining.** Eight selected children remain: C3.2–C3.5 and C4.1–C4.4.
+  C4.4 is the release readiness milestone once the required reviews and
+  evidence are complete.
 - **Later bundles.** Acquisition is planned for `0.2.0`, recording and replay
   for `0.3.0`, and native projection with G1 for `0.4.0`. Standards, FDM/FOQA,
   external consumer adoption and T3.1 remain outside these selected bundles.
@@ -153,7 +155,7 @@ recalculate its version from the published baseline and the selected scope.
 | `C2.2` | Measurement catalog, schema, ordering, and references | `verified` | `C2.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-01-c2-2-measurement-catalog.md) | 4/4 | [review](.superpowers/sdd/2026-11-01-c2-2-catalog/review.md) | — | — |
 | `C2.3` | Source-binding definition and transform references | `verified` | `C2.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-15-c2-3-source-binding-definition.md) | 4/4 | [review](.superpowers/sdd/2026-11-15-c2-3-binding/review.md) | — | — |
 | `C2.4` | Binding catalog and pure cross-catalog validation | `verified` | `C2.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-15-c2-4-binding-catalog-validation.md) | 5/5 | [review](.superpowers/sdd/2026-11-15-c2-4-binding-catalog/review.md) | — | — |
-| `C3.1` | Raw-observation record and schema | `reviewed` | `C1.3`, `C1.4`, `C1.5`, `C2.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-22-c3-1-raw-observation.md) | 4/4 | [review](.superpowers/sdd/2026-11-22-c3-1-raw-observation/review.md) | — | — |
+| `C3.1` | Raw-observation record and schema | `verified` | `C1.3`, `C1.4`, `C1.5`, `C2.4` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | [plan](docs/superpowers/plans/2026-11-22-c3-1-raw-observation.md) | 4/4 | [review](.superpowers/sdd/2026-11-22-c3-1-raw-observation/review.md) | — | — |
 | `C3.2` | Measurement-sample record and schema | `specified` | `C3.1` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C3.3` | Raw/sample lineage and cross-contract validation | `specified` | `C3.2` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |
 | `C3.4` | Measurement-frame record and schema | `specified` | `C3.3` | [design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md) | — | 0/4 | — | — | — |

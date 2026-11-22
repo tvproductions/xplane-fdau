@@ -1,5 +1,54 @@
 # Project Handoff
 
+## C3.1 integrated and C3.2 planning next — 2026-11-22
+
+**Observed 2026-11-22 20:22 UTC on local main** at
+`11613673d9d02e0368e39efc00c91299fab8451e`, before the requested handoff commit
+and ordinary Git sync. This section is the current resume point. Earlier
+sections are dated history.
+
+**Resume point.** Read the session-entry authorities in AGENTS.md and run the
+backlog adapter's strict audit and next action. Expect no findings, an empty
+active-child selection, and `action=write_plan child=C3.2`. C3.2, the
+measurement-sample record and schema, is `specified` with 0/4 gates. When
+planning is authorized, use Superpowers writing-plans and GovZero plan-audit
+with the [approved canonical design](docs/superpowers/specs/2026-08-09-xplane-fdau-canonical-measurement-contracts-design.md)
+and [C3.2 acceptance gates](BACKLOG.md#c32--measurement-sample-record-and-schema).
+The first deliverable is one reviewable C3.2 plan. Stop on an audit finding or
+changed authority, and obtain plan approval before implementation.
+
+**Completed.** C3.1 is verified with 4/4 gates and integrated at the exact
+revision above. Native execution received independent whole-branch review.
+All five findings were reproduced and fixed test-first. Branch offline
+hygiene, final hooks, and focused main verification passed on Windows with
+Python 3.12.16. The fresh wheel and sdist matched the branch hashes and an
+isolated wheel install passed public raw-observation and native FDR smoke.
+Both the feature branch and worktree were removed after archiving 43 local
+execution files. Jeff authorized clearing the completed C3.1 selection. The
+guarded adapter changed the selection line and reported C3.2 as next.
+
+**Evidence.** The [completed C3.1 plan](docs/superpowers/plans/2026-11-22-c3-1-raw-observation.md),
+[completion](.superpowers/sdd/2026-11-22-c3-1-raw-observation/completion.md),
+[review](.superpowers/sdd/2026-11-22-c3-1-raw-observation/review.md), and
+[verification manifest](.superpowers/sdd/2026-11-22-c3-1-raw-observation/verification.json)
+are committed. Integration logs and artifact identities are local-only under
+`.superpowers/sdd/c3-1-integration-2026-11-22-1161367/`. The archived
+execution logs remain in `.superpowers/sdd/2026-11-22-c3-1-raw-observation/execution/`.
+Use the committed receipts in a fresh checkout. The unrelated dependency
+worktree remains at `f81c4c2`.
+
+**Release and save point.** The first selected release is unpublished
+`0.1.0`. Eight selected slices remain from C3.2 through C4.4. Use the
+[release record](BACKLOG.md#selected-first-release-scope-and-version-decision--2026-11-22)
+and [roadmap milestones](ROADMAP.md#planned-release-milestones) for the scope,
+version decisions, and acceptance gates. Project policy retains Python 3.12,
+uv 0.13.6, unittest, and a standard-library-only runtime. The current
+authorization covers the handoff, guarded selection clear, and ordinary Git
+sync. C3.2 planning, publication, and Backplane adoption have separate
+authority. Recheck Git state after the save-point commit. Save-point logs
+are local-only under
+`.superpowers/sdd/c3-1-handoff-sync-2026-11-22-1161367/`.
+
 ## C2.4 verified and integrated — fresh-session resume, 2026-11-22
 
 **Observed:** 2026-11-22 13:53 UTC, before this requested handoff/save-point
